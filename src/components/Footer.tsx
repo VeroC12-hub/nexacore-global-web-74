@@ -9,7 +9,7 @@ import {
   Facebook,
   Youtube,
   Instagram,
-  X,
+  Twitter,
   Send,
   Shield
 } from 'lucide-react';
@@ -95,7 +95,7 @@ const Footer = () => {
               <a href="https://www.linkedin.com/company/nexacore-innovations" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-primary-glow transition-colors">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="https://www.facebook.com/people/NexaCore-Innovations/61578918113006/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-[#3b5998]/80 transition-colors">
+              <a href="https://facebook.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-[#3b5998]/80 transition-colors">
                 <Facebook className="w-4 h-4" />
               </a>
               <a href="https://youtube.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-red-600/80 transition-colors">
@@ -104,7 +104,7 @@ const Footer = () => {
               <a href="https://x.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-black/80 transition-colors">
                 <Twitter className="w-4 h-4" />
               </a>
-              <a href="https://www.instagram.com/nexacoreinnovations" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-pink-600/80 transition-colors">
+              <a href="https://instagram.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-pink-600/80 transition-colors">
                 <Instagram className="w-4 h-4" />
               </a>
               <a href="https://t.me/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-blue-500/80 transition-colors">
