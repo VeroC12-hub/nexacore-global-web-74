@@ -20,31 +20,27 @@ import abstractBg from '@/assets/abstract-tech.jpg';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-const Index = () => {
-  const services = [
+const testimonials = [
     {
-      icon: Cog,
-      title: 'Engineering & Technical',
-      description: 'CAD Design, 3D Animation, AI/ML Engineering, Blockchain Solutions',
-      features: ['CAD/Design Engineering', '3D Animation & VFX', 'AI/ML Engineering', 'Blockchain/Web3']
+      name: 'Ocloo Godwin',
+      company: 'NexaCore Innovations',
+      role: 'Founder & Project Manager',
+      content: 'As a certified industrial designer from WorldSkills, I bring precision and creativity into every project. At NexaCore, we build solutions that work in the real world.',
+      rating: 5
     },
     {
-      icon: Smartphone,
-      title: 'Software & App Development',
-      description: 'Custom software, mobile apps, cybersecurity, and automation solutions',
-      features: ['Custom Software', 'Mobile Apps', 'Cybersecurity', 'AI/ML Tools']
+      name: 'Benjamin Agbesi',
+      company: 'NexaCore Innovations',
+      role: 'Operations Manager',
+      content: 'From branding to execution, we ensure every project runs smoothly and leaves a strong impact. Our process is our strength.',
+      rating: 5
     },
     {
-      icon: Palette,
-      title: 'Creative & Branding',
-      description: 'Graphic design, video editing, UI/UX design, and content creation',
-      features: ['Graphic Design', 'Video Editing', 'UI/UX Design', 'Content Writing']
-    },
-    {
-      icon: BarChart3,
-      title: 'Data & Digital Growth',
-      description: 'Analytics dashboards, Excel automation, Power BI, digital marketing',
-      features: ['Data Analytics', 'Excel Automation', 'Power BI', 'Digital Marketing']
+      name: 'Manasseh Kabutey',
+      company: 'NexaCore Innovations',
+      role: 'Software & App Dev Lead',
+      content: 'We specialize in full-stack systems and cutting-edge app development. NexaCore delivers secure and scalable digital solutions.',
+      rating: 5
     }
   ];
 
