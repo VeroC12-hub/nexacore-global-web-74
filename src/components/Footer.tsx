@@ -9,9 +9,7 @@ import {
   Facebook,
   Youtube,
   Instagram,
-  Twitter,
-  Send,
-  Shield
+  Send
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/nexacore-logo.png';
@@ -92,26 +90,33 @@ const Footer = () => {
 
             {/* Social Links */}
             <div className="flex space-x-3 pt-2">
-              <a href="https://www.linkedin.com/company/nexacore-innovations" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-primary-glow transition-colors">
+              <a href="https://www.linkedin.com/company/nexacore-innovations" target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-primary-glow">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="https://facebook.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-[#3b5998]/80 transition-colors">
+              <a href="https://facebook.com/nexacore" target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-[#3b5998]">
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="https://youtube.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-red-600/80 transition-colors">
+              <a href="https://youtube.com/nexacore" target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-red-600">
                 <Youtube className="w-4 h-4" />
               </a>
-              <a href="https://x.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-black/80 transition-colors">
-                <Twitter className="w-4 h-4" />
+              <a href="https://x.com/nexacore" target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-sm transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-black">
+                X
               </a>
-              <a href="https://instagram.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-pink-600/80 transition-colors">
+              <a href="https://instagram.com/nexacore" target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-pink-600">
                 <Instagram className="w-4 h-4" />
               </a>
-              <a href="https://t.me/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-blue-500/80 transition-colors">
+              <a href="https://t.me/nexacore" target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-blue-500">
                 <Send className="w-4 h-4" />
               </a>
-              <a href="https://tiktok.com/@nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-black/80 transition-colors">
-                <Shield className="w-4 h-4" />
+              <a href="https://tiktok.com/@nexacore" target="_blank" rel="noopener noreferrer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-xs transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-black">
+                TikTok
               </a>
             </div>
           </div>
