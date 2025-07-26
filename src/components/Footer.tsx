@@ -9,7 +9,7 @@ import {
   Facebook,
   Youtube,
   Instagram,
-  Twitter,
+  X,
   Send,
   Shield
 } from 'lucide-react';
