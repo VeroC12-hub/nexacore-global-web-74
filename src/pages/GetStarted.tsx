@@ -16,7 +16,7 @@ const currencyMap: Record<string, { code: string; symbol: string }> = {
   Nigeria: { code: "NGN", symbol: "₦" },
   Rwanda: { code: "RWF", symbol: "FRw" },
   Senegal: { code: "XOF", symbol: "CFA" },
-  South Africa: { code: "ZAR", symbol: "R" },
+  "South Africa": { code: "ZAR", symbol: "R" },
   Tanzania: { code: "TZS", symbol: "TSh" },
   Tunisia: { code: "TND", symbol: "د.ت" },
   Uganda: { code: "UGX", symbol: "USh" },
@@ -30,7 +30,7 @@ const currencyMap: Record<string, { code: string; symbol: string }> = {
   Chile: { code: "CLP", symbol: "$" },
   Colombia: { code: "COP", symbol: "$" },
   Mexico: { code: "MXN", symbol: "$" },
-  United States: { code: "USD", symbol: "$" },
+  "United States": { code: "USD", symbol: "$" },
 
   // 🌏 Asia
   Bangladesh: { code: "BDT", symbol: "৳" },
@@ -41,9 +41,9 @@ const currencyMap: Record<string, { code: string; symbol: string }> = {
   Malaysia: { code: "MYR", symbol: "RM" },
   Pakistan: { code: "PKR", symbol: "₨" },
   Philippines: { code: "PHP", symbol: "₱" },
-  Saudi Arabia: { code: "SAR", symbol: "﷼" },
+  "Saudi Arabia": { code: "SAR", symbol: "﷼" },
   Singapore: { code: "SGD", symbol: "S$" },
-  South Korea: { code: "KRW", symbol: "₩" },
+  "South Korea": { code: "KRW", symbol: "₩" },
   Thailand: { code: "THB", symbol: "฿" },
   UAE: { code: "AED", symbol: "د.إ" },
   Vietnam: { code: "VND", symbol: "₫" },
@@ -62,11 +62,11 @@ const currencyMap: Record<string, { code: string; symbol: string }> = {
   Switzerland: { code: "CHF", symbol: "CHF" },
   Turkey: { code: "TRY", symbol: "₺" },
   Ukraine: { code: "UAH", symbol: "₴" },
-  United Kingdom: { code: "GBP", symbol: "£" },
+  "United Kingdom": { code: "GBP", symbol: "£" },
 
   // 🌏 Oceania
   Australia: { code: "AUD", symbol: "A$" },
-  New Zealand: { code: "NZD", symbol: "NZ$" },
+  "New Zealand": { code: "NZD", symbol: "NZ$" },
 };
 
 const GetStarted = () => {
