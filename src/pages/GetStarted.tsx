@@ -309,15 +309,7 @@ const GetStarted = () => {
           src="src/assets/nexacore-logo.png" 
           alt="NexaCore Logo" 
           className="h-10 w-auto"
-          onError={(e) => {
-            // Fallback to "N" if logo fails to load
-            e.target.style.display = 'none';
-            e.target.nextSibling.style.display = 'flex';
-          }}
         />
-        <div className="h-10 w-10 bg-blue-600 rounded-lg items-center justify-center" style={{display: 'none'}}>
-          <span className="text-white font-bold text-lg">N</span>
-        </div>
         <h1 className="text-3xl font-bold text-gray-900">Get Started with NexaCore</h1>
       </div>
 
