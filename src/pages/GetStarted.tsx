@@ -333,7 +333,7 @@ const GetStarted = () => {
             </div>
             
             {/* Right side - Large background logo */}
-            <div className="hidden lg:block opacity-20">
+            <div className="hidden lg:block opacity-30">
               <div className="text-8xl font-bold bg-gradient-to-r from-green-400 via-teal-500 to-yellow-400 bg-clip-text text-transparent">
                 NEXACORE
               </div>
