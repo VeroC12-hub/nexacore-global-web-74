@@ -96,7 +96,6 @@ const Index = () => {
             <div className="space-y-8 animate-fade-in">
               <div className="space-y-4">
                 <Badge className="bg-primary/10 text-primary border-primary/20 hover:scale-105 transition-transform duration-300">
-                  🌍 Global Innovation Team
                 </Badge>
                 <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                   <span className="text-gradient-hero">Engineering Global</span><br />
