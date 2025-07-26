@@ -333,8 +333,8 @@ const GetStarted = () => {
             </div>
             
             {/* Right side - Large background logo */}
-            <div className="hidden lg:block opacity-30">
-              <img src={nexacoreBackgroundLogo} alt="NexaCore Background" className="max-h-32 w-92" />
+            <div className="hidden lg:block opacity-40">
+              <img src={nexacoreBackgroundLogo} alt="NexaCore Background" className="max-h-33 w-92" />
             </div>
           </div>
         </div>
