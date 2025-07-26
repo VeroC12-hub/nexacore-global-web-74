@@ -306,11 +306,7 @@ const GetStarted = () => {
     <div className="min-h-screen bg-gray-50 p-8 max-w-4xl mx-auto">
       
       <div className="flex items-center space-x-4 mb-6">
-        <img 
-          src="/nexacore-logo.png" 
-          alt="NexaCore Logo" 
-          className="h-10 w-auto"
-        />
+        <img src={nexacoreLogo} alt="NexaCore Logo" className="h-10 w-auto" />
         <h1 className="text-3xl font-bold text-gray-900">Get Started with NexaCore</h1>
       </div>
 
