@@ -306,7 +306,7 @@ const GetStarted = () => {
     <div className="min-h-screen bg-gray-50 p-8 max-w-4xl mx-auto">
       
       <div 
-        className="flex items-center space-x-4 mb-6 p-4 rounded-lg relative h-32"
+        className="flex items-center space-x-4 mb-6 p-4 rounded-lg relative h-48"
         style={{
           backgroundImage: `url(${nexacoreLogo})`,
           backgroundSize: 'contain',
