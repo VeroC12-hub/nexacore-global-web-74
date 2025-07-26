@@ -59,14 +59,14 @@ const Index = () => {
     {
       name: 'Ocloo Godwin',
       company: 'NexaCore Innovations',
-      role: 'Founder & Project Manager',
+      role: 'Co-Founder & Project Manager',
       content: 'As a certified industrial designer from WorldSkills, I bring precision and creativity into every project. At NexaCore, we build solutions that work in the real world.',
       rating: 5
     },
     {
       name: 'Benjamin Agbesi',
       company: 'NexaCore Innovations',
-      role: 'Operations Manager',
+      role: 'Co-Founder & Operations Manager',
       content: 'From branding to execution, we ensure every project runs smoothly and leaves a strong impact. Our process is our strength.',
       rating: 5
     },
