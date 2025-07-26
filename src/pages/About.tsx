@@ -13,9 +13,6 @@ import {
   Shield,
 } from 'lucide-react';
 import teamImage from '@/assets/team-collaboration.jpg';
-import godwin from '@/assets/godwin.jpg';
-import benjamin from '@/assets/benjamin.jpg';
-import manasseh from '@/assets/manasseh.jpg';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -50,44 +47,49 @@ const About = () => {
     { icon: Target, title: '98% Success Rate', description: 'Exceptional project completion record' },
   ];
 
+  const founders = [
+    { name: 'Ocloo Godwin', role: 'Engineering & Technical Lead' },
+    { name: 'Benjamin Agbesi', role: 'Creativity & Branding Lead' },
+    { name: 'Manasseh Kabutey', role: 'Software & App Development Lead' },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero */}
-      <section className="pt-16 pb-16 lg:pt-24 lg:pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      {/* Hero Section */}
+      <section className="pt-16 pb-16 lg:pt-24 lg:pb-20 text-center bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Badge className="bg-primary/10 text-primary border-primary/20 mb-6">
             <Globe className="w-4 h-4 mr-2" />
             About NexaCore
           </Badge>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
+          <h1 className="text-4xl lg:text-6xl font-bold mb-6">
             <span className="text-gradient-hero">Engineering Global Innovation</span><br />
             <span className="text-foreground">with Excellence</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            We are a multi-disciplinary team of engineers, software developers, designers, and analysts 
-            delivering world-class solutions with impact.
+            We are a multi-disciplinary team of engineers, developers, designers, and analysts dedicated to building solutions that matter.
           </p>
         </div>
       </section>
 
-      {/* Story */}
-      <section className="py-16 bg-muted/30">
+      {/* Story Section */}
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
-            <h2 className="text-3xl lg:text-4xl font-bold">Our <span className="text-gradient-primary">Story</span></h2>
+            <h2 className="text-3xl lg:text-4xl font-bold">
+              Our <span className="text-gradient-primary">Story</span>
+            </h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Founded in Ghana, NexaCore Innovations began with the goal of solving tough industry challenges 
-              through innovation, collaboration, and skill. Today, our team works with clients around the world.
+              Founded in Ghana, NexaCore Innovations began with a vision to bridge the gap between innovation and real-world application. What started as a local effort has grown into a globally active team solving challenges in engineering, software, branding, and data.
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Our strength is our diversity — from CAD and BIM engineering to app development and digital branding, 
-              every member brings world-class talent and passion to every project.
+              Our strength is our diversity — from AutoCAD and BIM engineering to mobile apps and marketing design, every member brings something powerful to the table.
             </p>
           </div>
           <div className="relative">
-            <img src={teamImage} alt="Team at work" className="rounded-2xl shadow-xl" />
+            <img src={teamImage} alt="Team" className="rounded-2xl shadow-xl" />
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-success/10 rounded-2xl" />
           </div>
         </div>
@@ -136,20 +138,21 @@ const About = () => {
       </section>
 
       {/* Meet the Founders */}
-      <section className="py-16">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-6">Meet Our <span className="text-gradient-primary">Founders</span></h2>
           <div className="flex flex-wrap justify-center gap-10 mt-10">
-            {[{ name: 'Ocloo Godwin', role: 'Engineering & Technical Lead', img: godwin },
-              { name: 'Benjamin Agbesi', role: 'Creativity & Branding Lead', img: benjamin },
-              { name: 'Manasseh Kabutey', role: 'Software & App Dev Lead', img: manasseh }]
-              .map((person, index) => (
-                <div key={index} className="text-center max-w-xs">
-                  <img src={person.img} alt={person.name} className="h-32 w-32 rounded-full mx-auto mb-4 shadow-lg" />
-                  <h3 className="text-lg font-semibold text-foreground">{person.name}</h3>
-                  <p className="text-sm text-muted-foreground">{person.role}</p>
-                </div>
-              ))}
+            {founders.map((person, index) => (
+              <div key={index} className="text-center max-w-xs">
+                <img
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=150`}
+                  alt={person.name}
+                  className="h-32 w-32 rounded-full mx-auto mb-4 shadow-lg object-cover"
+                />
+                <h3 className="text-lg font-semibold text-foreground">{person.name}</h3>
+                <p className="text-sm text-muted-foreground">{person.role}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
