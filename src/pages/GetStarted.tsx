@@ -308,7 +308,7 @@ const GetStarted = () => {
       {/* Header Section with Network Background */}
       <div className="relative bg-white shadow-lg overflow-hidden">
         {/* Network Pattern Background */}
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-5">
           <svg className="w-full h-full" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="network" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
@@ -334,7 +334,7 @@ const GetStarted = () => {
             
             {/* Right side - Large background logo */}
             <div className="hidden lg:block opacity-40">
-              <img src={nexacoreBackgroundLogo} alt="NexaCore Background" className="h-32 w-92" />
+              <img src={nexacoreBackgroundLogo} alt="NexaCore Background" className="h-33 w-92" />
             </div>
           </div>
         </div>
