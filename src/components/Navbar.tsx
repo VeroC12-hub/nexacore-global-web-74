@@ -25,7 +25,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo and Brand */}
           <Link to="/" className="flex items-center space-x-2">
-            <img src={logo} alt="NexaCore Innovations Logo" className="h-8 w-8 rounded" />
+            <img src={logo} alt="NexaCore Innovations Logo" className="h-12 w-12 rounded" />
             <span className="text-xl font-bold text-gradient-primary">NexaCore Innovations</span>
           </Link>
 
