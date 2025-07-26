@@ -22,6 +22,7 @@ const Services = () => {
   const serviceCategories = [
     {
       icon: Cog,
+      image: '/assets/services/engineering.png',
       title: 'Engineering & Technical Services',
       description: 'Advanced engineering solutions and technical expertise for complex projects',
       services: [
@@ -34,6 +35,7 @@ const Services = () => {
     },
     {
       icon: Smartphone,
+      image: '/assets/services/software.png',
       title: 'Software & App Development',
       description: 'Custom software solutions tailored to your business needs',
       services: [
@@ -46,6 +48,7 @@ const Services = () => {
     },
     {
       icon: Palette,
+      image: '/assets/services/creative.png',
       title: 'Creative & Branding',
       description: 'Visual identity and creative solutions that make your brand stand out',
       services: [
@@ -58,6 +61,7 @@ const Services = () => {
     },
     {
       icon: BarChart3,
+      image: '/assets/services/digital.png',
       title: 'Data & Digital Growth',
       description: 'Transform your data into actionable insights and growth opportunities',
       services: [
@@ -90,93 +94,76 @@ const Services = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       {/* Hero Section */}
       <section className="pt-16 pb-16 lg:pt-24 lg:pb-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <Badge className="bg-primary/10 text-primary border-primary/20 mb-6">
-              Our Services
-            </Badge>
-            <h1 className="text-4xl lg:text-6xl font-bold mb-6">
-              <span className="text-gradient-hero">Comprehensive Solutions</span><br />
-              <span className="text-foreground">for Every Challenge</span>
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              From engineering and software development to creative design and data analytics, 
-              we provide end-to-end solutions that drive innovation and growth.
-            </p>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Badge className="bg-primary/10 text-primary border-primary/20 mb-6">
+            Our Services
+          </Badge>
+          <h1 className="text-4xl lg:text-6xl font-bold mb-6">
+            <span className="text-gradient-hero">Comprehensive Solutions</span><br />
+            <span className="text-foreground">for Every Challenge</span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            From engineering and software development to creative design and data analytics, 
+            we provide end-to-end solutions that drive innovation and growth.
+          </p>
         </div>
       </section>
 
       {/* Services Categories */}
       <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-16">
-            {serviceCategories.map((category, index) => (
-              <div key={index} className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''}`}>
-                <div className={`space-y-6 ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center">
-                      <category.icon className="w-6 h-6 text-white" />
-                    </div>
-                    <h2 className="text-3xl font-bold text-gradient-primary">{category.title}</h2>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          {serviceCategories.map((category, index) => (
+            <div key={index} className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''}`}>
+              <div className={`space-y-6 ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center">
+                    <category.icon className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-lg text-muted-foreground">{category.description}</p>
-                  <ul className="space-y-4">
-                    {category.services.map((service, idx) => (
-                      <li key={idx} className="flex items-start space-x-3">
-                        <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
-                        <div>
-                          <h4 className="font-semibold text-foreground">{service.name}</h4>
-                          <p className="text-sm text-muted-foreground">{service.description}</p>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button className="btn-hero">
-                    Learn More
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
+                  <h2 className="text-3xl font-bold text-gradient-primary">{category.title}</h2>
                 </div>
-                
-                <Card className={`card-gradient p-8 ${index % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''}`}>
-                  <div className="space-y-6">
-                    <div className="text-center">
-                      <div className="w-20 h-20 bg-gradient-to-br from-primary to-primary-glow rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <category.icon className="w-10 h-10 text-white" />
+                <p className="text-lg text-muted-foreground">{category.description}</p>
+                <ul className="space-y-4">
+                  {category.services.map((service, idx) => (
+                    <li key={idx} className="flex items-start space-x-3">
+                      <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-foreground">{service.name}</h4>
+                        <p className="text-sm text-muted-foreground">{service.description}</p>
                       </div>
-                      <h3 className="text-xl font-semibold text-gradient-primary">Professional Excellence</h3>
-                    </div>
-                    <ul className="space-y-3">
-                      {['Global Standards', 'Certified Professionals', 'Quality Assurance', 'Ongoing Support'].map((item, idx) => (
-                        <li key={idx} className="flex items-center justify-center space-x-2">
-                          <CheckCircle className="w-4 h-4 text-success" />
-                          <span className="text-sm text-muted-foreground">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </Card>
+                    </li>
+                  ))}
+                </ul>
+                <Button className="btn-hero">
+                  Learn More
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
               </div>
-            ))}
-          </div>
+
+              <Card className={`overflow-hidden p-0 rounded-xl shadow-lg border ${index % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''}`}>
+                <img
+                  src={category.image}
+                  alt={category.title}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+              </Card>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* Technologies Section */}
       <section className="py-16 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-              <span className="text-gradient-primary">Technologies</span> We Master
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              We stay at the forefront of technology to deliver cutting-edge solutions.
-            </p>
-          </div>
-
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            <span className="text-gradient-primary">Technologies</span> We Master
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+            We stay at the forefront of technology to deliver cutting-edge solutions.
+          </p>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             {technologies.map((tech, index) => (
               <Card key={index} className="card-gradient p-6 text-center hover:scale-105 transition-transform duration-300">
@@ -190,16 +177,13 @@ const Services = () => {
 
       {/* Process Section */}
       <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-              Our <span className="text-gradient-primary">Process</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              A proven methodology that ensures successful project delivery every time.
-            </p>
-          </div>
-
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            Our <span className="text-gradient-primary">Process</span>
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+            A proven methodology that ensures successful project delivery every time.
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
             {processSteps.map((process, index) => (
               <div key={index} className="text-center relative">
@@ -218,8 +202,8 @@ const Services = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gradient-to-br from-primary via-primary-glow to-success">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section className="py-16 bg-gradient-to-br from-primary via-primary-glow to-success text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
             Ready to Start Your Project?
           </h2>
