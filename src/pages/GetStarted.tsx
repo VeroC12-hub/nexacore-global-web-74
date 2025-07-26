@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import nexacoreLogo from "../assets/nexacore-logo.png";
+import nexacoreLogo from "../assets/nexacore-backgroundlogo.png";
 
 // Full country and currency map
 const currencyMap = {
@@ -303,99 +304,131 @@ const GetStarted = () => {
   const convertedPrice = (currentServicePrice * rate).toFixed(2);
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8 max-w-4xl mx-auto">
-      
-      <div className="flex items-center space-x-4 mb-6">
-        <img src={nexacoreLogo} alt="NexaCore Logo" className="h-12 w-19" />
-        <h1 className="text-3xl font-bold text-gray-900">Get Started with NexaCore</h1>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Header Section with Network Background */}
+      <div className="relative bg-white shadow-lg overflow-hidden">
+        {/* Network Pattern Background */}
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="network" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+                <circle cx="25" cy="25" r="2" fill="#64748b"/>
+                <line x1="25" y1="25" x2="75" y2="25" stroke="#64748b" strokeWidth="1"/>
+                <line x1="25" y1="25" x2="25" y2="75" stroke="#64748b" strokeWidth="1"/>
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#network)"/>
+          </svg>
+        </div>
+        
+        <div className="relative max-w-6xl mx-auto px-8 py-6">
+          <div className="flex items-center justify-between">
+            {/* Left side - Small logo and text */}
+            <div className="flex items-center space-x-4">
+              <img src="/src/assets/nexacore-logo.png" alt="NexaCore Logo" className="h-16 w-auto" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Get Started with NexaCore</h1>
+                <p className="text-gray-600">Innovation & Technology Solutions</p>
+              </div>
+            </div>
+            
+            {/* Right side - Large background logo */}
+            <div className="hidden lg:block opacity-20">
+              <img src="/src/assets/nexacore-backgroundlogo.png" alt="NexaCore Background" className="max-h-32 w-auto" />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
-        <div>
-          <label htmlFor="country" className="block mb-2 font-medium text-gray-700">
-            Your Country
-          </label>
-          <select
-            id="country"
-            value={country}
-            onChange={handleCountryChange}
-            className="w-full border border-gray-300 px-4 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            disabled={loading}
-          >
-            {Object.keys(currencyMap).map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="service" className="block mb-2 font-medium text-gray-700">
-            Service Type
-          </label>
-          <select 
-            id="service" 
-            value={service}
-            onChange={(e) => setService(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            {Object.keys(servicePricing).map((serviceType) => (
-              <option key={serviceType} value={serviceType}>
-                {serviceType}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block mb-2 font-medium text-gray-700">
-            Project Description
-          </label>
-          <textarea
-            id="description"
-            value={projectDescription}
-            onChange={(e) => setProjectDescription(e.target.value)}
-            className="w-full border border-gray-300 px-4 py-2 rounded-md h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Tell us more about your project..."
-          />
-        </div>
-
-        <div className="bg-gray-50 p-4 rounded-md">
-          <div className="text-lg font-semibold text-gray-900">
-            Estimated Price: {loading ? (
-              <span className="text-gray-500">Calculating...</span>
-            ) : (
-              <span className="text-blue-600">{currency.symbol} {convertedPrice}</span>
-            )}
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto p-8">
+        <div className="bg-white rounded-xl shadow-lg p-8 space-y-6 border border-gray-200">
+          <div>
+            <label htmlFor="country" className="block mb-2 font-medium text-gray-700 text-lg">
+              Your Country
+            </label>
+            <select
+              id="country"
+              value={country}
+              onChange={handleCountryChange}
+              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+              disabled={loading}
+            >
+              {Object.keys(currencyMap).map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
-          <p className="text-sm text-gray-600 mt-1">
-            Base price: ${currentServicePrice} USD • Exchange rate applied for {currency.code}
-          </p>
-        </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <Button 
-            className="text-lg px-6 py-3"
-            onClick={handleSubmit}
-          >
-            Submit Request
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            className="text-lg px-6 py-3" 
-            onClick={handleBackToHome}
-          >
-            Back to Home
-          </Button>
-          
-          <Button 
-            variant="success"
-            className="text-lg px-6 py-3" 
-            onClick={handleGetQuote}
-          >
-            Get Free Quote
-          </Button>
+          <div>
+            <label htmlFor="service" className="block mb-2 font-medium text-gray-700 text-lg">
+              Service Type
+            </label>
+            <select 
+              id="service" 
+              value={service}
+              onChange={(e) => setService(e.target.value)}
+              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+            >
+              {Object.keys(servicePricing).map((serviceType) => (
+                <option key={serviceType} value={serviceType}>
+                  {serviceType}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="description" className="block mb-2 font-medium text-gray-700 text-lg">
+              Project Description
+            </label>
+            <textarea
+              id="description"
+              value={projectDescription}
+              onChange={(e) => setProjectDescription(e.target.value)}
+              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
+              placeholder="Tell us more about your project..."
+            />
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg border border-blue-200">
+            <div className="text-xl font-semibold text-gray-900">
+              Estimated Price: {loading ? (
+                <span className="text-gray-500">Calculating...</span>
+              ) : (
+                <span className="text-blue-600">{currency.symbol} {convertedPrice}</span>
+              )}
+            </div>
+            <p className="text-sm text-gray-600 mt-2">
+              Base price: ${currentServicePrice} USD • Exchange rate applied for {currency.code}
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+            <Button 
+              className="text-lg px-8 py-4 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+              onClick={handleSubmit}
+            >
+              Submit Request
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              className="text-lg px-8 py-4 border-2" 
+              onClick={handleBackToHome}
+            >
+              Back to Home
+            </Button>
+            
+            <Button 
+              variant="success"
+              className="text-lg px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700" 
+              onClick={handleGetQuote}
+            >
+              Get Free Quote
+            </Button>
+          </div>
         </div>
       </div>
     </div>
