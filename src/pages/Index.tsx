@@ -57,24 +57,24 @@ const Index = () => {
 
   const testimonials = [
     {
-      name: 'Sarah Chen',
-      company: 'TechStart Global',
-      role: 'CTO',
-      content: 'NexaCore delivered exceptional software solutions that transformed our business operations. Their technical expertise and professionalism are unmatched.',
+      name: 'Ocloo Godwin',
+      company: 'NexaCore Innovations',
+      role: 'Founder & Project Manager',
+      content: 'As a certified industrial designer from WorldSkills, I bring precision and creativity into every project. At NexaCore, we build solutions that work in the real world.',
       rating: 5
     },
     {
-      name: 'Dr. James Osei',
-      company: 'University of Ghana',
-      role: 'Engineering Professor',
-      content: 'The CAD designs and 3D animations provided by NexaCore were instrumental in our research projects. Outstanding quality and attention to detail.',
+      name: 'Benjamin Agbesi',
+      company: 'NexaCore Innovations',
+      role: 'Operations Manager',
+      content: 'From branding to execution, we ensure every project runs smoothly and leaves a strong impact. Our process is our strength.',
       rating: 5
     },
     {
-      name: 'Maria Rodriguez',
-      company: 'EcoTech Solutions',
-      role: 'Founder',
-      content: 'From UI/UX design to full-stack development, NexaCore exceeded our expectations. They truly understand global market needs.',
+      name: 'Manasseh Kabutey',
+      company: 'NexaCore Innovations',
+      role: 'Software & App Dev Lead',
+      content: 'We specialize in full-stack systems and cutting-edge app development. NexaCore delivers secure and scalable digital solutions.',
       rating: 5
     }
   ];
