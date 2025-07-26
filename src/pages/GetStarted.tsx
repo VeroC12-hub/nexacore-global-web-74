@@ -13,7 +13,7 @@ const currencyMap: Record<
   Egypt: { code: "EGP", symbol: "£" },
   Ethiopia: { code: "ETB", symbol: "Br" },
   Ghana: { code: "GHS", symbol: "₵" },
-  Ivory Coast: { code: "XOF", symbol: "CFA" },
+  "Ivory Coast": { code: "XOF", symbol: "CFA" },
   Kenya: { code: "KES", symbol: "KSh" },
   Morocco: { code: "MAD", symbol: "د.م." },
   Nigeria: { code: "NGN", symbol: "₦" },
