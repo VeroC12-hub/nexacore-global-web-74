@@ -79,7 +79,7 @@ const Footer = () => {
 
             {/* Social Links */}
             <div className="flex space-x-3 pt-2">
-              <a href="#" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-primary-glow transition-colors">
+              <a href="https://www.linkedin.com/company/nexacore-innovations" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-primary-glow transition-colors">
                 <Linkedin className="w-4 h-4" />
               </a>
               <a href="#" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-success transition-colors">
