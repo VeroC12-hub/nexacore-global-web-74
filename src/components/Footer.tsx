@@ -12,7 +12,7 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <img src={logo} alt="NexaCore Logo" className="w-8 h-8 rounded" />
+              <img src={logo} alt="NexaCore Logo" className="w-22 h-24 rounded" />
               <span className="text-xl font-bold">NexaCore Innovations</span>
             </div>
             <p className="text-muted text-sm leading-relaxed">
