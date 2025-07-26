@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import nexacoreLogo from "./assets/nexacore-logo.png";
+import nexacoreLogo from "../assets/nexacore-logo.png";
 
 // Full country and currency map
 const currencyMap = {
