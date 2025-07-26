@@ -18,7 +18,7 @@ const Footer = () => {
             <p className="text-muted text-sm leading-relaxed">
               Engineering Global Innovation with Excellence. We deliver technical, creative, and digital solutions worldwide.
             </p>
-            <Button variant="outline" className="border-background/20 text-background hover:bg-background hover:text-foreground">
+            <Button className="bg-white text-foreground hover:bg-muted text-sm font-medium px-4 py-2">
               <Download className="w-4 h-4 mr-2" />
               Company Profile
             </Button>
@@ -91,7 +91,7 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="border-t border-background/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-muted">
-          <p>&copy; 2024 NexaCore Innovations. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} NexaCore Innovations. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link to="/privacy" className="hover:text-background transition-colors">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-background transition-colors">Terms of Service</Link>
