@@ -205,6 +205,24 @@ const Button = ({ children, className, variant, onClick, ...props }) => {
   );
 };
 
+// Service pricing in USD
+const servicePricing = {
+  "Software Engineering": 150,
+  "Data Analysis": 120,
+  "CAD Engineering": 180,
+  "Graphic Design": 80,
+  "Digital Marketing": 100,
+  "Video Editing & Motion Graphics": 130,
+  "UI/UX Design": 110,
+  "Cybersecurity Solutions": 200,
+  "Mobile App Development": 160,
+  "Content Writing / Copywriting": 60,
+  "3D Animation & VFX": 220,
+  "Web3 & Blockchain Engineering": 250,
+  "E-Commerce Solutions": 140,
+  "AI / Machine Learning Engineering": 240
+};
+
 const GetStarted = () => {
   const [country, setCountry] = useState("Ghana");
   const [currency, setCurrency] = useState(currencyMap["Ghana"]);
@@ -212,8 +230,6 @@ const GetStarted = () => {
   const [service, setService] = useState("Software Engineering");
   const [projectDescription, setProjectDescription] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const basePriceUSD = 100;
 
   const handleCountryChange = async (e) => {
     const selected = e.target.value;
@@ -281,7 +297,9 @@ const GetStarted = () => {
     initializeExchangeRate();
   }, []);
 
-  const convertedPrice = (basePriceUSD * rate).toFixed(2);
+  // Get the current service price and convert to local currency
+  const currentServicePrice = servicePricing[service] || 100;
+  const convertedPrice = (currentServicePrice * rate).toFixed(2);
 
   return (
     <div className="min-h-screen bg-gray-50 p-8 max-w-4xl mx-auto">
@@ -321,20 +339,11 @@ const GetStarted = () => {
             onChange={(e) => setService(e.target.value)}
             className="w-full border border-gray-300 px-4 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
-            <option value="Software Engineering">Software Engineering</option>
-            <option value="Data Analysis">Data Analysis</option>
-            <option value="CAD Engineering">CAD Engineering</option>
-            <option value="Graphic Design">Graphic Design</option>
-            <option value="Digital Marketing">Digital Marketing</option>
-            <option value="Video Editing & Motion Graphics">Video Editing & Motion Graphics</option>
-            <option value="UI/UX Design">UI/UX Design</option>
-            <option value="Cybersecurity Solutions">Cybersecurity Solutions</option>
-            <option value="Mobile App Development">Mobile App Development</option>
-            <option value="Content Writing / Copywriting">Content Writing / Copywriting</option>
-            <option value="3D Animation & VFX">3D Animation & VFX</option>
-            <option value="Web3 & Blockchain Engineering">Web3 & Blockchain Engineering</option>
-            <option value="E-Commerce Solutions">E-Commerce Solutions</option>
-            <option value="AI / Machine Learning Engineering">AI / Machine Learning Engineering</option>
+            {Object.keys(servicePricing).map((serviceType) => (
+              <option key={serviceType} value={serviceType}>
+                {serviceType}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -360,7 +369,7 @@ const GetStarted = () => {
             )}
           </div>
           <p className="text-sm text-gray-600 mt-1">
-            Base price: $100 USD • Exchange rate applied for {currency.code}
+            Base price: ${currentServicePrice} USD • Exchange rate applied for {currency.code}
           </p>
         </div>
 
