@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import nexacoreLogo from "../assets/nexacore-logo.png";
-import nexacoreLogo from "../assets/nexacore-backgroundlogo.png";
+import nexacoreBackgroundLogo from "../assets/nexacore-backgroundlogo.png";
 
 // Full country and currency map
 const currencyMap = {
@@ -325,7 +325,7 @@ const GetStarted = () => {
           <div className="flex items-center justify-between">
             {/* Left side - Small logo and text */}
             <div className="flex items-center space-x-4">
-              <img src="/src/assets/nexacore-logo.png" alt="NexaCore Logo" className="h-16 w-auto" />
+              <img src={nexacoreLogo} alt="NexaCore Logo" className="h-16 w-auto" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Get Started with NexaCore</h1>
                 <p className="text-gray-600">Innovation & Technology Solutions</p>
@@ -334,7 +334,12 @@ const GetStarted = () => {
             
             {/* Right side - Large background logo */}
             <div className="hidden lg:block opacity-20">
-              <img src="/src/assets/nexacore-backgroundlogo.png" alt="NexaCore Background" className="max-h-32 w-auto" />
+              <div className="text-8xl font-bold bg-gradient-to-r from-green-400 via-teal-500 to-yellow-400 bg-clip-text text-transparent">
+                NEXACORE
+              </div>
+              <div className="text-2xl font-semibold text-gray-600 text-center tracking-wider">
+                INNOVATIONS
+              </div>
             </div>
           </div>
         </div>
