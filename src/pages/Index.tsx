@@ -110,10 +110,10 @@ const Index = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to=\"/get-started\">
-  <Button className=\"btn-hero text-lg px-8 py-4 group\">
+                <Link to="/get-started">
+  <Button className="btn-hero text-lg px-8 py-4 group">
     Get Started
-    <ArrowRight className=\"ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300\" />
+    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
   </Button>
 </Link>
                 <Button variant="outline" className="btn-outline-primary text-lg px-8 py-4 group">
