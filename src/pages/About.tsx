@@ -184,8 +184,8 @@ const About = () => {
             Book a session with our team or send us a message — we're ready to bring your ideas to life.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/contact">
-              <Button variant="secondary" className="text-lg px-8 py-4 bg-white text-primary hover:bg-white/90">
+            <Button variant="secondary" asChild className="text-lg px-8 py-4 bg-white text-primary hover:bg-white/90">
+              <Link to="/contact" className="flex items-center justify-center">
                 Contact Us
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
