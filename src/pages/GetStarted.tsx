@@ -1,12 +1,8 @@
-
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { getExchangeRate } from "@/utils/getExchangeRate";
-import logo from '@/assets/logo.png';
 
 // Full country and currency map
-const currencyMap: Record<string, { code: string; symbol: string }> = {
+const currencyMap = {
   Afghanistan: { code: "AFN", symbol: "؋" },
   Albania: { code: "ALL", symbol: "L" },
   Algeria: { code: "DZD", symbol: "دج" },
@@ -168,94 +164,232 @@ const currencyMap: Record<string, { code: string; symbol: string }> = {
   Zimbabwe: { code: "ZWL", symbol: "Z$" }
 };
 
+// Mock exchange rate function (replace with actual API call)
+const getExchangeRate = async (currencyCode) => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Mock exchange rates (in a real app, you'd fetch from an API)
+  const mockRates = {
+    USD: 1,
+    EUR: 0.85,
+    GBP: 0.73,
+    GHS: 12.50, // Ghana Cedis
+    NGN: 450,   // Nigerian Naira
+    ZAR: 18.5,  // South African Rand
+    KES: 110,   // Kenyan Shilling
+    // Add more as needed
+  };
+  
+  return mockRates[currencyCode] || 1;
+};
+
+const Button = ({ children, className, variant, onClick, ...props }) => {
+  const baseClasses = "px-4 py-2 rounded font-medium transition-colors duration-200 flex items-center justify-center";
+  const variants = {
+    default: "bg-blue-600 text-white hover:bg-blue-700",
+    outline: "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white",
+    success: "bg-green-600 text-white hover:bg-green-700"
+  };
+  
+  const variantClass = variants[variant] || variants.default;
+  
+  return (
+    <button 
+      className={`${baseClasses} ${variantClass} ${className || ''}`}
+      onClick={onClick}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
 
 const GetStarted = () => {
   const [country, setCountry] = useState("Ghana");
   const [currency, setCurrency] = useState(currencyMap["Ghana"]);
   const [rate, setRate] = useState(1);
+  const [service, setService] = useState("Software Engineering");
+  const [projectDescription, setProjectDescription] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const basePriceUSD = 100;
 
-  const handleCountryChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleCountryChange = async (e) => {
     const selected = e.target.value;
     setCountry(selected);
     const selectedCurrency = currencyMap[selected] || { code: "USD", symbol: "$" };
     setCurrency(selectedCurrency);
 
-    const exchangeRate = await getExchangeRate(selectedCurrency.code);
-    setRate(exchangeRate);
+    setLoading(true);
+    try {
+      const exchangeRate = await getExchangeRate(selectedCurrency.code);
+      setRate(exchangeRate);
+    } catch (error) {
+      console.error("Error fetching exchange rate:", error);
+      setRate(1); // Fallback to 1:1 rate
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!projectDescription.trim()) {
+      alert("Please provide a project description");
+      return;
+    }
+    
+    const formData = {
+      country,
+      service,
+      projectDescription,
+      estimatedPrice: `${currency.symbol} ${convertedPrice}`
+    };
+    
+    console.log("Form submitted:", formData);
+    alert("Request submitted successfully!");
+  };
+
+  const handleGetQuote = () => {
+    alert("Free quote request submitted! We'll get back to you soon.");
+  };
+
+  const handleBackToHome = () => {
+    // In a real app, you'd use React Router
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = "/";
+    }
   };
 
   useEffect(() => {
-    handleCountryChange({ target: { value: "Ghana" } } as React.ChangeEvent<HTMLSelectElement>);
+    // Initialize with Ghana on component mount
+    const initializeExchangeRate = async () => {
+      setLoading(true);
+      try {
+        const exchangeRate = await getExchangeRate(currencyMap["Ghana"].code);
+        setRate(exchangeRate);
+      } catch (error) {
+        console.error("Error fetching initial exchange rate:", error);
+        setRate(1);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeExchangeRate();
   }, []);
 
   const convertedPrice = (basePriceUSD * rate).toFixed(2);
 
   return (
-    <div className="min-h-screen bg-background p-8 max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-8 max-w-4xl mx-auto">
       
       <div className="flex items-center space-x-4 mb-6">
-        <img src={logo} alt="nexacore-logo.png" className="h-10 w-auto" />
-        <h1 className="text-3xl font-bold">Get Started with NexaCore</h1>
+        <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center">
+          <span className="text-white font-bold text-lg">N</span>
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900">Get Started with NexaCore</h1>
       </div>
 
+      <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
+        <div>
+          <label htmlFor="country" className="block mb-2 font-medium text-gray-700">
+            Your Country
+          </label>
+          <select
+            id="country"
+            value={country}
+            onChange={handleCountryChange}
+            className="w-full border border-gray-300 px-4 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            disabled={loading}
+          >
+            {Object.keys(currencyMap).map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
 
-      <div className="mb-4">
-        <label htmlFor="country" className="block mb-1 font-medium">Your Country</label>
-        <select
-          id="country"
-          value={country}
-          onChange={handleCountryChange}
-          className="w-full border px-4 py-2 rounded"
-        >
-          {Object.keys(currencyMap).map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
+        <div>
+          <label htmlFor="service" className="block mb-2 font-medium text-gray-700">
+            Service Type
+          </label>
+          <select 
+            id="service" 
+            value={service}
+            onChange={(e) => setService(e.target.value)}
+            className="w-full border border-gray-300 px-4 py-2 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="Software Engineering">Software Engineering</option>
+            <option value="Data Analysis">Data Analysis</option>
+            <option value="CAD Engineering">CAD Engineering</option>
+            <option value="Graphic Design">Graphic Design</option>
+            <option value="Digital Marketing">Digital Marketing</option>
+            <option value="Video Editing & Motion Graphics">Video Editing & Motion Graphics</option>
+            <option value="UI/UX Design">UI/UX Design</option>
+            <option value="Cybersecurity Solutions">Cybersecurity Solutions</option>
+            <option value="Mobile App Development">Mobile App Development</option>
+            <option value="Content Writing / Copywriting">Content Writing / Copywriting</option>
+            <option value="3D Animation & VFX">3D Animation & VFX</option>
+            <option value="Web3 & Blockchain Engineering">Web3 & Blockchain Engineering</option>
+            <option value="E-Commerce Solutions">E-Commerce Solutions</option>
+            <option value="AI / Machine Learning Engineering">AI / Machine Learning Engineering</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="description" className="block mb-2 font-medium text-gray-700">
+            Project Description
+          </label>
+          <textarea
+            id="description"
+            value={projectDescription}
+            onChange={(e) => setProjectDescription(e.target.value)}
+            className="w-full border border-gray-300 px-4 py-2 rounded-md h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Tell us more about your project..."
+          />
+        </div>
+
+        <div className="bg-gray-50 p-4 rounded-md">
+          <div className="text-lg font-semibold text-gray-900">
+            Estimated Price: {loading ? (
+              <span className="text-gray-500">Calculating...</span>
+            ) : (
+              <span className="text-blue-600">{currency.symbol} {convertedPrice}</span>
+            )}
+          </div>
+          <p className="text-sm text-gray-600 mt-1">
+            Base price: $100 USD • Exchange rate applied for {currency.code}
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <Button 
+            className="text-lg px-6 py-3"
+            onClick={handleSubmit}
+          >
+            Submit Request
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="text-lg px-6 py-3" 
+            onClick={handleBackToHome}
+          >
+            Back to Home
+          </Button>
+          
+          <Button 
+            variant="success"
+            className="text-lg px-6 py-3" 
+            onClick={handleGetQuote}
+          >
+            Get Free Quote
+          </Button>
+        </div>
       </div>
-
-      <div className="mb-4">
-        <label htmlFor="service" className="block mb-1 font-medium">Service Type</label>
-        <select id="service" className="w-full border px-4 py-2 rounded">
-          <option>Software Engineering</option>
-          <option>Data Analysis</option>
-          <option>CAD Engineering</option>
-          <option>Graphic Design</option>
-          <option>Digital Marketing</option>
-          <option>Video Editing & Motion Graphics</option>
-          <option>UI/UX Design</option>
-          <option>Cybersecurity Solutions</option>
-          <option>Mobile App Development</option>
-          <option>Content Writing / Copywriting</option>
-          <option>3D Animation & VFX</option>
-          <option>Web3 & Blockchain Engineering</option>
-          <option>E-Commerce Solutions</option>
-          <option>AI / Machine Learning Engineering</option>
-        </select>
-      </div>
-
-      <div className="mb-4">
-        <label className="block mb-1 font-medium">Project Description</label>
-        <textarea
-          className="w-full border px-4 py-2 rounded h-32"
-          placeholder="Tell us more about your project..."
-        />
-      </div>
-
-      <div className="mb-6 text-lg">
-        Estimated Price: <strong>{currency.symbol} {convertedPrice}</strong>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
-      <Button className="bg-primary text-white px-6 py-3 rounded font-semibold hover:bg-primary/80 transition">
-        Submit Request
-        <ArrowRight className="ml-2 w-5 h-5" />
-      </Button>
-      <Button variant="outline" className="text-lg px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-white transition" onClick={() => window.location.href = "/"}>
-        Back to Home
-      </Button>
-      <Button className="text-lg px-6 py-3 bg-success text-white hover:bg-success/80 transition" onClick={() => alert("Quote request submitted!")}>Get Free Quote</Button>
     </div>
   );
 };
