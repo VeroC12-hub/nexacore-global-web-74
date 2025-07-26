@@ -95,7 +95,7 @@ const Footer = () => {
               <a href="https://www.linkedin.com/company/nexacore-innovations" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-primary-glow transition-colors">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="https://facebook.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-[#3b5998]/80 transition-colors">
+              <a href="https://www.facebook.com/people/NexaCore-Innovations/61578918113006/" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-[#3b5998]/80 transition-colors">
                 <Facebook className="w-4 h-4" />
               </a>
               <a href="https://youtube.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-red-600/80 transition-colors">
