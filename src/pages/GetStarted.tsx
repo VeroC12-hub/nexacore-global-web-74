@@ -2,10 +2,7 @@ import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const currencyMap: Record<
-  string,
-  { code: string; symbol: string }
-> = {
+const currencyMap: Record<string, { code: string; symbol: string }> = {
   // 🌍 Africa
   Algeria: { code: "DZD", symbol: "د.ج" },
   Botswana: { code: "BWP", symbol: "P" },
