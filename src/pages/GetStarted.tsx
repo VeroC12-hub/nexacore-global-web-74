@@ -1,117 +1,159 @@
+import { useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import countries from "@/data/countries"; // optional countries.js array
 
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { ArrowRight } from 'lucide-react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-
-const services = [
-  'Engineering & Technical',
-  'Software & App Development',
-  'Creative & Branding',
-  'Data & Digital Growth',
-];
+const currencyMap: Record<string, string> = {
+  Ghana: "GHS",
+  "United States": "USD",
+  "United Kingdom": "GBP",
+  Nigeria: "NGN",
+  Kenya: "KES",
+  Germany: "EUR",
+};
 
 const GetStarted = () => {
-  const [form, setForm] = useState({
-    name: '',
-    email: '',
-    service: '',
-    message: '',
-    budget: '',
-    timeline: '',
-  });
+  const [country, setCountry] = useState("Ghana");
+  const [currency, setCurrency] = useState(currencyMap["Ghana"]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Form submitted:', form);
-    alert('Thanks for reaching out! We’ll contact you soon.');
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selected = e.target.value;
+    setCountry(selected);
+    setCurrency(currencyMap[selected] || "USD");
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar />
+    <div className="min-h-screen py-20 px-6 bg-background text-foreground">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <h1 className="text-4xl font-bold text-center">Let’s Build Something Brilliant Together</h1>
+        <p className="text-center text-muted-foreground max-w-xl mx-auto">
+          Tell us what you need—we’ll help bring your idea to life with the right tools, skills, and solutions.
+        </p>
 
-      <section className="py-20 bg-muted/30 text-center">
-        <div className="max-w-3xl mx-auto px-4">
-          <Badge className="bg-primary/10 text-primary border-primary/20 mb-6">
-            Get Started
-          </Badge>
-          <h1 className="text-4xl lg:text-5xl font-bold mb-4">Let’s Kickstart Your Project</h1>
-          <p className="text-lg text-muted-foreground mb-6">
-            Tell us what you need and our team will get in touch right away.
-          </p>
-        </div>
-      </section>
-
-      <section className="py-12">
-        <div className="max-w-4xl mx-auto px-4 space-y-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input name="name" placeholder="Your Full Name" value={form.name} onChange={handleChange} required />
-              <Input type="email" name="email" placeholder="Your Email Address" value={form.email} onChange={handleChange} required />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form className="space-y-10">
+          {/* Country + Currency */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="font-semibold">Your Country</label>
               <select
-                name="service"
-                value={form.service}
-                onChange={handleChange}
-                className="input"
-                required
+                value={country}
+                onChange={handleCountryChange}
+                className="w-full mt-2 p-2 border border-border rounded-md bg-background"
               >
-                <option value="">Select Service</option>
-                {services.map((srv, idx) => (
-                  <option key={idx} value={srv}>{srv}</option>
+                {Object.keys(currencyMap).map((c) => (
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-
-              <select
-                name="budget"
-                value={form.budget}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="">Estimated Budget</option>
-                <option value="< $500">Less than $500</option>
-                <option value="$500 - $2000">$500 - $2000</option>
-                <option value="> $2000">More than $2000</option>
-              </select>
             </div>
+            <div>
+              <label className="font-semibold">Currency</label>
+              <input
+                value={currency}
+                readOnly
+                className="w-full mt-2 p-2 border border-border rounded-md bg-muted"
+              />
+            </div>
+          </div>
 
-            <Input
-              name="timeline"
-              placeholder="Preferred Timeline (optional)"
-              value={form.timeline}
-              onChange={handleChange}
-            />
+          {/* Services */}
+          <div>
+            <h2 className="text-lg font-semibold mb-4">What services do you need?</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                "Software Engineering",
+                "Data Analysis",
+                "CAD Engineering",
+                "Graphic Design",
+                "Digital Marketing",
+                "Video Editing & Motion Graphics",
+                "UI/UX Design",
+                "Cybersecurity Solutions",
+                "Mobile App Development",
+                "Content Writing / Copywriting",
+                "3D Animation & VFX",
+                "Web3 & Blockchain Engineering",
+                "E-Commerce Solutions",
+                "AI / Machine Learning Engineering",
+              ].map((service, idx) => (
+                <label key={idx} className="flex items-center space-x-2">
+                  <input type="checkbox" value={service} className="accent-primary" />
+                  <span>{service}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
-            <Textarea
-              name="message"
-              placeholder="Tell us about your project..."
-              rows={5}
-              value={form.message}
-              onChange={handleChange}
-              required
-            />
+          {/* Description */}
+          <div>
+            <label className="font-semibold">Project Description</label>
+            <textarea className="w-full mt-2 p-3 border border-border rounded-md min-h-[120px]" />
+          </div>
 
-            <Button type="submit" className="w-full text-lg py-4">
-              Submit Request
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </form>
-        </div>
-      </section>
+          {/* Timeline & Budget */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="font-semibold">Project Start Date</label>
+              <input type="date" className="w-full mt-2 p-2 border border-border rounded-md" />
+            </div>
+            <div>
+              <label className="font-semibold">Deadline (optional)</label>
+              <input type="date" className="w-full mt-2 p-2 border border-border rounded-md" />
+            </div>
+          </div>
 
-      <Footer />
+          <div className="space-y-3">
+            <label className="font-semibold">Budget Range</label>
+            <div className="flex flex-wrap gap-4">
+              {["< 5,000", "5,000 - 15,000", "15,000 - 30,000", "Not Sure"].map((b, i) => (
+                <label key={i} className="flex items-center space-x-2">
+                  <input type="radio" name="budget" value={b} className="accent-primary" />
+                  <span>{currency} {b}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* File Upload */}
+          <div>
+            <label className="font-semibold">Upload References</label>
+            <input type="file" className="w-full mt-2" />
+          </div>
+
+          {/* Contact Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <input placeholder="Full Name" className="p-2 border border-border rounded-md" />
+            <input placeholder="Company (optional)" className="p-2 border border-border rounded-md" />
+            <input placeholder="Email" className="p-2 border border-border rounded-md" />
+            <input placeholder="Phone / WhatsApp" className="p-2 border border-border rounded-md" />
+          </div>
+
+          {/* Preferred Contact */}
+          <div className="space-y-2">
+            <label className="font-semibold">Preferred Contact Method</label>
+            <div className="flex gap-4">
+              {["Email", "Phone", "Zoom Meeting"].map((method, idx) => (
+                <label key={idx} className="flex items-center space-x-2">
+                  <input type="radio" name="contact-method" value={method} className="accent-primary" />
+                  <span>{method}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <input type="checkbox" className="accent-primary" />
+            <span className="text-sm text-muted-foreground">
+              I agree to be contacted regarding this inquiry and understand my data will be handled securely.
+            </span>
+          </div>
+
+          <Button className="w-full text-lg mt-4">
+            Get Started with NexaCore
+            <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };
