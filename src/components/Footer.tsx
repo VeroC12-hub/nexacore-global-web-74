@@ -1,18 +1,18 @@
 import { Link } from 'react-router-dom';
 import { MapPin, Phone, Mail, Linkedin, MessageSquare, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import logo from '@/assets/nexacore-logo.png';
 
 const Footer = () => {
   return (
     <footer className="bg-foreground text-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary-glow to-success rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">N</span>
-              </div>
+              <img src={logo} alt="NexaCore Logo" className="w-8 h-8 rounded" />
               <span className="text-xl font-bold">NexaCore Innovations</span>
             </div>
             <p className="text-muted text-sm leading-relaxed">
@@ -67,16 +67,16 @@ const Footer = () => {
                 <MapPin className="w-4 h-4 mt-0.5 text-primary-glow" />
                 <span className="text-muted">Accra, Ghana<br />Global Remote Team</span>
               </div>
-              <div className="flex items-center space-x-3">
+              <div className="flex items-start space-x-3">
                 <Phone className="w-4 h-4 text-primary-glow" />
-                <span className="text-muted">+233 54087377</span>
+                <span className="text-muted">+288558330610 / +233501588710</span>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-4 h-4 text-primary-glow" />
                 <span className="text-muted">info@nexacoreinnovations.com</span>
               </div>
             </div>
-            
+
             {/* Social Links */}
             <div className="flex space-x-3 pt-2">
               <a href="#" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-primary-glow transition-colors">
