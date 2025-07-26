@@ -1,5 +1,18 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Phone, Mail, Linkedin, MessageSquare, Download } from 'lucide-react';
+import {
+  MapPin,
+  Phone,
+  Mail,
+  Linkedin,
+  MessageSquare,
+  Download,
+  Facebook,
+  Youtube,
+  Instagram,
+  Twitter,
+  Send,
+  Shield
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/nexacore-logo.png';
 
@@ -12,7 +25,7 @@ const Footer = () => {
           {/* Company Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <img src={logo} alt="NexaCore Logo" className="w-16 h-14 rounded" />
+              <img src={logo} alt="NexaCore Logo" className="w-8 h-8 rounded" />
               <span className="text-xl font-bold">NexaCore Innovations</span>
             </div>
             <p className="text-muted text-sm leading-relaxed">
@@ -79,11 +92,26 @@ const Footer = () => {
 
             {/* Social Links */}
             <div className="flex space-x-3 pt-2">
-              <a href="https://www.linkedin.com/company/nexacore-innovations" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-primary-glow transition-colors">
+              <a href="https://www.linkedin.com/company/nexacore-innovations" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-primary-glow transition-colors">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="#" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-success transition-colors">
-                <MessageSquare className="w-4 h-4" />
+              <a href="https://facebook.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-[#3b5998]/80 transition-colors">
+                <Facebook className="w-4 h-4" />
+              </a>
+              <a href="https://youtube.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-red-600/80 transition-colors">
+                <Youtube className="w-4 h-4" />
+              </a>
+              <a href="https://x.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-black/80 transition-colors">
+                <Twitter className="w-4 h-4" />
+              </a>
+              <a href="https://instagram.com/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-pink-600/80 transition-colors">
+                <Instagram className="w-4 h-4" />
+              </a>
+              <a href="https://t.me/nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-blue-500/80 transition-colors">
+                <Send className="w-4 h-4" />
+              </a>
+              <a href="https://tiktok.com/@nexacore" target="_blank" rel="noopener noreferrer" className="w-8 h-8 bg-background/10 rounded-lg flex items-center justify-center hover:bg-black/80 transition-colors">
+                <Shield className="w-4 h-4" />
               </a>
             </div>
           </div>
