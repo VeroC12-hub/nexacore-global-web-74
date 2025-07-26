@@ -193,7 +193,12 @@ const GetStarted = () => {
 
   return (
     <div className="min-h-screen bg-background p-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Get Started with NexaCore</h1>
+      
+      <div className="flex items-center space-x-4 mb-6">
+        <img src={require('@/assets/logo.png')} alt="NexaCore Logo" className="h-10 w-auto" />
+        <h1 className="text-3xl font-bold">Get Started with NexaCore</h1>
+      </div>
+
 
       <div className="mb-4">
         <label htmlFor="country" className="block mb-1 font-medium">Your Country</label>
