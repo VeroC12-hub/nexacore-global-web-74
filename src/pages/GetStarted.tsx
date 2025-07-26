@@ -241,10 +241,15 @@ const GetStarted = () => {
         Estimated Price: <strong>{currency.symbol} {convertedPrice}</strong>
       </div>
 
+      <div className="flex flex-col sm:flex-row gap-4 justify-center mt-6">
       <Button className="bg-primary text-white px-6 py-3 rounded font-semibold hover:bg-primary/80 transition">
         Submit Request
         <ArrowRight className="ml-2 w-5 h-5" />
       </Button>
+      <Button variant="outline" className="text-lg px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-white transition" onClick={() => window.location.href = "/"}>
+        Back to Home
+      </Button>
+      <Button className="text-lg px-6 py-3 bg-success text-white hover:bg-success/80 transition" onClick={() => alert("Quote request submitted!")}>Get Free Quote</Button>
     </div>
   );
 };
