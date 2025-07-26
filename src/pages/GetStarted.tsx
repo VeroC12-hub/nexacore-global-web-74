@@ -305,18 +305,9 @@ const GetStarted = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-8 max-w-4xl mx-auto">
       
-      <div 
-        className="flex items-center space-x-4 mb-6 p-4 rounded-lg relative h-48"
-        style={{
-          backgroundImage: `url(${nexacoreLogo})`,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
-        }}
-      >
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-30 rounded-lg"></div>
-        <h1 className="text-3xl font-bold text-white relative z-10 w-full text-center">Get Started with NexaCore</h1>
+      <div className="flex items-center space-x-4 mb-6">
+        <img src={nexacoreLogo} alt="NexaCore Logo" className="h-12 w-19" />
+        <h1 className="text-3xl font-bold text-gray-900">Get Started with NexaCore</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
