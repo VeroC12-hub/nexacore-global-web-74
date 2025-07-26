@@ -48,10 +48,10 @@ const About = () => {
   ];
 
   const founders = [
-    { name: 'Ocloo Godwin', role: 'Engineering & Technical Lead' },
-    { name: 'Benjamin Agbesi', role: 'Creativity & Branding Lead' },
-    { name: 'Manasseh Kabutey', role: 'Software & App Development Lead' },
-  ];
+  { name: 'Ocloo Godwin', role: 'Engineering & Technical Lead, Project Manager' },
+  { name: 'Benjamin Agbesi', role: 'Creativity & Branding Lead, Operations Manager' },
+  { name: 'Manasseh Kabutey', role: 'Software & App Development Lead' },
+];
 
   return (
     <div className="min-h-screen bg-background">
