@@ -94,7 +94,7 @@ const Footer = () => {
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-primary-glow">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="https://facebook.com/nexacore" target="_blank" rel="noopener noreferrer"
+              <a href="https://www.facebook.com/people/NexaCore-Innovations/61578918113006" target="_blank" rel="noopener noreferrer"
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-[#3b5998]">
                 <Facebook className="w-4 h-4" />
               </a>
