@@ -19,8 +19,28 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useNavigate } from 'react-router-dom'; // Add this import
 
 const Services = () => {
+  const navigate = useNavigate(); // Add this hook
+
+  // Function to handle service category click
+  const handleServiceClick = (categoryTitle) => {
+    // Map category titles to specific services in GetStarted
+    const serviceMapping = {
+      'Engineering & Technical Services': 'CAD Engineering',
+      'Software & App Development': 'Software Engineering',
+      'Creative & Branding': 'Graphic Design',
+      'Data & Digital Growth': 'Data Analysis',
+      'Professional Services': 'Cybersecurity Solutions'
+    };
+
+    const selectedService = serviceMapping[categoryTitle] || 'Software Engineering';
+    
+    // Navigate to GetStarted with the selected service as a URL parameter
+    navigate(`/get-started?service=${encodeURIComponent(selectedService)}`);
+  };
+
   const serviceCategories = [
     {
       icon: Cog,
@@ -151,19 +171,34 @@ const Services = () => {
                     </li>
                   ))}
                 </ul>
-                <Button className="btn-hero">
-                  Learn More
+                <Button 
+                  className="btn-hero"
+                  onClick={() => handleServiceClick(category.title)}
+                >
+                  Get Started
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </div>
 
-              <Card className={`overflow-hidden p-0 rounded-xl shadow-lg border ${index % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''}`}>
-                <img
-                  src={category.image}
-                  alt={category.title}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
+              <Card 
+                className={`overflow-hidden p-0 rounded-xl shadow-lg border cursor-pointer hover:shadow-2xl transition-all duration-300 ${index % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''}`}
+                onClick={() => handleServiceClick(category.title)}
+              >
+                <div className="relative group">
+                  <img
+                    src={category.image}
+                    alt={category.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  {/* Overlay with text */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <p className="text-lg font-semibold mb-2">Click to Get Started</p>
+                      <ArrowRight className="w-6 h-6 mx-auto" />
+                    </div>
+                  </div>
+                </div>
               </Card>
             </div>
           ))}
@@ -226,11 +261,19 @@ const Services = () => {
             Let's discuss your requirements and create a custom solution that drives your success.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="secondary" className="text-lg px-8 py-4 bg-white text-primary hover:bg-white/90">
+            <Button 
+              variant="secondary" 
+              className="text-lg px-8 py-4 bg-white text-primary hover:bg-white/90"
+              onClick={() => navigate('/get-started')}
+            >
               Get Free Quote
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary">
+            <Button 
+              variant="outline" 
+              className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary"
+              onClick={() => navigate('/get-started')}
+            >
               Schedule Consultation
             </Button>
           </div>
