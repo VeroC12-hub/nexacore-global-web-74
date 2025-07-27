@@ -1,453 +1,288 @@
-import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import nexacoreLogo from "../assets/nexacore-logo.png";
-import nexacoreBackgroundLogo from "../assets/nexacore-backgroundlogo.png";
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
+  Cog, 
+  Smartphone, 
+  Palette, 
+  BarChart3,
+  ArrowRight,
+  CheckCircle,
+  Code,
+  Database,
+  Shield,
+  Zap,
+  Cpu,
+  Globe,
+  Users,
+  Briefcase
+} from 'lucide-react';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { useNavigate } from 'react-router-dom'; // Add this import
 
-// Full country and currency map
-const currencyMap = {
-  Afghanistan: { code: "AFN", symbol: "؋" },
-  Albania: { code: "ALL", symbol: "L" },
-  Algeria: { code: "DZD", symbol: "دج" },
-  Angola: { code: "AOA", symbol: "Kz" },
-  Argentina: { code: "ARS", symbol: "$" },
-  Armenia: { code: "AMD", symbol: "֏" },
-  Australia: { code: "AUD", symbol: "A$" },
-  Austria: { code: "EUR", symbol: "€" },
-  Azerbaijan: { code: "AZN", symbol: "₼" },
-  Bahamas: { code: "BSD", symbol: "B$" },
-  Bahrain: { code: "BHD", symbol: ".د.ب" },
-  Bangladesh: { code: "BDT", symbol: "৳" },
-  Belarus: { code: "BYN", symbol: "Br" },
-  Belgium: { code: "EUR", symbol: "€" },
-  Belize: { code: "BZD", symbol: "BZ$" },
-  Benin: { code: "XOF", symbol: "CFA" },
-  Bhutan: { code: "BTN", symbol: "Nu." },
-  Bolivia: { code: "BOB", symbol: "Bs." },
-  Bosnia: { code: "BAM", symbol: "KM" },
-  Botswana: { code: "BWP", symbol: "P" },
-  Brazil: { code: "BRL", symbol: "R$" },
-  Bulgaria: { code: "BGN", symbol: "лв" },
-  BurkinaFaso: { code: "XOF", symbol: "CFA" },
-  Burundi: { code: "BIF", symbol: "FBu" },
-  Cambodia: { code: "KHR", symbol: "៛" },
-  Cameroon: { code: "XAF", symbol: "FCFA" },
-  Canada: { code: "CAD", symbol: "C$" },
-  Chad: { code: "XAF", symbol: "FCFA" },
-  Chile: { code: "CLP", symbol: "$" },
-  China: { code: "CNY", symbol: "¥" },
-  Colombia: { code: "COP", symbol: "$" },
-  Comoros: { code: "KMF", symbol: "CF" },
-  Congo: { code: "CDF", symbol: "FC" },
-  "Costa Rica": { code: "CRC", symbol: "₡" },
-  Croatia: { code: "HRK", symbol: "kn" },
-  Cuba: { code: "CUP", symbol: "₱" },
-  Cyprus: { code: "EUR", symbol: "€" },
-  Czechia: { code: "CZK", symbol: "Kč" },
-  Denmark: { code: "DKK", symbol: "kr" },
-  Djibouti: { code: "DJF", symbol: "Fdj" },
-  Dominica: { code: "XCD", symbol: "$" },
-  "Dominican Republic": { code: "DOP", symbol: "RD$" },
-  Ecuador: { code: "USD", symbol: "$" },
-  Egypt: { code: "EGP", symbol: "£" },
-  "El Salvador": { code: "USD", symbol: "$" },
-  Eritrea: { code: "ERN", symbol: "Nfk" },
-  Estonia: { code: "EUR", symbol: "€" },
-  Eswatini: { code: "SZL", symbol: "L" },
-  Ethiopia: { code: "ETB", symbol: "Br" },
-  Fiji: { code: "FJD", symbol: "FJ$" },
-  Finland: { code: "EUR", symbol: "€" },
-  France: { code: "EUR", symbol: "€" },
-  Gabon: { code: "XAF", symbol: "FCFA" },
-  Gambia: { code: "GMD", symbol: "D" },
-  Georgia: { code: "GEL", symbol: "₾" },
-  Germany: { code: "EUR", symbol: "€" },
-  Ghana: { code: "GHS", symbol: "₵" },
-  Greece: { code: "EUR", symbol: "€" },
-  Grenada: { code: "XCD", symbol: "$" },
-  Guatemala: { code: "GTQ", symbol: "Q" },
-  Guinea: { code: "GNF", symbol: "FG" },
-  Guyana: { code: "GYD", symbol: "G$" },
-  Haiti: { code: "HTG", symbol: "G" },
-  Honduras: { code: "HNL", symbol: "L" },
-  Hungary: { code: "HUF", symbol: "Ft" },
-  Iceland: { code: "ISK", symbol: "kr" },
-  India: { code: "INR", symbol: "₹" },
-  Indonesia: { code: "IDR", symbol: "Rp" },
-  Iran: { code: "IRR", symbol: "﷼" },
-  Iraq: { code: "IQD", symbol: "ع.د" },
-  Ireland: { code: "EUR", symbol: "€" },
-  Israel: { code: "ILS", symbol: "₪" },
-  Italy: { code: "EUR", symbol: "€" },
-  Jamaica: { code: "JMD", symbol: "J$" },
-  Japan: { code: "JPY", symbol: "¥" },
-  Jordan: { code: "JOD", symbol: "د.ا" },
-  Kazakhstan: { code: "KZT", symbol: "₸" },
-  Kenya: { code: "KES", symbol: "KSh" },
-  Korea: { code: "KRW", symbol: "₩" },
-  Kuwait: { code: "KWD", symbol: "د.ك" },
-  Kyrgyzstan: { code: "KGS", symbol: "лв" },
-  Laos: { code: "LAK", symbol: "₭" },
-  Latvia: { code: "EUR", symbol: "€" },
-  Lebanon: { code: "LBP", symbol: "ل.ل" },
-  Lesotho: { code: "LSL", symbol: "M" },
-  Liberia: { code: "LRD", symbol: "$" },
-  Libya: { code: "LYD", symbol: "ل.د" },
-  Lithuania: { code: "EUR", symbol: "€" },
-  Luxembourg: { code: "EUR", symbol: "€" },
-  Madagascar: { code: "MGA", symbol: "Ar" },
-  Malawi: { code: "MWK", symbol: "MK" },
-  Malaysia: { code: "MYR", symbol: "RM" },
-  Maldives: { code: "MVR", symbol: "Rf" },
-  Mali: { code: "XOF", symbol: "CFA" },
-  Malta: { code: "EUR", symbol: "€" },
-  Mauritania: { code: "MRU", symbol: "UM" },
-  Mauritius: { code: "MUR", symbol: "₨" },
-  Mexico: { code: "MXN", symbol: "$" },
-  Moldova: { code: "MDL", symbol: "L" },
-  Monaco: { code: "EUR", symbol: "€" },
-  Mongolia: { code: "MNT", symbol: "₮" },
-  Montenegro: { code: "EUR", symbol: "€" },
-  Morocco: { code: "MAD", symbol: "د.م." },
-  Mozambique: { code: "MZN", symbol: "MT" },
-  Namibia: { code: "NAD", symbol: "$" },
-  Nepal: { code: "NPR", symbol: "₨" },
-  Netherlands: { code: "EUR", symbol: "€" },
-  NewZealand: { code: "NZD", symbol: "NZ$" },
-  Nicaragua: { code: "NIO", symbol: "C$" },
-  Niger: { code: "XOF", symbol: "CFA" },
-  Nigeria: { code: "NGN", symbol: "₦" },
-  Norway: { code: "NOK", symbol: "kr" },
-  Oman: { code: "OMR", symbol: "﷼" },
-  Pakistan: { code: "PKR", symbol: "₨" },
-  Panama: { code: "PAB", symbol: "B/." },
-  Paraguay: { code: "PYG", symbol: "Gs" },
-  Peru: { code: "PEN", symbol: "S/." },
-  Philippines: { code: "PHP", symbol: "₱" },
-  Poland: { code: "PLN", symbol: "zł" },
-  Portugal: { code: "EUR", symbol: "€" },
-  Qatar: { code: "QAR", symbol: "ر.ق" },
-  Romania: { code: "RON", symbol: "lei" },
-  Russia: { code: "RUB", symbol: "₽" },
-  Rwanda: { code: "RWF", symbol: "FRw" },
-  "Saudi Arabia": { code: "SAR", symbol: "﷼" },
-  Senegal: { code: "XOF", symbol: "CFA" },
-  Serbia: { code: "RSD", symbol: "din" },
-  Seychelles: { code: "SCR", symbol: "₨" },
-  Singapore: { code: "SGD", symbol: "S$" },
-  Slovakia: { code: "EUR", symbol: "€" },
-  Slovenia: { code: "EUR", symbol: "€" },
-  Somalia: { code: "SOS", symbol: "S" },
-  "South Africa": { code: "ZAR", symbol: "R" },
-  Spain: { code: "EUR", symbol: "€" },
-  SriLanka: { code: "LKR", symbol: "Rs" },
-  Sudan: { code: "SDG", symbol: "£" },
-  Sweden: { code: "SEK", symbol: "kr" },
-  Switzerland: { code: "CHF", symbol: "CHF" },
-  Syria: { code: "SYP", symbol: "£" },
-  Taiwan: { code: "TWD", symbol: "NT$" },
-  Tanzania: { code: "TZS", symbol: "TSh" },
-  Thailand: { code: "THB", symbol: "฿" },
-  Togo: { code: "XOF", symbol: "CFA" },
-  Trinidad: { code: "TTD", symbol: "TT$" },
-  Tunisia: { code: "TND", symbol: "د.ت" },
-  Turkey: { code: "TRY", symbol: "₺" },
-  Turkmenistan: { code: "TMT", symbol: "m" },
-  Uganda: { code: "UGX", symbol: "USh" },
-  Ukraine: { code: "UAH", symbol: "₴" },
-  UAE: { code: "AED", symbol: "د.إ" },
-  UK: { code: "GBP", symbol: "£" },
-  USA: { code: "USD", symbol: "$" },
-  Uruguay: { code: "UYU", symbol: "$U" },
-  Uzbekistan: { code: "UZS", symbol: "лв" },
-  Venezuela: { code: "VES", symbol: "Bs.S" },
-  Vietnam: { code: "VND", symbol: "₫" },
-  Yemen: { code: "YER", symbol: "﷼" },
-  Zambia: { code: "ZMW", symbol: "ZK" },
-  Zimbabwe: { code: "ZWL", symbol: "Z$" }
-};
+const Services = () => {
+  const navigate = useNavigate(); // Add this hook
 
-// Mock exchange rate function (replace with actual API call)
-const getExchangeRate = async (currencyCode) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Mock exchange rates (in a real app, you'd fetch from an API)
-  const mockRates = {
-    USD: 1,
-    EUR: 0.85,
-    GBP: 0.73,
-    GHS: 12.50, // Ghana Cedis
-    NGN: 450,   // Nigerian Naira
-    ZAR: 18.5,  // South African Rand
-    KES: 110,   // Kenyan Shilling
-    // Add more as needed
-  };
-  
-  return mockRates[currencyCode] || 1;
-};
-
-const Button = ({ children, className, variant, onClick, ...props }) => {
-  const baseClasses = "px-4 py-2 rounded font-medium transition-colors duration-200 flex items-center justify-center";
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    outline: "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white",
-    success: "bg-green-600 text-white hover:bg-green-700"
-  };
-  
-  const variantClass = variants[variant] || variants.default;
-  
-  return (
-    <button 
-      className={`${baseClasses} ${variantClass} ${className || ''}`}
-      onClick={onClick}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-
-// Service pricing in USD
-const servicePricing = {
-  "Software Engineering": 150,
-  "Data Analysis": 120,
-  "CAD Engineering": 180,
-  "Graphic Design": 80,
-  "Digital Marketing": 100,
-  "Video Editing & Motion Graphics": 130,
-  "UI/UX Design": 110,
-  "Cybersecurity Solutions": 200,
-  "Mobile App Development": 160,
-  "Content Writing / Copywriting": 60,
-  "3D Animation & VFX": 220,
-  "Web3 & Blockchain Engineering": 250,
-  "E-Commerce Solutions": 140,
-  "AI / Machine Learning Engineering": 240
-};
-
-const GetStarted = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  
-  const [country, setCountry] = useState("Ghana");
-  const [currency, setCurrency] = useState(currencyMap["Ghana"]);
-  const [rate, setRate] = useState(1);
-  const [service, setService] = useState("Software Engineering");
-  const [projectDescription, setProjectDescription] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  const handleCountryChange = async (e) => {
-    const selected = e.target.value;
-    setCountry(selected);
-    const selectedCurrency = currencyMap[selected] || { code: "USD", symbol: "$" };
-    setCurrency(selectedCurrency);
-
-    setLoading(true);
-    try {
-      const exchangeRate = await getExchangeRate(selectedCurrency.code);
-      setRate(exchangeRate);
-    } catch (error) {
-      console.error("Error fetching exchange rate:", error);
-      setRate(1); // Fallback to 1:1 rate
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = () => {
-    if (!projectDescription.trim()) {
-      alert("Please provide a project description");
-      return;
-    }
-    
-    const formData = {
-      country,
-      service,
-      projectDescription,
-      estimatedPrice: `${currency.symbol} ${convertedPrice}`
-    };
-    
-    console.log("Form submitted:", formData);
-    alert("Request submitted successfully!");
-  };
-
-  const handleGetQuote = () => {
-    alert("Free quote request submitted! We'll get back to you soon.");
-  };
-
-  const handleBackToHome = () => {
-    // Navigate back to home page
-    navigate("/");
-  };
-
-  useEffect(() => {
-    // Check if service parameter is provided in URL
-    const serviceParam = searchParams.get('service');
-    if (serviceParam && servicePricing[serviceParam]) {
-      setService(serviceParam);
-    }
-    
-    // Initialize with Ghana on component mount
-    const initializeExchangeRate = async () => {
-      setLoading(true);
-      try {
-        const exchangeRate = await getExchangeRate(currencyMap["Ghana"].code);
-        setRate(exchangeRate);
-      } catch (error) {
-        console.error("Error fetching initial exchange rate:", error);
-        setRate(1);
-      } finally {
-        setLoading(false);
-      }
+  // Function to handle service category click
+  const handleServiceClick = (categoryTitle) => {
+    // Map category titles to specific services in GetStarted
+    const serviceMapping = {
+      'Engineering & Technical Services': 'CAD Engineering',
+      'Software & App Development': 'Software Engineering',
+      'Creative & Branding': 'Graphic Design',
+      'Data & Digital Growth': 'Data Analysis',
+      'Professional Services': 'Cybersecurity Solutions'
     };
 
-    initializeExchangeRate();
-  }, [searchParams]);
+    const selectedService = serviceMapping[categoryTitle] || 'Software Engineering';
+    
+    // Navigate to GetStarted with the selected service as a URL parameter
+    navigate(`/get-started?service=${encodeURIComponent(selectedService)}`);
+  };
 
-  // Get the current service price and convert to local currency
-  const currentServicePrice = servicePricing[service] || 100;
-  const convertedPrice = (currentServicePrice * rate).toFixed(2);
+  const serviceCategories = [
+    {
+      icon: Cog,
+      image: '/services/engineering-services.png',
+      title: 'Engineering & Technical Services',
+      description: 'Advanced engineering solutions and technical expertise for complex projects',
+      services: [
+        { name: 'CAD/Design Engineering', description: 'Professional 2D/3D design and engineering drawings' },
+        { name: '3D Animation & VFX', description: 'High-quality animations and visual effects for presentations' },
+        { name: 'AI/ML Engineering', description: 'Machine learning models and artificial intelligence solutions' },
+        { name: 'Blockchain/Web3 Solutions', description: 'Decentralized applications and smart contracts' },
+        { name: 'E-Commerce Technology', description: 'Complete online store development and optimization' }
+      ]
+    },
+    {
+      icon: Smartphone,
+      image: '/services/software-services.png',
+      title: 'Software & App Development',
+      description: 'Custom software solutions tailored to your business needs',
+      services: [
+        { name: 'Custom Software Development', description: 'Bespoke applications built for your requirements' },
+        { name: 'Mobile App Development', description: 'iOS and Android apps with native performance' },
+        { name: 'Cybersecurity Solutions', description: 'Comprehensive security assessments and implementations' },
+        { name: 'AI/ML Tools & Automation', description: 'Intelligent automation and machine learning tools' },
+        { name: 'API Development & Integration', description: 'Seamless system integration and API services' }
+      ]
+    },
+    {
+      icon: Palette,
+      image: '/services/creative-services.png',
+      title: 'Creative & Branding',
+      description: 'Visual identity and creative solutions that make your brand stand out',
+      services: [
+        { name: 'Graphic Design', description: 'Professional branding, logos, and marketing materials' },
+        { name: 'Video Editing & Motion Graphics', description: 'Engaging video content and animations' },
+        { name: 'UI/UX Design', description: 'User-centered design for web and mobile applications' },
+        { name: 'Content Writing & Copywriting', description: 'Compelling content that converts and engages' },
+        { name: 'Brand Strategy', description: 'Complete brand identity and positioning strategies' }
+      ]
+    },
+    {
+      icon: BarChart3,
+      image: '/services/data-digital-services.png',
+      title: 'Data & Digital Growth',
+      description: 'Transform your data into actionable insights and growth opportunities',
+      services: [
+        { name: 'Data Analytics & Dashboards', description: 'Interactive dashboards and business intelligence' },
+        { name: 'Excel Automation', description: 'Advanced Excel solutions and VBA automation' },
+        { name: 'Power BI Visualizations', description: 'Professional data visualization and reporting' },
+        { name: 'Digital Marketing', description: 'Complete digital marketing strategies and execution' },
+        { name: 'SEO & Content Strategy', description: 'Search optimization and content marketing' }
+      ]
+    },
+    {
+      icon: Briefcase,
+      image: '/services/professional-services.png',
+      title: 'Professional Services',
+      description: 'Comprehensive business solutions and professional consulting services',
+      services: [
+        { name: 'Business Consulting', description: 'Strategic business advice and growth planning' },
+        { name: 'Project Management', description: 'End-to-end project planning and execution' },
+        { name: 'Training & Workshops', description: 'Professional development and skill building sessions' },
+        { name: 'Quality Assurance', description: 'Comprehensive testing and quality control processes' },
+        { name: 'Technical Documentation', description: 'Professional documentation and user manuals' }
+      ]
+    }
+  ];
+
+  const technologies = [
+    { name: 'React & Next.js', icon: Code },
+    { name: 'Python & TensorFlow', icon: Cpu },
+    { name: 'AWS & Azure', icon: Database },
+    { name: 'Cybersecurity', icon: Shield },
+    { name: 'Blockchain', icon: Zap },
+    { name: 'Global Solutions', icon: Globe }
+  ];
+
+  const processSteps = [
+    { step: '01', title: 'Discovery', description: 'We understand your needs, goals, and challenges' },
+    { step: '02', title: 'Planning', description: 'Detailed project planning and timeline development' },
+    { step: '03', title: 'Development', description: 'Agile development with regular progress updates' },
+    { step: '04', title: 'Testing', description: 'Comprehensive testing and quality assurance' },
+    { step: '05', title: 'Delivery', description: 'Final delivery with training and ongoing support' }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header Section with Network Background */}
-      <div className="relative bg-white shadow-lg overflow-hidden">
-        {/* Network Pattern Background */}
-        <div className="absolute inset-0 opacity-5">
-          <svg className="w-full h-full" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="network" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
-                <circle cx="25" cy="25" r="2" fill="#64748b"/>
-                <line x1="25" y1="25" x2="75" y2="25" stroke="#64748b" strokeWidth="1"/>
-                <line x1="25" y1="25" x2="25" y2="75" stroke="#64748b" strokeWidth="1"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#network)"/>
-          </svg>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      {/* Hero Section */}
+      <section className="pt-16 pb-16 lg:pt-24 lg:pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Badge className="bg-primary/10 text-primary border-primary/20 mb-6">
+            Our Services
+          </Badge>
+          <h1 className="text-4xl lg:text-6xl font-bold mb-6">
+            <span className="text-gradient-hero">Comprehensive Solutions</span><br />
+            <span className="text-foreground">for Every Challenge</span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            From engineering and software development to creative design and data analytics, 
+            we provide end-to-end solutions that drive innovation and growth.
+          </p>
         </div>
-        
-        <div className="relative max-w-6xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            {/* Left side - Small logo and text */}
-            <div className="flex items-center space-x-4">
-              <img src={nexacoreLogo} alt="NexaCore Logo" className="h-16 w-auto" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Get Started with NexaCore</h1>
-                <p className="text-gray-600">Innovation & Technology Solutions</p>
+      </section>
+
+      {/* Services Categories */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
+          {serviceCategories.map((category, index) => (
+            <div key={index} className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''}`}>
+              <div className={`space-y-6 ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center">
+                    <category.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h2 className="text-3xl font-bold text-gradient-primary">{category.title}</h2>
+                </div>
+                <p className="text-lg text-muted-foreground">{category.description}</p>
+                <ul className="space-y-4">
+                  {category.services.map((service, idx) => (
+                    <li key={idx} className="flex items-start space-x-3">
+                      <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-semibold text-foreground">{service.name}</h4>
+                        <p className="text-sm text-muted-foreground">{service.description}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <Button 
+                  className="btn-hero"
+                  onClick={() => handleServiceClick(category.title)}
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
               </div>
+
+              <Card 
+                className={`overflow-hidden p-0 rounded-xl shadow-lg border cursor-pointer hover:shadow-2xl transition-all duration-300 ${index % 2 === 1 ? 'lg:col-start-1 lg:row-start-1' : ''}`}
+                onClick={() => handleServiceClick(category.title)}
+              >
+                <div className="relative group">
+                  <img
+                    src={category.image}
+                    alt={category.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    loading="lazy"
+                  />
+                  {/* Overlay with text */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <p className="text-lg font-semibold mb-2">Click to Get Started</p>
+                      <ArrowRight className="w-6 h-6 mx-auto" />
+                    </div>
+                  </div>
+                </div>
+              </Card>
             </div>
-            
-            {/* Right side - Large background logo */}
-            <div className="hidden lg:block opacity-50">
-              <img src={nexacoreBackgroundLogo} alt="NexaCore Background" className="h-32 w-96" />
-            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Technologies Section */}
+      <section className="py-16 bg-muted/30">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            <span className="text-gradient-primary">Technologies</span> We Master
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+            We stay at the forefront of technology to deliver cutting-edge solutions.
+          </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {technologies.map((tech, index) => (
+              <Card key={index} className="card-gradient p-6 text-center hover:scale-105 transition-transform duration-300">
+                <tech.icon className="w-8 h-8 text-primary mx-auto mb-3" />
+                <p className="text-sm font-medium text-foreground">{tech.name}</p>
+              </Card>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-white rounded-xl shadow-lg p-8 space-y-6 border border-gray-200">
-          {/* Service Pre-selection Notice */}
-          {searchParams.get('service') && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-blue-800 font-medium">
-                🎯 Great choice! You've selected <span className="font-bold">{service}</span> from our services page.
-              </p>
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="country" className="block mb-2 font-medium text-gray-700 text-lg">
-              Your Country
-            </label>
-            <select
-              id="country"
-              value={country}
-              onChange={handleCountryChange}
-              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-              disabled={loading}
-            >
-              {Object.keys(currencyMap).map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
+      {/* Process Section */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            Our <span className="text-gradient-primary">Process</span>
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-12">
+            A proven methodology that ensures successful project delivery every time.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-8">
+            {processSteps.map((process, index) => (
+              <div key={index} className="text-center relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-glow rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold text-lg">{process.step}</span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-gradient-primary">{process.title}</h3>
+                <p className="text-sm text-muted-foreground">{process.description}</p>
+                {index < processSteps.length - 1 && (
+                  <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-primary to-primary-glow transform -translate-x-1/2"></div>
+                )}
+              </div>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div>
-            <label htmlFor="service" className="block mb-2 font-medium text-gray-700 text-lg">
-              Service Type
-            </label>
-            <select 
-              id="service" 
-              value={service}
-              onChange={(e) => setService(e.target.value)}
-              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-            >
-              {Object.keys(servicePricing).map((serviceType) => (
-                <option key={serviceType} value={serviceType}>
-                  {serviceType}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="description" className="block mb-2 font-medium text-gray-700 text-lg">
-              Project Description
-            </label>
-            <textarea
-              id="description"
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
-              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-              placeholder="Tell us more about your project..."
-            />
-          </div>
-
-          <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg border border-blue-200">
-            <div className="text-xl font-semibold text-gray-900">
-              Estimated Price: {loading ? (
-                <span className="text-gray-500">Calculating...</span>
-              ) : (
-                <span className="text-blue-600">{currency.symbol} {convertedPrice}</span>
-              )}
-            </div>
-            <p className="text-sm text-gray-600 mt-2">
-              Base price: ${currentServicePrice} USD • Exchange rate applied for {currency.code}
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+      {/* CTA Section */}
+      <section className="py-16 bg-gradient-to-br from-primary via-primary-glow to-success text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+            Ready to Start Your Project?
+          </h2>
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            Let's discuss your requirements and create a custom solution that drives your success.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              className="text-lg px-8 py-4 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
-              onClick={handleSubmit}
-            >
-              Submit Request
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="text-lg px-8 py-4 border-2" 
-              onClick={handleBackToHome}
-            >
-              Back to Home
-            </Button>
-            
-            <Button 
-              variant="success"
-              className="text-lg px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700" 
-              onClick={handleGetQuote}
+              variant="secondary" 
+              className="text-lg px-8 py-4 bg-white text-primary hover:bg-white/90"
+              onClick={() => navigate('/get-started')}
             >
               Get Free Quote
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+            <Button 
+              variant="outline" 
+              className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary"
+              onClick={() => navigate('/get-started')}
+            >
+              Schedule Consultation
             </Button>
           </div>
         </div>
-      </div>
+      </section>
+
+      <Footer />
     </div>
   );
 };
 
-export default GetStarted;
+export default Services;
