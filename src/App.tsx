@@ -8,7 +8,8 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
-import GetStarted from "./pages/GetStarted"; // ✅ Add this import
+import GetStarted from "./pages/GetStarted";
+import Portfolio from "./pages/Portfolio"; // ✅ Add Portfolio import
 import NotFound from "./pages/NotFound";
 import AIAssistant from "./components/AIAssistant";
 
@@ -25,7 +26,8 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/get-started" element={<GetStarted />} /> {/* ✅ This enables your new page */}
+          <Route path="/get-started" element={<GetStarted />} />
+          <Route path="/portfolio" element={<Portfolio />} /> {/* ✅ Add Portfolio route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
         <AIAssistant />
