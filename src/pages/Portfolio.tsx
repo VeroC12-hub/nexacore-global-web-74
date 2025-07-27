@@ -38,6 +38,8 @@ import {
   Lock,
   Unlock
 } from 'lucide-react';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const PortfolioWithAdmin = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -737,9 +739,11 @@ const PortfolioWithAdmin = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
       {/* Admin Controls */}
       {isAdmin && (
-        <div className="bg-blue-600 text-white p-4">
+        <div className="bg-blue-600 text-white p-4 pt-20">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
             <div className="flex items-center">
               <Settings className="w-5 h-5 mr-2" />
@@ -764,7 +768,7 @@ const PortfolioWithAdmin = () => {
       )}
 
       {/* Header Section */}
-      <section className="bg-gradient-to-br from-blue-600 via-purple-600 to-teal-600 text-white py-20">
+      <section className={`bg-gradient-to-br from-blue-600 via-purple-600 to-teal-600 text-white ${isAdmin ? 'py-12' : 'py-20 pt-32'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <Badge className="bg-white/20 text-white border-white/30 mb-6 text-lg px-6 py-2">
@@ -982,6 +986,8 @@ const PortfolioWithAdmin = () => {
           setCurrentImageIndex(0);
         }}
       />
+
+      <Footer />
     </div>
   );
 };
