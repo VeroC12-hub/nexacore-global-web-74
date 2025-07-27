@@ -222,7 +222,7 @@ const Index = () => {
               <img 
                 src="/services/services.png" 
                 alt="View All Services" 
-                className="max-w-md mx-auto cursor-pointer hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 rounded-lg"
+                className="max-w-2xl mx-auto cursor-pointer hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 rounded-lg"
               />
             </Link>
           </div>
