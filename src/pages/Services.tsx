@@ -18,11 +18,17 @@ import {
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
+// Import images at the top of the file
+import engineeringImg from '/src/assets/services/engineering.png';
+import softwareImg from '/src/assets/services/software.png';
+import creativeImg from '/src/assets/services/creative.png';
+import digitalImg from '/src/assets/services/digital.png';
+
 const Services = () => {
   const serviceCategories = [
     {
       icon: Cog,
-      image: '/assets/services/engineering.png',
+      image: engineeringImg, // Use imported image
       title: 'Engineering & Technical Services',
       description: 'Advanced engineering solutions and technical expertise for complex projects',
       services: [
@@ -35,7 +41,7 @@ const Services = () => {
     },
     {
       icon: Smartphone,
-      image: '/assets/services/software.png',
+      image: softwareImg, // Use imported image
       title: 'Software & App Development',
       description: 'Custom software solutions tailored to your business needs',
       services: [
@@ -48,7 +54,7 @@ const Services = () => {
     },
     {
       icon: Palette,
-      image: '/assets/services/creative.png',
+      image: creativeImg, // Use imported image
       title: 'Creative & Branding',
       description: 'Visual identity and creative solutions that make your brand stand out',
       services: [
@@ -61,7 +67,7 @@ const Services = () => {
     },
     {
       icon: BarChart3,
-      image: '/assets/services/digital.png',
+      image: digitalImg, // Use imported image
       title: 'Data & Digital Growth',
       description: 'Transform your data into actionable insights and growth opportunities',
       services: [
