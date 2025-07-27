@@ -13,7 +13,9 @@ import {
   Shield,
   Zap,
   Cpu,
-  Globe
+  Globe,
+  Users,
+  Briefcase
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -22,7 +24,7 @@ const Services = () => {
   const serviceCategories = [
     {
       icon: Cog,
-      image: '/services/engineering.png', // Direct path to public folder
+      image: '/services/engineering.png',
       title: 'Engineering & Technical Services',
       description: 'Advanced engineering solutions and technical expertise for complex projects',
       services: [
@@ -35,7 +37,7 @@ const Services = () => {
     },
     {
       icon: Smartphone,
-      image: '/services/software.png', // Direct path to public folder
+      image: '/services/software.png',
       title: 'Software & App Development',
       description: 'Custom software solutions tailored to your business needs',
       services: [
@@ -48,7 +50,7 @@ const Services = () => {
     },
     {
       icon: Palette,
-      image: '/services/creative.png', // Direct path to public folder
+      image: '/services/creative.png',
       title: 'Creative & Branding',
       description: 'Visual identity and creative solutions that make your brand stand out',
       services: [
@@ -61,7 +63,7 @@ const Services = () => {
     },
     {
       icon: BarChart3,
-      image: '/services/digital.png', // Direct path to public folder
+      image: '/services/digital.png',
       title: 'Data & Digital Growth',
       description: 'Transform your data into actionable insights and growth opportunities',
       services: [
@@ -70,6 +72,19 @@ const Services = () => {
         { name: 'Power BI Visualizations', description: 'Professional data visualization and reporting' },
         { name: 'Digital Marketing', description: 'Complete digital marketing strategies and execution' },
         { name: 'SEO & Content Strategy', description: 'Search optimization and content marketing' }
+      ]
+    },
+    {
+      icon: Briefcase,
+      image: '/services/professional.png',
+      title: 'Professional Services',
+      description: 'Comprehensive business solutions and professional consulting services',
+      services: [
+        { name: 'Business Consulting', description: 'Strategic business advice and growth planning' },
+        { name: 'Project Management', description: 'End-to-end project planning and execution' },
+        { name: 'Training & Workshops', description: 'Professional development and skill building sessions' },
+        { name: 'Quality Assurance', description: 'Comprehensive testing and quality control processes' },
+        { name: 'Technical Documentation', description: 'Professional documentation and user manuals' }
       ]
     }
   ];
