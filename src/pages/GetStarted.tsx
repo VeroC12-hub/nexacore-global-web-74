@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom"; // Add these imports
 import nexacoreLogo from "../assets/nexacore-logo.png";
 import nexacoreBackgroundLogo from "../assets/nexacore-backgroundlogo.png";
 
@@ -204,7 +205,9 @@ const Button = ({ children, className, variant, onClick, ...props }) => {
     >
       {children}
     </button>
-  );
+};
+
+export default GetStarted;
 };
 
 // Service pricing in USD
@@ -226,6 +229,9 @@ const servicePricing = {
 };
 
 const GetStarted = () => {
+  const [searchParams] = useSearchParams(); // Add this hook
+  const navigate = useNavigate(); // Add this hook
+  
   const [country, setCountry] = useState("Ghana");
   const [currency, setCurrency] = useState(currencyMap["Ghana"]);
   const [rate, setRate] = useState(1);
@@ -273,15 +279,17 @@ const GetStarted = () => {
   };
 
   const handleBackToHome = () => {
-    // In a real app, you'd use React Router
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = "/";
-    }
+    // Navigate back to home page
+    navigate("/");
   };
 
   useEffect(() => {
+    // Check if service parameter is provided in URL
+    const serviceParam = searchParams.get('service');
+    if (serviceParam && servicePricing[serviceParam]) {
+      setService(serviceParam);
+    }
+    
     // Initialize with Ghana on component mount
     const initializeExchangeRate = async () => {
       setLoading(true);
@@ -297,7 +305,7 @@ const GetStarted = () => {
     };
 
     initializeExchangeRate();
-  }, []);
+  }, [searchParams]);
 
   // Get the current service price and convert to local currency
   const currentServicePrice = servicePricing[service] || 100;
@@ -343,6 +351,15 @@ const GetStarted = () => {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto p-8">
         <div className="bg-white rounded-xl shadow-lg p-8 space-y-6 border border-gray-200">
+          {/* Service Pre-selection Notice */}
+          {searchParams.get('service') && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-800 font-medium">
+                🎯 Great choice! You've selected <span className="font-bold">{service}</span> from our services page.
+              </p>
+            </div>
+          )}
+
           <div>
             <label htmlFor="country" className="block mb-2 font-medium text-gray-700 text-lg">
               Your Country
@@ -433,6 +450,5 @@ const GetStarted = () => {
       </div>
     </div>
   );
-};
 
 export default GetStarted;
