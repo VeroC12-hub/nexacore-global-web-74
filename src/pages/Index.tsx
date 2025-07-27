@@ -136,9 +136,11 @@ const Index = () => {
                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
                   </Button>
                 </Link>
-                <Button variant="outline" className="btn-outline-primary text-lg px-8 py-4 group">
-                  <span className="story-link">View Portfolio</span>
-                </Button>
+                <Link to="/portfolio">
+                  <Button variant="outline" className="btn-outline-primary text-lg px-8 py-4 group">
+                    <span className="story-link">View Portfolio</span>
+                  </Button>
+                </Link>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8">
