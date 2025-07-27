@@ -216,15 +216,71 @@ const Index = () => {
             ))}
           </div>
           
-          {/* Additional CTA for services - Now using Image */}
-          <div className="text-center mt-12">
-            <Link to="/services" className="inline-block hover:scale-105 transition-transform duration-300">
-              <img 
-                src="/services/services.png" 
-                alt="View All Services" 
-                className="max-w-2xl mx-auto cursor-pointer hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 rounded-lg"
-              />
-            </Link>
+          {/* Enhanced Services Showcase with Blended Design */}
+          <div className="text-center mt-20">
+            {/* Section Header */}
+            <div className="mb-12">
+              <Badge className="bg-gradient-to-r from-primary/20 to-success/20 text-primary border-primary/30 mb-6 text-lg px-6 py-2">
+                Complete Service Portfolio
+              </Badge>
+              <h2 className="text-4xl lg:text-5xl font-bold mb-6">
+                <span className="text-gradient-hero">Our Services</span>
+              </h2>
+              <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                Discover our comprehensive range of professional services designed to bring your vision to life
+              </p>
+            </div>
+
+            {/* Image with Blended Background */}
+            <div className="relative max-w-5xl mx-auto">
+              {/* Gradient Background Blend */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-success/10 to-primary-glow/5 rounded-3xl blur-3xl scale-110"></div>
+              <div className="absolute inset-0 bg-gradient-to-tr from-success/5 via-primary/5 to-accent/10 rounded-3xl blur-2xl scale-105"></div>
+              
+              {/* Main Content Container */}
+              <div className="relative bg-gradient-to-br from-white/80 via-white/60 to-white/40 backdrop-blur-sm rounded-3xl p-8 border border-white/20 shadow-2xl">
+                <Link to="/services" className="block group">
+                  <div className="relative overflow-hidden rounded-2xl">
+                    {/* Color Overlay for Blending */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-success/10 z-10 group-hover:from-primary/15 group-hover:to-success/15 transition-all duration-500"></div>
+                    
+                    {/* Glow Effects */}
+                    <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 via-success/20 to-primary-glow/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                    
+                    <img 
+                      src="/services/services.png" 
+                      alt="NexaCore Complete Service Portfolio" 
+                      className="w-full h-auto relative z-20 group-hover:scale-[1.02] transition-all duration-700 ease-out"
+                    />
+                    
+                    {/* Interactive Overlay */}
+                    <div className="absolute inset-0 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 bg-gradient-to-t from-primary/90 via-primary/50 to-transparent">
+                      <div className="text-center text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                        <div className="text-2xl font-bold mb-2">Explore All Services</div>
+                        <div className="flex items-center justify-center">
+                          <span className="text-lg mr-2">View Details</span>
+                          <ArrowRight className="w-6 h-6 animate-bounce" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+
+              {/* Floating Elements */}
+              <div className="absolute top-4 right-4 w-24 h-24 bg-gradient-to-br from-primary/20 to-success/20 rounded-full blur-xl animate-pulse-slow"></div>
+              <div className="absolute bottom-4 left-4 w-32 h-32 bg-gradient-to-br from-success/15 to-primary-glow/15 rounded-full blur-2xl animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            {/* Call-to-Action */}
+            <div className="mt-12">
+              <Link to="/services">
+                <Button className="btn-hero text-lg px-8 py-4 group">
+                  Explore All Services
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
