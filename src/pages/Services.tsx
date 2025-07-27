@@ -24,7 +24,7 @@ const Services = () => {
   const serviceCategories = [
     {
       icon: Cog,
-      image: '/services/engineering.png',
+      image: '/services/engineering-services.png',
       title: 'Engineering & Technical Services',
       description: 'Advanced engineering solutions and technical expertise for complex projects',
       services: [
@@ -37,7 +37,7 @@ const Services = () => {
     },
     {
       icon: Smartphone,
-      image: '/services/software.png',
+      image: '/services/software-services.png',
       title: 'Software & App Development',
       description: 'Custom software solutions tailored to your business needs',
       services: [
@@ -50,7 +50,7 @@ const Services = () => {
     },
     {
       icon: Palette,
-      image: '/services/creative.png',
+      image: '/services/creative-services.png',
       title: 'Creative & Branding',
       description: 'Visual identity and creative solutions that make your brand stand out',
       services: [
@@ -63,7 +63,7 @@ const Services = () => {
     },
     {
       icon: BarChart3,
-      image: '/services/digital.png',
+      image: '/services/data-digital-services.png',
       title: 'Data & Digital Growth',
       description: 'Transform your data into actionable insights and growth opportunities',
       services: [
@@ -76,7 +76,7 @@ const Services = () => {
     },
     {
       icon: Briefcase,
-      image: '/services/professional.png',
+      image: '/services/professional-services.png',
       title: 'Professional Services',
       description: 'Comprehensive business solutions and professional consulting services',
       services: [
