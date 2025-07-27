@@ -15,6 +15,7 @@ import {
   Star,
   Quote
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Add this import
 import heroImage from '@/assets/hero-main.jpg';
 import teamImage from '@/assets/team-collaboration.jpg';
 import abstractBg from '@/assets/abstract-tech.jpg';
@@ -22,6 +23,24 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const Index = () => {
+  const navigate = useNavigate(); // Add this hook
+
+  // Function to handle service card click
+  const handleServiceClick = (serviceTitle) => {
+    // Map service titles to specific services in GetStarted
+    const serviceMapping = {
+      'Engineering & Technical': 'CAD Engineering',
+      'Software & App Development': 'Software Engineering', 
+      'Creative & Branding': 'Graphic Design',
+      'Data & Digital Growth': 'Data Analysis'
+    };
+
+    const selectedService = serviceMapping[serviceTitle] || 'Software Engineering';
+    
+    // Navigate to GetStarted with the selected service as a URL parameter
+    navigate(`/get-started?service=${encodeURIComponent(selectedService)}`);
+  };
+
   const services = [
     {
       icon: Cog,
@@ -97,6 +116,7 @@ const Index = () => {
             <div className="space-y-8 animate-fade-in">
               <div className="space-y-4">
                 <Badge className="bg-primary/10 text-primary border-primary/20 hover:scale-105 transition-transform duration-300">
+                  Innovation & Excellence
                 </Badge>
                 <h1 className="text-4xl lg:text-6xl font-bold leading-tight">
                   <span className="text-gradient-hero">Engineering Global</span><br />
@@ -111,11 +131,11 @@ const Index = () => {
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/get-started">
-  <Button className="btn-hero text-lg px-8 py-4 group">
-    Get Started
-    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-  </Button>
-</Link>
+                  <Button className="btn-hero text-lg px-8 py-4 group">
+                    Get Started
+                    <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  </Button>
+                </Link>
                 <Button variant="outline" className="btn-outline-primary text-lg px-8 py-4 group">
                   <span className="story-link">View Portfolio</span>
                 </Button>
@@ -165,13 +185,18 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {services.map((service, index) => (
-              <Card key={index} className="card-service group cursor-pointer" style={{ animationDelay: `${index * 0.1}s` }}>
+              <Card 
+                key={index} 
+                className="card-service group cursor-pointer hover:shadow-xl hover:shadow-primary/20 transition-all duration-300" 
+                style={{ animationDelay: `${index * 0.1}s` }}
+                onClick={() => handleServiceClick(service.title)}
+              >
                 <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 glow-primary group-hover:glow-success">
                   <service.icon className="w-6 h-6 text-white group-hover:scale-110 transition-transform duration-300" />
                 </div>
                 <h3 className="text-xl font-semibold mb-3 text-gradient-primary group-hover:text-gradient-hero transition-all duration-300">{service.title}</h3>
                 <p className="text-muted-foreground mb-4 group-hover:text-foreground transition-colors duration-300">{service.description}</p>
-                <ul className="space-y-2">
+                <ul className="space-y-2 mb-6">
                   {service.features.map((feature, idx) => (
                     <li key={idx} className="flex items-center text-sm group-hover:translate-x-1 transition-transform duration-300" style={{ transitionDelay: `${idx * 50}ms` }}>
                       <CheckCircle className="w-4 h-4 text-success mr-2 group-hover:scale-110 transition-transform duration-300" />
@@ -179,8 +204,26 @@ const Index = () => {
                     </li>
                   ))}
                 </ul>
+                
+                {/* Call-to-action overlay */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-t from-primary/90 to-transparent absolute inset-0 flex items-end justify-center pb-6 rounded-lg">
+                  <div className="text-white text-center">
+                    <p className="font-semibold mb-2">Click to Get Started</p>
+                    <ArrowRight className="w-5 h-5 mx-auto animate-bounce" />
+                  </div>
+                </div>
               </Card>
             ))}
+          </div>
+          
+          {/* Additional CTA for services */}
+          <div className="text-center mt-12">
+            <Link to="/services">
+              <Button variant="outline" className="btn-outline-primary text-lg px-8 py-4">
+                View All Services
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -286,11 +329,19 @@ const Index = () => {
             and discover how we can transform your ideas into reality.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="secondary" className="text-lg px-8 py-4 bg-white text-primary hover:bg-white/90">
+            <Button 
+              variant="secondary" 
+              className="text-lg px-8 py-4 bg-white text-primary hover:bg-white/90"
+              onClick={() => navigate('/get-started')}
+            >
               Get Free Quote
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button variant="outline" className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary">
+            <Button 
+              variant="outline" 
+              className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary"
+              onClick={() => navigate('/get-started')}
+            >
               Schedule Consultation
             </Button>
           </div>
