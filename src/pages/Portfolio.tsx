@@ -36,7 +36,9 @@ import {
   Smartphone,
   Database,
   Lock,
-  Unlock
+  Unlock,
+  Building2,
+  Target
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -59,93 +61,199 @@ const PortfolioWithAdmin = () => {
     { name: 'All', count: 0, icon: Sparkles },
     { name: 'Web Development', count: 0, icon: Globe },
     { name: 'Mobile Apps', count: 0, icon: Smartphone },
-    { name: 'Full Stack', count: 0, icon: Code },
+    { name: 'Engineering & CAD', count: 0, icon: Settings },
     { name: 'Data Analytics', count: 0, icon: TrendingUp },
-    { name: 'Tools & Utilities', count: 0, icon: Settings }
+    { name: 'Creative & Design', count: 0, icon: Award },
+    { name: 'Tools & Utilities', count: 0, icon: Code }
   ];
 
-  // Initial projects based on your existing work
+  // Company projects with team member attributions
   const [projects, setProjects] = useState([
     {
       id: 1,
-      title: 'E-Commerce Solution',
+      title: 'NexaCore E-Commerce Platform',
       category: 'Web Development',
-      client: 'Personal Project',
+      client: 'Retail Solutions Ghana',
       year: '2024',
       location: 'Ghana',
-      description: 'Full-stack e-commerce solution with HTML, Tailwind CSS, JavaScript and Firebase for seamless online shopping experience.',
-      longDescription: 'A comprehensive e-commerce platform featuring user authentication, product catalog, shopping cart, payment integration, and order management. Built with modern web technologies for optimal performance and user experience.',
-      technologies: ['HTML', 'Tailwind CSS', 'JavaScript', 'Firebase', 'Payment Gateway'],
+      description: 'Comprehensive e-commerce solution with modern UI/UX, payment integration, and inventory management system.',
+      longDescription: 'A full-stack e-commerce platform designed for African markets, featuring mobile-first design, multiple payment gateway integration including mobile money, inventory management, analytics dashboard, and multi-language support. Built with scalability and performance in mind.',
+      technologies: ['Next.js', 'React', 'Node.js', 'MongoDB', 'Stripe', 'PayStack', 'Tailwind CSS'],
+      images: ['/api/placeholder/800/600', '/api/placeholder/800/600', '/api/placeholder/800/600'],
+      thumbnail: '/api/placeholder/400/300',
+      status: 'Completed',
+      featured: true,
+      metrics: {
+        views: '2.5K',
+        likes: 156,
+        shares: 45
+      },
+      links: {
+        live: 'https://example-ecommerce.com',
+        github: 'https://github.com/nexacore-innovations',
+        case: '/case-study/1'
+      },
+      awards: ['Best E-commerce Solution 2024'],
+      teamSize: 3,
+      duration: '4 months',
+      teamMembers: [
+        { name: 'Manasseh Kabutey', role: 'Lead Developer', contribution: 'Full-stack development, architecture design' },
+        { name: 'Benjamin Agbesi', role: 'UI/UX Designer', contribution: 'User interface design, user experience optimization' },
+        { name: 'Ocloo Godwin', role: 'Quality Assurance', contribution: 'Testing, performance optimization' }
+      ]
+    },
+    {
+      id: 2,
+      title: 'Smart City IoT Dashboard',
+      category: 'Data Analytics',
+      client: 'Municipal Authority',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Real-time data visualization dashboard for smart city infrastructure monitoring and management.',
+      longDescription: 'An advanced IoT dashboard solution for monitoring city infrastructure including traffic flow, air quality, waste management, and energy consumption. Features real-time data processing, predictive analytics, and automated alert systems.',
+      technologies: ['React', 'D3.js', 'Python', 'FastAPI', 'PostgreSQL', 'Docker', 'AWS'],
+      images: ['/api/placeholder/800/500', '/api/placeholder/800/500'],
+      thumbnail: '/api/placeholder/400/300',
+      status: 'Completed',
+      featured: true,
+      metrics: {
+        views: '1.8K',
+        likes: 89,
+        shares: 32
+      },
+      links: {
+        live: 'https://smart-city-dashboard.com',
+        case: '/case-study/2'
+      },
+      awards: ['Innovation Award 2024'],
+      teamSize: 4,
+      duration: '6 months',
+      teamMembers: [
+        { name: 'Ocloo Godwin', role: 'Project Manager', contribution: 'Project coordination, stakeholder management' },
+        { name: 'Data Analytics Team', role: 'Data Scientists', contribution: 'Algorithm development, data modeling' },
+        { name: 'Manasseh Kabutey', role: 'Frontend Developer', contribution: 'Dashboard interface, data visualization' }
+      ]
+    },
+    {
+      id: 3,
+      title: 'AgriTech Mobile Solution',
+      category: 'Mobile Apps',
+      client: 'Ghana Agricultural Development',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Mobile application connecting farmers with markets, weather data, and agricultural best practices.',
+      longDescription: 'A comprehensive mobile solution for agricultural development in Ghana, providing farmers with market prices, weather forecasts, crop management advice, and direct market access. Features offline functionality and multi-language support.',
+      technologies: ['Flutter', 'Dart', 'Firebase', 'Google Maps API', 'Weather API', 'Node.js'],
+      images: ['/api/placeholder/400/600', '/api/placeholder/400/600', '/api/placeholder/400/600'],
+      thumbnail: '/api/placeholder/400/300',
+      status: 'In Progress',
+      featured: false,
+      metrics: {
+        views: '1.2K',
+        likes: 67,
+        shares: 18
+      },
+      links: {
+        github: 'https://github.com/nexacore-innovations/agritech-app'
+      },
+      awards: [],
+      teamSize: 3,
+      duration: '5 months',
+      teamMembers: [
+        { name: 'Manasseh Kabutey', role: 'Mobile Developer', contribution: 'Flutter app development, API integration' },
+        { name: 'Benjamin Agbesi', role: 'UI/UX Designer', contribution: 'Mobile interface design, user research' },
+        { name: 'Agricultural Consultants', role: 'Domain Experts', contribution: 'Agricultural content, best practices' }
+      ]
+    },
+    {
+      id: 4,
+      title: 'Manufacturing Process Optimization',
+      category: 'Engineering & CAD',
+      client: 'Industrial Manufacturing Corp',
+      year: '2024',
+      location: 'Ghana',
+      description: '3D CAD modeling and process optimization for manufacturing efficiency improvement.',
+      longDescription: 'Complete redesign and optimization of manufacturing processes using advanced CAD modeling, simulation, and lean manufacturing principles. Achieved 30% efficiency improvement and 25% cost reduction.',
+      technologies: ['SolidWorks', 'AutoCAD', 'ANSYS', 'Lean Six Sigma', 'Process Simulation'],
       images: ['/api/placeholder/800/600', '/api/placeholder/800/600'],
       thumbnail: '/api/placeholder/400/300',
       status: 'Completed',
       featured: true,
       metrics: {
-        views: '1.2K',
-        likes: 89,
-        shares: 23
+        views: '956',
+        likes: 78,
+        shares: 21
       },
       links: {
-        live: 'https://manassehkabutey.vercel.app/',
-        github: 'https://github.com/manasseh-kabutey',
-        case: '/case-study/1'
+        case: '/case-study/4'
       },
-      awards: [],
-      teamSize: 1,
-      duration: '3 months'
+      awards: ['Excellence in Engineering 2024'],
+      teamSize: 2,
+      duration: '3 months',
+      teamMembers: [
+        { name: 'Ocloo Godwin', role: 'Lead CAD Engineer', contribution: '3D modeling, process design, simulation analysis' },
+        { name: 'Engineering Team', role: 'Process Engineers', contribution: 'Process optimization, quality control' }
+      ]
     },
     {
-      id: 2,
-      title: 'Web Scraper CLI Tool',
-      category: 'Tools & Utilities',
-      client: 'Open Source',
+      id: 5,
+      title: 'Corporate Branding Suite',
+      category: 'Creative & Design',
+      client: 'Multiple Corporate Clients',
       year: '2024',
-      location: 'Ghana',
-      description: 'A versatile command-line web scraper built with Dart. This tool allows you to scrape web pages and save the extracted data in various formats.',
-      longDescription: 'Developed a powerful command-line interface tool for web scraping using Dart. Features include multiple output formats, error handling, rate limiting, and support for complex web page structures. Perfect for data collection and automation tasks.',
-      technologies: ['Dart', 'CLI', 'Web Scraping', 'JSON', 'CSV'],
-      images: ['/api/placeholder/800/500'],
-      thumbnail: '/api/placeholder/400/300',
-      status: 'Completed',
-      featured: true,
-      metrics: {
-        views: '856',
-        likes: 67,
-        shares: 15
-      },
-      links: {
-        github: 'https://github.com/manasseh-kabutey',
-        case: '/case-study/2'
-      },
-      awards: [],
-      teamSize: 1,
-      duration: '2 months'
-    },
-    {
-      id: 3,
-      title: 'Mobile Phone Tracker',
-      category: 'Mobile Apps',
-      client: 'Personal Project',
-      year: '2024',
-      location: 'Ghana',
-      description: 'Mobile app for tracking location of missing phones with real-time GPS tracking and security features.',
-      longDescription: 'A Flutter-based mobile application designed to help locate missing or stolen phones. Features include real-time GPS tracking, emergency alerts, remote device management, and secure authentication. The app prioritizes user privacy while providing powerful tracking capabilities.',
-      technologies: ['Flutter', 'Dart', 'GPS', 'Firebase', 'Real-time Database'],
-      images: ['/api/placeholder/400/600', '/api/placeholder/400/600'],
+      location: 'International',
+      description: 'Complete brand identity design including logos, marketing materials, and digital assets.',
+      longDescription: 'Comprehensive branding solutions for various corporate clients including logo design, brand guidelines, marketing collateral, website design, and social media assets. Focus on modern, culturally-aware design principles.',
+      technologies: ['Adobe Creative Suite', 'Figma', 'After Effects', 'Sketch', 'Webflow'],
+      images: ['/api/placeholder/800/600', '/api/placeholder/800/600', '/api/placeholder/800/600'],
       thumbnail: '/api/placeholder/400/300',
       status: 'Completed',
       featured: false,
       metrics: {
-        views: '643',
+        views: '2.1K',
+        likes: 134,
+        shares: 67
+      },
+      links: {
+        live: 'https://nexacore-design-portfolio.com'
+      },
+      awards: [],
+      teamSize: 2,
+      duration: '2 months',
+      teamMembers: [
+        { name: 'Benjamin Agbesi', role: 'Creative Director', contribution: 'Brand strategy, visual identity design' },
+        { name: 'Design Team', role: 'Graphic Designers', contribution: 'Marketing materials, digital assets' }
+      ]
+    },
+    {
+      id: 6,
+      title: 'Data Automation Platform',
+      category: 'Tools & Utilities',
+      client: 'Financial Services Ltd',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Automated data processing and reporting system for financial analytics and compliance.',
+      longDescription: 'Enterprise-grade data automation platform that processes financial data, generates compliance reports, and provides real-time analytics. Features include data validation, automated scheduling, and secure API integrations.',
+      technologies: ['Python', 'Pandas', 'Apache Airflow', 'PostgreSQL', 'Docker', 'Redis'],
+      images: ['/api/placeholder/800/500'],
+      thumbnail: '/api/placeholder/400/300',
+      status: 'Completed',
+      featured: false,
+      metrics: {
+        views: '743',
         likes: 45,
         shares: 12
       },
       links: {
-        github: 'https://github.com/manasseh-kabutey'
+        github: 'https://github.com/nexacore-innovations/data-automation'
       },
       awards: [],
-      teamSize: 1,
-      duration: '4 months'
+      teamSize: 2,
+      duration: '3 months',
+      teamMembers: [
+        { name: 'Data Engineering Team', role: 'Backend Developers', contribution: 'Data pipeline development, automation scripts' },
+        { name: 'Manasseh Kabutey', role: 'System Architect', contribution: 'System design, API development' }
+      ]
     }
   ]);
 
@@ -225,7 +333,7 @@ const PortfolioWithAdmin = () => {
           <div className="text-center mb-6">
             <Lock className="w-12 h-12 text-gray-600 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900">Admin Access</h2>
-            <p className="text-gray-600">Enter admin password to manage projects</p>
+            <p className="text-gray-600">Enter admin password to manage portfolio</p>
           </div>
           
           <div className="space-y-4">
@@ -276,16 +384,30 @@ const PortfolioWithAdmin = () => {
       duration: project?.duration || '',
       liveLink: project?.links?.live || '',
       githubLink: project?.links?.github || '',
-      caseStudyLink: project?.links?.case || ''
+      caseStudyLink: project?.links?.case || '',
+      teamMembers: project?.teamMembers?.map(member => `${member.name} (${member.role}): ${member.contribution}`).join('\n') || ''
     });
 
     const handleSubmit = (e) => {
       e.preventDefault();
+      const teamMembersArray = formData.teamMembers.split('\n').filter(line => line.trim()).map(line => {
+        const match = line.match(/^(.+?)\s*\((.+?)\):\s*(.+)$/);
+        if (match) {
+          return {
+            name: match[1].trim(),
+            role: match[2].trim(),
+            contribution: match[3].trim()
+          };
+        }
+        return { name: line.trim(), role: 'Team Member', contribution: 'Project contribution' };
+      });
+
       const projectData = {
         ...project,
         ...formData,
         technologies: formData.technologies.split(',').map(tech => tech.trim()),
         images: formData.images.split(',').map(img => img.trim()),
+        teamMembers: teamMembersArray,
         links: {
           live: formData.liveLink,
           github: formData.githubLink,
@@ -304,7 +426,7 @@ const PortfolioWithAdmin = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
               <input
                 type="text"
                 value={formData.title}
@@ -323,8 +445,9 @@ const PortfolioWithAdmin = () => {
               >
                 <option>Web Development</option>
                 <option>Mobile Apps</option>
-                <option>Full Stack</option>
+                <option>Engineering & CAD</option>
                 <option>Data Analytics</option>
+                <option>Creative & Design</option>
                 <option>Tools & Utilities</option>
               </select>
             </div>
@@ -377,13 +500,24 @@ const PortfolioWithAdmin = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Long Description</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Detailed Description</label>
             <textarea
               value={formData.longDescription}
               onChange={(e) => setFormData({...formData, longDescription: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               rows="4"
               required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Team Members (One per line: Name (Role): Contribution)</label>
+            <textarea
+              value={formData.teamMembers}
+              onChange={(e) => setFormData({...formData, teamMembers: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              rows="4"
+              placeholder="Manasseh Kabutey (Lead Developer): Full-stack development, architecture design"
             />
           </div>
 
@@ -521,7 +655,7 @@ const PortfolioWithAdmin = () => {
     );
   };
 
-  // Project Modal (same as before but with admin controls)
+  // Project Modal with team members
   const ProjectModal = ({ project, onClose }) => {
     if (!project) return null;
 
@@ -589,12 +723,42 @@ const PortfolioWithAdmin = () => {
                     </Badge>
                   ))}
                 </div>
+
+                {/* Team Members Section */}
+                {project.teamMembers && project.teamMembers.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold mb-3 flex items-center">
+                      <Users className="w-5 h-5 mr-2" />
+                      Project Team
+                    </h4>
+                    <div className="space-y-3">
+                      {project.teamMembers.map((member, index) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-medium text-gray-900">{member.name}</div>
+                            <Badge variant="outline" className="text-xs">
+                              {member.role}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600">{member.contribution}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
                 <div className="bg-gray-50 rounded-lg p-6">
                   <h4 className="text-lg font-semibold mb-4">Project Details</h4>
                   <div className="space-y-4">
+                    <div className="flex items-center">
+                      <Building2 className="w-4 h-4 text-gray-500 mr-3" />
+                      <div>
+                        <div className="text-sm text-gray-500">Client</div>
+                        <div className="font-medium">{project.client}</div>
+                      </div>
+                    </div>
                     <div className="flex items-center">
                       <Calendar className="w-4 h-4 text-gray-500 mr-3" />
                       <div>
@@ -616,7 +780,28 @@ const PortfolioWithAdmin = () => {
                         <div className="font-medium">{project.teamSize} member{project.teamSize > 1 ? 's' : ''}</div>
                       </div>
                     </div>
+                    <div className="flex items-center">
+                      <Target className="w-4 h-4 text-gray-500 mr-3" />
+                      <div>
+                        <div className="text-sm text-gray-500">Duration</div>
+                        <div className="font-medium">{project.duration}</div>
+                      </div>
+                    </div>
                   </div>
+
+                  {project.awards && project.awards.length > 0 && (
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      <h5 className="font-semibold mb-2 flex items-center">
+                        <Award className="w-4 h-4 mr-2 text-yellow-500" />
+                        Awards
+                      </h5>
+                      <div className="space-y-1">
+                        {project.awards.map((award, index) => (
+                          <div key={index} className="text-sm text-gray-600">{award}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <div className="space-y-2">
@@ -630,6 +815,12 @@ const PortfolioWithAdmin = () => {
                         <Button variant="outline" className="w-full" size="sm" onClick={() => window.open(project.links.github, '_blank')}>
                           <Github className="w-4 h-4 mr-2" />
                           View Code
+                        </Button>
+                      )}
+                      {project.links.case && (
+                        <Button variant="outline" className="w-full" size="sm" onClick={() => window.open(project.links.case, '_blank')}>
+                          <Eye className="w-4 h-4 mr-2" />
+                          Case Study
                         </Button>
                       )}
                     </div>
@@ -715,20 +906,31 @@ const PortfolioWithAdmin = () => {
           {project.description}
         </p>
         
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center text-sm text-gray-500">
+            <Building2 className="w-4 h-4 mr-1" />
+            {project.client}
+          </div>
           <div className="flex items-center text-sm text-gray-500">
             <MapPin className="w-4 h-4 mr-1" />
             {project.location}
           </div>
+        </div>
+        
+        <div className="flex items-center justify-between">
+          <div className="flex items-center text-sm text-gray-500">
+            <Users className="w-4 h-4 mr-1" />
+            {project.teamSize} member{project.teamSize > 1 ? 's' : ''}
+          </div>
           <div className="flex space-x-2">
-            {project.technologies.slice(0, 3).map((tech, index) => (
+            {project.technologies.slice(0, 2).map((tech, index) => (
               <Badge key={index} variant="outline" className="text-xs">
                 {tech}
               </Badge>
             ))}
-            {project.technologies.length > 3 && (
+            {project.technologies.length > 2 && (
               <Badge variant="outline" className="text-xs">
-                +{project.technologies.length - 3}
+                +{project.technologies.length - 2}
               </Badge>
             )}
           </div>
@@ -772,15 +974,15 @@ const PortfolioWithAdmin = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <Badge className="bg-white/20 text-white border-white/30 mb-6 text-lg px-6 py-2">
-              <Sparkles className="w-5 h-5 mr-2" />
-              Manasseh Kabutey's Portfolio
+              <Building2 className="w-5 h-5 mr-2" />
+              NexaCore Innovations Portfolio
             </Badge>
             <h1 className="text-5xl lg:text-6xl font-bold mb-6">
-              Software Engineering <span className="text-gradient bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent">Excellence</span>
+              Engineering <span className="text-gradient bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent">Innovation</span> Globally
             </h1>
             <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-              Full-stack developer specializing in web and mobile technologies. 
-              Creating innovative solutions with Next.js, Flutter, Firebase, and modern development practices.
+              Showcasing our diverse portfolio of technical solutions, creative designs, and digital innovations. 
+              From engineering excellence to cutting-edge software development.
             </p>
             
             {!isAdmin && (
@@ -795,13 +997,13 @@ const PortfolioWithAdmin = () => {
             )}
           </div>
           
-          {/* Stats */}
+          {/* Company Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
             {[
-              { number: `${projects.length}+`, label: 'Projects Completed' },
-              { number: '15+', label: 'Technologies Mastered' },
-              { number: '5+', label: 'Countries Reached' },
-              { number: '3+', label: 'Years Experience' }
+              { number: `${projects.length}+`, label: 'Projects Delivered' },
+              { number: '25+', label: 'Global Clients' },
+              { number: '15+', label: 'Team Members' },
+              { number: '5+', label: 'Years Excellence' }
             ].map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-3xl lg:text-4xl font-bold mb-2">{stat.number}</div>
@@ -821,7 +1023,7 @@ const PortfolioWithAdmin = () => {
                 Featured Projects
               </h2>
               <p className="text-xl text-gray-600">
-                Highlighting my most impactful and innovative work
+                Highlighting our most impactful and innovative solutions
               </p>
             </div>
             
@@ -904,27 +1106,51 @@ const PortfolioWithAdmin = () => {
         </div>
       </section>
 
-      {/* Skills & Technologies Section */}
+      {/* Company Capabilities Section */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Technologies & Skills
+              Our Core Capabilities
             </h2>
             <p className="text-xl text-gray-600">
-              My technical expertise and preferred development stack
+              The technologies and expertise that power our innovative solutions
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {[
-              'Next.js', 'React', 'Flutter', 'Dart', 'JavaScript', 'TypeScript',
-              'Firebase', 'Node.js', 'HTML/CSS', 'Tailwind CSS', 'Git', 'MongoDB'
-            ].map((tech, index) => (
-              <div key={index} className="bg-gray-50 rounded-lg p-4 text-center hover:shadow-md transition-shadow duration-200">
-                <div className="font-medium text-gray-900">{tech}</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-6">
+              <Globe className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Web Development</h3>
+              <p className="text-gray-600 mb-4">Modern web applications using cutting-edge frameworks</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {['Next.js', 'React', 'Node.js', 'TypeScript'].map((tech, index) => (
+                  <Badge key={index} variant="outline">{tech}</Badge>
+                ))}
               </div>
-            ))}
+            </div>
+
+            <div className="text-center p-6">
+              <Smartphone className="w-12 h-12 text-green-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Mobile Development</h3>
+              <p className="text-gray-600 mb-4">Cross-platform mobile solutions</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {['Flutter', 'Dart', 'Firebase', 'React Native'].map((tech, index) => (
+                  <Badge key={index} variant="outline">{tech}</Badge>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-center p-6">
+              <Settings className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Engineering & Design</h3>
+              <p className="text-gray-600 mb-4">CAD modeling and industrial design solutions</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {['SolidWorks', 'AutoCAD', '3D Modeling', 'ANSYS'].map((tech, index) => (
+                  <Badge key={index} variant="outline">{tech}</Badge>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -933,27 +1159,27 @@ const PortfolioWithAdmin = () => {
       <section className="py-20 bg-gradient-to-br from-gray-900 to-blue-900 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-            Let's Build Something Amazing Together
+            Ready to Start Your Next Project?
           </h2>
           <p className="text-xl text-white/90 mb-8">
-            Ready to start your next project? Let's discuss how I can help bring your ideas to life.
+            Let's discuss how NexaCore Innovations can help bring your vision to life with our expert team and proven methodologies.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
               className="bg-white text-gray-900 hover:bg-gray-100"
-              onClick={() => window.open('mailto:manassehkabutey@gmail.com', '_blank')}
+              onClick={() => window.location.href = '/get-started'}
             >
-              Get In Touch
+              Start Your Project
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               className="border-white text-white hover:bg-white hover:text-gray-900"
-              onClick={() => window.open('https://manassehkabutey.vercel.app/', '_blank')}
+              onClick={() => window.location.href = '/services'}
             >
-              View Full Resume
+              View Our Services
             </Button>
           </div>
         </div>
