@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom"; // Add these imports
+import { useSearchParams, useNavigate } from "react-router-dom";
 import nexacoreLogo from "../assets/nexacore-logo.png";
 import nexacoreBackgroundLogo from "../assets/nexacore-backgroundlogo.png";
 
@@ -205,9 +205,7 @@ const Button = ({ children, className, variant, onClick, ...props }) => {
     >
       {children}
     </button>
-};
-
-export default GetStarted;
+  );
 };
 
 // Service pricing in USD
@@ -229,8 +227,8 @@ const servicePricing = {
 };
 
 const GetStarted = () => {
-  const [searchParams] = useSearchParams(); // Add this hook
-  const navigate = useNavigate(); // Add this hook
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   const [country, setCountry] = useState("Ghana");
   const [currency, setCurrency] = useState(currencyMap["Ghana"]);
@@ -450,5 +448,6 @@ const GetStarted = () => {
       </div>
     </div>
   );
+};
 
 export default GetStarted;
