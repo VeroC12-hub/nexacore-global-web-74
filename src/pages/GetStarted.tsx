@@ -353,7 +353,7 @@ const GetStarted = () => {
           {searchParams.get('service') && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <p className="text-blue-800 font-medium">
-                🎯 Great choice! You've selected <span className="font-bold">{service}</span> from our services page.
+                🎯 Great choice! You've selected <span className="font-bold">{service}</span> services.
               </p>
             </div>
           )}
