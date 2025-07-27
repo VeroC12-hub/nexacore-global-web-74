@@ -216,13 +216,14 @@ const Index = () => {
             ))}
           </div>
           
-          {/* Additional CTA for services */}
+          {/* Additional CTA for services - Now using Image */}
           <div className="text-center mt-12">
-            <Link to="/services">
-              <Button variant="outline" className="btn-outline-primary text-lg px-8 py-4">
-                View All Services
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+            <Link to="/services" className="inline-block hover:scale-105 transition-transform duration-300">
+              <img 
+                src="/services/services.png" 
+                alt="View All Services" 
+                className="max-w-md mx-auto cursor-pointer hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 rounded-lg"
+              />
             </Link>
           </div>
         </div>
