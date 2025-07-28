@@ -77,7 +77,8 @@ const GITHUB_CONFIG = {
   repo: 'nexacore-global-web-74',
   branch: 'main',
   path: 'public/images/portfolio/',
-  token: null // In production, this would be set securely
+  // token: import.meta.env.GITHUB_TOKEN || '',
+  token: undefined // In production, this would be set securely
 };
 
 // Enhanced GitHub API Service
