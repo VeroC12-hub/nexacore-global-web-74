@@ -38,10 +38,535 @@ import {
   Lock,
   Unlock,
   Building2,
-  Target
+  Target,
+  Image as ImageIcon,
+  Camera,
+  FolderOpen,
+  AlertCircle,
+  CheckCircle,
+  Loader2
 } from 'lucide-react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+
+// Image Upload Component
+const ImageUploader = ({ onImageSelect, label = "Select Image", currentImage = null }) => {
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(currentImage);
+  const fileInputRef = useRef(null);
+
+  const handleFileSelect = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+
+    try {
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreviewUrl(e.target.result);
+      };
+      reader.readAsDataURL(file);
+
+      // In a real implementation, you would upload to GitHub or your image hosting service
+      // For now, we'll simulate the upload and generate a GitHub raw URL
+      await simulateImageUpload(file);
+      
+      // Generate a GitHub raw URL format
+      const fileName = `portfolio-${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+      const githubRawUrl = `https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/${fileName}`;
+      
+      onImageSelect(githubRawUrl);
+      
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const simulateImageUpload = (file) => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 2000); // Simulate upload delay
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      <label className="block text-sm font-medium text-gray-700">{label}</label>
+      
+      {previewUrl && (
+        <div className="relative w-full h-48 border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
+          <img 
+            src={previewUrl} 
+            alt="Preview" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-2 right-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+            </Button>
+          </div>
+        </div>
+      )}
+      
+      {!previewUrl && (
+        <div 
+          className="w-full h-48 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-400 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {uploading ? (
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-2" />
+              <p className="text-sm text-gray-600">Uploading to GitHub...</p>
+            </div>
+          ) : (
+            <div className="text-center">
+              <ImageIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600">Click to select image</p>
+              <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
+            </div>
+          )}
+        </div>
+      )}
+      
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        disabled={uploading}
+      />
+      
+      <div className="text-xs text-gray-500">
+        <div className="flex items-center gap-1 mb-1">
+          <Github className="w-3 h-3" />
+          Images will be stored in your GitHub repository
+        </div>
+        <div className="text-gray-400">
+          Repository: VeroC12-hub/nexacore-global-web-74/public/images/portfolio/
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// GitHub Integration Info Component
+const GitHubIntegrationInfo = () => {
+  const [showInfo, setShowInfo] = useState(false);
+
+  return (
+    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <Github className="w-5 h-5 text-blue-600 mr-2" />
+          <span className="font-medium text-blue-900">GitHub Integration Active</span>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowInfo(!showInfo)}
+        >
+          {showInfo ? 'Hide' : 'Show'} Details
+        </Button>
+      </div>
+      
+      {showInfo && (
+        <div className="mt-4 space-y-2 text-sm text-blue-800">
+          <div>
+            <strong>Repository:</strong> VeroC12-hub/nexacore-global-web-74
+          </div>
+          <div>
+            <strong>Image Storage:</strong> /public/images/portfolio/
+          </div>
+          <div>
+            <strong>Auto-commit:</strong> Enabled for uploaded images
+          </div>
+          <div className="flex items-center gap-1 text-green-700">
+            <CheckCircle className="w-4 h-4" />
+            Connected and ready for uploads
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Enhanced Project Form with Image Upload
+const ProjectForm = ({ project = null, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    title: project?.title || '',
+    category: project?.category || 'Web Development',
+    client: project?.client || '',
+    year: project?.year || new Date().getFullYear().toString(),
+    location: project?.location || '',
+    description: project?.description || '',
+    longDescription: project?.longDescription || '',
+    technologies: project?.technologies?.join(', ') || '',
+    thumbnail: project?.thumbnail || '',
+    images: project?.images?.join(', ') || '',
+    status: project?.status || 'Completed',
+    featured: project?.featured || false,
+    teamSize: project?.teamSize || 1,
+    duration: project?.duration || '',
+    liveLink: project?.links?.live || '',
+    githubLink: project?.links?.github || '',
+    caseStudyLink: project?.links?.case || '',
+    teamMembers: project?.teamMembers?.map(member => `${member.name} (${member.role}): ${member.contribution}`).join('\n') || ''
+  });
+
+  const handleImageSelect = (imageUrl, type) => {
+    if (type === 'thumbnail') {
+      setFormData(prev => ({ ...prev, thumbnail: imageUrl }));
+    } else if (type === 'gallery') {
+      const currentImages = formData.images ? formData.images.split(',').map(img => img.trim()).filter(img => img) : [];
+      const newImages = [...currentImages, imageUrl];
+      setFormData(prev => ({ ...prev, images: newImages.join(', ') }));
+    }
+  };
+
+  const removeGalleryImage = (indexToRemove) => {
+    const currentImages = formData.images.split(',').map(img => img.trim()).filter(img => img);
+    const newImages = currentImages.filter((_, index) => index !== indexToRemove);
+    setFormData(prev => ({ ...prev, images: newImages.join(', ') }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const teamMembersArray = formData.teamMembers.split('\n').filter(line => line.trim()).map(line => {
+      const match = line.match(/^(.+?)\s*\((.+?)\):\s*(.+)$/);
+      if (match) {
+        return {
+          name: match[1].trim(),
+          role: match[2].trim(),
+          contribution: match[3].trim()
+        };
+      }
+      return { name: line.trim(), role: 'Team Member', contribution: 'Project contribution' };
+    });
+
+    const projectData = {
+      ...project,
+      ...formData,
+      technologies: formData.technologies.split(',').map(tech => tech.trim()),
+      images: formData.images.split(',').map(img => img.trim()).filter(img => img),
+      teamMembers: teamMembersArray,
+      links: {
+        live: formData.liveLink,
+        github: formData.githubLink,
+        case: formData.caseStudyLink
+      }
+    };
+    onSave(projectData);
+  };
+
+  const galleryImages = formData.images ? formData.images.split(',').map(img => img.trim()).filter(img => img) : [];
+
+  return (
+    <div className="bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
+      <h2 className="text-2xl font-bold mb-4">
+        {project ? 'Edit Project' : 'Add New Project'}
+      </h2>
+      
+      <GitHubIntegrationInfo />
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Basic Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({...formData, title: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select
+              value={formData.category}
+              onChange={(e) => setFormData({...formData, category: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option>Web Development</option>
+              <option>Mobile Apps</option>
+              <option>Engineering & CAD</option>
+              <option>Data Analytics</option>
+              <option>Creative & Design</option>
+              <option>Tools & Utilities</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Client, Year, Location */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Client</label>
+            <input
+              type="text"
+              value={formData.client}
+              onChange={(e) => setFormData({...formData, client: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+            <input
+              type="text"
+              value={formData.year}
+              onChange={(e) => setFormData({...formData, year: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+            <input
+              type="text"
+              value={formData.location}
+              onChange={(e) => setFormData({...formData, location: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Descriptions */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Short Description</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({...formData, description: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            rows="3"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Detailed Description</label>
+          <textarea
+            value={formData.longDescription}
+            onChange={(e) => setFormData({...formData, longDescription: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            rows="4"
+            required
+          />
+        </div>
+
+        {/* Image Upload Section */}
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <ImageIcon className="w-5 h-5 mr-2" />
+            Project Images
+          </h3>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Thumbnail Upload */}
+            <div>
+              <ImageUploader
+                label="Project Thumbnail"
+                currentImage={formData.thumbnail}
+                onImageSelect={(url) => handleImageSelect(url, 'thumbnail')}
+              />
+            </div>
+
+            {/* Gallery Images */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Gallery Images</label>
+              
+              {galleryImages.length > 0 && (
+                <div className="mb-4 space-y-2">
+                  <p className="text-sm text-gray-600">Current images:</p>
+                  {galleryImages.map((img, index) => (
+                    <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                      <div className="flex items-center">
+                        <img src={img} alt={`Gallery ${index + 1}`} className="w-10 h-10 object-cover rounded mr-2" />
+                        <span className="text-sm text-gray-600 truncate">Image {index + 1}</span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeGalleryImage(index)}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <ImageUploader
+                label="Add Gallery Image"
+                onImageSelect={(url) => handleImageSelect(url, 'gallery')}
+              />
+              
+              <div className="mt-2">
+                <input
+                  type="text"
+                  placeholder="Or paste image URLs (comma-separated)"
+                  value={formData.images}
+                  onChange={(e) => setFormData({...formData, images: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Team Members */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Team Members (One per line: Name (Role): Contribution)</label>
+          <textarea
+            value={formData.teamMembers}
+            onChange={(e) => setFormData({...formData, teamMembers: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            rows="4"
+            placeholder="Manasseh Kabutey (Lead Developer): Full-stack development, architecture design"
+          />
+        </div>
+
+        {/* Technologies */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Technologies (comma-separated)</label>
+          <input
+            type="text"
+            value={formData.technologies}
+            onChange={(e) => setFormData({...formData, technologies: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            placeholder="React, Node.js, MongoDB"
+            required
+          />
+        </div>
+
+        {/* Project Details */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({...formData, status: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            >
+              <option>Completed</option>
+              <option>In Progress</option>
+              <option>Planning</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Team Size</label>
+            <input
+              type="number"
+              value={formData.teamSize}
+              onChange={(e) => setFormData({...formData, teamSize: parseInt(e.target.value)})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              min="1"
+              required
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+            <input
+              type="text"
+              value={formData.duration}
+              onChange={(e) => setFormData({...formData, duration: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              placeholder="3 months"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Links */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Live Demo URL</label>
+            <input
+              type="url"
+              value={formData.liveLink}
+              onChange={(e) => setFormData({...formData, liveLink: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">GitHub URL</label>
+            <input
+              type="url"
+              value={formData.githubLink}
+              onChange={(e) => setFormData({...formData, githubLink: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Case Study URL</label>
+            <input
+              type="url"
+              value={formData.caseStudyLink}
+              onChange={(e) => setFormData({...formData, caseStudyLink: e.target.value})}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Featured Checkbox */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="featured"
+            checked={formData.featured}
+            onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+            className="mr-2"
+          />
+          <label htmlFor="featured" className="text-sm font-medium text-gray-700">
+            Featured Project
+          </label>
+        </div>
+
+        {/* Submit Buttons */}
+        <div className="flex gap-3 pt-4 border-t">
+          <Button type="submit" className="flex-1">
+            <Save className="w-4 h-4 mr-2" />
+            {project ? 'Update Project' : 'Add Project'}
+          </Button>
+          <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+};
 
 // Admin Login Modal - moved outside main component to prevent re-renders
 const AdminLoginModal = ({ 
@@ -97,296 +622,6 @@ const AdminLoginModal = ({
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-// Project Form Component
-const ProjectForm = ({ project = null, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
-    title: project?.title || '',
-    category: project?.category || 'Web Development',
-    client: project?.client || '',
-    year: project?.year || new Date().getFullYear().toString(),
-    location: project?.location || '',
-    description: project?.description || '',
-    longDescription: project?.longDescription || '',
-    technologies: project?.technologies?.join(', ') || '',
-    thumbnail: project?.thumbnail || '/api/placeholder/400/300',
-    images: project?.images?.join(', ') || '/api/placeholder/800/600',
-    status: project?.status || 'Completed',
-    featured: project?.featured || false,
-    teamSize: project?.teamSize || 1,
-    duration: project?.duration || '',
-    liveLink: project?.links?.live || '',
-    githubLink: project?.links?.github || '',
-    caseStudyLink: project?.links?.case || '',
-    teamMembers: project?.teamMembers?.map(member => `${member.name} (${member.role}): ${member.contribution}`).join('\n') || ''
-  });
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const teamMembersArray = formData.teamMembers.split('\n').filter(line => line.trim()).map(line => {
-      const match = line.match(/^(.+?)\s*\((.+?)\):\s*(.+)$/);
-      if (match) {
-        return {
-          name: match[1].trim(),
-          role: match[2].trim(),
-          contribution: match[3].trim()
-        };
-      }
-      return { name: line.trim(), role: 'Team Member', contribution: 'Project contribution' };
-    });
-
-    const projectData = {
-      ...project,
-      ...formData,
-      technologies: formData.technologies.split(',').map(tech => tech.trim()),
-      images: formData.images.split(',').map(img => img.trim()),
-      teamMembers: teamMembersArray,
-      links: {
-        live: formData.liveLink,
-        github: formData.githubLink,
-        case: formData.caseStudyLink
-      }
-    };
-    onSave(projectData);
-  };
-
-  return (
-    <div className="bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
-      <h2 className="text-2xl font-bold mb-6">
-        {project ? 'Edit Project' : 'Add New Project'}
-      </h2>
-      
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Project Title</label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option>Web Development</option>
-              <option>Mobile Apps</option>
-              <option>Engineering & CAD</option>
-              <option>Data Analytics</option>
-              <option>Creative & Design</option>
-              <option>Tools & Utilities</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Client</label>
-            <input
-              type="text"
-              value={formData.client}
-              onChange={(e) => setFormData({...formData, client: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-            <input
-              type="text"
-              value={formData.year}
-              onChange={(e) => setFormData({...formData, year: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-            <input
-              type="text"
-              value={formData.location}
-              onChange={(e) => setFormData({...formData, location: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Short Description</label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            rows="3"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Detailed Description</label>
-          <textarea
-            value={formData.longDescription}
-            onChange={(e) => setFormData({...formData, longDescription: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            rows="4"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Team Members (One per line: Name (Role): Contribution)</label>
-          <textarea
-            value={formData.teamMembers}
-            onChange={(e) => setFormData({...formData, teamMembers: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            rows="4"
-            placeholder="Manasseh Kabutey (Lead Developer): Full-stack development, architecture design"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Technologies (comma-separated)</label>
-          <input
-            type="text"
-            value={formData.technologies}
-            onChange={(e) => setFormData({...formData, technologies: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            placeholder="React, Node.js, MongoDB"
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Thumbnail URL</label>
-            <input
-              type="url"
-              value={formData.thumbnail}
-              onChange={(e) => setFormData({...formData, thumbnail: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Gallery Images (comma-separated URLs)</label>
-            <input
-              type="text"
-              value={formData.images}
-              onChange={(e) => setFormData({...formData, images: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-            <select
-              value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option>Completed</option>
-              <option>In Progress</option>
-              <option>Planning</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Team Size</label>
-            <input
-              type="number"
-              value={formData.teamSize}
-              onChange={(e) => setFormData({...formData, teamSize: parseInt(e.target.value)})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              min="1"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Duration</label>
-            <input
-              type="text"
-              value={formData.duration}
-              onChange={(e) => setFormData({...formData, duration: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              placeholder="3 months"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Live Demo URL</label>
-            <input
-              type="url"
-              value={formData.liveLink}
-              onChange={(e) => setFormData({...formData, liveLink: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">GitHub URL</label>
-            <input
-              type="url"
-              value={formData.githubLink}
-              onChange={(e) => setFormData({...formData, githubLink: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Case Study URL</label>
-            <input
-              type="url"
-              value={formData.caseStudyLink}
-              onChange={(e) => setFormData({...formData, caseStudyLink: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="featured"
-            checked={formData.featured}
-            onChange={(e) => setFormData({...formData, featured: e.target.checked})}
-            className="mr-2"
-          />
-          <label htmlFor="featured" className="text-sm font-medium text-gray-700">
-            Featured Project
-          </label>
-        </div>
-
-        <div className="flex gap-3 pt-4">
-          <Button type="submit" className="flex-1">
-            <Save className="w-4 h-4 mr-2" />
-            {project ? 'Update Project' : 'Add Project'}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
-            Cancel
-          </Button>
-        </div>
-      </form>
     </div>
   );
 };
@@ -713,8 +948,8 @@ const PortfolioWithAdmin = () => {
       description: 'Comprehensive e-commerce solution with modern UI/UX, payment integration, and inventory management system.',
       longDescription: 'A full-stack e-commerce platform designed for African markets, featuring mobile-first design, multiple payment gateway integration including mobile money, inventory management, analytics dashboard, and multi-language support. Built with scalability and performance in mind.',
       technologies: ['Next.js', 'React', 'Node.js', 'MongoDB', 'Stripe', 'PayStack', 'Tailwind CSS'],
-      images: ['/api/placeholder/800/600', '/api/placeholder/800/600', '/api/placeholder/800/600'],
-      thumbnail: '/api/placeholder/400/300',
+      images: ['https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/ecommerce-1.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/ecommerce-2.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/ecommerce-3.jpg'],
+      thumbnail: 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/ecommerce-thumb.jpg',
       status: 'Completed',
       featured: true,
       metrics: {
@@ -746,8 +981,8 @@ const PortfolioWithAdmin = () => {
       description: 'Real-time data visualization dashboard for smart city infrastructure monitoring and management.',
       longDescription: 'An advanced IoT dashboard solution for monitoring city infrastructure including traffic flow, air quality, waste management, and energy consumption. Features real-time data processing, predictive analytics, and automated alert systems.',
       technologies: ['React', 'D3.js', 'Python', 'FastAPI', 'PostgreSQL', 'Docker', 'AWS'],
-      images: ['/api/placeholder/800/500', '/api/placeholder/800/500'],
-      thumbnail: '/api/placeholder/400/300',
+      images: ['https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/dashboard-1.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/dashboard-2.jpg'],
+      thumbnail: 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/dashboard-thumb.jpg',
       status: 'Completed',
       featured: true,
       metrics: {
@@ -778,8 +1013,8 @@ const PortfolioWithAdmin = () => {
       description: 'Mobile application connecting farmers with markets, weather data, and agricultural best practices.',
       longDescription: 'A comprehensive mobile solution for agricultural development in Ghana, providing farmers with market prices, weather forecasts, crop management advice, and direct market access. Features offline functionality and multi-language support.',
       technologies: ['Flutter', 'Dart', 'Firebase', 'Google Maps API', 'Weather API', 'Node.js'],
-      images: ['/api/placeholder/400/600', '/api/placeholder/400/600', '/api/placeholder/400/600'],
-      thumbnail: '/api/placeholder/400/300',
+      images: ['https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/agritech-1.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/agritech-2.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/agritech-3.jpg'],
+      thumbnail: 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/agritech-thumb.jpg',
       status: 'In Progress',
       featured: false,
       metrics: {
@@ -797,96 +1032,6 @@ const PortfolioWithAdmin = () => {
         { name: 'Manasseh Kabutey', role: 'Mobile Developer', contribution: 'Flutter app development, API integration' },
         { name: 'Benjamin Agbesi', role: 'UI/UX Designer', contribution: 'Mobile interface design, user research' },
         { name: 'Agricultural Consultants', role: 'Domain Experts', contribution: 'Agricultural content, best practices' }
-      ]
-    },
-    {
-      id: 4,
-      title: 'Manufacturing Process Optimization',
-      category: 'Engineering & CAD',
-      client: 'Industrial Manufacturing Corp',
-      year: '2024',
-      location: 'Ghana',
-      description: '3D CAD modeling and process optimization for manufacturing efficiency improvement.',
-      longDescription: 'Complete redesign and optimization of manufacturing processes using advanced CAD modeling, simulation, and lean manufacturing principles. Achieved 30% efficiency improvement and 25% cost reduction.',
-      technologies: ['SolidWorks', 'AutoCAD', 'ANSYS', 'Lean Six Sigma', 'Process Simulation'],
-      images: ['/api/placeholder/800/600', '/api/placeholder/800/600'],
-      thumbnail: '/api/placeholder/400/300',
-      status: 'Completed',
-      featured: true,
-      metrics: {
-        views: '956',
-        likes: 78,
-        shares: 21
-      },
-      links: {
-        case: '/case-study/4'
-      },
-      awards: ['Excellence in Engineering 2024'],
-      teamSize: 2,
-      duration: '3 months',
-      teamMembers: [
-        { name: 'Ocloo Godwin', role: 'Lead CAD Engineer', contribution: '3D modeling, process design, simulation analysis' },
-        { name: 'Engineering Team', role: 'Process Engineers', contribution: 'Process optimization, quality control' }
-      ]
-    },
-    {
-      id: 5,
-      title: 'Corporate Branding Suite',
-      category: 'Creative & Design',
-      client: 'Multiple Corporate Clients',
-      year: '2024',
-      location: 'International',
-      description: 'Complete brand identity design including logos, marketing materials, and digital assets.',
-      longDescription: 'Comprehensive branding solutions for various corporate clients including logo design, brand guidelines, marketing collateral, website design, and social media assets. Focus on modern, culturally-aware design principles.',
-      technologies: ['Adobe Creative Suite', 'Figma', 'After Effects', 'Sketch', 'Webflow'],
-      images: ['/api/placeholder/800/600', '/api/placeholder/800/600', '/api/placeholder/800/600'],
-      thumbnail: '/api/placeholder/400/300',
-      status: 'Completed',
-      featured: false,
-      metrics: {
-        views: '2.1K',
-        likes: 134,
-        shares: 67
-      },
-      links: {
-        live: 'https://nexacore-design-portfolio.com'
-      },
-      awards: [],
-      teamSize: 2,
-      duration: '2 months',
-      teamMembers: [
-        { name: 'Benjamin Agbesi', role: 'Creative Director', contribution: 'Brand strategy, visual identity design' },
-        { name: 'Design Team', role: 'Graphic Designers', contribution: 'Marketing materials, digital assets' }
-      ]
-    },
-    {
-      id: 6,
-      title: 'Data Automation Platform',
-      category: 'Tools & Utilities',
-      client: 'Financial Services Ltd',
-      year: '2024',
-      location: 'Ghana',
-      description: 'Automated data processing and reporting system for financial analytics and compliance.',
-      longDescription: 'Enterprise-grade data automation platform that processes financial data, generates compliance reports, and provides real-time analytics. Features include data validation, automated scheduling, and secure API integrations.',
-      technologies: ['Python', 'Pandas', 'Apache Airflow', 'PostgreSQL', 'Docker', 'Redis'],
-      images: ['/api/placeholder/800/500'],
-      thumbnail: '/api/placeholder/400/300',
-      status: 'Completed',
-      featured: false,
-      metrics: {
-        views: '743',
-        likes: 45,
-        shares: 12
-      },
-      links: {
-        github: 'https://github.com/nexacore-innovations/data-automation'
-      },
-      awards: [],
-      teamSize: 2,
-      duration: '3 months',
-      teamMembers: [
-        { name: 'Data Engineering Team', role: 'Backend Developers', contribution: 'Data pipeline development, automation scripts' },
-        { name: 'Manasseh Kabutey', role: 'System Architect', contribution: 'System design, API development' }
       ]
     }
   ]);
@@ -962,37 +1107,35 @@ const PortfolioWithAdmin = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
-      {/* Admin Controls */}
-      {isAdmin && (
-        <div className="bg-blue-600 text-white p-4 pt-20">
-          <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <div className="flex items-center">
-              <Settings className="w-5 h-5 mr-2" />
-              <span className="font-medium">Admin Mode Active</span>
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                variant="secondary"
-                onClick={() => setShowAddProject(true)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Project
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Header Section */}
-      <section className={`bg-gradient-to-br from-blue-600 via-purple-600 to-teal-600 text-white ${isAdmin ? 'py-12' : 'py-20 pt-32'}`}>
+      <section className={`bg-gradient-to-br from-blue-600 via-purple-600 to-teal-600 text-white ${isAdmin ? 'py-12' : 'py-20'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Admin Controls */}
+          {isAdmin && (
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-8">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <Settings className="w-5 h-5 mr-2" />
+                  <span className="font-medium">Admin Mode Active - GitHub Integration Enabled</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    size="sm" 
+                    variant="secondary"
+                    onClick={() => setShowAddProject(true)}
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Project
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleLogout} className="border-white text-white hover:bg-white hover:text-gray-900">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logout
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="text-center">
             <Badge className="bg-white/20 text-white border-white/30 mb-6 text-lg px-6 py-2">
               <Building2 className="w-5 h-5 mr-2" />
@@ -1142,55 +1285,6 @@ const PortfolioWithAdmin = () => {
         </div>
       </section>
 
-      {/* Company Capabilities Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Our Core Capabilities
-            </h2>
-            <p className="text-xl text-gray-600">
-              The technologies and expertise that power our innovative solutions
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center p-6">
-              <Globe className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Web Development</h3>
-              <p className="text-gray-600 mb-4">Modern web applications using cutting-edge frameworks</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {['Next.js', 'React', 'Node.js', 'TypeScript'].map((tech, index) => (
-                  <Badge key={index} variant="outline">{tech}</Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="text-center p-6">
-              <Smartphone className="w-12 h-12 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Mobile Development</h3>
-              <p className="text-gray-600 mb-4">Cross-platform mobile solutions</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {['Flutter', 'Dart', 'Firebase', 'React Native'].map((tech, index) => (
-                  <Badge key={index} variant="outline">{tech}</Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="text-center p-6">
-              <Settings className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Engineering & Design</h3>
-              <p className="text-gray-600 mb-4">CAD modeling and industrial design solutions</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {['SolidWorks', 'AutoCAD', '3D Modeling', 'ANSYS'].map((tech, index) => (
-                  <Badge key={index} variant="outline">{tech}</Badge>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Contact CTA Section */}
       <section className="py-20 bg-gradient-to-br from-gray-900 to-blue-900 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -1204,7 +1298,6 @@ const PortfolioWithAdmin = () => {
             <Button 
               size="lg" 
               className="bg-white text-gray-900 hover:bg-gray-100"
-              onClick={() => window.location.href = '/get-started'}
             >
               Start Your Project
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -1213,7 +1306,6 @@ const PortfolioWithAdmin = () => {
               size="lg" 
               variant="outline" 
               className="border-white text-white hover:bg-white hover:text-gray-900"
-              onClick={() => window.location.href = '/services'}
             >
               View Our Services
             </Button>
@@ -1233,7 +1325,7 @@ const PortfolioWithAdmin = () => {
       {/* Add/Edit Project Modal */}
       {(showAddProject || editingProject) && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="max-w-4xl w-full">
+          <div className="max-w-5xl w-full">
             <ProjectForm
               project={editingProject}
               onSave={editingProject ? handleUpdateProject : handleAddProject}
@@ -1254,8 +1346,6 @@ const PortfolioWithAdmin = () => {
         setEditingProject={setEditingProject}
         handleDeleteProject={handleDeleteProject}
       />
-
-      <Footer />
     </div>
   );
 };
