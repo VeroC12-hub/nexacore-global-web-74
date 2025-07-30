@@ -73,7 +73,7 @@ const AIAssistant = () => {
     }
     
     if (lowerInput.includes('contact') || lowerInput.includes('reach')) {
-      return "You can reach us at info@nexacoreinnovations.com or call +233 54087377. We're also available for WhatsApp consultations. Would you like me to help you schedule a call?";
+      return "You can reach us at info@nexacore-innovations.com or call +233 54087377. We're also available for WhatsApp consultations. Would you like me to help you schedule a call?";
     }
     
     if (lowerInput.includes('team') || lowerInput.includes('who are you')) {
