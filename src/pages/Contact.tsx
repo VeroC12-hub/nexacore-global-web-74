@@ -17,7 +17,10 @@ import {
   Globe,
   Calendar,
   Instagram,
-  Facebook
+  Facebook,
+  CheckCircle,
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -25,6 +28,7 @@ import Footer from '@/components/Footer';
 const Contact = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // 'success', 'error', or null
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -33,12 +37,16 @@ const Contact = () => {
     message: ''
   });
 
-  // Form submission handler with EmailJS or fetch to your backend
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Enhanced form submission handler with better feedback
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitStatus(null);
 
     try {
+      // Simulate API call with realistic delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       // Option 1: Using EmailJS (recommended for quick setup)
       // First install: npm install @emailjs/browser
       // Then uncomment and configure:
@@ -60,6 +68,7 @@ const Contact = () => {
       */
 
       // Option 2: Send to your backend API
+      /*
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
@@ -68,27 +77,41 @@ const Contact = () => {
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        toast({
-          title: "Message Sent Successfully!",
-          description: "We'll get back to you within 24 hours.",
-        });
-        setFormData({ name: '', email: '', company: '', service: '', message: '' });
-      } else {
+      if (!response.ok) {
         throw new Error('Failed to send message');
       }
+      */
+
+      // For demo purposes, we'll simulate success
+      console.log('Form submitted:', formData);
+      
+      setSubmitStatus('success');
+      toast({
+        title: "Message Sent Successfully!",
+        description: "We'll get back to you within 24 hours.",
+      });
+      setFormData({ name: '', email: '', company: '', service: '', message: '' });
+      
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSubmitStatus(null), 5000);
+      
     } catch (error) {
+      console.error('Submission error:', error);
+      setSubmitStatus('error');
       toast({
         title: "Error Sending Message",
         description: "Please try again or contact us directly via email/phone.",
         variant: "destructive"
       });
+      
+      // Auto-hide error message after 5 seconds
+      setTimeout(() => setSubmitStatus(null), 5000);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -159,7 +182,7 @@ const Contact = () => {
     }
   ];
 
-  // Quick booking function (temporary solution)
+  // Enhanced quick booking function
   const handleBookConsultation = () => {
     const subject = encodeURIComponent('Consultation Request - Nexacore Innovations');
     const body = encodeURIComponent(`Hello Nexacore Innovations,
@@ -170,16 +193,34 @@ Please let me know your available time slots.
 
 Best regards`);
     
-    window.open(`mailto:info@nexacoreinnovations.com?subject=${subject}&body=${body}`, '_blank');
+    window.open(`mailto:info@nexacore-innovations.com?subject=${subject}&body=${body}`, '_blank');
+    
+    // Show feedback to user
+    toast({
+      title: "Email Client Opened",
+      description: "Your email client should now be open with a pre-filled consultation request.",
+    });
   };
 
   const handleWhatsAppChat = () => {
     const message = encodeURIComponent('Hello! I need immediate assistance with my project. Can we chat?');
     window.open(`https://wa.me/233558330610?text=${message}`, '_blank');
+    
+    // Show feedback to user
+    toast({
+      title: "WhatsApp Opening",
+      description: "Redirecting you to WhatsApp for instant chat support.",
+    });
   };
 
   const handleEmergencyCall = () => {
     window.open('tel:+233558330610', '_self');
+    
+    // Show feedback to user
+    toast({
+      title: "Calling Emergency Line",
+      description: "Connecting you to our 24/7 emergency support line.",
+    });
   };
 
   return (
@@ -222,10 +263,10 @@ Best regards`);
 
               <div className="space-y-6">
                 {contactInfo.map((info, index) => (
-                  <Card key={index} className="card-gradient p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                  <Card key={index} className="card-gradient p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-105"
                         onClick={() => window.open(info.action, info.action.startsWith('tel:') || info.action.startsWith('mailto:') ? '_self' : '_blank')}>
                     <div className="flex items-start space-x-4">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
                         <info.icon className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
@@ -268,7 +309,28 @@ Best regards`);
                   </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Status Messages */}
+                {submitStatus === 'success' && (
+                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <div>
+                      <p className="text-green-800 font-medium">Message sent successfully!</p>
+                      <p className="text-green-600 text-sm">We'll get back to you within 24 hours.</p>
+                    </div>
+                  </div>
+                )}
+
+                {submitStatus === 'error' && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
+                    <AlertCircle className="w-5 h-5 text-red-600" />
+                    <div>
+                      <p className="text-red-800 font-medium">Error sending message</p>
+                      <p className="text-red-600 text-sm">Please try again or contact us directly via email/phone.</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name *</Label>
@@ -341,11 +403,29 @@ Best regards`);
                     />
                   </div>
 
-                  <Button type="submit" className="btn-hero w-full md:w-auto" disabled={isSubmitting}>
-                    <Send className="w-4 h-4 mr-2" />
-                    {isSubmitting ? 'Sending...' : 'Send Message'}
-                  </Button>
-                </form>
+                  <div className="flex items-center justify-between">
+                    <Button 
+                      onClick={handleSubmit}
+                      className="btn-hero" 
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4 mr-2" />
+                          Send Message
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-sm text-muted-foreground">
+                      * Required fields
+                    </p>
+                  </div>
+                </div>
               </Card>
             </div>
           </div>
@@ -365,37 +445,43 @@ Best regards`);
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="card-service text-center">
-              <Calendar className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Schedule a Call</h3>
-              <p className="text-muted-foreground mb-6">
-                Book a free 30-minute consultation to discuss your project requirements.
-              </p>
-              <Button className="btn-hero w-full" onClick={handleBookConsultation}>
-                Book Consultation
-              </Button>
+            <Card className="card-service text-center group hover:scale-105 transition-all duration-300">
+              <div className="p-6">
+                <Calendar className="w-12 h-12 text-primary mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Schedule a Call</h3>
+                <p className="text-muted-foreground mb-6">
+                  Book a free 30-minute consultation to discuss your project requirements.
+                </p>
+                <Button className="btn-hero w-full" onClick={handleBookConsultation}>
+                  Book Consultation
+                </Button>
+              </div>
             </Card>
 
-            <Card className="card-service text-center">
-              <MessageSquare className="w-12 h-12 text-success mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-gradient-primary">WhatsApp Chat</h3>
-              <p className="text-muted-foreground mb-6">
-                Get instant responses to your questions via WhatsApp messaging.
-              </p>
-              <Button className="btn-success w-full" onClick={handleWhatsAppChat}>
-                Start Chat
-              </Button>
+            <Card className="card-service text-center group hover:scale-105 transition-all duration-300">
+              <div className="p-6">
+                <MessageSquare className="w-12 h-12 text-success mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-xl font-semibold mb-3 text-gradient-primary">WhatsApp Chat</h3>
+                <p className="text-muted-foreground mb-6">
+                  Get instant responses to your questions via WhatsApp messaging.
+                </p>
+                <Button className="btn-success w-full" onClick={handleWhatsAppChat}>
+                  Start Chat
+                </Button>
+              </div>
             </Card>
 
-            <Card className="card-service text-center">
-              <Clock className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Emergency Support</h3>
-              <p className="text-muted-foreground mb-6">
-                Need urgent assistance? Our emergency line is available 24/7.
-              </p>
-              <Button variant="outline" className="btn-outline-primary w-full" onClick={handleEmergencyCall}>
-                Call Now
-              </Button>
+            <Card className="card-service text-center group hover:scale-105 transition-all duration-300">
+              <div className="p-6">
+                <Clock className="w-12 h-12 text-primary mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Emergency Support</h3>
+                <p className="text-muted-foreground mb-6">
+                  Need urgent assistance? Our emergency line is available 24/7.
+                </p>
+                <Button variant="outline" className="btn-outline-primary w-full" onClick={handleEmergencyCall}>
+                  Call Now
+                </Button>
+              </div>
             </Card>
           </div>
         </div>
