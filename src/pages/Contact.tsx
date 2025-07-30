@@ -182,45 +182,87 @@ const Contact = () => {
     }
   ];
 
-  // Enhanced quick booking function
+  // Enhanced quick booking function with better feedback
   const handleBookConsultation = () => {
-    const subject = encodeURIComponent('Consultation Request - Nexacore Innovations');
-    const body = encodeURIComponent(`Hello Nexacore Innovations,
+    const subject = encodeURIComponent('🗓️ Consultation Request - Nexacore Innovations');
+    const body = encodeURIComponent(`Hello Nexacore Innovations Team,
 
-I would like to schedule a 30-minute consultation to discuss my project requirements.
+I hope this email finds you well! I would like to schedule a FREE 30-minute consultation to discuss my project requirements.
 
-Please let me know your available time slots.
+📋 PROJECT DETAILS:
+• Project Type: [Please specify - Web Development, Mobile App, etc.]
+• Timeline: [When do you need this completed?]
+• Budget Range: [Optional]
+• Special Requirements: [Any specific needs or questions?]
 
-Best regards`);
+📅 PREFERRED CONSULTATION TIMES:
+• Option 1: [Day/Time]
+• Option 2: [Day/Time] 
+• Option 3: [Day/Time]
+
+Please let me know your available time slots that work best for both of us.
+
+Looking forward to discussing how Nexacore Innovations can help bring my project to life!
+
+Best regards,
+[Your Name]
+[Your Phone Number]`);
     
+    // Open email client
     window.open(`mailto:info@nexacore-innovations.com?subject=${subject}&body=${body}`, '_blank');
     
-    // Show feedback to user
+    // Show feedback with enhanced message
     toast({
-      title: "Email Client Opened",
-      description: "Your email client should now be open with a pre-filled consultation request.",
+      title: "📧 Email Client Opened!",
+      description: "Pre-filled consultation request ready to send. Check your email client.",
+      duration: 4000,
     });
   };
 
   const handleWhatsAppChat = () => {
-    const message = encodeURIComponent('Hello! I need immediate assistance with my project. Can we chat?');
-    window.open(`https://wa.me/233558330610?text=${message}`, '_blank');
+    const message = encodeURIComponent(`👋 Hello Nexacore Innovations!
+
+I'm interested in your services and would like to discuss my project requirements.
+
+🚀 I'm looking for help with:
+• [Brief description of your project]
+
+⏰ Best time to chat: [Your preferred time]
+
+Can we schedule a quick chat to explore how you can help me achieve my goals?
+
+Thank you! 😊`);
     
-    // Show feedback to user
+    const whatsappUrl = `https://wa.me/233558330610?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+    
+    // Show feedback with enhanced message
     toast({
-      title: "WhatsApp Opening",
-      description: "Redirecting you to WhatsApp for instant chat support.",
+      title: "💬 Opening WhatsApp...",
+      description: "Redirecting to WhatsApp with pre-filled message for instant support!",
+      duration: 4000,
     });
   };
 
   const handleEmergencyCall = () => {
+    // First try to make the call
     window.open('tel:+233558330610', '_self');
     
-    // Show feedback to user
+    // Show feedback with enhanced message
     toast({
-      title: "Calling Emergency Line",
-      description: "Connecting you to our 24/7 emergency support line.",
+      title: "🚨 Calling Emergency Line",
+      description: "Connecting you to our 24/7 emergency support. If call doesn't connect, try WhatsApp.",
+      duration: 5000,
     });
+    
+    // Fallback option after 3 seconds if call doesn't work
+    setTimeout(() => {
+      toast({
+        title: "📱 Alternative Contact Options",
+        description: "Call not connecting? Try our WhatsApp for immediate assistance!",
+        duration: 4000,
+      });
+    }, 3000);
   };
 
   return (
@@ -445,40 +487,43 @@ Best regards`);
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="card-service text-center group hover:scale-105 transition-all duration-300">
+            <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer" onClick={handleBookConsultation}>
               <div className="p-6">
                 <Calendar className="w-12 h-12 text-primary mx-auto mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Schedule a Call</h3>
                 <p className="text-muted-foreground mb-6">
                   Book a free 30-minute consultation to discuss your project requirements.
                 </p>
-                <Button className="btn-hero w-full" onClick={handleBookConsultation}>
+                <Button className="btn-hero w-full" onClick={(e) => {e.stopPropagation(); handleBookConsultation();}}>
+                  <Calendar className="w-4 h-4 mr-2" />
                   Book Consultation
                 </Button>
               </div>
             </Card>
 
-            <Card className="card-service text-center group hover:scale-105 transition-all duration-300">
+            <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer" onClick={handleWhatsAppChat}>
               <div className="p-6">
-                <MessageSquare className="w-12 h-12 text-success mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <MessageSquare className="w-12 h-12 text-green-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-xl font-semibold mb-3 text-gradient-primary">WhatsApp Chat</h3>
                 <p className="text-muted-foreground mb-6">
                   Get instant responses to your questions via WhatsApp messaging.
                 </p>
-                <Button className="btn-success w-full" onClick={handleWhatsAppChat}>
+                <Button className="bg-green-500 hover:bg-green-600 text-white w-full" onClick={(e) => {e.stopPropagation(); handleWhatsAppChat();}}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
                   Start Chat
                 </Button>
               </div>
             </Card>
 
-            <Card className="card-service text-center group hover:scale-105 transition-all duration-300">
+            <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer" onClick={handleEmergencyCall}>
               <div className="p-6">
-                <Clock className="w-12 h-12 text-primary mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <Clock className="w-12 h-12 text-red-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Emergency Support</h3>
                 <p className="text-muted-foreground mb-6">
                   Need urgent assistance? Our emergency line is available 24/7.
                 </p>
-                <Button variant="outline" className="btn-outline-primary w-full" onClick={handleEmergencyCall}>
+                <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white w-full" onClick={(e) => {e.stopPropagation(); handleEmergencyCall();}}>
+                  <Phone className="w-4 h-4 mr-2" />
                   Call Now
                 </Button>
               </div>
