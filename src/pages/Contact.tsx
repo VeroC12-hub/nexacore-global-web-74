@@ -1,3 +1,53 @@
+/*
+🚀 EMAILJS SETUP INSTRUCTIONS:
+
+1. Go to https://www.emailjs.com/ and create a free account
+2. Create an Email Service (Gmail, Outlook, etc.)
+3. Create an Email Template with these variables:
+   - {{from_name}} - Sender's name
+   - {{from_email}} - Sender's email
+   - {{company}} - Company name
+   - {{service}} - Service interest
+   - {{message}} - Message content
+   - {{timestamp}} - Submission time
+   
+4. Get your credentials from the EmailJS dashboard:
+   - Service ID (from Email Services)
+   - Template ID (from Email Templates)  
+   - Public Key (from Account > API Keys)
+
+5. Add this script to your index.html file:
+   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+   <script type="text/javascript">
+     (function() {
+       emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your public key
+     })();
+   </script>
+
+6. Replace the placeholder values in the code below:
+   - YOUR_SERVICE_ID
+   - YOUR_TEMPLATE_ID  
+   - YOUR_PUBLIC_KEY
+
+📧 Example Email Template:
+Subject: New Contact Form Submission from {{from_name}}
+
+Hello,
+
+You have received a new message from your website contact form:
+
+Name: {{from_name}}
+Email: {{from_email}}
+Company: {{company}}
+Service Interest: {{service}}
+Submitted: {{timestamp}}
+
+Message:
+{{message}}
+
+Reply to: {{from_email}}
+*/
+
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -37,75 +87,121 @@ const Contact = () => {
     message: ''
   });
 
-  // Enhanced form submission handler with better feedback
+  // EmailJS Configuration - Replace with your actual values
+  const EMAILJS_CONFIG = {
+    serviceID: 'YOUR_SERVICE_ID',      // Replace with your service ID
+    templateID: 'YOUR_TEMPLATE_ID',    // Replace with your template ID
+    publicKey: 'YOUR_PUBLIC_KEY',      // Replace with your public key
+    demoMode: true  // Set to false once you've configured EmailJS
+  };
+
+  // Enhanced form submission handler with EmailJS
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSubmitStatus(null);
 
     try {
-      // Simulate API call with realistic delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Option 1: Using EmailJS (recommended for quick setup)
-      // First install: npm install @emailjs/browser
-      // Then uncomment and configure:
-      /*
-      const emailjs = require('@emailjs/browser');
-      await emailjs.send(
-        'YOUR_SERVICE_ID',
-        'YOUR_TEMPLATE_ID',
-        {
-          from_name: formData.name,
-          from_email: formData.email,
-          company: formData.company,
-          service: formData.service,
-          message: formData.message,
-          to_email: 'info@nexacore-innovations.com'
-        },
-        'YOUR_PUBLIC_KEY'
-      );
-      */
-
-      // Option 2: Send to your backend API
-      /*
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send message');
+      // Demo mode for testing before EmailJS setup
+      if (EMAILJS_CONFIG.demoMode) {
+        console.log('🧪 DEMO MODE: Form data that would be sent:', formData);
+        
+        // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        setSubmitStatus('success');
+        toast({
+          title: "🧪 Demo Mode: Message Simulated!",
+          description: "This is a demo. Set up EmailJS to send real emails. Check console for form data.",
+          duration: 6000,
+        });
+        
+        setFormData({ name: '', email: '', company: '', service: '', message: '' });
+        setTimeout(() => setSubmitStatus(null), 8000);
+        return;
       }
-      */
 
-      // For demo purposes, we'll simulate success
-      console.log('Form submitted:', formData);
+      // Real EmailJS implementation
+      const emailjs = window.emailjs;
       
-      setSubmitStatus('success');
-      toast({
-        title: "Message Sent Successfully!",
-        description: "We'll get back to you within 24 hours.",
-      });
-      setFormData({ name: '', email: '', company: '', service: '', message: '' });
+      if (!emailjs) {
+        throw new Error('EmailJS not loaded. Please ensure the EmailJS script is included in your HTML.');
+      }
+
+      // Check if configuration is still using placeholder values
+      if (EMAILJS_CONFIG.serviceID === 'YOUR_SERVICE_ID' || 
+          EMAILJS_CONFIG.templateID === 'YOUR_TEMPLATE_ID' || 
+          EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY') {
+        throw new Error('Please configure your EmailJS credentials in the EMAILJS_CONFIG object.');
+      }
+
+      // Prepare template parameters
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        company: formData.company || 'Not specified',
+        service: formData.service || 'Not specified',
+        message: formData.message,
+        to_email: 'info@nexacore-innovations.com',
+        reply_to: formData.email,
+        timestamp: new Date().toLocaleString(),
+        subject: `New Contact Form Submission from ${formData.name}`,
+      };
+
+      console.log('📧 Sending email with EmailJS...', templateParams);
+
+      // Send email using EmailJS
+      const response = await emailjs.send(
+        EMAILJS_CONFIG.serviceID,
+        EMAILJS_CONFIG.templateID,
+        templateParams,
+        EMAILJS_CONFIG.publicKey
+      );
+
+      console.log('✅ EmailJS Response:', response);
       
-      // Auto-hide success message after 5 seconds
-      setTimeout(() => setSubmitStatus(null), 5000);
+      if (response.status === 200) {
+        setSubmitStatus('success');
+        toast({
+          title: "✅ Message Sent Successfully!",
+          description: "Thank you for contacting us! We'll get back to you within 24 hours.",
+          duration: 5000,
+        });
+        
+        // Clear form
+        setFormData({ name: '', email: '', company: '', service: '', message: '' });
+        setTimeout(() => setSubmitStatus(null), 8000);
+      } else {
+        throw new Error('Failed to send email');
+      }
       
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error('❌ Email Error:', error);
       setSubmitStatus('error');
+      
+      // Detailed error handling
+      let errorMessage = "Please try again or contact us directly.";
+      let errorTitle = "❌ Error Sending Message";
+      
+      if (error.message.includes('EmailJS not loaded')) {
+        errorTitle = "⚙️ EmailJS Not Configured";
+        errorMessage = "Please add the EmailJS script to your HTML file and configure your credentials.";
+      } else if (error.message.includes('configure your EmailJS')) {
+        errorTitle = "🔧 Configuration Required";
+        errorMessage = "Please update the EMAILJS_CONFIG with your actual service credentials.";
+      } else if (error.message.includes('Invalid service ID')) {
+        errorTitle = "🔑 Invalid Service ID";
+        errorMessage = "Please check your EmailJS service ID configuration.";
+      }
+      
       toast({
-        title: "Error Sending Message",
-        description: "Please try again or contact us directly via email/phone.",
-        variant: "destructive"
+        title: errorTitle,
+        description: errorMessage,
+        variant: "destructive",
+        duration: 6000,
       });
       
-      // Auto-hide error message after 5 seconds
-      setTimeout(() => setSubmitStatus(null), 5000);
+      setTimeout(() => setSubmitStatus(null), 8000);
     } finally {
       setIsSubmitting(false);
     }
