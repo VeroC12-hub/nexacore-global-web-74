@@ -48,9 +48,9 @@ const Contact = () => {
     {
       icon: Phone,
       title: 'Phone',
-      value: '+233 54087377',
+      value: '+233 558330610',
       description: 'Mon-Fri 9AM-6PM GMT',
-      action: 'tel:+233540873777'
+      action: 'tel:+233558330610'
     },
     {
       icon: Mail,
@@ -69,9 +69,9 @@ const Contact = () => {
     {
       icon: MessageSquare,
       title: 'WhatsApp',
-      value: '+233 54087377',
+      value: '+233 558330610',
       description: 'Quick chat support',
-      action: 'https://wa.me/233540873777'
+      action: 'https://wa.me/233558330610'
     }
   ];
 
