@@ -15,13 +15,16 @@ import {
   Send,
   Clock,
   Globe,
-  Calendar
+  Calendar,
+  Instagram,
+  Facebook
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const Contact = () => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -30,14 +33,59 @@ const Contact = () => {
     message: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Form submission handler with EmailJS or fetch to your backend
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission logic here
-    toast({
-      title: "Message Sent!",
-      description: "We'll get back to you within 24 hours.",
-    });
-    setFormData({ name: '', email: '', company: '', service: '', message: '' });
+    setIsSubmitting(true);
+
+    try {
+      // Option 1: Using EmailJS (recommended for quick setup)
+      // First install: npm install @emailjs/browser
+      // Then uncomment and configure:
+      /*
+      const emailjs = require('@emailjs/browser');
+      await emailjs.send(
+        'YOUR_SERVICE_ID',
+        'YOUR_TEMPLATE_ID',
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          company: formData.company,
+          service: formData.service,
+          message: formData.message,
+          to_email: 'info@nexacoreinnovations.com'
+        },
+        'YOUR_PUBLIC_KEY'
+      );
+      */
+
+      // Option 2: Send to your backend API
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Message Sent Successfully!",
+          description: "We'll get back to you within 24 hours.",
+        });
+        setFormData({ name: '', email: '', company: '', service: '', message: '' });
+      } else {
+        throw new Error('Failed to send message');
+      }
+    } catch (error) {
+      toast({
+        title: "Error Sending Message",
+        description: "Please try again or contact us directly via email/phone.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -64,14 +112,14 @@ const Contact = () => {
       title: 'Location',
       value: 'Accra, Ghana',
       description: 'Global Remote Team',
-      action: '#'
+      action: 'https://maps.google.com/?q=Accra,Ghana'
     },
     {
       icon: MessageSquare,
       title: 'WhatsApp',
       value: '+233 558330610',
       description: 'Quick chat support',
-      action: 'https://wa.me/233558330610'
+      action: 'https://wa.me/233558330610?text=Hello%20Nexacore%20Innovations!%20I%20would%20like%20to%20discuss%20a%20project%20with%20you.'
     }
   ];
 
@@ -83,6 +131,56 @@ const Contact = () => {
     'Consultation',
     'Other'
   ];
+
+  const socialLinks = [
+    {
+      name: 'LinkedIn',
+      icon: Linkedin,
+      url: 'https://www.linkedin.com/company/108046319',
+      gradient: 'from-primary to-primary-glow'
+    },
+    {
+      name: 'Instagram',
+      icon: Instagram,
+      url: 'https://www.instagram.com/nexacoreinnovations',
+      gradient: 'from-pink-500 to-purple-600'
+    },
+    {
+      name: 'Facebook',
+      icon: Facebook,
+      url: 'https://web.facebook.com/people/NexaCore-Innovations/61578918113006',
+      gradient: 'from-blue-600 to-blue-700'
+    },
+    {
+      name: 'WhatsApp',
+      icon: MessageSquare,
+      url: 'https://wa.me/233558330610?text=Hello%20Nexacore%20Innovations!',
+      gradient: 'from-green-500 to-green-600'
+    }
+  ];
+
+  // Quick booking function (temporary solution)
+  const handleBookConsultation = () => {
+    const subject = encodeURIComponent('Consultation Request - Nexacore Innovations');
+    const body = encodeURIComponent(`Hello Nexacore Innovations,
+
+I would like to schedule a 30-minute consultation to discuss my project requirements.
+
+Please let me know your available time slots.
+
+Best regards`);
+    
+    window.open(`mailto:info@nexacoreinnovations.com?subject=${subject}&body=${body}`, '_blank');
+  };
+
+  const handleWhatsAppChat = () => {
+    const message = encodeURIComponent('Hello! I need immediate assistance with my project. Can we chat?');
+    window.open(`https://wa.me/233558330610?text=${message}`, '_blank');
+  };
+
+  const handleEmergencyCall = () => {
+    window.open('tel:+233558330610', '_self');
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,7 +222,8 @@ const Contact = () => {
 
               <div className="space-y-6">
                 {contactInfo.map((info, index) => (
-                  <Card key={index} className="card-gradient p-6">
+                  <Card key={index} className="card-gradient p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => window.open(info.action, info.action.startsWith('tel:') || info.action.startsWith('mailto:') ? '_self' : '_blank')}>
                     <div className="flex items-start space-x-4">
                       <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center flex-shrink-0">
                         <info.icon className="w-5 h-5 text-white" />
@@ -142,13 +241,19 @@ const Contact = () => {
               {/* Social Links */}
               <div className="pt-6">
                 <h3 className="font-semibold text-foreground mb-4">Follow Us</h3>
-                <div className="flex space-x-4">
-                  <a href="#" className="w-10 h-10 bg-gradient-to-br from-primary to-primary-glow rounded-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <Linkedin className="w-5 h-5 text-white" />
-                  </a>
-                  <a href="#" className="w-10 h-10 bg-gradient-to-br from-success to-success/80 rounded-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <MessageSquare className="w-5 h-5 text-white" />
-                  </a>
+                <div className="grid grid-cols-2 gap-3">
+                  {socialLinks.map((social, index) => (
+                    <a 
+                      key={index}
+                      href={social.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className={`group flex items-center space-x-3 p-3 bg-gradient-to-r ${social.gradient} rounded-lg hover:scale-105 transition-all duration-200 text-white`}
+                    >
+                      <social.icon className="w-5 h-5" />
+                      <span className="text-sm font-medium">{social.name}</span>
+                    </a>
+                  ))}
                 </div>
               </div>
             </div>
@@ -174,6 +279,7 @@ const Contact = () => {
                         onChange={handleChange}
                         placeholder="Your full name"
                         required
+                        disabled={isSubmitting}
                       />
                     </div>
                     <div className="space-y-2">
@@ -186,6 +292,7 @@ const Contact = () => {
                         onChange={handleChange}
                         placeholder="your.email@company.com"
                         required
+                        disabled={isSubmitting}
                       />
                     </div>
                   </div>
@@ -199,6 +306,7 @@ const Contact = () => {
                         value={formData.company}
                         onChange={handleChange}
                         placeholder="Your company name"
+                        disabled={isSubmitting}
                       />
                     </div>
                     <div className="space-y-2">
@@ -208,7 +316,8 @@ const Contact = () => {
                         name="service"
                         value={formData.service}
                         onChange={handleChange}
-                        className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                        disabled={isSubmitting}
+                        className="w-full px-3 py-2 border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                       >
                         <option value="">Select a service</option>
                         {services.map((service) => (
@@ -228,12 +337,13 @@ const Contact = () => {
                       placeholder="Tell us about your project, requirements, timeline, and any specific questions you have..."
                       rows={6}
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
 
-                  <Button type="submit" className="btn-hero w-full md:w-auto">
+                  <Button type="submit" className="btn-hero w-full md:w-auto" disabled={isSubmitting}>
                     <Send className="w-4 h-4 mr-2" />
-                    Send Message
+                    {isSubmitting ? 'Sending...' : 'Send Message'}
                   </Button>
                 </form>
               </Card>
@@ -261,7 +371,9 @@ const Contact = () => {
               <p className="text-muted-foreground mb-6">
                 Book a free 30-minute consultation to discuss your project requirements.
               </p>
-              <Button className="btn-hero w-full">Book Consultation</Button>
+              <Button className="btn-hero w-full" onClick={handleBookConsultation}>
+                Book Consultation
+              </Button>
             </Card>
 
             <Card className="card-service text-center">
@@ -270,7 +382,9 @@ const Contact = () => {
               <p className="text-muted-foreground mb-6">
                 Get instant responses to your questions via WhatsApp messaging.
               </p>
-              <Button className="btn-success w-full">Start Chat</Button>
+              <Button className="btn-success w-full" onClick={handleWhatsAppChat}>
+                Start Chat
+              </Button>
             </Card>
 
             <Card className="card-service text-center">
@@ -279,7 +393,9 @@ const Contact = () => {
               <p className="text-muted-foreground mb-6">
                 Need urgent assistance? Our emergency line is available 24/7.
               </p>
-              <Button variant="outline" className="btn-outline-primary w-full">Call Now</Button>
+              <Button variant="outline" className="btn-outline-primary w-full" onClick={handleEmergencyCall}>
+                Call Now
+              </Button>
             </Card>
           </div>
         </div>
