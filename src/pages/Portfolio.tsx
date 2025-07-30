@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Badge } from '@/components/ui/badge';
 import { Globe } from 'lucide-react';
 import { 
   Filter, 
@@ -28,7 +27,6 @@ import {
   X,
   Star,
   TrendingUp,
-  Globe,
   Plus,
   Edit,
   Trash2,
@@ -1110,87 +1108,64 @@ const PortfolioWithAdmin = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <section className={`bg-gradient-to-br from-blue-600 via-purple-600 to-teal-600 text-white ${isAdmin ? 'py-12' : 'py-20'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Admin Controls */}
-          {isAdmin && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-8">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      
+      {/* Hero Header */}
+      <section className="pt-16 pb-16 lg:pt-24 lg:pb-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Badge className="bg-primary/10 text-primary border-primary/20 mb-6">
+            <Globe className="w-4 h-4 mr-2" />
+            Portfolio
+          </Badge>
+          <h1 className="text-4xl lg:text-6xl font-bold mb-6">
+            <span className="text-gradient-hero">Showcasing Our Craft</span><br />
+            <span className="text-foreground">Excellence in Every Project</span>
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Explore the solutions we've created — from engineering to digital transformation. Each project tells a story of innovation, precision, and impact.
+          </p>
+        </div>
+      </section>
+
+      {/* Admin Controls */}
+      {isAdmin && (
+        <section className="py-4 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white rounded-lg p-4 shadow-sm border">
               <div className="flex justify-between items-center">
                 <div className="flex items-center">
-                  <Settings className="w-5 h-5 mr-2" />
-                  <span className="font-medium">Admin Mode Active - GitHub Integration Enabled</span>
+                  <Settings className="w-5 h-5 mr-2 text-primary" />
+                  <span className="font-medium text-foreground">Admin Mode Active - GitHub Integration Enabled</span>
                 </div>
                 <div className="flex gap-2">
                   <Button 
                     size="sm" 
-                    variant="secondary"
                     onClick={() => setShowAddProject(true)}
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Project
                   </Button>
-                  <Button size="sm" variant="outline" onClick={handleLogout} className="border-white text-white hover:bg-white hover:text-gray-900">
+                  <Button size="sm" variant="outline" onClick={handleLogout}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Logout
                   </Button>
                 </div>
               </div>
             </div>
-          )}
-
-          <div className="text-center">
-            <Badge className="bg-white/20 text-white border-white/30 mb-6 text-lg px-6 py-2">
-              <Building2 className="w-5 h-5 mr-2" />
-              NexaCore Innovations Portfolio
-            </Badge>
-            <h1 className="text-5xl lg:text-6xl font-bold mb-6">
-              Engineering <span className="text-gradient bg-gradient-to-r from-yellow-400 to-pink-400 bg-clip-text text-transparent">Innovation</span> Globally
-            </h1>
-            <p className="text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-              Showcasing our diverse portfolio of technical solutions, creative designs, and digital innovations. 
-              From engineering excellence to cutting-edge software development.
-            </p>
-            
-            {!isAdmin && (
-              <Button 
-                variant="outline" 
-                className="mt-6 border-white text-white hover:bg-white hover:text-gray-900"
-                onClick={() => setShowAdminLogin(true)}
-              >
-                <Lock className="w-4 h-4 mr-2" />
-                Admin Access
-              </Button>
-            )}
           </div>
-          
-          {/* Company Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-16">
-            {[
-              { number: `${projects.length}+`, label: 'Projects Delivered' },
-              { number: '25+', label: 'Global Clients' },
-              { number: '15+', label: 'Team Members' },
-              { number: '5+', label: 'Years Excellence' }
-            ].map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl lg:text-4xl font-bold mb-2">{stat.number}</div>
-                <div className="text-white/80">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Featured Projects */}
       {featuredProjects.length > 0 && (
-        <section className="py-16 bg-white">
+        <section className="py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                Featured Projects
+              <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+                <span className="text-gradient-primary">Featured Projects</span>
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-muted-foreground">
                 Highlighting our most impactful and innovative solutions
               </p>
             </div>
@@ -1213,7 +1188,7 @@ const PortfolioWithAdmin = () => {
       )}
 
       {/* Main Portfolio Section */}
-      <section className="py-16">
+      <section className="py-16 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Filters and Search */}
           <div className="mb-12">
@@ -1230,7 +1205,7 @@ const PortfolioWithAdmin = () => {
                   >
                     <category.icon className="w-4 h-4 mr-2" />
                     {category.name}
-                    <Badge className="ml-2 bg-gray-100 text-gray-700 group-hover:bg-white">
+                    <Badge className="ml-2 bg-muted text-muted-foreground group-hover:bg-background">
                       {category.count}
                     </Badge>
                   </Button>
@@ -1239,13 +1214,13 @@ const PortfolioWithAdmin = () => {
               
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
                   type="text"
                   placeholder="Search projects..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                  className="pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent w-64 bg-background"
                 />
               </div>
             </div>
@@ -1254,13 +1229,23 @@ const PortfolioWithAdmin = () => {
           {/* Results Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-foreground">
                 {selectedCategory === 'All' ? 'All Projects' : selectedCategory}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-muted-foreground">
                 Showing {filteredProjects.length} project{filteredProjects.length !== 1 ? 's' : ''}
               </p>
             </div>
+            
+            {!isAdmin && (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowAdminLogin(true)}
+              >
+                <Lock className="w-4 h-4 mr-2" />
+                Admin Access
+              </Button>
+            )}
           </div>
 
           {/* Projects Grid */}
@@ -1279,18 +1264,18 @@ const PortfolioWithAdmin = () => {
 
           {filteredProjects.length === 0 && (
             <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
+              <div className="text-muted-foreground mb-4">
                 <Search className="w-16 h-16 mx-auto" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No projects found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria</p>
+              <h3 className="text-xl font-semibold text-muted-foreground mb-2">No projects found</h3>
+              <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
             </div>
           )}
         </div>
       </section>
 
       {/* Contact CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-900 to-blue-900 text-white">
+      <section className="py-20 bg-gradient-to-br from-primary via-primary-glow to-success text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-6">
             Ready to Start Your Next Project?
@@ -1301,7 +1286,7 @@ const PortfolioWithAdmin = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               size="lg" 
-              className="bg-white text-gray-900 hover:bg-gray-100"
+              className="bg-white text-primary hover:bg-white/90"
             >
               Start Your Project
               <ArrowRight className="ml-2 w-5 h-5" />
@@ -1309,7 +1294,7 @@ const PortfolioWithAdmin = () => {
             <Button 
               size="lg" 
               variant="outline" 
-              className="border-white text-white hover:bg-white hover:text-gray-900"
+              className="border-white text-white hover:bg-white hover:text-primary"
             >
               View Our Services
             </Button>
@@ -1350,6 +1335,8 @@ const PortfolioWithAdmin = () => {
         setEditingProject={setEditingProject}
         handleDeleteProject={handleDeleteProject}
       />
+
+      <Footer />
     </div>
   );
 };
