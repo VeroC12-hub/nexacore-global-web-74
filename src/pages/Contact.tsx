@@ -53,7 +53,7 @@ const Contact = () => {
           company: formData.company,
           service: formData.service,
           message: formData.message,
-          to_email: 'info@nexacoreinnovations.com'
+          to_email: 'info@nexacore-innovations.com'
         },
         'YOUR_PUBLIC_KEY'
       );
@@ -103,9 +103,9 @@ const Contact = () => {
     {
       icon: Mail,
       title: 'Email',
-      value: 'info@nexacoreinnovations.com',
+      value: 'info@nexacore-innovations.com',
       description: 'We reply within 24 hours',
-      action: 'mailto:info@nexacoreinnovations.com'
+      action: 'mailto:info@nexacore-innovations.com'
     },
     {
       icon: MapPin,
