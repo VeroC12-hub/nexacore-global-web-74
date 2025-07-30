@@ -1,51 +1,29 @@
 /*
-🚀 EMAILJS SETUP INSTRUCTIONS:
+🚀 EMAILJS INTEGRATION - PRODUCTION READY
 
-1. Go to https://www.emailjs.com/ and create a free account
-2. Create an Email Service (Gmail, Outlook, etc.)
-3. Create an Email Template with these variables:
+✅ Your EmailJS is now configured with:
+- Service ID: service_skk2xfl
+- Template ID: template_ina7xpa
+- Public Key: YUqPQV4IrK7H3F3-T
+
+📧 Make sure your EmailJS template includes these variables:
    - {{from_name}} - Sender's name
    - {{from_email}} - Sender's email
    - {{company}} - Company name
    - {{service}} - Service interest
    - {{message}} - Message content
    - {{timestamp}} - Submission time
-   
-4. Get your credentials from the EmailJS dashboard:
-   - Service ID (from Email Services)
-   - Template ID (from Email Templates)  
-   - Public Key (from Account > API Keys)
+   - {{to_email}} - Your business email
+   - {{reply_to}} - Reply-to email
+   - {{subject}} - Email subject
 
-5. Add this script to your index.html file:
+🔧 Add this script to your index.html file (in the <head> section):
    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
    <script type="text/javascript">
      (function() {
-       emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your public key
+       emailjs.init('YUqPQV4IrK7H3F3-T');
      })();
    </script>
-
-6. Replace the placeholder values in the code below:
-   - YOUR_SERVICE_ID
-   - YOUR_TEMPLATE_ID  
-   - YOUR_PUBLIC_KEY
-
-📧 Example Email Template:
-Subject: New Contact Form Submission from {{from_name}}
-
-Hello,
-
-You have received a new message from your website contact form:
-
-Name: {{from_name}}
-Email: {{from_email}}
-Company: {{company}}
-Service Interest: {{service}}
-Submitted: {{timestamp}}
-
-Message:
-{{message}}
-
-Reply to: {{from_email}}
 */
 
 import { useState } from 'react';
@@ -87,70 +65,79 @@ const Contact = () => {
     message: ''
   });
 
-  // EmailJS Configuration - Replace with your actual values
+  // Your EmailJS Configuration - PRODUCTION READY
   const EMAILJS_CONFIG = {
-    serviceID: 'YOUR_SERVICE_ID',      // Replace with your service ID
-    templateID: 'YOUR_TEMPLATE_ID',    // Replace with your template ID
-    publicKey: 'YOUR_PUBLIC_KEY',      // Replace with your public key
-    demoMode: true  // Set to false once you've configured EmailJS
+    serviceID: 'service_skk2xfl',
+    templateID: 'template_ina7xpa', 
+    publicKey: 'YUqPQV4IrK7H3F3-T'
   };
 
-  // Enhanced form submission handler with EmailJS
+  // Production EmailJS form submission handler
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+      toast({
+        title: "❌ Required Fields Missing",
+        description: "Please fill in all required fields (Name, Email, and Message).",
+        variant: "destructive",
+        duration: 4000,
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast({
+        title: "❌ Invalid Email Format",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+        duration: 4000,
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitStatus(null);
 
     try {
-      // Demo mode for testing before EmailJS setup
-      if (EMAILJS_CONFIG.demoMode) {
-        console.log('🧪 DEMO MODE: Form data that would be sent:', formData);
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        setSubmitStatus('success');
-        toast({
-          title: "🧪 Demo Mode: Message Simulated!",
-          description: "This is a demo. Set up EmailJS to send real emails. Check console for form data.",
-          duration: 6000,
-        });
-        
-        setFormData({ name: '', email: '', company: '', service: '', message: '' });
-        setTimeout(() => setSubmitStatus(null), 8000);
-        return;
-      }
-
-      // Real EmailJS implementation
+      // Check if EmailJS is loaded
       const emailjs = window.emailjs;
       
       if (!emailjs) {
-        throw new Error('EmailJS not loaded. Please ensure the EmailJS script is included in your HTML.');
+        throw new Error('EmailJS library not loaded. Please ensure the EmailJS script is included in your HTML.');
       }
 
-      // Check if configuration is still using placeholder values
-      if (EMAILJS_CONFIG.serviceID === 'YOUR_SERVICE_ID' || 
-          EMAILJS_CONFIG.templateID === 'YOUR_TEMPLATE_ID' || 
-          EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY') {
-        throw new Error('Please configure your EmailJS credentials in the EMAILJS_CONFIG object.');
-      }
-
-      // Prepare template parameters
+      // Prepare template parameters for your EmailJS template
       const templateParams = {
-        from_name: formData.name,
-        from_email: formData.email,
-        company: formData.company || 'Not specified',
+        from_name: formData.name.trim(),
+        from_email: formData.email.trim(),
+        company: formData.company.trim() || 'Not specified',
         service: formData.service || 'Not specified',
-        message: formData.message,
+        message: formData.message.trim(),
         to_email: 'info@nexacore-innovations.com',
-        reply_to: formData.email,
-        timestamp: new Date().toLocaleString(),
-        subject: `New Contact Form Submission from ${formData.name}`,
+        reply_to: formData.email.trim(),
+        timestamp: new Date().toLocaleString('en-US', {
+          timeZone: 'GMT',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        }),
+        subject: `New Contact Form Submission from ${formData.name.trim()}`,
       };
 
-      console.log('📧 Sending email with EmailJS...', templateParams);
+      console.log('📧 Sending email via EmailJS...', {
+        service: EMAILJS_CONFIG.serviceID,
+        template: EMAILJS_CONFIG.templateID,
+        sender: templateParams.from_email
+      });
 
-      // Send email using EmailJS
+      // Send email using your EmailJS configuration
       const response = await emailjs.send(
         EMAILJS_CONFIG.serviceID,
         EMAILJS_CONFIG.templateID,
@@ -158,50 +145,59 @@ const Contact = () => {
         EMAILJS_CONFIG.publicKey
       );
 
-      console.log('✅ EmailJS Response:', response);
+      console.log('✅ EmailJS Success Response:', response);
       
       if (response.status === 200) {
         setSubmitStatus('success');
         toast({
           title: "✅ Message Sent Successfully!",
-          description: "Thank you for contacting us! We'll get back to you within 24 hours.",
-          duration: 5000,
+          description: "Thank you for contacting NexaCore Innovations! We'll get back to you within 24 hours.",
+          duration: 6000,
         });
         
-        // Clear form
+        // Clear form after successful submission
         setFormData({ name: '', email: '', company: '', service: '', message: '' });
-        setTimeout(() => setSubmitStatus(null), 8000);
+        
+        // Clear success status after 10 seconds
+        setTimeout(() => setSubmitStatus(null), 10000);
       } else {
-        throw new Error('Failed to send email');
+        throw new Error(`EmailJS returned status: ${response.status}`);
       }
       
     } catch (error) {
-      console.error('❌ Email Error:', error);
+      console.error('❌ EmailJS Error:', error);
       setSubmitStatus('error');
       
-      // Detailed error handling
-      let errorMessage = "Please try again or contact us directly.";
+      // Enhanced error handling with specific messages
+      let errorMessage = "Please try again or contact us directly via phone/WhatsApp.";
       let errorTitle = "❌ Error Sending Message";
       
-      if (error.message.includes('EmailJS not loaded')) {
-        errorTitle = "⚙️ EmailJS Not Configured";
-        errorMessage = "Please add the EmailJS script to your HTML file and configure your credentials.";
-      } else if (error.message.includes('configure your EmailJS')) {
-        errorTitle = "🔧 Configuration Required";
-        errorMessage = "Please update the EMAILJS_CONFIG with your actual service credentials.";
-      } else if (error.message.includes('Invalid service ID')) {
-        errorTitle = "🔑 Invalid Service ID";
-        errorMessage = "Please check your EmailJS service ID configuration.";
+      if (error.message.includes('EmailJS library not loaded')) {
+        errorTitle = "⚙️ EmailJS Not Available";
+        errorMessage = "Email service temporarily unavailable. Please contact us via phone or WhatsApp for immediate assistance.";
+      } else if (error.message.includes('Invalid service ID') || error.message.includes('service_id')) {
+        errorTitle = "🔧 Service Configuration Error";
+        errorMessage = "Email service configuration issue. Please contact us directly at info@nexacore-innovations.com";
+      } else if (error.message.includes('Invalid template ID') || error.message.includes('template_id')) {
+        errorTitle = "📧 Template Error";
+        errorMessage = "Email template issue. Please try again or contact us directly.";
+      } else if (error.message.includes('Invalid public key') || error.message.includes('public_key')) {
+        errorTitle = "🔑 Authentication Error";
+        errorMessage = "Email authentication failed. Please contact us directly.";
+      } else if (error.message.includes('Network')) {
+        errorTitle = "🌐 Network Error";
+        errorMessage = "Network connection issue. Please check your internet and try again.";
       }
       
       toast({
         title: errorTitle,
         description: errorMessage,
         variant: "destructive",
-        duration: 6000,
+        duration: 8000,
       });
       
-      setTimeout(() => setSubmitStatus(null), 8000);
+      // Clear error status after 10 seconds
+      setTimeout(() => setSubmitStatus(null), 10000);
     } finally {
       setIsSubmitting(false);
     }
@@ -278,10 +274,10 @@ const Contact = () => {
     }
   ];
 
-  // Enhanced quick booking function with better feedback
+  // Enhanced quick booking function
   const handleBookConsultation = () => {
-    const subject = encodeURIComponent('🗓️ Consultation Request - Nexacore Innovations');
-    const body = encodeURIComponent(`Hello Nexacore Innovations Team,
+    const subject = encodeURIComponent('🗓️ Consultation Request - NexaCore Innovations');
+    const body = encodeURIComponent(`Hello NexaCore Innovations Team,
 
 I hope this email finds you well! I would like to schedule a FREE 30-minute consultation to discuss my project requirements.
 
@@ -298,16 +294,14 @@ I hope this email finds you well! I would like to schedule a FREE 30-minute cons
 
 Please let me know your available time slots that work best for both of us.
 
-Looking forward to discussing how Nexacore Innovations can help bring my project to life!
+Looking forward to discussing how NexaCore Innovations can help bring my project to life!
 
 Best regards,
 [Your Name]
 [Your Phone Number]`);
     
-    // Open email client
     window.open(`mailto:info@nexacore-innovations.com?subject=${subject}&body=${body}`, '_blank');
     
-    // Show feedback with enhanced message
     toast({
       title: "📧 Email Client Opened!",
       description: "Pre-filled consultation request ready to send. Check your email client.",
@@ -316,7 +310,7 @@ Best regards,
   };
 
   const handleWhatsAppChat = () => {
-    const message = encodeURIComponent(`👋 Hello Nexacore Innovations!
+    const message = encodeURIComponent(`👋 Hello NexaCore Innovations!
 
 I'm interested in your services and would like to discuss my project requirements.
 
@@ -332,7 +326,6 @@ Thank you! 😊`);
     const whatsappUrl = `https://wa.me/233558330610?text=${message}`;
     window.open(whatsappUrl, '_blank');
     
-    // Show feedback with enhanced message
     toast({
       title: "💬 Opening WhatsApp...",
       description: "Redirecting to WhatsApp with pre-filled message for instant support!",
@@ -341,17 +334,14 @@ Thank you! 😊`);
   };
 
   const handleEmergencyCall = () => {
-    // First try to make the call
     window.open('tel:+233558330610', '_self');
     
-    // Show feedback with enhanced message
     toast({
       title: "🚨 Calling Emergency Line",
       description: "Connecting you to our 24/7 emergency support. If call doesn't connect, try WhatsApp.",
       duration: 5000,
     });
-    
-    // Fallback option after 3 seconds if call doesn't work
+
     setTimeout(() => {
       toast({
         title: "📱 Alternative Contact Options",
@@ -449,26 +439,26 @@ Thank you! 😊`);
 
                 {/* Status Messages */}
                 {submitStatus === 'success' && (
-                  <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
+                  <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg flex items-center space-x-3">
                     <CheckCircle className="w-5 h-5 text-green-600" />
                     <div>
-                      <p className="text-green-800 font-medium">Message sent successfully!</p>
-                      <p className="text-green-600 text-sm">We'll get back to you within 24 hours.</p>
+                      <p className="text-green-800 dark:text-green-200 font-medium">Message sent successfully!</p>
+                      <p className="text-green-600 dark:text-green-300 text-sm">We'll get back to you within 24 hours.</p>
                     </div>
                   </div>
                 )}
 
                 {submitStatus === 'error' && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
+                  <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-3">
                     <AlertCircle className="w-5 h-5 text-red-600" />
                     <div>
-                      <p className="text-red-800 font-medium">Error sending message</p>
-                      <p className="text-red-600 text-sm">Please try again or contact us directly via email/phone.</p>
+                      <p className="text-red-800 dark:text-red-200 font-medium">Error sending message</p>
+                      <p className="text-red-600 dark:text-red-300 text-sm">Please try again or contact us directly via email/phone.</p>
                     </div>
                   </div>
                 )}
 
-                <div className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name *</Label>
@@ -480,6 +470,7 @@ Thank you! 😊`);
                         placeholder="Your full name"
                         required
                         disabled={isSubmitting}
+                        className="focus:ring-2 focus:ring-primary"
                       />
                     </div>
                     <div className="space-y-2">
@@ -493,6 +484,7 @@ Thank you! 😊`);
                         placeholder="your.email@company.com"
                         required
                         disabled={isSubmitting}
+                        className="focus:ring-2 focus:ring-primary"
                       />
                     </div>
                   </div>
@@ -507,6 +499,7 @@ Thank you! 😊`);
                         onChange={handleChange}
                         placeholder="Your company name"
                         disabled={isSubmitting}
+                        className="focus:ring-2 focus:ring-primary"
                       />
                     </div>
                     <div className="space-y-2">
@@ -538,12 +531,13 @@ Thank you! 😊`);
                       rows={6}
                       required
                       disabled={isSubmitting}
+                      className="focus:ring-2 focus:ring-primary"
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
                     <Button 
-                      onClick={handleSubmit}
+                      type="submit"
                       className="btn-hero" 
                       disabled={isSubmitting}
                     >
@@ -563,7 +557,7 @@ Thank you! 😊`);
                       * Required fields
                     </p>
                   </div>
-                </div>
+                </form>
               </Card>
             </div>
           </div>
