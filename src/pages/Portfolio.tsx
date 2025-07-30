@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { Badge } from '@/components/ui/badge';
+import { Globe } from 'lucide-react';
 import { 
   Filter, 
   Search, 
