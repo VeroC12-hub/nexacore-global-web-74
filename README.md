@@ -99,8 +99,8 @@ Then open a PR.
 **Ocloo Godwin**
 
 * Website: [nexacore-innovations.com](https://nexacore-innovations.com)
-* LinkedIn: [linkedin.com/company/nexacore](https://linkedin.com/company/nexacore)
-* Email: [info@nexacore-innovations.com](mailto:info@nexacore-innovations.com)
+* LinkedIn: [linkedin.com/company/nexacore](www.linkedin.com/in/godwin-ocloo-837983235)
+* Email: [godwin.ocloo@nexacore-innovations.com](mailto:godwin.ocloo@nexacore-innovations.com)
 
 ## 🙏 Credits & Thanks
 
