@@ -1,10 +1,22 @@
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import nexacoreLogo from "../assets/nexacore-logo.png";
-import nexacoreBackgroundLogo from "../assets/nexacore-backgroundlogo.png";
+import { 
+  ArrowRight, 
+  Globe, 
+  DollarSign, 
+  FileText, 
+  CheckCircle,
+  Star,
+  Shield,
+  Clock,
+  Users
+} from "lucide-react";
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
-// Full country and currency map
+// Full country and currency map - restored complete list
 const currencyMap = {
   Afghanistan: { code: "AFN", symbol: "؋" },
   Albania: { code: "ALL", symbol: "L" },
@@ -167,45 +179,33 @@ const currencyMap = {
   Zimbabwe: { code: "ZWL", symbol: "Z$" }
 };
 
-// Mock exchange rate function (replace with actual API call)
+// Real currency exchange API function
 const getExchangeRate = async (currencyCode) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  if (currencyCode === 'USD') return 1; // Base currency
   
-  // Mock exchange rates (in a real app, you'd fetch from an API)
-  const mockRates = {
-    USD: 1,
-    EUR: 0.85,
-    GBP: 0.73,
-    GHS: 12.50, // Ghana Cedis
-    NGN: 450,   // Nigerian Naira
-    ZAR: 18.5,  // South African Rand
-    KES: 110,   // Kenyan Shilling
-    // Add more as needed
-  };
-  
-  return mockRates[currencyCode] || 1;
-};
-
-const Button = ({ children, className, variant, onClick, ...props }) => {
-  const baseClasses = "px-4 py-2 rounded font-medium transition-colors duration-200 flex items-center justify-center";
-  const variants = {
-    default: "bg-blue-600 text-white hover:bg-blue-700",
-    outline: "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white",
-    success: "bg-green-600 text-white hover:bg-green-700"
-  };
-  
-  const variantClass = variants[variant] || variants.default;
-  
-  return (
-    <button 
-      className={`${baseClasses} ${variantClass} ${className || ''}`}
-      onClick={onClick}
-      {...props}
-    >
-      {children}
-    </button>
-  );
+  try {
+    // Using exchangerate-api.com (free tier available)
+    const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch exchange rates');
+    }
+    
+    const data = await response.json();
+    return data.rates[currencyCode] || 1;
+  } catch (error) {
+    console.error('Error fetching exchange rate:', error);
+    
+    // Fallback to alternative API
+    try {
+      const fallbackResponse = await fetch(`https://api.fxratesapi.com/latest?base=USD&symbols=${currencyCode}`);
+      const fallbackData = await fallbackResponse.json();
+      return fallbackData.rates[currencyCode] || 1;
+    } catch (fallbackError) {
+      console.error('Fallback API also failed:', fallbackError);
+      return 1; // Ultimate fallback
+    }
+  }
 };
 
 // Service pricing in USD
@@ -227,21 +227,21 @@ const servicePricing = {
 };
 
 const GetStarted = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  
   const [country, setCountry] = useState("Ghana");
   const [currency, setCurrency] = useState(currencyMap["Ghana"]);
   const [rate, setRate] = useState(1);
   const [service, setService] = useState("Software Engineering");
   const [projectDescription, setProjectDescription] = useState("");
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [exchangeError, setExchangeError] = useState(false);
 
   const handleCountryChange = async (e) => {
     const selected = e.target.value;
     setCountry(selected);
     const selectedCurrency = currencyMap[selected] || { code: "USD", symbol: "$" };
     setCurrency(selectedCurrency);
+    setExchangeError(false);
 
     setLoading(true);
     try {
@@ -249,6 +249,7 @@ const GetStarted = () => {
       setRate(exchangeRate);
     } catch (error) {
       console.error("Error fetching exchange rate:", error);
+      setExchangeError(true);
       setRate(1); // Fallback to 1:1 rate
     } finally {
       setLoading(false);
@@ -265,187 +266,280 @@ const GetStarted = () => {
       country,
       service,
       projectDescription,
-      estimatedPrice: `${currency.symbol} ${convertedPrice}`
+      estimatedPrice: `${currency.symbol} ${convertedPrice}`,
+      exchangeRate: rate,
+      basePriceUSD: currentServicePrice
     };
     
     console.log("Form submitted:", formData);
-    alert("Request submitted successfully!");
+    setSubmitted(true);
+    setTimeout(() => setSubmitted(false), 3000);
   };
 
   const handleGetQuote = () => {
-    alert("Free quote request submitted! We'll get back to you soon.");
+    alert("Free quote request submitted! We'll get back to you within 24 hours.");
   };
 
   const handleBackToHome = () => {
-    // Navigate back to home page
-    navigate("/");
+    window.location.href = "/";
   };
 
   useEffect(() => {
-    // Check if service parameter is provided in URL
-    const serviceParam = searchParams.get('service');
-    if (serviceParam && servicePricing[serviceParam]) {
-      setService(serviceParam);
-    }
-    
-    // Initialize with Ghana on component mount
     const initializeExchangeRate = async () => {
       setLoading(true);
+      setExchangeError(false);
       try {
         const exchangeRate = await getExchangeRate(currencyMap["Ghana"].code);
         setRate(exchangeRate);
       } catch (error) {
         console.error("Error fetching initial exchange rate:", error);
-        setRate(1);
+        setExchangeError(true);
+        setRate(12.50); // Reasonable fallback for GHS
       } finally {
         setLoading(false);
       }
     };
 
     initializeExchangeRate();
-  }, [searchParams]);
+  }, []);
 
-  // Get the current service price and convert to local currency
   const currentServicePrice = servicePricing[service] || 100;
   const convertedPrice = (currentServicePrice * rate).toFixed(2);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header Section with Network Background */}
-      <div className="relative bg-white shadow-lg overflow-hidden">
-        {/* Network Pattern Background */}
-        <div className="absolute inset-0 opacity-5">
-          <svg className="w-full h-full" viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="network" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
-                <circle cx="25" cy="25" r="2" fill="#64748b"/>
-                <line x1="25" y1="25" x2="75" y2="25" stroke="#64748b" strokeWidth="1"/>
-                <line x1="25" y1="25" x2="25" y2="75" stroke="#64748b" strokeWidth="1"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#network)"/>
-          </svg>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
+      <Navbar />
+      
+      {/* Hero Section */}
+      <section className="pt-24 pb-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-teal-600/5"></div>
+        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-teal-600/10 rounded-full blur-3xl"></div>
         
-        <div className="relative max-w-6xl mx-auto px-8 py-6">
-          <div className="flex items-center justify-between">
-            {/* Left side - Small logo and text */}
-            <div className="flex items-center space-x-4">
-              <img src={nexacoreLogo} alt="NexaCore Logo" className="h-16 w-auto" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Get Started with NexaCore</h1>
-                <p className="text-gray-600">Innovation & Technology Solutions</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <Badge className="mb-6 bg-gradient-to-r from-blue-100 to-teal-100 text-blue-700 border border-blue-200">
+            <Globe className="w-4 h-4 mr-2" />
+            Get Started with NexaCore
+          </Badge>
+          
+          <h1 className="text-4xl lg:text-6xl font-bold mb-6">
+            <span className="bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
+              Transform Your Ideas
+            </span>
+            <br />
+            <span className="text-gray-900">Into Reality</span>
+          </h1>
+          
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+            Tell us about your project and get an instant estimate with real-time currency conversion. 
+            Our global team of experts is ready to bring your vision to life with cutting-edge solutions.
+          </p>
+          
+          {/* Trust Indicators */}
+          <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-600">
+            <div className="flex items-center">
+              <Shield className="w-5 h-5 text-green-600 mr-2" />
+              Trusted by 25+ clients
+            </div>
+            <div className="flex items-center">
+              <Star className="w-5 h-5 text-yellow-500 mr-2" />
+              98% Success Rate
+            </div>
+            <div className="flex items-center">
+              <Clock className="w-5 h-5 text-blue-600 mr-2" />
+              24/7 Support
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Form Section */}
+      <section className="pb-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="p-8 relative overflow-hidden card-gradient">
+            {/* Background Pattern */}
+            <div className="absolute top-0 right-0 w-64 h-64 opacity-5">
+              <svg viewBox="0 0 200 200" className="w-full h-full">
+                <defs>
+                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#6B7280" strokeWidth="1"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+              </svg>
+            </div>
+
+            {/* Success Message */}
+            {submitted && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center">
+                <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
+                <p className="text-green-800 font-medium">
+                  Request submitted successfully! We'll get back to you soon.
+                </p>
+              </div>
+            )}
+
+            {/* Exchange Rate Error */}
+            {exchangeError && (
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center">
+                <DollarSign className="w-6 h-6 text-yellow-600 mr-3" />
+                <p className="text-yellow-800 text-sm">
+                  Unable to fetch real-time exchange rates. Using approximate values.
+                </p>
+              </div>
+            )}
+
+            <div className="space-y-8 relative z-10">
+              {/* Country Selection */}
+              <div className="space-y-3">
+                <label htmlFor="country" className="block text-lg font-semibold text-gray-900 flex items-center">
+                  <Globe className="w-5 h-5 mr-2 text-blue-600" />
+                  Your Country
+                </label>
+                <select
+                  id="country"
+                  value={country}
+                  onChange={handleCountryChange}
+                  className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                  disabled={loading}
+                >
+                  {Object.keys(currencyMap).map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Service Selection */}
+              <div className="space-y-3">
+                <label htmlFor="service" className="block text-lg font-semibold text-gray-900 flex items-center">
+                  <Star className="w-5 h-5 mr-2 text-blue-600" />
+                  Service Type
+                </label>
+                <select 
+                  id="service" 
+                  value={service}
+                  onChange={(e) => setService(e.target.value)}
+                  className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  {Object.keys(servicePricing).map((serviceType) => (
+                    <option key={serviceType} value={serviceType}>
+                      {serviceType}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Project Description */}
+              <div className="space-y-3">
+                <label htmlFor="description" className="block text-lg font-semibold text-gray-900 flex items-center">
+                  <FileText className="w-5 h-5 mr-2 text-blue-600" />
+                  Project Description
+                </label>
+                <textarea
+                  id="description"
+                  value={projectDescription}
+                  onChange={(e) => setProjectDescription(e.target.value)}
+                  className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl h-36 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200 resize-none"
+                  placeholder="Tell us about your project, goals, timeline, and any specific requirements..."
+                />
+              </div>
+
+              {/* Price Estimate */}
+              <Card className="bg-gradient-to-br from-blue-50 to-teal-50 p-6 border border-blue-200 card-gradient">
+                <div className="flex items-center mb-4">
+                  <DollarSign className="w-6 h-6 text-blue-600 mr-2" />
+                  <h3 className="text-xl font-bold text-gray-900">Real-Time Price Estimate</h3>
+                </div>
+                
+                {loading ? (
+                  <div className="flex items-center space-x-3">
+                    <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                    <span className="text-gray-600">Fetching live exchange rates...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="text-3xl font-bold text-gradient-primary">
+                      {currency.symbol} {convertedPrice}
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Base price: ${currentServicePrice} USD • Live rate: {rate.toFixed(4)} {currency.code}/USD
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      *Prices updated with real-time exchange rates. Final cost may vary based on project complexity.
+                    </p>
+                  </div>
+                )}
+              </Card>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                <Button 
+                  className="flex-1 text-lg py-4 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                  onClick={handleSubmit}
+                  disabled={!projectDescription.trim()}
+                >
+                  Submit Request
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="flex-1 text-lg py-4 border-2"
+                  onClick={handleBackToHome}
+                >
+                  Back to Home
+                </Button>
+                
+                <Button 
+                  className="flex-1 text-lg py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  onClick={handleGetQuote}
+                >
+                  Get Free Quote
+                </Button>
               </div>
             </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* Why Choose Us Section */}
+      <section className="py-16 bg-white/60 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+              Why Choose <span className="text-gradient-primary">NexaCore</span>
+            </h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 card-service">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-gradient-primary">Expert Team</h3>
+              <p className="text-muted-foreground">Global team of certified professionals with international experience</p>
+            </Card>
             
-            {/* Right side - Large background logo */}
-            <div className="hidden lg:block opacity-50">
-              <img src={nexacoreBackgroundLogo} alt="NexaCore Background" className="h-32 w-96" />
-            </div>
+            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 card-service">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-gradient-primary">Proven Results</h3>
+              <p className="text-muted-foreground">98% success rate with 25+ satisfied clients worldwide</p>
+            </Card>
+            
+            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 card-service">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Clock className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-gradient-primary">Fast Delivery</h3>
+              <p className="text-muted-foreground">Quick turnaround times without compromising on quality</p>
+            </Card>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="bg-white rounded-xl shadow-lg p-8 space-y-6 border border-gray-200">
-          {/* Service Pre-selection Notice */}
-          {searchParams.get('service') && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-blue-800 font-medium">
-                🎯 Great choice! You've selected <span className="font-bold">{service}</span> services.
-              </p>
-            </div>
-          )}
-
-          <div>
-            <label htmlFor="country" className="block mb-2 font-medium text-gray-700 text-lg">
-              Your Country
-            </label>
-            <select
-              id="country"
-              value={country}
-              onChange={handleCountryChange}
-              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-              disabled={loading}
-            >
-              {Object.keys(currencyMap).map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="service" className="block mb-2 font-medium text-gray-700 text-lg">
-              Service Type
-            </label>
-            <select 
-              id="service" 
-              value={service}
-              onChange={(e) => setService(e.target.value)}
-              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-            >
-              {Object.keys(servicePricing).map((serviceType) => (
-                <option key={serviceType} value={serviceType}>
-                  {serviceType}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="description" className="block mb-2 font-medium text-gray-700 text-lg">
-              Project Description
-            </label>
-            <textarea
-              id="description"
-              value={projectDescription}
-              onChange={(e) => setProjectDescription(e.target.value)}
-              className="w-full border-2 border-gray-300 px-4 py-3 rounded-lg h-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base"
-              placeholder="Tell us more about your project..."
-            />
-          </div>
-
-          <div className="bg-gradient-to-r from-blue-50 to-green-50 p-6 rounded-lg border border-blue-200">
-            <div className="text-xl font-semibold text-gray-900">
-              Estimated Price: {loading ? (
-                <span className="text-gray-500">Calculating...</span>
-              ) : (
-                <span className="text-blue-600">{currency.symbol} {convertedPrice}</span>
-              )}
-            </div>
-            <p className="text-sm text-gray-600 mt-2">
-              Base price: ${currentServicePrice} USD • Exchange rate applied for {currency.code}
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
-            <Button 
-              className="text-lg px-8 py-4 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
-              onClick={handleSubmit}
-            >
-              Submit Request
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              className="text-lg px-8 py-4 border-2" 
-              onClick={handleBackToHome}
-            >
-              Back to Home
-            </Button>
-            
-            <Button 
-              variant="success"
-              className="text-lg px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700" 
-              onClick={handleGetQuote}
-            >
-              Get Free Quote
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 };
