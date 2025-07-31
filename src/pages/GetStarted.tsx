@@ -273,6 +273,14 @@ const GetStarted = () => {
       alert("Please provide your email address");
       return;
     }
+    
+    // Email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(clientEmail.trim())) {
+      alert("Please provide a valid email address");
+      return;
+    }
+    
     if (!projectDescription.trim()) {
       alert("Please provide a project description");
       return;
@@ -286,67 +294,70 @@ const GetStarted = () => {
         throw new Error('EmailJS not loaded. Please refresh the page and try again.');
       }
 
-      // FIXED: Template parameters with correct field names for EmailJS
+      const currentDate = new Date();
+      const convertedPrice = (currentServicePrice * rate).toFixed(2);
+
+      // FIXED: Business email parameters - simplified and corrected
       const businessEmailParams = {
-        // Use 'to_name' and 'to_email' as standard EmailJS fields
         to_name: 'NexaCore Innovations Team',
         to_email: 'info@nexacore-innovations.com',
-        from_name: clientName,
-        from_email: clientEmail,
-        reply_to: clientEmail,
+        from_name: clientName.trim(),
+        from_email: clientEmail.trim(),
+        reply_to: clientEmail.trim(),
         
-        // Custom fields for your template
-        client_name: clientName,
-        client_email: clientEmail,
-        client_phone: clientPhone || "Not provided",
+        client_name: clientName.trim(),
+        client_email: clientEmail.trim(),
+        client_phone: clientPhone.trim() || "Not provided",
         client_country: country,
         service_type: service,
-        project_description: projectDescription,
+        project_description: projectDescription.trim(),
         estimated_price: `${currency.symbol} ${convertedPrice}`,
         base_price_usd: `$${currentServicePrice}`,
         exchange_rate: rate.toFixed(4),
         currency_code: currency.code,
-        submission_date: new Date().toLocaleDateString(),
-        submission_time: new Date().toLocaleTimeString(),
+        submission_date: currentDate.toLocaleDateString(),
+        submission_time: currentDate.toLocaleTimeString(),
         
-        // Additional template variables
         subject: `New Project Inquiry - ${service}`,
-        message: `New project inquiry from ${clientName} for ${service}. Project: ${projectDescription}`
+        message: `New project inquiry from ${clientName.trim()} for ${service}. Project: ${projectDescription.trim()}`
       };
 
-      // Template parameters for client confirmation email
+      // FIXED: Client email parameters - ensure all required fields are present
       const clientEmailParams = {
-        // Standard EmailJS fields
-        to_name: clientName,
-        to_email: clientEmail,
+        // CRITICAL: These must match your EmailJS template variable names exactly
+        to_name: clientName.trim(),
+        to_email: clientEmail.trim(),
         from_name: 'NexaCore Innovation Team',
-        from_email: 'godwin.ocloo@nexacore-innovations.com',
+        from_email: 'info@nexacore-innovations.com',
         reply_to: 'info@nexacore-innovations.com',
         
-        // Custom fields
-        client_name: clientName,
+        // Additional parameters for the client template
+        client_name: clientName.trim(),
         service_type: service,
         estimated_price: `${currency.symbol} ${convertedPrice}`,
-        project_description: projectDescription,
+        project_description: projectDescription.trim(),
         country: country,
-        submission_date: new Date().toLocaleDateString(),
+        submission_date: currentDate.toLocaleDateString(),
+        client_phone: clientPhone.trim() || "Not provided",
         
-        // Additional template variables
         subject: `Thank you for your inquiry - ${service}`,
-        message: `Thank you ${clientName} for your ${service} inquiry. We'll get back to you within 24 hours.`
+        message: `Thank you ${clientName.trim()} for your ${service} inquiry. We'll get back to you within 24 hours.`
       };
 
       console.log('Sending business email with params:', businessEmailParams);
       
-      // Send business notification email using emailjs.sendForm method
+      // Send business notification email
       const businessResponse = await window.emailjs.send(
         'service_skk2xfl', // Your service ID
         'template_con_nexacore', // Business template ID
         businessEmailParams,
-        'YUqPQV4IrK7H3F3-T' // Your public key (optional but recommended)
+        'YUqPQV4IrK7H3F3-T' // Your public key
       );
       
       console.log('Business email sent successfully:', businessResponse);
+
+      // Add a small delay before sending the client email
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       console.log('Sending client email with params:', clientEmailParams);
       
@@ -355,7 +366,7 @@ const GetStarted = () => {
         'service_skk2xfl', // Same service ID
         'template_client_nexacore', // Client template ID
         clientEmailParams,
-        'YUqPQV4IrK7H3F3-T' // Your public key (optional but recommended)
+        'YUqPQV4IrK7H3F3-T' // Your public key
       );
       
       console.log('Client email sent successfully:', clientResponse);
@@ -746,6 +757,27 @@ const GetStarted = () => {
       </section>
 
       <Footer />
+
+      <style jsx>{`
+        .text-gradient-primary {
+          background: linear-gradient(135deg, #2563eb, #059669);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+        
+        .card-gradient {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8));
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-service {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9));
+          backdrop-filter: blur(5px);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+      `}</style>
     </div>
   );
 };
