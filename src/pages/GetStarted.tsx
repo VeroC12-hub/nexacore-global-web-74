@@ -289,7 +289,7 @@ const GetStarted = () => {
       // FIXED: Template parameters with correct field names for EmailJS
       const businessEmailParams = {
         // Use 'to_name' and 'to_email' as standard EmailJS fields
-        to_name: 'NexaCore Team',
+        to_name: 'NexaCore Innovations Team',
         to_email: 'info@nexacore-innovations.com',
         from_name: clientName,
         from_email: clientEmail,
