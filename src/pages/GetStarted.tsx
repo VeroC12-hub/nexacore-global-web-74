@@ -319,8 +319,8 @@ const GetStarted = () => {
         // Standard EmailJS fields
         to_name: clientName,
         to_email: clientEmail,
-        from_name: 'NexaCore Team',
-        from_email: 'info@nexacore-innovations.com',
+        from_name: 'NexaCore Innovation Team',
+        from_email: 'godwin.ocloo@nexacore-innovations.com',
         reply_to: 'info@nexacore-innovations.com',
         
         // Custom fields
