@@ -281,16 +281,14 @@ const GetStarted = () => {
     setSubmitting(true);
 
     try {
-      // Use EmailJS from global window object (already initialized in HTML)
-      const emailjs = window.emailjs;
-      
-      if (!emailjs) {
-        throw new Error('EmailJS not loaded');
+      // Check if EmailJS is available
+      if (!window.emailjs) {
+        throw new Error('EmailJS not loaded. Please refresh the page and try again.');
       }
 
       // Template parameters for your business email
       const businessEmailParams = {
-        to_email: "info@nexacore-innovations.com", // Replace with your actual business email
+        to_email: "info@nexacore-innovations.com",
         client_name: clientName,
         client_email: clientEmail,
         client_phone: clientPhone || "Not provided",
@@ -316,19 +314,27 @@ const GetStarted = () => {
         submission_date: new Date().toLocaleDateString()
       };
 
+      console.log('Sending business email with params:', businessEmailParams);
+      
       // Send business notification email
-      await emailjs.send(
-        'service_skk2xfl', // Replace with your actual EmailJS service ID
-        'template_con_nexacore', // Replace with your actual business template ID
+      const businessResponse = await window.emailjs.send(
+        'service_skk2xfl', // Your service ID from EmailJS dashboard
+        'template_con_nexacore', // Your business template ID 
         businessEmailParams
       );
+      
+      console.log('Business email sent successfully:', businessResponse);
 
+      console.log('Sending client email with params:', clientEmailParams);
+      
       // Send client confirmation email
-      await emailjs.send(
-        'service_skk2xfl', // Replace with your actual EmailJS service ID
-        'template_client_nexacore',  // Replace with your actual client template ID
+      const clientResponse = await window.emailjs.send(
+        'service_skk2xfl', // Same service ID
+        'template_client_nexacore', // Your client template ID
         clientEmailParams
       );
+      
+      console.log('Client email sent successfully:', clientResponse);
 
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 5000);
@@ -340,8 +346,22 @@ const GetStarted = () => {
       setProjectDescription("");
 
     } catch (error) {
-      console.error('Error sending emails:', error);
-      alert('Sorry, there was an error submitting your request. Please try again or contact us directly at info@nexacore-innovations.com');
+      console.error('Detailed error sending emails:', error);
+      
+      // More specific error handling
+      let errorMessage = 'Sorry, there was an error submitting your request. Please try again or contact us directly at info@nexacore-innovations.com';
+      
+      if (error.status === 400) {
+        errorMessage = 'Invalid email parameters. Please check all required fields are filled correctly.';
+      } else if (error.status === 401 || error.status === 403) {
+        errorMessage = 'Authentication failed. Please refresh the page and try again.';
+      } else if (error.status === 404) {
+        errorMessage = 'Email service configuration error. Please contact us directly at info@nexacore-innovations.com';
+      } else if (error.message && error.message.includes('EmailJS not loaded')) {
+        errorMessage = 'Email service not ready. Please refresh the page and try again.';
+      }
+      
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
