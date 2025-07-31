@@ -286,9 +286,16 @@ const GetStarted = () => {
         throw new Error('EmailJS not loaded. Please refresh the page and try again.');
       }
 
-      // Template parameters for your business email
+      // FIXED: Template parameters with correct field names for EmailJS
       const businessEmailParams = {
-        to_email: "info@nexacore-innovations.com",
+        // Use 'to_name' and 'to_email' as standard EmailJS fields
+        to_name: 'NexaCore Team',
+        to_email: 'info@nexacore-innovations.com',
+        from_name: clientName,
+        from_email: clientEmail,
+        reply_to: clientEmail,
+        
+        // Custom fields for your template
         client_name: clientName,
         client_email: clientEmail,
         client_phone: clientPhone || "Not provided",
@@ -300,27 +307,43 @@ const GetStarted = () => {
         exchange_rate: rate.toFixed(4),
         currency_code: currency.code,
         submission_date: new Date().toLocaleDateString(),
-        submission_time: new Date().toLocaleTimeString()
+        submission_time: new Date().toLocaleTimeString(),
+        
+        // Additional template variables
+        subject: `New Project Inquiry - ${service}`,
+        message: `New project inquiry from ${clientName} for ${service}. Project: ${projectDescription}`
       };
 
       // Template parameters for client confirmation email
       const clientEmailParams = {
+        // Standard EmailJS fields
+        to_name: clientName,
         to_email: clientEmail,
+        from_name: 'NexaCore Team',
+        from_email: 'info@nexacore-innovations.com',
+        reply_to: 'info@nexacore-innovations.com',
+        
+        // Custom fields
         client_name: clientName,
         service_type: service,
         estimated_price: `${currency.symbol} ${convertedPrice}`,
         project_description: projectDescription,
         country: country,
-        submission_date: new Date().toLocaleDateString()
+        submission_date: new Date().toLocaleDateString(),
+        
+        // Additional template variables
+        subject: `Thank you for your inquiry - ${service}`,
+        message: `Thank you ${clientName} for your ${service} inquiry. We'll get back to you within 24 hours.`
       };
 
       console.log('Sending business email with params:', businessEmailParams);
       
-      // Send business notification email
+      // Send business notification email using emailjs.sendForm method
       const businessResponse = await window.emailjs.send(
-        'service_skk2xfl', // Your service ID from EmailJS dashboard
-        'template_con_nexacore', // Your business template ID 
-        businessEmailParams
+        'service_skk2xfl', // Your service ID
+        'template_con_nexacore', // Business template ID
+        businessEmailParams,
+        'YUqPQV4IrK7H3F3-T' // Your public key (optional but recommended)
       );
       
       console.log('Business email sent successfully:', businessResponse);
@@ -330,8 +353,9 @@ const GetStarted = () => {
       // Send client confirmation email
       const clientResponse = await window.emailjs.send(
         'service_skk2xfl', // Same service ID
-        'template_client_nexacore', // Your client template ID
-        clientEmailParams
+        'template_client_nexacore', // Client template ID
+        clientEmailParams,
+        'YUqPQV4IrK7H3F3-T' // Your public key (optional but recommended)
       );
       
       console.log('Client email sent successfully:', clientResponse);
@@ -359,6 +383,8 @@ const GetStarted = () => {
         errorMessage = 'Email service configuration error. Please contact us directly at info@nexacore-innovations.com';
       } else if (error.message && error.message.includes('EmailJS not loaded')) {
         errorMessage = 'Email service not ready. Please refresh the page and try again.';
+      } else if (error.text && error.text.includes('empty')) {
+        errorMessage = 'Email configuration error. Please contact us directly at info@nexacore-innovations.com';
       }
       
       alert(errorMessage);
