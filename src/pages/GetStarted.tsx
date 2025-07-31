@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-// Full country and currency map - restored complete list
+// Full country and currency map
 const currencyMap = {
   Afghanistan: { code: "AFN", symbol: "؋" },
   Albania: { code: "ALL", symbol: "L" },
@@ -281,12 +281,16 @@ const GetStarted = () => {
     setSubmitting(true);
 
     try {
-      // Initialize EmailJS (you'll need to replace these with your actual IDs)
+      // Use EmailJS from global window object (already initialized in HTML)
       const emailjs = window.emailjs;
       
+      if (!emailjs) {
+        throw new Error('EmailJS not loaded');
+      }
+
       // Template parameters for your business email
       const businessEmailParams = {
-        to_email: "your-business@email.com", // Replace with your business email
+        to_email: "hello@nexacore-innovations.com", // Replace with your actual business email
         client_name: clientName,
         client_email: clientEmail,
         client_phone: clientPhone || "Not provided",
@@ -314,32 +318,30 @@ const GetStarted = () => {
 
       // Send business notification email
       await emailjs.send(
-        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
-        'business_template', // Replace with your business template ID
-        businessEmailParams,
-        'YOUR_PUBLIC_KEY'   // Replace with your EmailJS public key
+        'service_skk2xfl', // Replace with your actual EmailJS service ID
+        'template_con_nexacore', // Replace with your actual business template ID
+        businessEmailParams
       );
 
       // Send client confirmation email
       await emailjs.send(
-        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
-        'client_template',  // Replace with your client template ID
-        clientEmailParams,
-        'YOUR_PUBLIC_KEY'   // Replace with your EmailJS public key
+        'service_skk2xfl', // Replace with your actual EmailJS service ID
+        'template_client_nexacore',  // Replace with your actual client template ID
+        clientEmailParams
       );
 
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 5000);
 
-      // Optional: Clear form after successful submission
-      // setClientName("");
-      // setClientEmail("");
-      // setClientPhone("");
-      // setProjectDescription("");
+      // Clear form after successful submission
+      setClientName("");
+      setClientEmail("");
+      setClientPhone("");
+      setProjectDescription("");
 
     } catch (error) {
       console.error('Error sending emails:', error);
-      alert('Sorry, there was an error submitting your request. Please try again or contact us directly.');
+      alert('Sorry, there was an error submitting your request. Please try again or contact us directly at hello@nexacore-innovations.com');
     } finally {
       setSubmitting(false);
     }
@@ -382,16 +384,6 @@ const GetStarted = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
       <Navbar />
-      
-      {/* EmailJS Script */}
-      <script 
-        src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"
-      ></script>
-      <script>
-        {`(function(){
-          emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your EmailJS public key
-        })();`}
-      </script>
       
       {/* Hero Section */}
       <section className="pt-24 pb-12 relative overflow-hidden">
@@ -704,24 +696,6 @@ const GetStarted = () => {
               <p className="text-muted-foreground">Quick turnaround times without compromising on quality</p>
             </Card>
           </div>
-        </div>
-      </section>
-
-      {/* Setup Instructions */}
-      <section className="py-8 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="p-6 bg-yellow-50 border border-yellow-200">
-            <h3 className="text-lg font-bold text-yellow-800 mb-3">⚠️ Setup Required</h3>
-            <p className="text-yellow-700 text-sm mb-4">
-              To enable email functionality, you need to set up EmailJS:
-            </p>
-            <div className="text-yellow-700 text-sm space-y-2">
-              <p>1. Create account at <a href="https://emailjs.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">emailjs.com</a></p>
-              <p>2. Replace <code className="bg-yellow-200 px-1 rounded">YOUR_SERVICE_ID</code>, <code className="bg-yellow-200 px-1 rounded">YOUR_PUBLIC_KEY</code> in the code</p>
-              <p>3. Create email templates: <code className="bg-yellow-200 px-1 rounded">business_template</code> and <code className="bg-yellow-200 px-1 rounded">client_template</code></p>
-              <p>4. Update <code className="bg-yellow-200 px-1 rounded">your-business@email.com</code> to your actual business email</p>
-            </div>
-          </Card>
         </div>
       </section>
 
