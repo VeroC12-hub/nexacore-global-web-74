@@ -324,6 +324,7 @@ const GetStarted = () => {
 
       // FIXED: Client email parameters - ensure all required fields are present
       const clientEmailParams = {
+        email: clientEmail.trim(), // <-- this fixes the issue
         // CRITICAL: These must match your EmailJS template variable names exactly
         to_name: clientName.trim(),
         to_email: clientEmail.trim(),
