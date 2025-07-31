@@ -1,29 +1,26 @@
 /*
-🚀 EMAILJS INTEGRATION - PRODUCTION READY
+🚀 COMPLETE CONTACT FORM WITH CALENDLY INTEGRATION
 
-✅ Your EmailJS is now configured with:
+✅ Features:
+- Real EmailJS integration (production ready)
+- Calendly booking system for consultations
+- WhatsApp integration with smart fallbacks
+- Enhanced user experience with better feedback
+- Mobile responsive design
+- Professional error handling
+
+🔧 Setup Required:
+1. EmailJS credentials (already configured)
+2. Calendly account setup:
+   - Go to calendly.com and create free account
+   - Create "30-Minute Consultation" event
+   - Replace 'nexacore-innovations' in the URL below with your actual Calendly username
+   - Configure your availability and intake questions
+
+📧 EmailJS Configuration:
 - Service ID: service_skk2xfl
 - Template ID: template_ina7xpa
 - Public Key: YUqPQV4IrK7H3F3-T
-
-📧 Make sure your EmailJS template includes these variables:
-   - {{from_name}} - Sender's name
-   - {{from_email}} - Sender's email
-   - {{company}} - Company name
-   - {{service}} - Service interest
-   - {{message}} - Message content
-   - {{timestamp}} - Submission time
-   - {{to_email}} - Your business email
-   - {{reply_to}} - Reply-to email
-   - {{subject}} - Email subject
-
-🔧 Add this script to your index.html file (in the <head> section):
-   <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-   <script type="text/javascript">
-     (function() {
-       emailjs.init('YUqPQV4IrK7H3F3-T');
-     })();
-   </script>
 */
 
 import { useState } from 'react';
@@ -48,7 +45,9 @@ import {
   Facebook,
   CheckCircle,
   AlertCircle,
-  Loader2
+  Loader2,
+  ExternalLink,
+  Zap
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -70,6 +69,13 @@ const Contact = () => {
     serviceID: 'service_skk2xfl',
     templateID: 'template_ina7xpa', 
     publicKey: 'YUqPQV4IrK7H3F3-T'
+  };
+
+  // Calendly Configuration - UPDATE WITH YOUR ACTUAL CALENDLY URL
+  const CALENDLY_CONFIG = {
+    consultationUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/30min',
+    // Alternative booking methods
+    fallbackEnabled: true
   };
 
   // Production EmailJS form submission handler
@@ -207,6 +213,172 @@ const Contact = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // 🗓️ CALENDLY INTEGRATION - Primary booking method
+  const handleBookConsultation = () => {
+    try {
+      // Open Calendly booking page
+      window.open(CALENDLY_CONFIG.consultationUrl, '_blank');
+      
+      // Provide user feedback
+      toast({
+        title: "📅 Opening Booking Calendar...",
+        description: "Select your preferred time slot. Instant confirmation & calendar invite included!",
+        duration: 5000,
+      });
+      
+      // Analytics tracking (optional)
+      console.log('📊 Consultation booking initiated via Calendly');
+      
+    } catch (error) {
+      console.error('Error opening Calendly:', error);
+      
+      // Fallback to WhatsApp if Calendly fails
+      if (CALENDLY_CONFIG.fallbackEnabled) {
+        toast({
+          title: "⚠️ Calendly Unavailable",
+          description: "Redirecting to WhatsApp for instant booking assistance...",
+          duration: 4000,
+        });
+        
+        setTimeout(() => {
+          handleWhatsAppBooking();
+        }, 1000);
+      }
+    }
+  };
+
+  // 💬 WHATSAPP BOOKING - Alternative method
+  const handleWhatsAppBooking = () => {
+    const message = encodeURIComponent(`🗓️ Hello NexaCore Innovations!
+
+I'd like to book a FREE 30-minute consultation to discuss my project requirements.
+
+📋 PROJECT DETAILS:
+• Project Type: [Web Development, Mobile App, Design, etc.]
+• Timeline: [When do you need this completed?]
+• Budget Range: [Optional - helps us prepare better]
+• Special Requirements: [Any specific needs?]
+
+⏰ PREFERRED CONSULTATION TIMES:
+• Option 1: [Your preferred day/time]
+• Option 2: [Alternative day/time]
+• Option 3: [Another backup option]
+
+🌍 My Timezone: [Your timezone - e.g., GMT, EST, PST]
+📞 My Contact: [Your phone number]
+
+I'm excited to discuss how NexaCore Innovations can help bring my project to life!
+
+Thank you! 😊`);
+    
+    const whatsappUrl = `https://wa.me/233558330610?text=${message}`;
+    
+    try {
+      window.open(whatsappUrl, '_blank');
+      
+      toast({
+        title: "💬 Opening WhatsApp Consultation...",
+        description: "Pre-filled booking message ready! Quick scheduling via chat with our team.",
+        duration: 5000,
+      });
+      
+      console.log('📊 WhatsApp consultation booking initiated');
+      
+    } catch (error) {
+      console.error('Error opening WhatsApp:', error);
+      toast({
+        title: "❌ Unable to Open WhatsApp",
+        description: "Please manually message us at +233 558330610 for consultation booking.",
+        variant: "destructive",
+        duration: 6000,
+      });
+    }
+  };
+
+  // 💬 GENERAL WHATSAPP CHAT
+  const handleWhatsAppChat = () => {
+    const message = encodeURIComponent(`👋 Hello NexaCore Innovations!
+
+I'm interested in your services and would like to discuss my project requirements.
+
+🚀 I'm looking for help with:
+• [Brief description of your project]
+
+⏰ Best time to chat: [Your preferred time]
+
+Can we schedule a quick chat to explore how you can help me achieve my goals?
+
+Thank you! 😊`);
+    
+    const whatsappUrl = `https://wa.me/233558330610?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+    
+    toast({
+      title: "💬 Opening WhatsApp...",
+      description: "Redirecting to WhatsApp with pre-filled message for instant support!",
+      duration: 4000,
+    });
+  };
+
+  // 🚨 EMERGENCY SUPPORT
+  const handleEmergencyCall = () => {
+    window.open('tel:+233558330610', '_self');
+    
+    toast({
+      title: "🚨 Calling Emergency Line",
+      description: "Connecting you to our 24/7 emergency support. If call doesn't connect, try WhatsApp.",
+      duration: 5000,
+    });
+
+    setTimeout(() => {
+      toast({
+        title: "📱 Alternative Contact Options",
+        description: "Call not connecting? Try our WhatsApp for immediate assistance!",
+        duration: 4000,
+      });
+    }, 3000);
+  };
+
+  // 📧 EMAIL CONSULTATION REQUEST (Backup method)
+  const handleEmailConsultation = () => {
+    const subject = encodeURIComponent('🗓️ Consultation Request - NexaCore Innovations');
+    const body = encodeURIComponent(`Hello NexaCore Innovations Team,
+
+I hope this email finds you well! I would like to schedule a FREE 30-minute consultation to discuss my project requirements.
+
+📋 PROJECT DETAILS:
+• Project Type: [Please specify - Web Development, Mobile App, Design, etc.]
+• Timeline: [When do you need this completed?]
+• Budget Range: [Optional - helps with preparation]
+• Special Requirements: [Any specific needs or questions?]
+
+📅 MY PREFERRED CONSULTATION TIMES:
+• Option 1: [Day/Time + Timezone]
+• Option 2: [Day/Time + Timezone] 
+• Option 3: [Day/Time + Timezone]
+
+📞 MY CONTACT DETAILS:
+• Phone: [Your phone number]
+• Email: [Your email address]
+• Preferred contact method: [Email/Phone/WhatsApp]
+
+Please let me know your available time slots that work best for both of us. I'm excited to discuss how NexaCore Innovations can help bring my project to life!
+
+Looking forward to hearing from you soon.
+
+Best regards,
+[Your Name]
+[Your Company/Organization]`);
+    
+    window.open(`mailto:info@nexacore-innovations.com?subject=${subject}&body=${body}`, '_blank');
+    
+    toast({
+      title: "📧 Email Client Opened!",
+      description: "Pre-filled consultation request ready to send. Check your email client.",
+      duration: 4000,
+    });
+  };
+
   const contactInfo = [
     {
       icon: Phone,
@@ -234,7 +406,7 @@ const Contact = () => {
       title: 'WhatsApp',
       value: '+233 558330610',
       description: 'Quick chat support',
-      action: 'https://wa.me/233558330610?text=Hello%20Nexacore%20Innovations!%20I%20would%20like%20to%20discuss%20a%20project%20with%20you.'
+      action: 'https://wa.me/233558330610?text=Hello%20NexaCore%20Innovations!%20I%20would%20like%20to%20discuss%20a%20project%20with%20you.'
     }
   ];
 
@@ -269,87 +441,10 @@ const Contact = () => {
     {
       name: 'WhatsApp',
       icon: MessageSquare,
-      url: 'https://wa.me/233558330610?text=Hello%20Nexacore%20Innovations!',
+      url: 'https://wa.me/233558330610?text=Hello%20NexaCore%20Innovations!',
       gradient: 'from-green-500 to-green-600'
     }
   ];
-
-  // Enhanced quick booking function
-  const handleBookConsultation = () => {
-    const subject = encodeURIComponent('🗓️ Consultation Request - NexaCore Innovations');
-    const body = encodeURIComponent(`Hello NexaCore Innovations Team,
-
-I hope this email finds you well! I would like to schedule a FREE 30-minute consultation to discuss my project requirements.
-
-📋 PROJECT DETAILS:
-• Project Type: [Please specify - Web Development, Mobile App, etc.]
-• Timeline: [When do you need this completed?]
-• Budget Range: [Optional]
-• Special Requirements: [Any specific needs or questions?]
-
-📅 PREFERRED CONSULTATION TIMES:
-• Option 1: [Day/Time]
-• Option 2: [Day/Time] 
-• Option 3: [Day/Time]
-
-Please let me know your available time slots that work best for both of us.
-
-Looking forward to discussing how NexaCore Innovations can help bring my project to life!
-
-Best regards,
-[Your Name]
-[Your Phone Number]`);
-    
-    window.open(`mailto:info@nexacore-innovations.com?subject=${subject}&body=${body}`, '_blank');
-    
-    toast({
-      title: "📧 Email Client Opened!",
-      description: "Pre-filled consultation request ready to send. Check your email client.",
-      duration: 4000,
-    });
-  };
-
-  const handleWhatsAppChat = () => {
-    const message = encodeURIComponent(`👋 Hello NexaCore Innovations!
-
-I'm interested in your services and would like to discuss my project requirements.
-
-🚀 I'm looking for help with:
-• [Brief description of your project]
-
-⏰ Best time to chat: [Your preferred time]
-
-Can we schedule a quick chat to explore how you can help me achieve my goals?
-
-Thank you! 😊`);
-    
-    const whatsappUrl = `https://wa.me/233558330610?text=${message}`;
-    window.open(whatsappUrl, '_blank');
-    
-    toast({
-      title: "💬 Opening WhatsApp...",
-      description: "Redirecting to WhatsApp with pre-filled message for instant support!",
-      duration: 4000,
-    });
-  };
-
-  const handleEmergencyCall = () => {
-    window.open('tel:+233558330610', '_self');
-    
-    toast({
-      title: "🚨 Calling Emergency Line",
-      description: "Connecting you to our 24/7 emergency support. If call doesn't connect, try WhatsApp.",
-      duration: 5000,
-    });
-
-    setTimeout(() => {
-      toast({
-        title: "📱 Alternative Contact Options",
-        description: "Call not connecting? Try our WhatsApp for immediate assistance!",
-        duration: 4000,
-      });
-    }, 3000);
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -429,7 +524,7 @@ Thank you! 😊`);
 
             {/* Contact Form */}
             <div className="lg:col-span-2">
-              <Card className="card-gradient p-8">
+              <Card className="card-gradient p-8" id="contact-form">
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold mb-4 text-gradient-primary">Send us a Message</h2>
                   <p className="text-muted-foreground">
@@ -564,7 +659,7 @@ Thank you! 😊`);
         </div>
       </section>
 
-      {/* Quick Actions */}
+      {/* Quick Actions - Enhanced with Calendly */}
       <section className="py-16 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -577,26 +672,38 @@ Thank you! 😊`);
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer" onClick={handleBookConsultation}>
+            {/* Calendly Booking - Primary Option */}
+            <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer border-2 border-primary/20" onClick={handleBookConsultation}>
               <div className="p-6">
-                <Calendar className="w-12 h-12 text-primary mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <div className="relative">
+                  <Calendar className="w-12 h-12 text-primary mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                  <Badge className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                    <Zap className="w-3 h-3 mr-1" />
+                    INSTANT
+                  </Badge>
+                </div>
                 <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Schedule a Call</h3>
                 <p className="text-muted-foreground mb-6">
-                  Book a free 30-minute consultation to discuss your project requirements.
+                  Book a free 30-minute consultation instantly. Pick your preferred time slot and get automatic confirmation.
                 </p>
-                <Button className="btn-hero w-full" onClick={(e) => {e.stopPropagation(); handleBookConsultation();}}>
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Book Consultation
+                <Button className="btn-hero w-full group" onClick={(e) => {e.stopPropagation(); handleBookConsultation();}}>
+                  <Calendar className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
+                  Book Now - Calendly
+                  <ExternalLink className="w-4 h-4 ml-2" />
                 </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  ✅ Instant confirmation • 📅 Calendar sync • 🔔 Reminders
+                </p>
               </div>
             </Card>
 
+            {/* WhatsApp Chat - Secondary Option */}
             <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer" onClick={handleWhatsAppChat}>
               <div className="p-6">
                 <MessageSquare className="w-12 h-12 text-green-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-xl font-semibold mb-3 text-gradient-primary">WhatsApp Chat</h3>
                 <p className="text-muted-foreground mb-6">
-                  Get instant responses to your questions via WhatsApp messaging.
+                  Get instant responses to your questions via WhatsApp messaging with our team.
                 </p>
                 <Button className="bg-green-500 hover:bg-green-600 text-white w-full" onClick={(e) => {e.stopPropagation(); handleWhatsAppChat();}}>
                   <MessageSquare className="w-4 h-4 mr-2" />
@@ -605,12 +712,13 @@ Thank you! 😊`);
               </div>
             </Card>
 
+            {/* Emergency Support - Tertiary Option */}
             <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer" onClick={handleEmergencyCall}>
               <div className="p-6">
                 <Clock className="w-12 h-12 text-red-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Emergency Support</h3>
                 <p className="text-muted-foreground mb-6">
-                  Need urgent assistance? Our emergency line is available 24/7.
+                  Need urgent assistance? Our emergency line is available 24/7 for critical issues.
                 </p>
                 <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white w-full" onClick={(e) => {e.stopPropagation(); handleEmergencyCall();}}>
                   <Phone className="w-4 h-4 mr-2" />
@@ -619,10 +727,27 @@ Thank you! 😊`);
               </div>
             </Card>
           </div>
+
+          {/* Alternative Booking Methods */}
+          <div className="mt-12 text-center">
+            <p className="text-muted-foreground mb-4">
+              Prefer other booking methods?
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button variant="outline" onClick={handleWhatsAppBooking} className="text-green-600 border-green-300 hover:bg-green-50">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                WhatsApp Booking
+              </Button>
+              <Button variant="outline" onClick={handleEmailConsultation} className="text-blue-600 border-blue-300 hover:bg-blue-50">
+                <Mail className="w-4 h-4 mr-2" />
+                Email Booking
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Office Hours */}
+      {/* Office Hours & Availability */}
       <section className="py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Card className="card-gradient p-8 text-center">
@@ -633,19 +758,79 @@ Thank you! 😊`);
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
               <div>
-                <h4 className="font-semibold text-foreground mb-2">Ghana Time (GMT)</h4>
+                <h4 className="font-semibold text-foreground mb-2">🇬🇭 Ghana Time (GMT)</h4>
                 <p className="text-muted-foreground">Monday - Friday: 9:00 AM - 6:00 PM</p>
+                <p className="text-muted-foreground">Saturday: 10:00 AM - 2:00 PM</p>
               </div>
               <div>
-                <h4 className="font-semibold text-foreground mb-2">Emergency Support</h4>
+                <h4 className="font-semibold text-foreground mb-2">🚨 Emergency Support</h4>
                 <p className="text-muted-foreground">24/7 Available for Urgent Issues</p>
+                <p className="text-muted-foreground">WhatsApp & Phone Support</p>
               </div>
               <div>
-                <h4 className="font-semibold text-foreground mb-2">Response Time</h4>
+                <h4 className="font-semibold text-foreground mb-2">⚡ Response Time</h4>
                 <p className="text-muted-foreground">Within 24 hours guaranteed</p>
+                <p className="text-muted-foreground">Usually within 2-4 hours</p>
               </div>
             </div>
+            
+            {/* Calendly Integration Info */}
+            <div className="mt-8 p-4 bg-primary/5 rounded-lg border border-primary/10">
+              <h4 className="font-semibold text-primary mb-2">📅 Instant Booking Available</h4>
+              <p className="text-sm text-muted-foreground">
+                Use our Calendly integration above to see real-time availability and book instantly. 
+                Perfect for consultations, project discussions, and technical meetings.
+              </p>
+            </div>
           </Card>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-16 bg-muted/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">
+              <span className="text-gradient-primary">Frequently Asked</span> Questions
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Quick answers to common questions about our services and booking process
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="card-gradient p-6">
+              <h4 className="font-semibold text-foreground mb-3">🆓 Is the consultation really free?</h4>
+              <p className="text-muted-foreground text-sm">
+                Yes! Our 30-minute consultation is completely free with no obligations. 
+                We'll discuss your project, provide insights, and offer a tailored solution.
+              </p>
+            </Card>
+
+            <Card className="card-gradient p-6">
+              <h4 className="font-semibold text-foreground mb-3">⏱️ How quickly can we start?</h4>
+              <p className="text-muted-foreground text-sm">
+                Most projects can begin within 48-72 hours after agreement. 
+                Emergency projects can often start the same day.
+              </p>
+            </Card>
+
+            <Card className="card-gradient p-6">
+              <h4 className="font-semibold text-foreground mb-3">🌍 Do you work with international clients?</h4>
+              <p className="text-muted-foreground text-sm">
+                Absolutely! We serve clients globally and have experience with different 
+                time zones, currencies, and business requirements worldwide.
+              </p>
+            </Card>
+
+            <Card className="card-gradient p-6">
+              <h4 className="font-semibold text-foreground mb-3">💰 How do you handle pricing?</h4>
+              <p className="text-muted-foreground text-sm">
+                We provide transparent, detailed quotes based on project scope. 
+                No hidden fees, flexible payment terms, and competitive pricing.
+              </p>
+            </Card>
+          </div>
         </div>
       </section>
 
