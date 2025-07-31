@@ -290,7 +290,7 @@ const GetStarted = () => {
 
       // Template parameters for your business email
       const businessEmailParams = {
-        to_email: "godwin.ocloo@nexacore-innovations.com", // Replace with your actual business email
+        to_email: "info@nexacore-innovations.com", // Replace with your actual business email
         client_name: clientName,
         client_email: clientEmail,
         client_phone: clientPhone || "Not provided",
