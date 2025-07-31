@@ -8,7 +8,10 @@ import {
   Star,
   Shield,
   Clock,
-  Users
+  Users,
+  User,
+  Mail,
+  Phone
 } from "lucide-react";
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -232,8 +235,12 @@ const GetStarted = () => {
   const [rate, setRate] = useState(1);
   const [service, setService] = useState("Software Engineering");
   const [projectDescription, setProjectDescription] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [exchangeError, setExchangeError] = useState(false);
 
   const handleCountryChange = async (e) => {
@@ -256,28 +263,94 @@ const GetStarted = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Validation
+    if (!clientName.trim()) {
+      alert("Please provide your name");
+      return;
+    }
+    if (!clientEmail.trim()) {
+      alert("Please provide your email address");
+      return;
+    }
     if (!projectDescription.trim()) {
       alert("Please provide a project description");
       return;
     }
-    
-    const formData = {
-      country,
-      service,
-      projectDescription,
-      estimatedPrice: `${currency.symbol} ${convertedPrice}`,
-      exchangeRate: rate,
-      basePriceUSD: currentServicePrice
-    };
-    
-    console.log("Form submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+
+    setSubmitting(true);
+
+    try {
+      // Initialize EmailJS (you'll need to replace these with your actual IDs)
+      const emailjs = window.emailjs;
+      
+      // Template parameters for your business email
+      const businessEmailParams = {
+        to_email: "your-business@email.com", // Replace with your business email
+        client_name: clientName,
+        client_email: clientEmail,
+        client_phone: clientPhone || "Not provided",
+        client_country: country,
+        service_type: service,
+        project_description: projectDescription,
+        estimated_price: `${currency.symbol} ${convertedPrice}`,
+        base_price_usd: `$${currentServicePrice}`,
+        exchange_rate: rate.toFixed(4),
+        currency_code: currency.code,
+        submission_date: new Date().toLocaleDateString(),
+        submission_time: new Date().toLocaleTimeString()
+      };
+
+      // Template parameters for client confirmation email
+      const clientEmailParams = {
+        to_email: clientEmail,
+        client_name: clientName,
+        service_type: service,
+        estimated_price: `${currency.symbol} ${convertedPrice}`,
+        project_description: projectDescription,
+        country: country,
+        submission_date: new Date().toLocaleDateString()
+      };
+
+      // Send business notification email
+      await emailjs.send(
+        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+        'business_template', // Replace with your business template ID
+        businessEmailParams,
+        'YOUR_PUBLIC_KEY'   // Replace with your EmailJS public key
+      );
+
+      // Send client confirmation email
+      await emailjs.send(
+        'YOUR_SERVICE_ID', // Replace with your EmailJS service ID
+        'client_template',  // Replace with your client template ID
+        clientEmailParams,
+        'YOUR_PUBLIC_KEY'   // Replace with your EmailJS public key
+      );
+
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 5000);
+
+      // Optional: Clear form after successful submission
+      // setClientName("");
+      // setClientEmail("");
+      // setClientPhone("");
+      // setProjectDescription("");
+
+    } catch (error) {
+      console.error('Error sending emails:', error);
+      alert('Sorry, there was an error submitting your request. Please try again or contact us directly.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleGetQuote = () => {
-    alert("Free quote request submitted! We'll get back to you within 24 hours.");
+    if (!clientEmail.trim()) {
+      alert("Please provide your email address first so we can send you the quote!");
+      return;
+    }
+    alert("Free quote request submitted! We'll send a detailed quote to your email within 24 hours.");
   };
 
   const handleBackToHome = () => {
@@ -309,6 +382,16 @@ const GetStarted = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
       <Navbar />
+      
+      {/* EmailJS Script */}
+      <script 
+        src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"
+      ></script>
+      <script>
+        {`(function(){
+          emailjs.init("YOUR_PUBLIC_KEY"); // Replace with your EmailJS public key
+        })();`}
+      </script>
       
       {/* Hero Section */}
       <section className="pt-24 pb-12 relative overflow-hidden">
@@ -373,9 +456,14 @@ const GetStarted = () => {
             {submitted && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center">
                 <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
-                <p className="text-green-800 font-medium">
-                  Request submitted successfully! We'll get back to you soon.
-                </p>
+                <div>
+                  <p className="text-green-800 font-medium">
+                    Request submitted successfully!
+                  </p>
+                  <p className="text-green-700 text-sm">
+                    You'll receive a confirmation email shortly. We'll contact you within 24 hours.
+                  </p>
+                </div>
               </div>
             )}
 
@@ -390,58 +478,127 @@ const GetStarted = () => {
             )}
 
             <div className="space-y-8 relative z-10">
-              {/* Country Selection */}
-              <div className="space-y-3">
-                <label htmlFor="country" className="block text-lg font-semibold text-gray-900 flex items-center">
-                  <Globe className="w-5 h-5 mr-2 text-blue-600" />
-                  Your Country
-                </label>
-                <select
-                  id="country"
-                  value={country}
-                  onChange={handleCountryChange}
-                  className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                  disabled={loading}
-                >
-                  {Object.keys(currencyMap).map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+              {/* Client Information Section */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2">
+                  Your Information
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Client Name */}
+                  <div className="space-y-3">
+                    <label htmlFor="clientName" className="block text-lg font-semibold text-gray-900 flex items-center">
+                      <User className="w-5 h-5 mr-2 text-blue-600" />
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      id="clientName"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                      placeholder="Enter your full name"
+                      required
+                    />
+                  </div>
+
+                  {/* Client Email */}
+                  <div className="space-y-3">
+                    <label htmlFor="clientEmail" className="block text-lg font-semibold text-gray-900 flex items-center">
+                      <Mail className="w-5 h-5 mr-2 text-blue-600" />
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      id="clientEmail"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                      placeholder="your.email@example.com"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Client Phone */}
+                  <div className="space-y-3">
+                    <label htmlFor="clientPhone" className="block text-lg font-semibold text-gray-900 flex items-center">
+                      <Phone className="w-5 h-5 mr-2 text-blue-600" />
+                      Phone Number (Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      id="clientPhone"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+
+                  {/* Country Selection */}
+                  <div className="space-y-3">
+                    <label htmlFor="country" className="block text-lg font-semibold text-gray-900 flex items-center">
+                      <Globe className="w-5 h-5 mr-2 text-blue-600" />
+                      Your Country
+                    </label>
+                    <select
+                      id="country"
+                      value={country}
+                      onChange={handleCountryChange}
+                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                      disabled={loading}
+                    >
+                      {Object.keys(currencyMap).map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              {/* Service Selection */}
-              <div className="space-y-3">
-                <label htmlFor="service" className="block text-lg font-semibold text-gray-900 flex items-center">
-                  <Star className="w-5 h-5 mr-2 text-blue-600" />
-                  Service Type
-                </label>
-                <select 
-                  id="service" 
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                  className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                >
-                  {Object.keys(servicePricing).map((serviceType) => (
-                    <option key={serviceType} value={serviceType}>
-                      {serviceType}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Project Information Section */}
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2">
+                  Project Details
+                </h3>
 
-              {/* Project Description */}
-              <div className="space-y-3">
-                <label htmlFor="description" className="block text-lg font-semibold text-gray-900 flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-blue-600" />
-                  Project Description
-                </label>
-                <textarea
-                  id="description"
-                  value={projectDescription}
-                  onChange={(e) => setProjectDescription(e.target.value)}
-                  className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl h-36 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200 resize-none"
-                  placeholder="Tell us about your project, goals, timeline, and any specific requirements..."
-                />
+                {/* Service Selection */}
+                <div className="space-y-3">
+                  <label htmlFor="service" className="block text-lg font-semibold text-gray-900 flex items-center">
+                    <Star className="w-5 h-5 mr-2 text-blue-600" />
+                    Service Type
+                  </label>
+                  <select 
+                    id="service" 
+                    value={service}
+                    onChange={(e) => setService(e.target.value)}
+                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                  >
+                    {Object.keys(servicePricing).map((serviceType) => (
+                      <option key={serviceType} value={serviceType}>
+                        {serviceType}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Project Description */}
+                <div className="space-y-3">
+                  <label htmlFor="description" className="block text-lg font-semibold text-gray-900 flex items-center">
+                    <FileText className="w-5 h-5 mr-2 text-blue-600" />
+                    Project Description *
+                  </label>
+                  <textarea
+                    id="description"
+                    value={projectDescription}
+                    onChange={(e) => setProjectDescription(e.target.value)}
+                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl h-36 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200 resize-none"
+                    placeholder="Tell us about your project, goals, timeline, and any specific requirements..."
+                    required
+                  />
+                </div>
               </div>
 
               {/* Price Estimate */}
@@ -476,16 +633,26 @@ const GetStarted = () => {
                 <Button 
                   className="flex-1 text-lg py-4 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                   onClick={handleSubmit}
-                  disabled={!projectDescription.trim()}
+                  disabled={!projectDescription.trim() || !clientName.trim() || !clientEmail.trim() || submitting}
                 >
-                  Submit Request
-                  <ArrowRight className="ml-2 w-5 h-5" />
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit Request
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </>
+                  )}
                 </Button>
                 
                 <Button 
                   variant="outline" 
                   className="flex-1 text-lg py-4 border-2"
                   onClick={handleBackToHome}
+                  disabled={submitting}
                 >
                   Back to Home
                 </Button>
@@ -493,6 +660,7 @@ const GetStarted = () => {
                 <Button 
                   className="flex-1 text-lg py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                   onClick={handleGetQuote}
+                  disabled={submitting}
                 >
                   Get Free Quote
                 </Button>
@@ -536,6 +704,24 @@ const GetStarted = () => {
               <p className="text-muted-foreground">Quick turnaround times without compromising on quality</p>
             </Card>
           </div>
+        </div>
+      </section>
+
+      {/* Setup Instructions */}
+      <section className="py-8 bg-gray-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Card className="p-6 bg-yellow-50 border border-yellow-200">
+            <h3 className="text-lg font-bold text-yellow-800 mb-3">⚠️ Setup Required</h3>
+            <p className="text-yellow-700 text-sm mb-4">
+              To enable email functionality, you need to set up EmailJS:
+            </p>
+            <div className="text-yellow-700 text-sm space-y-2">
+              <p>1. Create account at <a href="https://emailjs.com" target="_blank" rel="noopener noreferrer" className="underline font-medium">emailjs.com</a></p>
+              <p>2. Replace <code className="bg-yellow-200 px-1 rounded">YOUR_SERVICE_ID</code>, <code className="bg-yellow-200 px-1 rounded">YOUR_PUBLIC_KEY</code> in the code</p>
+              <p>3. Create email templates: <code className="bg-yellow-200 px-1 rounded">business_template</code> and <code className="bg-yellow-200 px-1 rounded">client_template</code></p>
+              <p>4. Update <code className="bg-yellow-200 px-1 rounded">your-business@email.com</code> to your actual business email</p>
+            </div>
+          </Card>
         </div>
       </section>
 
