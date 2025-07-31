@@ -290,7 +290,7 @@ const GetStarted = () => {
 
       // Template parameters for your business email
       const businessEmailParams = {
-        to_email: "hello@nexacore-innovations.com", // Replace with your actual business email
+        to_email: "info@nexacore-innovations.com", // Replace with your actual business email
         client_name: clientName,
         client_email: clientEmail,
         client_phone: clientPhone || "Not provided",
@@ -341,7 +341,7 @@ const GetStarted = () => {
 
     } catch (error) {
       console.error('Error sending emails:', error);
-      alert('Sorry, there was an error submitting your request. Please try again or contact us directly at hello@nexacore-innovations.com');
+      alert('Sorry, there was an error submitting your request. Please try again or contact us directly at info@nexacore-innovations.com');
     } finally {
       setSubmitting(false);
     }
