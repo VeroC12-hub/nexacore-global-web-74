@@ -20,7 +20,7 @@ import { useEffect } from 'react';
 const About = () => {
   // Scroll to top when component mounts
   useEffect(() => {
-    window.scrollTo(1, 1);
+    window.scrollTo(2, 2);
   }, []);
   const values = [
     {
