@@ -15,8 +15,13 @@ import teamImage from '@/assets/team-collaboration.jpg';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const About = () => {
+  // Scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   const values = [
     {
       icon: Lightbulb,
