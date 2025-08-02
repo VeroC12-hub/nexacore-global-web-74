@@ -220,285 +220,17 @@ Please contact me ASAP to schedule an urgent consultation. Thank you!`);
           Step 1 of 3 • Personal Information
         </Badge>
         <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-          <span className="text-gradient-primary">Tell us about</span> yourself
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Tell us about</span> yourself
         </h2>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Let's start with some basic information so we can personalize your consultation experience.
         </p>
       </div>
 
-      <Card className="card-gradient p-8 max-w-2xl mx-auto">
+      <Card className="p-8 max-w-2xl mx-auto bg-gradient-to-br from-white to-gray-50 shadow-lg">
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="lg:col-span-1">
-              <div className="bg-white/10 rounded-xl p-6">
-                <h4 className="text-white font-semibold mb-4 flex items-center">
-                  <Award className="w-5 h-5 mr-2" />
-                  What's Included:
-                </h4>
-                <ul className="space-y-3 text-white/90">
-                  {recommendedService.features.map((feature, index) => (
-                    <li key={index} className="flex items-center">
-                      <CheckCircle className="w-4 h-4 mr-3 text-white/70 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-8">
-            <Button 
-              onClick={() => handleBooking(routingResult.recommendedService)}
-              className="w-full bg-white text-gray-900 hover:bg-gray-100 font-semibold h-14 text-lg"
-              size="lg"
-            >
-              <Calendar className="w-5 h-5 mr-3" />
-              Book This Consultation Now - It's Free!
-              <ExternalLink className="w-5 h-5 ml-3" />
-            </Button>
-            <p className="text-center text-white/80 text-sm mt-3">
-              ✅ Instant confirmation • 📅 Calendar sync • 🔔 Automatic reminders
-            </p>
-          </div>
-        </Card>
-
-        {/* Emergency Options */}
-        {routingResult.priority === 'urgent' && (
-          <Card className="p-8 border-2 border-red-200 bg-red-50 max-w-4xl mx-auto">
-            <div className="flex items-start space-x-6">
-              <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                <Zap className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="flex-1">
-                <h4 className="text-xl font-bold text-red-800 mb-3">🚨 Need Immediate Assistance?</h4>
-                <p className="text-red-700 mb-6 text-lg">
-                  Since you marked this as urgent, we also offer instant communication channels for immediate support:
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Button 
-                    onClick={handleWhatsAppFallback}
-                    className="bg-green-500 hover:bg-green-600 text-white h-12 text-base"
-                    size="lg"
-                  >
-                    <MessageSquare className="w-5 h-5 mr-2" />
-                    WhatsApp Urgent Support
-                  </Button>
-                  <Button 
-                    onClick={() => window.open('tel:+233558330610')}
-                    variant="outline"
-                    className="border-red-300 text-red-700 hover:bg-red-50 h-12 text-base"
-                    size="lg"
-                  >
-                    <Phone className="w-5 h-5 mr-2" />
-                    Call +233 558330610
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Alternative Services */}
-        <div className="max-w-6xl mx-auto">
-          <h4 className="text-2xl font-bold text-center mb-8">
-            Or explore <span className="text-gradient-primary">other consultation options:</span>
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Object.entries(serviceCategories)
-              .filter(([key]) => key !== routingResult.recommendedService)
-              .map(([key, service]) => (
-                <Card key={key} className="p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-105" onClick={() => handleBooking(key)}>
-                  <div className="text-center">
-                    <div className={`w-14 h-14 bg-gradient-to-r ${service.color} rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform`}>
-                      <service.icon className="w-7 h-7 text-white" />
-                    </div>
-                    <h5 className="font-semibold text-foreground mb-2">{service.title}</h5>
-                    <p className="text-sm text-muted-foreground mb-3">{service.duration}</p>
-                    <Button variant="outline" size="sm" className="w-full">
-                      Book This Instead
-                      <ChevronRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <Card className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 max-w-4xl mx-auto">
-          <div className="text-center mb-6">
-            <h4 className="text-xl font-bold mb-2">📞 Need Help or Have Questions?</h4>
-            <p className="text-muted-foreground">
-              Our team is here to assist you with any questions about the consultation process
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Mail className="w-6 h-6 text-blue-600" />
-              </div>
-              <h5 className="font-semibold mb-1">Email Support</h5>
-              <p className="text-sm text-muted-foreground">info@nexacore-innovations.com</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Phone className="w-6 h-6 text-green-600" />
-              </div>
-              <h5 className="font-semibold mb-1">Phone Support</h5>
-              <p className="text-sm text-muted-foreground">+233 558330610</p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <MessageSquare className="w-6 h-6 text-purple-600" />
-              </div>
-              <h5 className="font-semibold mb-1">WhatsApp</h5>
-              <p className="text-sm text-muted-foreground">Available 24/7</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Trust Indicators */}
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
-                <Shield className="w-6 h-6 text-green-600" />
-              </div>
-              <h5 className="font-semibold mb-1">100% Free Consultation</h5>
-              <p className="text-sm text-muted-foreground">No hidden fees or obligations</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
-                <Globe className="w-6 h-6 text-blue-600" />
-              </div>
-              <h5 className="font-semibold mb-1">Global Experience</h5>
-              <p className="text-sm text-muted-foreground">Serving clients worldwide</p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
-                <Award className="w-6 h-6 text-purple-600" />
-              </div>
-              <h5 className="font-semibold mb-1">Expert Team</h5>
-              <p className="text-sm text-muted-foreground">Specialized consultants</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Start Over */}
-        <div className="text-center">
-          <Button 
-            variant="outline"
-            onClick={() => {
-              setCurrentStep(1);
-              setFormData({
-                name: '', email: '', company: '', projectType: '', 
-                urgency: '', budget: '', timeline: '', projectDetails: '', preferredMeeting: ''
-              });
-              setRoutingResult(null);
-            }}
-            className="h-12 text-base px-8"
-            size="lg"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Start Over with Different Information
-          </Button>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <Navbar />
-      
-      {/* Header */}
-      <section className="pt-24 pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="inline-flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary-glow rounded-xl flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-gradient-primary">
-                Smart Consultation Booking
-              </h1>
-            </div>
-            <h2 className="text-4xl lg:text-6xl font-bold text-foreground mb-6">
-              Find Your <span className="text-gradient-hero">Perfect Match</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Answer a few quick questions and we'll automatically match you with the right specialist 
-              and consultation type for your specific project needs.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Progress Indicator */}
-      {currentStep < 4 && (
-        <section className="pb-8">
-          <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-center space-x-6">
-              {[1, 2, 3].map((step) => (
-                <div key={step} className="flex items-center">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                    step <= currentStep 
-                      ? 'bg-primary text-white shadow-lg' 
-                      : step === currentStep + 1
-                      ? 'bg-primary/20 text-primary border-2 border-primary/30'
-                      : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {step < currentStep ? (
-                      <CheckCircle className="w-6 h-6" />
-                    ) : (
-                      step
-                    )}
-                  </div>
-                  {step < 3 && (
-                    <div className={`w-20 h-2 mx-3 rounded-full transition-all ${
-                      step < currentStep ? 'bg-primary' : 'bg-muted'
-                    }`} />
-                  )}
-                </div>
-              ))}
-            </div>
-            <div className="flex justify-between mt-4 px-5">
-              <span className="text-sm text-muted-foreground">Personal Info</span>
-              <span className="text-sm text-muted-foreground">Project Details</span>
-              <span className="text-sm text-muted-foreground">Final Details</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Form Content */}
-      <section className="pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {currentStep === 1 && renderStep1()}
-          {currentStep === 2 && renderStep2()}
-          {currentStep === 3 && renderStep3()}
-          {currentStep === 4 && renderResults()}
-        </div>
-      </section>
-
-      {/* Footer */}
-      <div className="border-t bg-white/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center text-sm text-muted-foreground">
-            <p className="mb-2">🔒 Your information is secure and will only be used to provide you with the best consultation experience.</p>
-            <p>Powered by <span className="font-semibold text-primary">NexaCore Innovations</span> • Calendly Integration • AI-Powered Matching</p>
-          </div>
-        </div>
-      </div>
-
-      <Footer />
-    </div>
-  );
-};
-
-export default BookConsultation;="space-y-2">
+            <div className="space-y-2">
               <Label htmlFor="name" className="text-base font-medium">Full Name *</Label>
               <Input
                 id="name"
@@ -539,7 +271,7 @@ export default BookConsultation;="space-y-2">
             <Button 
               onClick={handleNext}
               disabled={!formData.name || !formData.email}
-              className="btn-hero flex-1 h-12 text-base"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex-1 h-12 text-base"
               size="lg"
             >
               Continue to Project Details
@@ -560,14 +292,14 @@ export default BookConsultation;="space-y-2">
           Step 2 of 3 • Project Details
         </Badge>
         <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-          <span className="text-gradient-primary">What's your project</span> about?
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">What's your project</span> about?
         </h2>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           Help us understand your needs so we can match you with the right specialist and consultation type.
         </p>
       </div>
 
-      <Card className="card-gradient p-8 max-w-4xl mx-auto">
+      <Card className="p-8 max-w-4xl mx-auto bg-gradient-to-br from-white to-gray-50 shadow-lg">
         <div className="space-y-8">
           <div className="space-y-4">
             <Label className="text-lg font-semibold">What type of project do you need help with? *</Label>
@@ -685,7 +417,7 @@ export default BookConsultation;="space-y-2">
             <Button 
               onClick={handleNext}
               disabled={!formData.projectType || !formData.urgency}
-              className="btn-hero flex-1 h-12 text-base"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex-1 h-12 text-base"
               size="lg"
             >
               Continue to Final Details
@@ -706,14 +438,14 @@ export default BookConsultation;="space-y-2">
           Step 3 of 3 • Final Details
         </Badge>
         <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-          <span className="text-gradient-primary">Almost there!</span> Final details
+          <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Almost there!</span> Final details
         </h2>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
           A few more details to ensure we provide the most relevant and valuable consultation for your needs.
         </p>
       </div>
 
-      <Card className="card-gradient p-8 max-w-3xl mx-auto">
+      <Card className="p-8 max-w-3xl mx-auto bg-gradient-to-br from-white to-gray-50 shadow-lg">
         <div className="space-y-8">
           <div className="space-y-4">
             <Label className="text-lg font-semibold">What's your expected timeline?</Label>
@@ -805,7 +537,7 @@ export default BookConsultation;="space-y-2">
             </Button>
             <Button 
               onClick={handleNext}
-              className="btn-hero flex-1 h-12 text-base"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex-1 h-12 text-base"
               size="lg"
             >
               Get My Consultation Recommendation
@@ -819,6 +551,8 @@ export default BookConsultation;="space-y-2">
 
   // Step 4: Results & Booking
   const renderResults = () => {
+    if (!routingResult) return null;
+    
     const recommendedService = serviceCategories[routingResult.recommendedService];
     
     return (
@@ -829,7 +563,7 @@ export default BookConsultation;="space-y-2">
             <CheckCircle className="w-10 h-10 text-green-600" />
           </div>
           <h2 className="text-3xl lg:text-5xl font-bold mb-4">
-            <span className="text-gradient-primary">Perfect Match</span> Found!
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Perfect Match</span> Found!
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Based on your project details, we've identified the ideal consultation type and specialist for your needs.
@@ -976,7 +710,7 @@ export default BookConsultation;="space-y-2">
         <Card className="p-8 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 max-w-4xl mx-auto">
           <div className="text-center mb-6">
             <h4 className="text-xl font-bold mb-2">📞 Need Help or Have Questions?</h4>
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               Our team is here to assist you with any questions about the consultation process
             </p>
           </div>
@@ -986,21 +720,21 @@ export default BookConsultation;="space-y-2">
                 <Mail className="w-6 h-6 text-blue-600" />
               </div>
               <h5 className="font-semibold mb-1">Email Support</h5>
-              <p className="text-sm text-gray-600">info@nexacore-innovations.com</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">info@nexacore-innovations.com</p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <Phone className="w-6 h-6 text-green-600" />
               </div>
               <h5 className="font-semibold mb-1">Phone Support</h5>
-              <p className="text-sm text-gray-600">+233 558330610</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">+233 558330610</p>
             </div>
             <div className="text-center">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <MessageSquare className="w-6 h-6 text-purple-600" />
               </div>
               <h5 className="font-semibold mb-1">WhatsApp</h5>
-              <p className="text-sm text-gray-600">Available 24/7</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Available 24/7</p>
             </div>
           </div>
         </Card>
@@ -1057,6 +791,8 @@ export default BookConsultation;="space-y-2">
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <Navbar />
+      
       {/* Header */}
       <section className="pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1136,6 +872,8 @@ export default BookConsultation;="space-y-2">
           </div>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
