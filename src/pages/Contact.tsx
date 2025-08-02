@@ -50,13 +50,6 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useEffect } from 'react';
-
-const Contact = () => {
-  // Scroll to top when component mounts
-  useEffect(() => {
-    window.scrollTo(2, 2);
-  }, []);
 
 // Smart Routing Form Component (Integrated)
 const SmartRoutingForm = () => {
