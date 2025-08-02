@@ -145,7 +145,7 @@ const Index = () => {
                 <Link to="/book-consultation">
                   <Button variant="secondary" className="text-lg px-8 py-4 bg-primary text-white hover:bg-primary/90">
                     Book Consultation
-                    <ArrowRight className="ml-2 w-4.5 h-5" />
+                    <ArrowRight className="ml-2 w-4 h-5" />
                   </Button>
                 </Link>
               </div>
