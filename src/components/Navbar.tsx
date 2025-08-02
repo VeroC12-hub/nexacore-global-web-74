@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import logo from '@/assets/nexacore-logo.png'; // ✅ Replace with your actual file name
+import logo from '@/assets/nexacore-logo.png';
 import { Button } from '@/components/ui/button';
 
 const Navbar = () => {
@@ -15,6 +15,7 @@ const Navbar = () => {
     { name: 'Portfolio', href: '/portfolio' },
     { name: 'Team', href: '/team' },
     { name: 'Contact', href: '/contact' },
+    { name: 'Book Consultation', href: '/book-consultation' }, // ✅ Added link
   ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -38,7 +39,9 @@ const Navbar = () => {
                 className={`text-sm font-medium ${
                   isActive(item.href)
                     ? 'text-primary underline underline-offset-4'
-                    : 'text-muted-foreground hover:text-primary transition-colors'
+                    : item.name === 'Book Consultation'
+                      ? 'text-white bg-primary px-4 py-2 rounded-md hover:bg-primary/80 transition-all'
+                      : 'text-muted-foreground hover:text-primary transition-colors'
                 }`}
               >
                 {item.name}
@@ -71,7 +74,9 @@ const Navbar = () => {
                 className={`block text-sm font-medium ${
                   isActive(item.href)
                     ? 'text-primary underline underline-offset-4'
-                    : 'text-muted-foreground hover:text-primary transition-colors'
+                    : item.name === 'Book Consultation'
+                      ? 'text-white bg-primary px-4 py-2 rounded-md block text-center'
+                      : 'text-muted-foreground hover:text-primary transition-colors'
                 }`}
                 onClick={() => setIsOpen(false)}
               >
