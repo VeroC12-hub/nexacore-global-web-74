@@ -15,6 +15,16 @@ import { Button } from '@/components/ui/button';
 import logo from '@/assets/nexacore-logo.png';
 
 const Footer = () => {
+  // Navigation items with their corresponding routes
+  const navigationItems = [
+    { name: 'About Us', path: '/about-us' },
+    { name: 'Services', path: '/services' },
+    { name: 'Portfolio', path: '/portfolio' },
+    { name: 'Team', path: '/team' },
+    { name: 'Contact', path: '/contact' },
+    { name: 'Blog', path: '/blog' }
+  ];
+
   return (
     <footer className="bg-foreground text-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -39,21 +49,16 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Quick Links</h3>
             <ul className="space-y-2">
-              {['About Us', 'Services', 'Portfolio', 'Team', 'Contact'].map((item) => (
-                <li key={item}>
+              {navigationItems.map((item) => (
+                <li key={item.name}>
                   <Link 
-                    to={`/${item.toLowerCase().replace(' ', '-')}`}
+                    to={item.path}
                     className="text-muted hover:text-background transition-colors text-sm"
                   >
-                    {item}
+                    {item.name}
                   </Link>
                 </li>
               ))}
-              <li>
-                <Link to="/blog" className="text-muted hover:text-background transition-colors text-sm">
-                  Blog
-                </Link>
-              </li>
             </ul>
           </div>
 
@@ -61,12 +66,54 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Our Services</h3>
             <ul className="space-y-2 text-sm">
-              <li className="text-muted">CAD/Design Engineering</li>
-              <li className="text-muted">Software Development</li>
-              <li className="text-muted">AI/ML Solutions</li>
-              <li className="text-muted">Blockchain & Web3</li>
-              <li className="text-muted">UI/UX Design</li>
-              <li className="text-muted">Data Analytics</li>
+              <li>
+                <Link 
+                  to="/services#cad-design" 
+                  className="text-muted hover:text-background transition-colors"
+                >
+                  CAD/Design Engineering
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/services#software-development" 
+                  className="text-muted hover:text-background transition-colors"
+                >
+                  Software Development
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/services#ai-ml" 
+                  className="text-muted hover:text-background transition-colors"
+                >
+                  AI/ML Solutions
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/services#blockchain" 
+                  className="text-muted hover:text-background transition-colors"
+                >
+                  Blockchain & Web3
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/services#ui-ux" 
+                  className="text-muted hover:text-background transition-colors"
+                >
+                  UI/UX Design
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/services#data-analytics" 
+                  className="text-muted hover:text-background transition-colors"
+                >
+                  Data Analytics
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -80,11 +127,21 @@ const Footer = () => {
               </div>
               <div className="flex items-start space-x-3">
                 <Phone className="w-4 h-4 text-primary-glow" />
-                <span className="text-muted">+233558330610 / +233501588710</span>
+                <a 
+                  href="tel:+233558330610" 
+                  className="text-muted hover:text-background transition-colors"
+                >
+                  +233558330610 / +233501588710
+                </a>
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-4 h-4 text-primary-glow" />
-                <span className="text-muted">info@nexacore-innovations.com</span>
+                <a 
+                  href="mailto:info@nexacore-innovations.com" 
+                  className="text-muted hover:text-background transition-colors"
+                >
+                  info@nexacore-innovations.com
+                </a>
               </div>
             </div>
 
