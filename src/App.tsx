@@ -9,8 +9,9 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import GetStarted from "./pages/GetStarted";
-import Portfolio from "./pages/Portfolio"; // ✅ Add Portfolio import
+import Portfolio from "./pages/Portfolio";
 import NotFound from "./pages/NotFound";
+import BookConsultation from "./pages/BookConsultation"; // ✅ Added import
 import AIAssistant from "./components/AIAssistant";
 
 const queryClient = new QueryClient();
@@ -27,7 +28,8 @@ const App = () => (
           <Route path="/services" element={<Services />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/get-started" element={<GetStarted />} />
-          <Route path="/portfolio" element={<Portfolio />} /> {/* ✅ Add Portfolio route */}
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/book-consultation" element={<BookConsultation />} /> {/* ✅ New Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
         <AIAssistant />
