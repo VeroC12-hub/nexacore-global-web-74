@@ -19,10 +19,28 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useNavigate } from 'react-router-dom'; // Add this import
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const Services = () => {
-  const navigate = useNavigate(); // Add this hook
+  const navigate = useNavigate();
+
+  // Handle scrolling to specific sections on page load
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash) {
+      setTimeout(() => {
+        const element = document.getElementById(hash.substring(1));
+        if (element) {
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+          });
+        }
+      }, 100);
+    }
+  }, []);
 
   // Function to handle service category click
   const handleServiceClick = (categoryTitle) => {
@@ -43,6 +61,7 @@ const Services = () => {
 
   const serviceCategories = [
     {
+      id: 'engineering-technical',
       icon: Cog,
       image: '/services/engineering-services.png',
       title: 'Engineering & Technical Services',
@@ -56,6 +75,7 @@ const Services = () => {
       ]
     },
     {
+      id: 'software-app-development',
       icon: Smartphone,
       image: '/services/software-services.png',
       title: 'Software & App Development',
@@ -69,6 +89,7 @@ const Services = () => {
       ]
     },
     {
+      id: 'creative-branding',
       icon: Palette,
       image: '/services/creative-services.png',
       title: 'Creative & Branding',
@@ -82,6 +103,7 @@ const Services = () => {
       ]
     },
     {
+      id: 'data-digital-growth',
       icon: BarChart3,
       image: '/services/data-digital-services.png',
       title: 'Data & Digital Growth',
@@ -95,6 +117,7 @@ const Services = () => {
       ]
     },
     {
+      id: 'professional-services',
       icon: Briefcase,
       image: '/services/professional-services.png',
       title: 'Professional Services',
@@ -151,7 +174,11 @@ const Services = () => {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
           {serviceCategories.map((category, index) => (
-            <div key={index} className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center ${index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''}`}>
+            <div 
+              key={index} 
+              id={category.id}
+              className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center scroll-mt-20 ${index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''}`}
+            >
               <div className={`space-y-6 ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
                 <div className="flex items-center space-x-4">
                   <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary-glow rounded-xl flex items-center justify-center">
