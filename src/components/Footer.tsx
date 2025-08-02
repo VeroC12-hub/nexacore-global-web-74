@@ -60,32 +60,25 @@ const Footer = () => {
   ];
 
   // Function to handle service link clicks with smooth scrolling
-  const handleServiceClick = (e: React.MouseEvent, serviceItem: typeof serviceItems[0]) => {
+  const handleServiceClick = (e: React.MouseEvent, path: string) => {
     e.preventDefault();
     
-    // Navigate to services page first
-    window.location.href = '/services';
-    
-    // Use setTimeout to ensure page loads before scrolling
-    setTimeout(() => {
-      // Find the service category section
-      const categoryElements = document.querySelectorAll('h2');
-      let targetElement: Element | null = null;
-      
-      categoryElements.forEach((element) => {
-        if (element.textContent?.includes(serviceItem.category.split(' ')[0])) {
-          targetElement = element.closest('div[class*="grid"]');
-        }
-      });
-      
-      if (targetElement) {
-        targetElement.scrollIntoView({ 
+    // Check if we're already on the services page
+    if (window.location.pathname === '/services') {
+      // We're already on services page, just scroll to section
+      const sectionId = path.split('#')[1];
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ 
           behavior: 'smooth', 
           block: 'start',
           inline: 'nearest'
         });
       }
-    }, 100);
+    } else {
+      // Navigate to services page with hash
+      window.location.href = path;
+    }
   };
 
   return (
@@ -133,7 +126,7 @@ const Footer = () => {
                 <li key={item.name}>
                   <a 
                     href={item.path}
-                    onClick={(e) => handleServiceClick(e, item)}
+                    onClick={(e) => handleServiceClick(e, item.path)}
                     className="text-muted hover:text-background transition-colors cursor-pointer"
                   >
                     {item.name}
