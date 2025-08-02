@@ -1,9 +1,6 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -11,31 +8,46 @@ import Contact from "./pages/Contact";
 import GetStarted from "./pages/GetStarted";
 import Portfolio from "./pages/Portfolio";
 import NotFound from "./pages/NotFound";
-import BookConsultation from "./pages/BookConsultation"; // ✅ Added import
+import BookConsultation from "./pages/BookConsultation";
 import AIAssistant from "./components/AIAssistant";
 
-const queryClient = new QueryClient();
+// Optional: Only import these if they exist in your project
+// If you get import errors, comment these out
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/get-started" element={<GetStarted />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/book-consultation" element={<BookConsultation />} /> {/* ✅ New Route */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <AIAssistant />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/get-started" element={<GetStarted />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/book-consultation" element={<BookConsultation />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <AIAssistant />
+          <Toaster />
+          <Sonner />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
