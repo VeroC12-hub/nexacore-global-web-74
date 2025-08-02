@@ -105,7 +105,6 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <EnhancedHeroButtons />
       <section className="relative pt-16 pb-24 lg:pt-24 lg:pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-success/5"></div>
         <div 
