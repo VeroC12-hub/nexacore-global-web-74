@@ -25,6 +25,69 @@ const Footer = () => {
     { name: 'Blog', path: '/blog' }
   ];
 
+  // Service items with exact mapping to Services page sections
+  const serviceItems = [
+    { 
+      name: 'CAD/Design Engineering', 
+      path: '/services#engineering-technical',
+      category: 'Engineering & Technical Services'
+    },
+    { 
+      name: 'Software Development', 
+      path: '/services#software-app-development',
+      category: 'Software & App Development'
+    },
+    { 
+      name: 'AI/ML Solutions', 
+      path: '/services#engineering-technical',
+      category: 'Engineering & Technical Services'
+    },
+    { 
+      name: 'Blockchain & Web3', 
+      path: '/services#engineering-technical',
+      category: 'Engineering & Technical Services'
+    },
+    { 
+      name: 'UI/UX Design', 
+      path: '/services#creative-branding',
+      category: 'Creative & Branding'
+    },
+    { 
+      name: 'Data Analytics', 
+      path: '/services#data-digital-growth',
+      category: 'Data & Digital Growth'
+    }
+  ];
+
+  // Function to handle service link clicks with smooth scrolling
+  const handleServiceClick = (e: React.MouseEvent, serviceItem: typeof serviceItems[0]) => {
+    e.preventDefault();
+    
+    // Navigate to services page first
+    window.location.href = '/services';
+    
+    // Use setTimeout to ensure page loads before scrolling
+    setTimeout(() => {
+      // Find the service category section
+      const categoryElements = document.querySelectorAll('h2');
+      let targetElement: Element | null = null;
+      
+      categoryElements.forEach((element) => {
+        if (element.textContent?.includes(serviceItem.category.split(' ')[0])) {
+          targetElement = element.closest('div[class*="grid"]');
+        }
+      });
+      
+      if (targetElement) {
+        targetElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
+        });
+      }
+    }, 100);
+  };
+
   return (
     <footer className="bg-foreground text-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -66,54 +129,17 @@ const Footer = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Our Services</h3>
             <ul className="space-y-2 text-sm">
-              <li>
-                <Link 
-                  to="/services#cad-design" 
-                  className="text-muted hover:text-background transition-colors"
-                >
-                  CAD/Design Engineering
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/services#software-development" 
-                  className="text-muted hover:text-background transition-colors"
-                >
-                  Software Development
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/services#ai-ml" 
-                  className="text-muted hover:text-background transition-colors"
-                >
-                  AI/ML Solutions
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/services#blockchain" 
-                  className="text-muted hover:text-background transition-colors"
-                >
-                  Blockchain & Web3
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/services#ui-ux" 
-                  className="text-muted hover:text-background transition-colors"
-                >
-                  UI/UX Design
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/services#data-analytics" 
-                  className="text-muted hover:text-background transition-colors"
-                >
-                  Data Analytics
-                </Link>
-              </li>
+              {serviceItems.map((item) => (
+                <li key={item.name}>
+                  <a 
+                    href={item.path}
+                    onClick={(e) => handleServiceClick(e, item)}
+                    className="text-muted hover:text-background transition-colors cursor-pointer"
+                  >
+                    {item.name}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
