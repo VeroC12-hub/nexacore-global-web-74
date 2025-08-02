@@ -17,7 +17,7 @@ import logo from '@/assets/nexacore-logo.png';
 const Footer = () => {
   // Navigation items with their corresponding routes
   const navigationItems = [
-    { name: 'About Us', path: '/about-us' },
+    { name: 'About Us', path: '/about' },
     { name: 'Services', path: '/services' },
     { name: 'Portfolio', path: '/portfolio' },
     { name: 'Team', path: '/team' },
