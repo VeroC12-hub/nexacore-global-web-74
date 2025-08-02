@@ -142,6 +142,12 @@ const Index = () => {
                     <span className="story-link">View Portfolio</span>
                   </Button>
                 </Link>
+                <Link to="/book-consultation">
+                  <Button variant="secondary" className="text-lg px-8 py-4 bg-primary text-white hover:bg-primary/90">
+                    Book Consultation
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8">
