@@ -27,19 +27,37 @@ const Services = () => {
 
   // Handle scrolling to specific sections on page load
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash) {
-      setTimeout(() => {
-        const element = document.getElementById(hash.substring(1));
+    const scrollToSection = () => {
+      const hash = window.location.hash;
+      if (hash) {
+        const sectionId = hash.substring(1);
+        const element = document.getElementById(sectionId);
         if (element) {
-          element.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start',
-            inline: 'nearest'
-          });
+          // Add a longer delay to ensure page is fully loaded
+          setTimeout(() => {
+            element.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'start',
+              inline: 'nearest'
+            });
+          }, 300);
         }
-      }, 100);
-    }
+      }
+    };
+
+    // Run on initial load
+    scrollToSection();
+
+    // Also run when hash changes
+    const handleHashChange = () => {
+      scrollToSection();
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
   }, []);
 
   // Function to handle service category click
@@ -177,7 +195,7 @@ const Services = () => {
             <div 
               key={index} 
               id={category.id}
-              className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center scroll-mt-20 ${index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''}`}
+              className={`grid grid-cols-1 lg:grid-cols-2 gap-12 items-center scroll-mt-24 ${index % 2 === 1 ? 'lg:grid-flow-col-dense' : ''}`}
             >
               <div className={`space-y-6 ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
                 <div className="flex items-center space-x-4">
