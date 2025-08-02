@@ -191,7 +191,7 @@ Hi NexaCore Innovations! I need immediate assistance with my project.
 
 Please contact me ASAP to schedule an urgent consultation. Thank you!`);
     
-    window.open(`https://wa.me/233558330610?text=${message}`, '_blank');
+    window.open(`https://wa.me/233209628907?text=${message}`, '_blank');
   };
 
   // Render methods for each step (condensed for space)
@@ -523,12 +523,12 @@ Please contact me ASAP to schedule an urgent consultation. Thank you!`);
                     WhatsApp Now
                   </Button>
                   <Button 
-                    onClick={() => window.open('tel:+233558330610')}
+                    onClick={() => window.open('tel:+233209628907')}
                     variant="outline"
                     className="border-red-300 text-red-700 hover:bg-red-50"
                   >
                     <Phone className="w-4 h-4 mr-2" />
-                    Call +233 558330610
+                    Call +233 209628907
                   </Button>
                 </div>
               </div>
@@ -821,7 +821,7 @@ I'm excited to discuss how NexaCore Innovations can help bring my project to lif
 
 Thank you! 😊`);
     
-    const whatsappUrl = `https://wa.me/233558330610?text=${message}`;
+    const whatsappUrl = `https://wa.me/233209628907?text=${message}`;
     
     try {
       window.open(whatsappUrl, '_blank');
@@ -860,7 +860,7 @@ Can we schedule a quick chat to explore how you can help me achieve my goals?
 
 Thank you! 😊`);
     
-    const whatsappUrl = `https://wa.me/233558330610?text=${message}`;
+    const whatsappUrl = `https://wa.me/233209628907?text=${message}`;
     window.open(whatsappUrl, '_blank');
     
     toast({
@@ -872,7 +872,7 @@ Thank you! 😊`);
 
   // 🚨 EMERGENCY SUPPORT
   const handleEmergencyCall = () => {
-    window.open('tel:+233558330610', '_self');
+    window.open('tel:+233209628907', '_self');
     
     toast({
       title: "🚨 Calling Emergency Line",
@@ -933,9 +933,9 @@ Best regards,
     {
       icon: Phone,
       title: 'Phone',
-      value: '+233 558330610',
+      value: '+233 209628907',
       description: 'Mon-Fri 9AM-6PM GMT',
-      action: 'tel:+233558330610'
+      action: 'tel:+233209628907'
     },
     {
       icon: Mail,
@@ -954,9 +954,9 @@ Best regards,
     {
       icon: MessageSquare,
       title: 'WhatsApp',
-      value: '+233 558330610',
+      value: '+233 209628907',
       description: 'Quick chat support',
-      action: 'https://wa.me/233558330610?text=Hello%20NexaCore%20Innovations!%20I%20would%20like%20to%20discuss%20a%20project%20with%20you.'
+      action: 'https://wa.me/233209628907?text=Hello%20NexaCore%20Innovations!%20I%20would%20like%20to%20discuss%20a%20project%20with%20you.'
     }
   ];
 
@@ -991,7 +991,7 @@ Best regards,
     {
       name: 'WhatsApp',
       icon: MessageSquare,
-      url: 'https://wa.me/233558330610?text=Hello%20NexaCore%20Innovations!',
+      url: 'https://wa.me/233209628907?text=Hello%20NexaCore%20Innovations!',
       gradient: 'from-green-500 to-green-600'
     }
   ];
