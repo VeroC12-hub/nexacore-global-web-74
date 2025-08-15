@@ -213,20 +213,20 @@ const getExchangeRate = async (currencyCode) => {
 
 // Service pricing in USD
 const servicePricing = {
-  "Software Engineering": 150,
-  "Data Analysis": 120,
-  "CAD Engineering": 180,
-  "Graphic Design": 80,
-  "Digital Marketing": 100,
-  "Video Editing & Motion Graphics": 130,
-  "UI/UX Design": 110,
-  "Cybersecurity Solutions": 200,
-  "Mobile App Development": 160,
-  "Content Writing / Copywriting": 60,
-  "3D Animation & VFX": 220,
-  "Web3 & Blockchain Engineering": 250,
-  "E-Commerce Solutions": 140,
-  "AI / Machine Learning Engineering": 240
+  "Software Engineering": 3000 - 20000,
+  "Data Analysis": 800 - 5000,
+  "CAD Engineering": 500 - 5000,
+  "Graphic Design": 200 - 2000,
+  "Digital Marketing": 500 - 5000,
+  "Video Editing & Motion Graphics": 500 - 3000,
+  "UI/UX Design": 1000 - 7000,
+  "Cybersecurity Solutions": 3000 - 10000,
+  "Mobile App Development": 3000 - 15000,
+  "Content Writing / Copywriting": 200 - 1500,
+  "3D Animation & VFX": 1000 - 10000,
+  "Web3 & Blockchain Engineering": 5000 - 30000,
+  "E-Commerce Solutions": 2000 - 10000,
+  "AI / Machine Learning Engineering": 5000 - 25000
 };
 
 const GetStarted = () => {
