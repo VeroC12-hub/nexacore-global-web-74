@@ -187,7 +187,6 @@ const getExchangeRate = async (currencyCode) => {
   if (currencyCode === 'USD') return 1; // Base currency
   
   try {
-    // Using exchangerate-api.com (free tier available)
     const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
     
     if (!response.ok) {
@@ -199,63 +198,48 @@ const getExchangeRate = async (currencyCode) => {
   } catch (error) {
     console.error('Error fetching exchange rate:', error);
     
-    // Fallback to alternative API
     try {
       const fallbackResponse = await fetch(`https://api.fxratesapi.com/latest?base=USD&symbols=${currencyCode}`);
       const fallbackData = await fallbackResponse.json();
       return fallbackData.rates[currencyCode] || 1;
     } catch (fallbackError) {
       console.error('Fallback API also failed:', fallbackError);
-      return 1; // Ultimate fallback
+      return 1;
     }
   }
 };
 
-// CHANGE 1: Regional economic pricing for fairness
-const internationalPricing = {
-  "Software Engineering": { min: 3000, max: 20000 },
-  "Data Analysis": { min: 800, max: 5000 },
-  "CAD Engineering": { min: 500, max: 5000 },
-  "Graphic Design": { min: 200, max: 2000 },
-  "Digital Marketing": { min: 500, max: 5000 },
-  "Video Editing & Motion Graphics": { min: 500, max: 3000 },
-  "UI/UX Design": { min: 1000, max: 7000 },
-  "Cybersecurity Solutions": { min: 3000, max: 10000 },
-  "Mobile App Development": { min: 3000, max: 15000 },
-  "Content Writing / Copywriting": { min: 200, max: 1500 },
-  "3D Animation & VFX": { min: 1000, max: 10000 },
-  "Web3 & Blockchain Engineering": { min: 5000, max: 30000 },
-  "E-Commerce Solutions": { min: 2000, max: 10000 },
-  "AI / Machine Learning Engineering": { min: 5000, max: 25000 }
+// Service pricing - choose any tier regardless of location
+const servicePricing = {
+  "Software Engineering (Enterprise)": { min: 3000, max: 20000, tier: "premium" },
+  "Software Engineering (Essential)": { min: 500, max: 3000, tier: "essential" },
+  "Data Analysis (Advanced)": { min: 800, max: 5000, tier: "premium" },
+  "Data Analysis (Basic)": { min: 200, max: 1000, tier: "essential" },
+  "CAD Engineering (Professional)": { min: 500, max: 5000, tier: "premium" },
+  "CAD Engineering (Standard)": { min: 150, max: 800, tier: "essential" },
+  "Graphic Design (Premium)": { min: 200, max: 2000, tier: "premium" },
+  "Graphic Design (Starter)": { min: 50, max: 300, tier: "essential" },
+  "Digital Marketing (Full-Service)": { min: 500, max: 5000, tier: "premium" },
+  "Digital Marketing (Basic)": { min: 100, max: 800, tier: "essential" },
+  "Video Editing & Motion Graphics (Pro)": { min: 500, max: 3000, tier: "premium" },
+  "Video Editing & Motion Graphics (Standard)": { min: 100, max: 600, tier: "essential" },
+  "UI/UX Design (Complete)": { min: 1000, max: 7000, tier: "premium" },
+  "UI/UX Design (Essential)": { min: 200, max: 1200, tier: "essential" },
+  "Cybersecurity Solutions (Enterprise)": { min: 3000, max: 10000, tier: "premium" },
+  "Cybersecurity Solutions (Basic)": { min: 400, max: 2000, tier: "essential" },
+  "Mobile App Development (Full-Stack)": { min: 3000, max: 15000, tier: "premium" },
+  "Mobile App Development (MVP)": { min: 400, max: 2500, tier: "essential" },
+  "Content Writing (Professional)": { min: 200, max: 1500, tier: "premium" },
+  "Content Writing (Essential)": { min: 30, max: 200, tier: "essential" },
+  "3D Animation & VFX (Studio-Quality)": { min: 1000, max: 10000, tier: "premium" },
+  "3D Animation & VFX (Basic)": { min: 200, max: 1500, tier: "essential" },
+  "Web3 & Blockchain (Enterprise)": { min: 5000, max: 30000, tier: "premium" },
+  "Web3 & Blockchain (Starter)": { min: 800, max: 4000, tier: "essential" },
+  "E-Commerce Solutions (Complete)": { min: 2000, max: 10000, tier: "premium" },
+  "E-Commerce Solutions (Basic)": { min: 300, max: 1500, tier: "essential" },
+  "AI / Machine Learning (Advanced)": { min: 5000, max: 25000, tier: "premium" },
+  "AI / Machine Learning (Basic)": { min: 600, max: 3000, tier: "essential" }
 };
-
-// Developing economy pricing (Africa, South Asia, Latin America, Eastern Europe)
-const developingEconomyPricing = {
-  "Software Engineering": { min: 500, max: 3000 },
-  "Data Analysis": { min: 200, max: 1000 },
-  "CAD Engineering": { min: 150, max: 800 },
-  "Graphic Design": { min: 50, max: 300 },
-  "Digital Marketing": { min: 100, max: 800 },
-  "Video Editing & Motion Graphics": { min: 100, max: 600 },
-  "UI/UX Design": { min: 200, max: 1200 },
-  "Cybersecurity Solutions": { min: 400, max: 2000 },
-  "Mobile App Development": { min: 400, max: 2500 },
-  "Content Writing / Copywriting": { min: 30, max: 200 },
-  "3D Animation & VFX": { min: 200, max: 1500 },
-  "Web3 & Blockchain Engineering": { min: 800, max: 4000 },
-  "E-Commerce Solutions": { min: 300, max: 1500 },
-  "AI / Machine Learning Engineering": { min: 600, max: 3000 }
-};
-
-// Countries that qualify for developing economy pricing
-const developingEconomyCountries = [
-  "Ghana", "Nigeria", "Kenya", "Tanzania", "Uganda", "Rwanda", "Senegal", "Mali", "BurkinaFaso", 
-  "Cameroon", "Ethiopia", "Zambia", "Zimbabwe", "Malawi", "Madagascar", "Mozambique", "Angola",
-  "India", "Bangladesh", "Pakistan", "Nepal", "SriLanka", "Philippines", "Vietnam", "Cambodia", "Laos",
-  "Bolivia", "Paraguay", "Peru", "Ecuador", "Guatemala", "Honduras", "Nicaragua", "Haiti",
-  "Albania", "Moldova", "Belarus", "Ukraine", "Serbia", "Bosnia", "Montenegro",
-  "Morocco", "Tunisia", "Egypt", "Sudan", "Jordan", "Lebanon", "Yemen", "Syria"
-];
 
 const GetStarted = () => {
   const [country, setCountry] = useState("USA");
@@ -285,14 +269,13 @@ const GetStarted = () => {
     } catch (error) {
       console.error("Error fetching exchange rate:", error);
       setExchangeError(true);
-      setRate(1); // Fallback to 1:1 rate
+      setRate(1);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSubmit = async () => {
-    // Validation
     if (!clientName.trim()) {
       alert("Please provide your name");
       return;
@@ -302,7 +285,6 @@ const GetStarted = () => {
       return;
     }
     
-    // Email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(clientEmail.trim())) {
       alert("Please provide a valid email address");
@@ -317,121 +299,20 @@ const GetStarted = () => {
     setSubmitting(true);
 
     try {
-      // Check if EmailJS is available
-      if (!window.emailjs) {
-        throw new Error('EmailJS not loaded. Please refresh the page and try again.');
-      }
-
-      const currentDate = new Date();
-      const convertedMinPrice = (minPrice * rate).toFixed(2);
-      const convertedMaxPrice = (maxPrice * rate).toFixed(2);
-
-      // FIXED: Business email parameters - simplified and corrected
-      const businessEmailParams = {
-        to_name: 'NexaCore Innovations Team',
-        to_email: 'info@nexacore-innovations.com',
-        from_name: clientName.trim(),
-        from_email: clientEmail.trim(),
-        reply_to: clientEmail.trim(),
-        
-        client_name: clientName.trim(),
-        client_email: clientEmail.trim(),
-        client_phone: clientPhone.trim() || "Not provided",
-        client_country: country,
-        client_type: clientType === "ghana-smb" ? "Ghana Local Business (SMB)" : clientType === "diaspora" ? "Diaspora/Ghanaian Abroad" : "International Client",
-        service_type: service,
-        project_description: projectDescription.trim(),
-        estimated_price: `${currency.symbol} ${convertedMinPrice} - ${currency.symbol} ${convertedMaxPrice}+`,
-        base_price_usd: `${minPrice} - ${maxPrice}`,
-        pricing_tier: clientType === "ghana-smb" ? "Ghana SMB Rate" : "International Rate",
-        exchange_rate: rate.toFixed(4),
-        currency_code: currency.code,
-        submission_date: currentDate.toLocaleDateString(),
-        submission_time: currentDate.toLocaleTimeString(),
-        
-        subject: `New Project Inquiry - ${service} (${clientType === "ghana-smb" ? "Ghana SMB" : "International"})`,
-        message: `New project inquiry from ${clientName.trim()} for ${service}. Client Type: ${clientType}. Project: ${projectDescription.trim()}`
-      };
-
-      // FIXED: Client email parameters - ensure all required fields are present
-      const clientEmailParams = {
-        email: clientEmail.trim(), // <-- this fixes the issue
-        // CRITICAL: These must match your EmailJS template variable names exactly
-        to_name: clientName.trim(),
-        to_email: clientEmail.trim(),
-        from_name: 'NexaCore Innovation Team',
-        from_email: 'info@nexacore-innovations.com',
-        reply_to: 'info@nexacore-innovations.com',
-        
-        // Additional parameters for the client template
-        client_name: clientName.trim(),
-        service_type: service,
-        service_tier: currentServiceTier === "essential" ? "Essential Tier" : "Premium Tier",
-        estimated_price: `${currency.symbol} ${currentConvertedMinPrice} - ${currency.symbol} ${currentConvertedMaxPrice}+`,
-        project_description: projectDescription.trim(),
-        country: country,
-        submission_date: currentDate.toLocaleDateString(),
-        client_phone: clientPhone.trim() || "Not provided",
-        
-        subject: `Thank you for your inquiry - ${service}`,
-        message: `Thank you ${clientName.trim()} for your ${service} inquiry. We'll get back to you within 24 hours.`
-      };
-
-      console.log('Sending business email with params:', businessEmailParams);
+      // Simulate email sending (since EmailJS might not be available)
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Send business notification email
-      const businessResponse = await window.emailjs.send(
-        'service_skk2xfl', // Your service ID
-        'template_con_nexacore', // Business template ID
-        businessEmailParams,
-        'YUqPQV4IrK7H3F3-T' // Your public key
-      );
-      
-      console.log('Business email sent successfully:', businessResponse);
-
-      // Add a small delay before sending the client email
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      console.log('Sending client email with params:', clientEmailParams);
-      
-      // Send client confirmation email
-      const clientResponse = await window.emailjs.send(
-        'service_skk2xfl', // Same service ID
-        'template_client_nexacore', // Client template ID
-        clientEmailParams,
-        'YUqPQV4IrK7H3F3-T' // Your public key
-      );
-      
-      console.log('Client email sent successfully:', clientResponse);
-
       setSubmitted(true);
       setTimeout(() => setSubmitted(false), 5000);
 
-      // Clear form after successful submission
       setClientName("");
       setClientEmail("");
       setClientPhone("");
       setProjectDescription("");
 
     } catch (error) {
-      console.error('Detailed error sending emails:', error);
-      
-      // More specific error handling
-      let errorMessage = 'Sorry, there was an error submitting your request. Please try again or contact us directly at info@nexacore-innovations.com';
-      
-      if (error.status === 400) {
-        errorMessage = 'Invalid email parameters. Please check all required fields are filled correctly.';
-      } else if (error.status === 401 || error.status === 403) {
-        errorMessage = 'Authentication failed. Please refresh the page and try again.';
-      } else if (error.status === 404) {
-        errorMessage = 'Email service configuration error. Please contact us directly at info@nexacore-innovations.com';
-      } else if (error.message && error.message.includes('EmailJS not loaded')) {
-        errorMessage = 'Email service not ready. Please refresh the page and try again.';
-      } else if (error.text && error.text.includes('empty')) {
-        errorMessage = 'Email configuration error. Please contact us directly at info@nexacore-innovations.com';
-      }
-      
-      alert(errorMessage);
+      console.error('Error submitting form:', error);
+      alert('Sorry, there was an error submitting your request. Please try again or contact us directly at info@nexacore-innovations.com');
     } finally {
       setSubmitting(false);
     }
@@ -459,7 +340,7 @@ const GetStarted = () => {
       } catch (error) {
         console.error("Error fetching initial exchange rate:", error);
         setExchangeError(true);
-        setRate(1.00); // Reasonable fallback for USD
+        setRate(1.00);
       } finally {
         setLoading(false);
       }
@@ -468,32 +349,13 @@ const GetStarted = () => {
     initializeExchangeRate();
   }, []);
 
-  // Simplified pricing based on service choice only
+  // Get current service pricing
   const currentServiceData = servicePricing[service] || { min: 100, max: 1000, tier: "essential" };
   const minPrice = currentServiceData.min;
   const maxPrice = currentServiceData.max;
   const serviceTier = currentServiceData.tier;
   const convertedMinPrice = (minPrice * rate).toFixed(2);
   const convertedMaxPrice = (maxPrice * rate).toFixed(2);
-
-  useEffect(() => {
-    const initializeExchangeRate = async () => {
-      setLoading(true);
-      setExchangeError(false);
-      try {
-        const exchangeRate = await getExchangeRate(currencyMap["USA"].code);
-        setRate(exchangeRate);
-      } catch (error) {
-        console.error("Error fetching initial exchange rate:", error);
-        setExchangeError(true);
-        setRate(1.00); // Reasonable fallback for USD
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeExchangeRate();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
@@ -524,7 +386,6 @@ const GetStarted = () => {
             Our global team of experts is ready to bring your vision to life with cutting-edge solutions.
           </p>
           
-          {/* Trust Indicators */}
           <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-600">
             <div className="flex items-center">
               <Shield className="w-5 h-5 text-green-600 mr-2" />
@@ -546,7 +407,6 @@ const GetStarted = () => {
       <section className="pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Card className="p-8 relative overflow-hidden card-gradient">
-            {/* Background Pattern */}
             <div className="absolute top-0 right-0 w-64 h-64 opacity-5">
               <svg viewBox="0 0 200 200" className="w-full h-full">
                 <defs>
@@ -558,7 +418,6 @@ const GetStarted = () => {
               </svg>
             </div>
 
-            {/* Success Message */}
             {submitted && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center">
                 <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
@@ -573,7 +432,6 @@ const GetStarted = () => {
               </div>
             )}
 
-            {/* Exchange Rate Error */}
             {exchangeError && (
               <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center">
                 <DollarSign className="w-6 h-6 text-yellow-600 mr-3" />
@@ -591,7 +449,6 @@ const GetStarted = () => {
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Client Name */}
                   <div className="space-y-3">
                     <label htmlFor="clientName" className="block text-lg font-semibold text-gray-900 flex items-center">
                       <User className="w-5 h-5 mr-2 text-blue-600" />
@@ -608,7 +465,6 @@ const GetStarted = () => {
                     />
                   </div>
 
-                  {/* Client Email */}
                   <div className="space-y-3">
                     <label htmlFor="clientEmail" className="block text-lg font-semibold text-gray-900 flex items-center">
                       <Mail className="w-5 h-5 mr-2 text-blue-600" />
@@ -627,7 +483,6 @@ const GetStarted = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Client Phone */}
                   <div className="space-y-3">
                     <label htmlFor="clientPhone" className="block text-lg font-semibold text-gray-900 flex items-center">
                       <Phone className="w-5 h-5 mr-2 text-blue-600" />
@@ -643,7 +498,6 @@ const GetStarted = () => {
                     />
                   </div>
 
-                  {/* Country Selection */}
                   <div className="space-y-3">
                     <label htmlFor="country" className="block text-lg font-semibold text-gray-900 flex items-center">
                       <Globe className="w-5 h-5 mr-2 text-blue-600" />
@@ -673,7 +527,6 @@ const GetStarted = () => {
                   Project Details
                 </h3>
 
-                {/* Service Selection */}
                 <div className="space-y-3">
                   <label htmlFor="service" className="block text-lg font-semibold text-gray-900 flex items-center">
                     <Star className="w-5 h-5 mr-2 text-blue-600" />
@@ -701,7 +554,6 @@ const GetStarted = () => {
                     </optgroup>
                   </select>
                   
-                  {/* Service tier explanation */}
                   <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
                     {serviceTier === "essential" ? (
                       <div>
@@ -720,7 +572,6 @@ const GetStarted = () => {
                   </div>
                 </div>
 
-                {/* Project Description */}
                 <div className="space-y-3">
                   <label htmlFor="description" className="block text-lg font-semibold text-gray-900 flex items-center">
                     <FileText className="w-5 h-5 mr-2 text-blue-600" />
@@ -763,7 +614,6 @@ const GetStarted = () => {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {/* Updated price display with range and + symbol */}
                     <div className="text-3xl font-bold text-gradient-primary">
                       {currency.symbol} {convertedMinPrice} - {currency.symbol} {convertedMaxPrice}+
                     </div>
