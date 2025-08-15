@@ -469,7 +469,7 @@ const GetStarted = () => {
   }, []);
 
   // Simplified pricing based on service choice only
-  const currentServiceData = allServices[service] || { min: 100, max: 1000, tier: "essential" };
+  const currentServiceData = servicePricing[service] || { min: 100, max: 1000, tier: "essential" };
   const minPrice = currentServiceData.min;
   const maxPrice = currentServiceData.max;
   const serviceTier = currentServiceData.tier;
@@ -686,14 +686,14 @@ const GetStarted = () => {
                     className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
                   >
                     <optgroup label="🌟 Premium Services (Full-featured)">
-                      {Object.keys(allServices).filter(key => allServices[key].tier === "premium").map((serviceType) => (
+                      {Object.keys(servicePricing).filter(key => servicePricing[key].tier === "premium").map((serviceType) => (
                         <option key={serviceType} value={serviceType}>
                           {serviceType}
                         </option>
                       ))}
                     </optgroup>
                     <optgroup label="🌱 Essential Services (Budget-friendly)">
-                      {Object.keys(allServices).filter(key => allServices[key].tier === "essential").map((serviceType) => (
+                      {Object.keys(servicePricing).filter(key => servicePricing[key].tier === "essential").map((serviceType) => (
                         <option key={serviceType} value={serviceType}>
                           {serviceType}
                         </option>
