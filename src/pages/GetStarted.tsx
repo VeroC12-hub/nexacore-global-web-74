@@ -230,8 +230,8 @@ const servicePricing = {
 };
 
 const GetStarted = () => {
-  const [country, setCountry] = useState("Ghana");
-  const [currency, setCurrency] = useState(currencyMap["Ghana"]);
+  const [country, setCountry] = useState("USA");
+  const [currency, setCurrency] = useState(currencyMap["USA"]);
   const [rate, setRate] = useState(1);
   const [service, setService] = useState("Software Engineering");
   const [projectDescription, setProjectDescription] = useState("");
