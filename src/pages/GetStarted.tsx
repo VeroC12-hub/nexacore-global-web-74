@@ -211,23 +211,24 @@ const getExchangeRate = async (currencyCode) => {
   }
 };
 
-// Service pricing in USD
+// CHANGE 1: Fixed service pricing with proper min/max structure
 const servicePricing = {
-  "Software Engineering": 3000 - 20000,
-  "Data Analysis": 800 - 5000,
-  "CAD Engineering": 500 - 5000,
-  "Graphic Design": 200 - 2000,
-  "Digital Marketing": 500 - 5000,
-  "Video Editing & Motion Graphics": 500 - 3000,
-  "UI/UX Design": 1000 - 7000,
-  "Cybersecurity Solutions": 3000 - 10000,
-  "Mobile App Development": 3000 - 15000,
-  "Content Writing / Copywriting": 200 - 1500,
-  "3D Animation & VFX": 1000 - 10000,
-  "Web3 & Blockchain Engineering": 5000 - 30000,
-  "E-Commerce Solutions": 2000 - 10000,
-  "AI / Machine Learning Engineering": 5000 - 25000
+  "Software Engineering": { min: 3000, max: 20000 },
+  "Data Analysis": { min: 800, max: 5000 },
+  "CAD Engineering": { min: 500, max: 5000 },
+  "Graphic Design": { min: 200, max: 2000 },
+  "Digital Marketing": { min: 500, max: 5000 },
+  "Video Editing & Motion Graphics": { min: 500, max: 3000 },
+  "UI/UX Design": { min: 1000, max: 7000 },
+  "Cybersecurity Solutions": { min: 3000, max: 10000 },
+  "Mobile App Development": { min: 3000, max: 15000 },
+  "Content Writing / Copywriting": { min: 200, max: 1500 },
+  "3D Animation & VFX": { min: 1000, max: 10000 },
+  "Web3 & Blockchain Engineering": { min: 5000, max: 30000 },
+  "E-Commerce Solutions": { min: 2000, max: 10000 },
+  "AI / Machine Learning Engineering": { min: 5000, max: 25000 }
 };
+
 const GetStarted = () => {
   const [country, setCountry] = useState("Ghana");
   const [currency, setCurrency] = useState(currencyMap["Ghana"]);
@@ -294,7 +295,8 @@ const GetStarted = () => {
       }
 
       const currentDate = new Date();
-      const convertedPrice = (currentServicePrice * rate).toFixed(2);
+      const convertedMinPrice = (minPrice * rate).toFixed(2);
+      const convertedMaxPrice = (maxPrice * rate).toFixed(2);
 
       // FIXED: Business email parameters - simplified and corrected
       const businessEmailParams = {
@@ -310,8 +312,8 @@ const GetStarted = () => {
         client_country: country,
         service_type: service,
         project_description: projectDescription.trim(),
-        estimated_price: `${currency.symbol} ${convertedPrice}`,
-        base_price_usd: `$${currentServicePrice}`,
+        estimated_price: `${currency.symbol} ${convertedMinPrice} - ${currency.symbol} ${convertedMaxPrice}+`,
+        base_price_usd: `$${minPrice} - $${maxPrice}`,
         exchange_rate: rate.toFixed(4),
         currency_code: currency.code,
         submission_date: currentDate.toLocaleDateString(),
@@ -334,7 +336,7 @@ const GetStarted = () => {
         // Additional parameters for the client template
         client_name: clientName.trim(),
         service_type: service,
-        estimated_price: `${currency.symbol} ${convertedPrice}`,
+        estimated_price: `${currency.symbol} ${convertedMinPrice} - ${currency.symbol} ${convertedMaxPrice}+`,
         project_description: projectDescription.trim(),
         country: country,
         submission_date: currentDate.toLocaleDateString(),
@@ -435,8 +437,11 @@ const GetStarted = () => {
     initializeExchangeRate();
   }, []);
 
-  const currentServicePrice = servicePricing[service] || 100;
-  const convertedPrice = (currentServicePrice * rate).toFixed(2);
+  // CHANGE 2: Updated price calculations
+  const minPrice = servicePricing[service]?.min || 100;
+  const maxPrice = servicePricing[service]?.max || 1000;
+  const convertedMinPrice = (minPrice * rate).toFixed(2);
+  const convertedMaxPrice = (maxPrice * rate).toFixed(2);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
@@ -664,11 +669,12 @@ const GetStarted = () => {
                   </div>
                 ) : (
                   <div className="space-y-2">
+                    {/* CHANGE 3: Updated price display with range and + symbol */}
                     <div className="text-3xl font-bold text-gradient-primary">
-                      {currency.symbol} {convertedPrice}
+                      {currency.symbol} {convertedMinPrice} - {currency.symbol} {convertedMaxPrice}+
                     </div>
                     <p className="text-sm text-gray-600">
-                      Base price: ${currentServicePrice} USD • Live rate: {rate.toFixed(4)} {currency.code}/USD
+                      Base price: ${minPrice} - ${maxPrice}+ USD • Live rate: {rate.toFixed(4)} {currency.code}/USD
                     </p>
                     <p className="text-xs text-gray-500">
                       *Prices updated with real-time exchange rates. Final cost may vary based on project complexity.
