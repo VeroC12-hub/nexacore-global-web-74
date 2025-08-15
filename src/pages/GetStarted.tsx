@@ -209,43 +209,86 @@ const getExchangeRate = async (currencyCode) => {
   }
 };
 
-// Service pricing - choose any tier regardless of location
-const servicePricing = {
-  "Software Engineering (Enterprise)": { min: 3000, max: 20000, tier: "premium" },
-  "Software Engineering (Essential)": { min: 500, max: 3000, tier: "essential" },
-  "Data Analysis (Advanced)": { min: 800, max: 5000, tier: "premium" },
-  "Data Analysis (Basic)": { min: 200, max: 1000, tier: "essential" },
-  "CAD Engineering (Professional)": { min: 500, max: 5000, tier: "premium" },
-  "CAD Engineering (Standard)": { min: 150, max: 800, tier: "essential" },
-  "Graphic Design (Premium)": { min: 200, max: 2000, tier: "premium" },
-  "Graphic Design (Starter)": { min: 50, max: 300, tier: "essential" },
-  "Digital Marketing (Full-Service)": { min: 500, max: 5000, tier: "premium" },
-  "Digital Marketing (Basic)": { min: 100, max: 800, tier: "essential" },
-  "Video Editing & Motion Graphics (Pro)": { min: 500, max: 3000, tier: "premium" },
-  "Video Editing & Motion Graphics (Standard)": { min: 100, max: 600, tier: "essential" },
-  "UI/UX Design (Complete)": { min: 1000, max: 7000, tier: "premium" },
-  "UI/UX Design (Essential)": { min: 200, max: 1200, tier: "essential" },
-  "Cybersecurity Solutions (Enterprise)": { min: 3000, max: 10000, tier: "premium" },
-  "Cybersecurity Solutions (Basic)": { min: 400, max: 2000, tier: "essential" },
-  "Mobile App Development (Full-Stack)": { min: 3000, max: 15000, tier: "premium" },
-  "Mobile App Development (MVP)": { min: 400, max: 2500, tier: "essential" },
-  "Content Writing (Professional)": { min: 200, max: 1500, tier: "premium" },
-  "Content Writing (Essential)": { min: 30, max: 200, tier: "essential" },
-  "3D Animation & VFX (Studio-Quality)": { min: 1000, max: 10000, tier: "premium" },
-  "3D Animation & VFX (Basic)": { min: 200, max: 1500, tier: "essential" },
-  "Web3 & Blockchain (Enterprise)": { min: 5000, max: 30000, tier: "premium" },
-  "Web3 & Blockchain (Starter)": { min: 800, max: 4000, tier: "essential" },
-  "E-Commerce Solutions (Complete)": { min: 2000, max: 10000, tier: "premium" },
-  "E-Commerce Solutions (Basic)": { min: 300, max: 1500, tier: "essential" },
-  "AI / Machine Learning (Advanced)": { min: 5000, max: 25000, tier: "premium" },
-  "AI / Machine Learning (Basic)": { min: 600, max: 3000, tier: "essential" }
+// Service pricing structured by service type and tier
+const serviceData = {
+  "Software Engineering": {
+    "Essential": { min: 500, max: 3000, description: "Core development, basic documentation, 3-month timeline" },
+    "Premium": { min: 2000, max: 8000, description: "Advanced features, senior developers, full documentation" },
+    "Enterprise": { min: 5000, max: 20000, description: "Full-scale solutions, dedicated team, priority support" }
+  },
+  "Data Analysis": {
+    "Basic": { min: 200, max: 1000, description: "Simple data processing and basic insights" },
+    "Advanced": { min: 800, max: 3000, description: "Complex analytics, custom dashboards, reporting" },
+    "Enterprise": { min: 2000, max: 5000, description: "AI-powered insights, real-time analytics, full integration" }
+  },
+  "CAD Engineering": {
+    "Standard": { min: 150, max: 800, description: "2D/3D modeling, basic technical drawings" },
+    "Professional": { min: 500, max: 2000, description: "Complex assemblies, detailed documentation" },
+    "Enterprise": { min: 1000, max: 5000, description: "Full product lifecycle, simulation, manufacturing ready" }
+  },
+  "Graphic Design": {
+    "Starter": { min: 50, max: 300, description: "Logo, basic branding, simple designs" },
+    "Professional": { min: 200, max: 1000, description: "Complete branding package, marketing materials" },
+    "Premium": { min: 500, max: 2000, description: "Full brand identity, advanced design systems" }
+  },
+  "Digital Marketing": {
+    "Basic": { min: 100, max: 800, description: "Social media setup, basic campaigns" },
+    "Professional": { min: 500, max: 2000, description: "Multi-platform campaigns, analytics, optimization" },
+    "Enterprise": { min: 1000, max: 5000, description: "Full digital strategy, automation, advanced analytics" }
+  },
+  "Video Editing & Motion Graphics": {
+    "Standard": { min: 100, max: 600, description: "Basic editing, simple transitions, basic graphics" },
+    "Professional": { min: 300, max: 1500, description: "Advanced editing, motion graphics, color grading" },
+    "Premium": { min: 500, max: 3000, description: "Cinema-quality, complex animations, full post-production" }
+  },
+  "UI/UX Design": {
+    "Essential": { min: 200, max: 1200, description: "User research, wireframes, basic prototypes" },
+    "Professional": { min: 800, max: 3000, description: "Full UX process, interactive prototypes, user testing" },
+    "Enterprise": { min: 2000, max: 7000, description: "Design systems, accessibility, advanced prototyping" }
+  },
+  "Cybersecurity Solutions": {
+    "Basic": { min: 400, max: 2000, description: "Security audit, basic protection setup" },
+    "Professional": { min: 1500, max: 5000, description: "Comprehensive security, monitoring, incident response" },
+    "Enterprise": { min: 3000, max: 10000, description: "Advanced threat protection, compliance, 24/7 monitoring" }
+  },
+  "Mobile App Development": {
+    "MVP": { min: 400, max: 2500, description: "Basic app, core features, single platform" },
+    "Professional": { min: 2000, max: 8000, description: "Cross-platform, advanced features, backend integration" },
+    "Enterprise": { min: 5000, max: 15000, description: "Complex apps, scalable architecture, full deployment" }
+  },
+  "Content Writing": {
+    "Essential": { min: 30, max: 200, description: "Blog posts, basic web content, editing" },
+    "Professional": { min: 150, max: 800, description: "SEO content, copywriting, content strategy" },
+    "Premium": { min: 300, max: 1500, description: "Brand voice development, comprehensive content strategy" }
+  },
+  "3D Animation & VFX": {
+    "Basic": { min: 200, max: 1500, description: "Simple 3D models, basic animations" },
+    "Professional": { min: 800, max: 5000, description: "Complex animations, realistic rendering" },
+    "Studio-Quality": { min: 2000, max: 10000, description: "Cinema-grade VFX, advanced simulations" }
+  },
+  "Web3 & Blockchain": {
+    "Starter": { min: 800, max: 4000, description: "Smart contracts, basic DApp development" },
+    "Professional": { min: 3000, max: 12000, description: "Complex DApps, tokenomics, security audits" },
+    "Enterprise": { min: 8000, max: 30000, description: "Full blockchain solutions, custom protocols" }
+  },
+  "E-Commerce Solutions": {
+    "Basic": { min: 300, max: 1500, description: "Simple online store, payment integration" },
+    "Professional": { min: 1000, max: 5000, description: "Custom e-commerce, inventory management" },
+    "Enterprise": { min: 3000, max: 10000, description: "Multi-vendor platforms, advanced analytics" }
+  },
+  "AI / Machine Learning": {
+    "Basic": { min: 600, max: 3000, description: "Data analysis, simple ML models" },
+    "Professional": { min: 3000, max: 12000, description: "Custom AI solutions, model deployment" },
+    "Enterprise": { min: 8000, max: 25000, description: "Advanced AI systems, real-time processing" }
+  }
 };
 
 const GetStarted = () => {
   const [country, setCountry] = useState("USA");
   const [currency, setCurrency] = useState(currencyMap["USA"]);
   const [rate, setRate] = useState(1);
-  const [service, setService] = useState("Software Engineering (Enterprise)");
+  const [selectedService, setSelectedService] = useState("Software Engineering");
+  const [selectedTier, setSelectedTier] = useState("Essential");
   const [projectDescription, setProjectDescription] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -275,6 +318,21 @@ const GetStarted = () => {
     }
   };
 
+  const handleServiceChange = (e) => {
+    const newService = e.target.value;
+    setSelectedService(newService);
+    
+    // Reset to first available tier when service changes
+    const availableTiers = Object.keys(serviceData[newService] || {});
+    if (availableTiers.length > 0) {
+      setSelectedTier(availableTiers[0]);
+    }
+  };
+
+  const handleTierChange = (e) => {
+    setSelectedTier(e.target.value);
+  };
+
   const handleSubmit = async () => {
     if (!clientName.trim()) {
       alert("Please provide your name");
@@ -299,7 +357,24 @@ const GetStarted = () => {
     setSubmitting(true);
 
     try {
-      // Simulate email sending (since EmailJS might not be available)
+      // Get current pricing for email
+      const currentServiceInfo = getCurrentServiceData();
+      const currentMinPrice = currentServiceInfo.min;
+      const currentMaxPrice = currentServiceInfo.max;
+      const currentConvertedMinPrice = (currentMinPrice * rate).toFixed(2);
+      const currentConvertedMaxPrice = (currentMaxPrice * rate).toFixed(2);
+      
+      // For demonstration purposes - simulate successful submission
+      console.log('Submitting:', {
+        client: clientName.trim(),
+        email: clientEmail.trim(),
+        service: selectedService,
+        tier: selectedTier,
+        description: projectDescription.trim(),
+        pricing: `${currency.symbol} ${currentConvertedMinPrice} - ${currency.symbol} ${currentConvertedMaxPrice}+`
+      });
+      
+      // Simulate email sending
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       setSubmitted(true);
@@ -349,13 +424,26 @@ const GetStarted = () => {
     initializeExchangeRate();
   }, []);
 
-  // Get current service pricing
-  const currentServiceData = servicePricing[service] || { min: 100, max: 1000, tier: "essential" };
-  const minPrice = currentServiceData.min;
-  const maxPrice = currentServiceData.max;
-  const serviceTier = currentServiceData.tier;
+  // Get current service pricing based on selected service and tier
+  const getCurrentServiceData = () => {
+    const service = serviceData[selectedService];
+    if (!service) return { min: 100, max: 1000, description: "Standard service" };
+    
+    const tier = service[selectedTier];
+    if (!tier) return { min: 100, max: 1000, description: "Standard service" };
+    
+    return tier;
+  };
+
+  const currentPricing = getCurrentServiceData();
+  const minPrice = currentPricing.min;
+  const maxPrice = currentPricing.max;
+  const serviceDescription = currentPricing.description;
   const convertedMinPrice = (minPrice * rate).toFixed(2);
   const convertedMaxPrice = (maxPrice * rate).toFixed(2);
+
+  // Get available tiers for current service
+  const availableTiers = selectedService ? Object.keys(serviceData[selectedService] || {}) : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
@@ -527,48 +615,53 @@ const GetStarted = () => {
                   Project Details
                 </h3>
 
-                <div className="space-y-3">
-                  <label htmlFor="service" className="block text-lg font-semibold text-gray-900 flex items-center">
-                    <Star className="w-5 h-5 mr-2 text-blue-600" />
-                    Choose Your Service & Tier
-                  </label>
-                  <select 
-                    id="service" 
-                    value={service}
-                    onChange={(e) => setService(e.target.value)}
-                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                  >
-                    <optgroup label="🌟 Premium Services (Full-featured)">
-                      {Object.keys(servicePricing).filter(key => servicePricing[key].tier === "premium").map((serviceType) => (
-                        <option key={serviceType} value={serviceType}>
-                          {serviceType}
+                {/* Service Selection */}
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <label htmlFor="service" className="block text-lg font-semibold text-gray-900 flex items-center">
+                      <Star className="w-5 h-5 mr-2 text-blue-600" />
+                      Choose Your Service
+                    </label>
+                    <select 
+                      id="service" 
+                      value={selectedService}
+                      onChange={handleServiceChange}
+                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                    >
+                      {Object.keys(serviceData).map((serviceName) => (
+                        <option key={serviceName} value={serviceName}>
+                          {serviceName}
                         </option>
                       ))}
-                    </optgroup>
-                    <optgroup label="🌱 Essential Services (Budget-friendly)">
-                      {Object.keys(servicePricing).filter(key => servicePricing[key].tier === "essential").map((serviceType) => (
-                        <option key={serviceType} value={serviceType}>
-                          {serviceType}
+                    </select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label htmlFor="tier" className="block text-lg font-semibold text-gray-900 flex items-center">
+                      <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
+                      Choose Your Tier
+                    </label>
+                    <select 
+                      id="tier" 
+                      value={selectedTier}
+                      onChange={handleTierChange}
+                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                    >
+                      {availableTiers.map((tierName) => (
+                        <option key={tierName} value={tierName}>
+                          {tierName} - ${serviceData[selectedService][tierName].min} - ${serviceData[selectedService][tierName].max}+
                         </option>
                       ))}
-                    </optgroup>
-                  </select>
-                  
-                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    {serviceTier === "essential" ? (
-                      <div>
-                        <p className="font-medium text-green-700 mb-1">🌱 Essential Tier Selected:</p>
-                        <p>Perfect for startups, small businesses, and budget-conscious projects. Includes core features, standard timelines, and quality delivery at accessible prices.</p>
-                      </div>
-                    ) : (
-                      <div>
-                        <p className="font-medium text-blue-700 mb-1">⭐ Premium Tier Selected:</p>
-                        <p>Full-service solutions with advanced features, priority support, faster delivery, senior-level expertise, and comprehensive project management.</p>
-                      </div>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2">
-                      💡 Choose based on your project needs and budget - not your location. All clients can select any tier.
-                    </p>
+                    </select>
+                    
+                    {/* Tier description */}
+                    <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                      <p className="font-medium text-blue-700 mb-1">📋 {selectedTier} Tier - What's Included:</p>
+                      <p>{serviceDescription}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        💡 Each tier offers different levels of complexity, features, and support. Choose based on your project needs.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -594,16 +687,9 @@ const GetStarted = () => {
                   <DollarSign className="w-6 h-6 text-blue-600 mr-2" />
                   <h3 className="text-xl font-bold text-gray-900">
                     Real-Time Price Estimate
-                    {serviceTier === "essential" && (
-                      <span className="text-sm font-normal text-green-600 ml-2">
-                        🌱 Essential Tier
-                      </span>
-                    )}
-                    {serviceTier === "premium" && (
-                      <span className="text-sm font-normal text-blue-600 ml-2">
-                        ⭐ Premium Tier
-                      </span>
-                    )}
+                    <span className="text-sm font-normal text-blue-600 ml-2">
+                      {selectedService} - {selectedTier}
+                    </span>
                   </h3>
                 </div>
                 
@@ -619,14 +705,14 @@ const GetStarted = () => {
                     </div>
                     <p className="text-sm text-gray-600">
                       Base price: ${minPrice} - ${maxPrice}+ USD • Live rate: {rate.toFixed(4)} {currency.code}/USD
-                      <span className={`font-medium ml-2 ${serviceTier === "essential" ? "text-green-600" : "text-blue-600"}`}>
-                        • {serviceTier === "essential" ? "Essential" : "Premium"} Service Tier
+                      <span className="font-medium ml-2 text-blue-600">
+                        • {selectedTier} Tier
                       </span>
                     </p>
                     <p className="text-xs text-gray-500">
                       *Prices updated with real-time exchange rates. Final cost may vary based on project complexity.
                       <span className="block mt-1 font-medium text-gray-700">
-                        🌍 Same pricing worldwide - choose the tier that fits your needs and budget!
+                        🌍 Same pricing worldwide - choose the service and tier that fits your needs!
                       </span>
                     </p>
                   </div>
