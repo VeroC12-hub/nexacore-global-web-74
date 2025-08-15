@@ -366,7 +366,8 @@ const GetStarted = () => {
         // Additional parameters for the client template
         client_name: clientName.trim(),
         service_type: service,
-        estimated_price: `${currency.symbol} ${convertedMinPrice} - ${currency.symbol} ${convertedMaxPrice}+`,
+        service_tier: currentServiceTier === "essential" ? "Essential Tier" : "Premium Tier",
+        estimated_price: `${currency.symbol} ${currentConvertedMinPrice} - ${currency.symbol} ${currentConvertedMaxPrice}+`,
         project_description: projectDescription.trim(),
         country: country,
         submission_date: currentDate.toLocaleDateString(),
@@ -474,6 +475,25 @@ const GetStarted = () => {
   const serviceTier = currentServiceData.tier;
   const convertedMinPrice = (minPrice * rate).toFixed(2);
   const convertedMaxPrice = (maxPrice * rate).toFixed(2);
+
+  useEffect(() => {
+    const initializeExchangeRate = async () => {
+      setLoading(true);
+      setExchangeError(false);
+      try {
+        const exchangeRate = await getExchangeRate(currencyMap["USA"].code);
+        setRate(exchangeRate);
+      } catch (error) {
+        console.error("Error fetching initial exchange rate:", error);
+        setExchangeError(true);
+        setRate(1.00); // Reasonable fallback for USD
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeExchangeRate();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
