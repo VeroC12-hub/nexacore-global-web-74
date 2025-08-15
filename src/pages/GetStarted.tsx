@@ -262,8 +262,6 @@ const GetStarted = () => {
   const [currency, setCurrency] = useState(currencyMap["USA"]);
   const [rate, setRate] = useState(1);
   const [service, setService] = useState("Software Engineering (Enterprise)");
-  const [clientType, setClientType] = useState("international"); // New state for client type
-  const [autoDetectedRegion, setAutoDetectedRegion] = useState("developed"); // Auto-detect economic region
   const [projectDescription, setProjectDescription] = useState("");
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
@@ -279,15 +277,6 @@ const GetStarted = () => {
     const selectedCurrency = currencyMap[selected] || { code: "USD", symbol: "$" };
     setCurrency(selectedCurrency);
     setExchangeError(false);
-
-    // Auto-detect economic region based on country
-    const isDevelopingEconomy = developingEconomyCountries.includes(selected);
-    setAutoDetectedRegion(isDevelopingEconomy ? "developing" : "developed");
-    
-    // Auto-suggest client type based on country
-    if (isDevelopingEconomy && clientType === "international") {
-      setClientType("local-business");
-    }
 
     setLoading(true);
     try {
@@ -478,66 +467,13 @@ const GetStarted = () => {
     initializeExchangeRate();
   }, []);
 
-  // Auto-adjust service when pricing tier changes
-  useEffect(() => {
-    // Determine current pricing tier
-    const isDevelopingCountry = developingEconomyCountries.includes(country);
-    let currentPricing;
-    
-    if (clientType === "auto") {
-      currentPricing = isDevelopingCountry ? developingEconomyPricing : internationalPricing;
-    } else if (clientType === "international") {
-      currentPricing = internationalPricing;
-    } else if (clientType === "local-business") {
-      currentPricing = isDevelopingCountry ? developingEconomyPricing : internationalPricing;
-    } else if (clientType === "diaspora") {
-      currentPricing = isDevelopingCountry ? developingEconomyPricing : internationalPricing;
-    } else if (clientType === "ngo-startup") {
-      currentPricing = developingEconomyPricing;
-    } else {
-      currentPricing = internationalPricing;
-    }
-    
-    const currentPricingKeys = Object.keys(currentPricing);
-    if (!currentPricingKeys.includes(service)) {
-      // If current service doesn't exist in new pricing tier, pick the first available
-      setService(currentPricingKeys[0] || "Software Engineering (Enterprise)");
-    }
-  }, [clientType, country, service]); // Include service to avoid infinite loops
-
-  // CHANGE 2: Smarter pricing logic that considers country + client type combination
-  const getCurrentPricing = () => {
-    // Smart pricing logic to prevent misuse while being fair
-    const isDevelopingCountry = developingEconomyCountries.includes(country);
-    
-    if (clientType === "auto") {
-      // Auto mode: use country-based detection
-      return isDevelopingCountry ? developingEconomyPricing : internationalPricing;
-    } else if (clientType === "international") {
-      // Always international rates regardless of country
-      return internationalPricing;
-    } else if (clientType === "local-business") {
-      // Local business rates only if in qualifying country
-      return isDevelopingCountry ? developingEconomyPricing : internationalPricing;
-    } else if (clientType === "diaspora") {
-      // Diaspora gets developing rates if their selected country qualifies
-      return isDevelopingCountry ? developingEconomyPricing : internationalPricing;
-    } else if (clientType === "ngo-startup") {
-      // NGO/Startup gets developing rates regardless of location
-      return developingEconomyPricing;
-    }
-    
-    // Default to international
-    return internationalPricing;
-  };
-  
-  const currentPricing = getCurrentPricing();
-  const minPrice = currentPricing[service]?.min || 100;
-  const maxPrice = currentPricing[service]?.max || 1000;
+  // Simplified pricing based on service choice only
+  const currentServiceData = allServices[service] || { min: 100, max: 1000, tier: "essential" };
+  const minPrice = currentServiceData.min;
+  const maxPrice = currentServiceData.max;
+  const serviceTier = currentServiceData.tier;
   const convertedMinPrice = (minPrice * rate).toFixed(2);
   const convertedMaxPrice = (maxPrice * rate).toFixed(2);
-  
-  const isUsingDevelopingPricing = currentPricing === developingEconomyPricing;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
@@ -691,7 +627,7 @@ const GetStarted = () => {
                   <div className="space-y-3">
                     <label htmlFor="country" className="block text-lg font-semibold text-gray-900 flex items-center">
                       <Globe className="w-5 h-5 mr-2 text-blue-600" />
-                      Your Country / Business Location
+                      Your Country (for currency)
                     </label>
                     <select
                       id="country"
@@ -705,56 +641,8 @@ const GetStarted = () => {
                       ))}
                     </select>
                     <p className="text-xs text-gray-500">
-                      💡 Select where you're based or where your business operates. This helps us provide appropriate regional pricing.
+                      💡 Used for currency conversion and invoicing. Choose any service tier regardless of location.
                     </p>
-                  </div>
-                </div>
-
-                {/* Client Type Selection */}
-                <div className="space-y-3">
-                  <label htmlFor="clientType" className="block text-lg font-semibold text-gray-900 flex items-center">
-                    <Users className="w-5 h-5 mr-2 text-blue-600" />
-                    Which describes you best?
-                  </label>
-                  <select
-                    id="clientType"
-                    value={clientType}
-                    onChange={(e) => setClientType(e.target.value)}
-                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                  >
-                    <option value="auto">Auto-detect based on my country/location</option>
-                    <option value="international">International client (US/EU/developed economy)</option>
-                    <option value="local-business">Local business in developing economy</option>
-                    <option value="diaspora">Diaspora working on project for home country</option>
-                    <option value="ngo-startup">NGO/Startup (reduced rates)</option>
-                  </select>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    {autoDetectedRegion === "developing" && clientType === "auto" ? (
-                      <p>🌍 Auto-detected: {country} qualifies for developing economy rates</p>
-                    ) : clientType === "local-business" ? (
-                      <p>🌍 Special rates for local businesses in developing economies</p>
-                    ) : clientType === "diaspora" ? (
-                      <p>🌍 You're abroad but working on a project for your home country</p>
-                    ) : clientType === "ngo-startup" ? (
-                      <p>🤝 Reduced rates for non-profits and early-stage startups</p>
-                    ) : (
-                      <p>🌍 Standard international rates for developed economies</p>
-                    )}
-                    
-                    {/* Warning for potential misuse */}
-                    {country && developingEconomyCountries.includes(country) && 
-                     (clientType === "international") && (
-                      <p className="text-amber-600 bg-amber-50 p-2 rounded text-xs">
-                        ℹ️ You selected {country} but chose international rates. If you're actually based in a developed economy, please select your correct location for accurate pricing.
-                      </p>
-                    )}
-                    
-                    {country && !developingEconomyCountries.includes(country) && 
-                     (clientType === "local-business") && (
-                      <p className="text-amber-600 bg-amber-50 p-2 rounded text-xs">
-                        ℹ️ You selected {country} but chose local business rates. Developing economy rates are for businesses operating in qualifying regions.
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
@@ -769,7 +657,7 @@ const GetStarted = () => {
                 <div className="space-y-3">
                   <label htmlFor="service" className="block text-lg font-semibold text-gray-900 flex items-center">
                     <Star className="w-5 h-5 mr-2 text-blue-600" />
-                    Service Type
+                    Choose Your Service & Tier
                   </label>
                   <select 
                     id="service" 
@@ -777,26 +665,38 @@ const GetStarted = () => {
                     onChange={(e) => setService(e.target.value)}
                     className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
                   >
-                    {Object.keys(getCurrentPricing()).map((serviceType) => (
-                      <option key={serviceType} value={serviceType}>
-                        {serviceType}
-                      </option>
-                    ))}
+                    <optgroup label="🌟 Premium Services (Full-featured)">
+                      {Object.keys(allServices).filter(key => allServices[key].tier === "premium").map((serviceType) => (
+                        <option key={serviceType} value={serviceType}>
+                          {serviceType}
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="🌱 Essential Services (Budget-friendly)">
+                      {Object.keys(allServices).filter(key => allServices[key].tier === "essential").map((serviceType) => (
+                        <option key={serviceType} value={serviceType}>
+                          {serviceType}
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                   
                   {/* Service tier explanation */}
                   <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    {isUsingDevelopingPricing ? (
+                    {serviceTier === "essential" ? (
                       <div>
-                        <p className="font-medium text-green-700 mb-1">🌱 Essential/Starter Tier:</p>
-                        <p>Perfect for startups and growing businesses. Includes core features, standard timelines, and quality delivery at accessible prices.</p>
+                        <p className="font-medium text-green-700 mb-1">🌱 Essential Tier Selected:</p>
+                        <p>Perfect for startups, small businesses, and budget-conscious projects. Includes core features, standard timelines, and quality delivery at accessible prices.</p>
                       </div>
                     ) : (
                       <div>
-                        <p className="font-medium text-blue-700 mb-1">⭐ Premium/Enterprise Tier:</p>
-                        <p>Full-service solutions with advanced features, priority support, faster delivery, and senior-level expertise.</p>
+                        <p className="font-medium text-blue-700 mb-1">⭐ Premium Tier Selected:</p>
+                        <p>Full-service solutions with advanced features, priority support, faster delivery, senior-level expertise, and comprehensive project management.</p>
                       </div>
                     )}
+                    <p className="text-xs text-gray-500 mt-2">
+                      💡 Choose based on your project needs and budget - not your location. All clients can select any tier.
+                    </p>
                   </div>
                 </div>
 
@@ -823,9 +723,14 @@ const GetStarted = () => {
                   <DollarSign className="w-6 h-6 text-blue-600 mr-2" />
                   <h3 className="text-xl font-bold text-gray-900">
                     Real-Time Price Estimate
-                    {isUsingDevelopingPricing && (
+                    {serviceTier === "essential" && (
                       <span className="text-sm font-normal text-green-600 ml-2">
-                        🌍 Developing Economy Rate
+                        🌱 Essential Tier
+                      </span>
+                    )}
+                    {serviceTier === "premium" && (
+                      <span className="text-sm font-normal text-blue-600 ml-2">
+                        ⭐ Premium Tier
                       </span>
                     )}
                   </h3>
@@ -844,17 +749,15 @@ const GetStarted = () => {
                     </div>
                     <p className="text-sm text-gray-600">
                       Base price: ${minPrice} - ${maxPrice}+ USD • Live rate: {rate.toFixed(4)} {currency.code}/USD
-                      {isUsingDevelopingPricing && (
-                        <span className="text-green-600 font-medium"> • Developing Economy Pricing</span>
-                      )}
+                      <span className={`font-medium ml-2 ${serviceTier === "essential" ? "text-green-600" : "text-blue-600"}`}>
+                        • {serviceTier === "essential" ? "Essential" : "Premium"} Service Tier
+                      </span>
                     </p>
                     <p className="text-xs text-gray-500">
                       *Prices updated with real-time exchange rates. Final cost may vary based on project complexity.
-                      {isUsingDevelopingPricing && (
-                        <span className="block text-green-600 font-medium mt-1">
-                          🎉 You're getting our special developing economy rates - fair pricing for your region!
-                        </span>
-                      )}
+                      <span className="block mt-1 font-medium text-gray-700">
+                        🌍 Same pricing worldwide - choose the tier that fits your needs and budget!
+                      </span>
                     </p>
                   </div>
                 )}
