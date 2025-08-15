@@ -423,12 +423,12 @@ const GetStarted = () => {
       setLoading(true);
       setExchangeError(false);
       try {
-        const exchangeRate = await getExchangeRate(currencyMap["Ghana"].code);
+        const exchangeRate = await getExchangeRate(currencyMap["USA"].code);
         setRate(exchangeRate);
       } catch (error) {
         console.error("Error fetching initial exchange rate:", error);
         setExchangeError(true);
-        setRate(12.50); // Reasonable fallback for GHS
+        setRate(1.00); // Reasonable fallback for USD
       } finally {
         setLoading(false);
       }
