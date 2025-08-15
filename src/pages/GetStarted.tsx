@@ -213,22 +213,21 @@ const getExchangeRate = async (currencyCode) => {
 
 // Service pricing in USD
 const servicePricing = {
-  "Software Engineering": 3000 - 20000,
-  "Data Analysis": 800 - 5000,
-  "CAD Engineering": 500 - 5000,
-  "Graphic Design": 200 - 2000,
-  "Digital Marketing": 500 - 5000,
-  "Video Editing & Motion Graphics": 500 - 3000,
-  "UI/UX Design": 1000 - 7000,
-  "Cybersecurity Solutions": 3000 - 10000,
-  "Mobile App Development": 3000 - 15000,
-  "Content Writing / Copywriting": 200 - 1500,
-  "3D Animation & VFX": 1000 - 10000,
-  "Web3 & Blockchain Engineering": 5000 - 30000,
-  "E-Commerce Solutions": 2000 - 10000,
-  "AI / Machine Learning Engineering": 5000 - 25000
+  "Software Engineering": { min: 3000, max: 20000, openEnded: true },
+  "Data Analysis": { min: 800, max: 5000, openEnded: true },
+  "CAD Engineering": { min: 500, max: 5000, openEnded: false },
+  "Graphic Design": { min: 200, max: 2000, openEnded: true },
+  "Digital Marketing": { min: 500, max: 5000, openEnded: true },
+  "Video Editing & Motion Graphics": { min: 500, max: 3000, openEnded: true },
+  "UI/UX Design": { min: 1000, max: 7000, openEnded: true },
+  "Cybersecurity Solutions": { min: 3000, max: 10000, openEnded: true },
+  "Mobile App Development": { min: 3000, max: 15000, openEnded: true },
+  "Content Writing / Copywriting": { min: 200, max: 1500, openEnded: false },
+  "3D Animation & VFX": { min: 1000, max: 10000, openEnded: true },
+  "Web3 & Blockchain Engineering": { min: 5000, max: 30000, openEnded: true },
+  "E-Commerce Solutions": { min: 2000, max: 10000, openEnded: true },
+  "AI / Machine Learning Engineering": { min: 5000, max: 25000, openEnded: true }
 };
-
 const GetStarted = () => {
   const [country, setCountry] = useState("Ghana");
   const [currency, setCurrency] = useState(currencyMap["Ghana"]);
