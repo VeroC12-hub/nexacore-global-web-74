@@ -21,11 +21,13 @@ import {
   CheckCircle,
   AlertCircle,
   Download,
-  ExternalLink
+  ExternalLink,
+  CreditCard
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ServiceRequestModal from '@/components/ServiceRequestModal';
+import VisaPaymentForm from '@/components/VisaPaymentForm';
 import { toast } from 'sonner';
 
 interface Project {
@@ -71,6 +73,7 @@ const ClientPortal = () => {
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [isServiceRequestModalOpen, setIsServiceRequestModalOpen] = useState(false);
+  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -112,25 +115,14 @@ const ClientPortal = () => {
     await signOut();
   };
 
-  const handlePayInvoice = async (invoice: Invoice) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('create-payment', {
-        body: {
-          invoiceId: invoice.id,
-          amount: invoice.total_amount,
-          currency: 'USD'
-        }
-      });
+  const handlePayInvoice = (invoice: Invoice) => {
+    setSelectedInvoiceForPayment(invoice);
+  };
 
-      if (error) throw error;
-
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      toast.error('Failed to process payment. Please try again.');
-    }
+  const handlePaymentComplete = () => {
+    // Reload data to reflect payment status
+    loadDashboardData();
+    setSelectedInvoiceForPayment(null);
   };
 
   const handleDownloadInvoice = (invoiceId: string) => {
@@ -405,8 +397,8 @@ const ClientPortal = () => {
                       </Button>
                       {invoice.status !== 'paid' && (
                         <Button size="sm" onClick={() => handlePayInvoice(invoice)}>
-                          <DollarSign className="w-4 h-4 mr-2" />
-                          Pay Now
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Pay with Visa
                         </Button>
                       )}
                     </div>
@@ -505,6 +497,15 @@ const ClientPortal = () => {
         onClose={() => setIsServiceRequestModalOpen(false)}
         onSuccess={loadDashboardData}
       />
+      
+      {selectedInvoiceForPayment && (
+        <VisaPaymentForm
+          isOpen={!!selectedInvoiceForPayment}
+          onClose={() => setSelectedInvoiceForPayment(null)}
+          invoice={selectedInvoiceForPayment}
+          onPaymentComplete={handlePaymentComplete}
+        />
+      )}
     </div>
   );
 };

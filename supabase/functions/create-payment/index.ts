@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
+// Stripe integration temporarily disabled - using Visa card form instead
+// import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -31,6 +32,10 @@ serve(async (req) => {
     // Get request body
     const { invoiceId, amount, currency = "USD" } = await req.json();
 
+    // Stripe integration temporarily disabled - using Visa card form instead
+    // When ready to enable Stripe, uncomment the code below and add STRIPE_SECRET_KEY secret
+    
+    /*
     // Initialize Stripe
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
@@ -74,6 +79,18 @@ serve(async (req) => {
     });
 
     return new Response(JSON.stringify({ url: session.url }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+    */
+
+    // Temporary response for Visa card payments
+    return new Response(JSON.stringify({ 
+      message: "Visa card payment processing enabled in client portal",
+      invoiceId,
+      amount,
+      currency 
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
