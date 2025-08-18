@@ -9,7 +9,8 @@ import {
   Facebook,
   Youtube,
   Instagram,
-  Send
+  Send,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import logo from '@/assets/nexacore-logo.png';
@@ -17,12 +18,12 @@ import logo from '@/assets/nexacore-logo.png';
 const Footer = () => {
   // Navigation items with their corresponding routes
   const navigationItems = [
-    { name: 'About Us', path: '/about' },
-    { name: 'Services', path: '/services' },
-    { name: 'Portfolio', path: '/portfolio' },
-    { name: 'Team', path: '/team' },
-    { name: 'Contact', path: '/contact' },
-    { name: 'Blog', path: '/blog' }
+    { name: 'About Us', path: '/about', external: false },
+    { name: 'Services', path: '/services', external: false },
+    { name: 'Portfolio', path: '/portfolio', external: false },
+    { name: 'Team', path: '/team', external: false },
+    { name: 'Contact', path: '/contact', external: false },
+    { name: 'Blog', path: 'https://nexacoreinn.blogspot.com/', external: true }
   ];
 
   // Service items with exact mapping to Services page sections
@@ -107,12 +108,24 @@ const Footer = () => {
             <ul className="space-y-2">
               {navigationItems.map((item) => (
                 <li key={item.name}>
-                  <Link 
-                    to={item.path}
-                    className="text-muted hover:text-background transition-colors text-sm"
-                  >
-                    {item.name}
-                  </Link>
+                  {item.external ? (
+                    <a 
+                      href={item.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted hover:text-background transition-colors text-sm flex items-center"
+                    >
+                      {item.name}
+                      <ExternalLink className="w-3 h-3 ml-1" />
+                    </a>
+                  ) : (
+                    <Link 
+                      to={item.path}
+                      className="text-muted hover:text-background transition-colors text-sm"
+                    >
+                      {item.name}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>
