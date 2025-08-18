@@ -25,9 +25,9 @@ const Privacy = () => {
               How we collect, use, and disclose your personal information when you use our services
             </p>
             <div className="flex items-center justify-center gap-4 mt-6 text-sm text-muted-foreground">
-              <span><strong>Effective Date:</strong> [Insert Date]</span>
+              <span><strong>Effective Date:</strong> January 1, 2025</span>
               <span>•</span>
-              <span><strong>Last Updated:</strong> [Insert Date]</span>
+              <span><strong>Last Updated:</strong> January 1, 2025</span>
             </div>
           </div>
         </div>
@@ -71,7 +71,7 @@ const Privacy = () => {
               <p>
                 This Privacy Policy explains how we collect, use, and disclose your personal information when you use the 
                 <strong> "NexaCore service"</strong> (that term and <strong>"NexaCore content"</strong> are defined in the 
-                NexaCore Terms of Use available at <a href="/terms" className="text-primary hover:underline">nexacore-innovations.com/terms</a>) 
+                NexaCore Innovations Terms of Use available at <a href="/terms" className="text-primary hover:underline">nexacore-innovations.com/terms</a>) 
                 or anywhere we display or reference this Privacy Policy. It also explains what privacy rights you have and how to exercise them.
               </p>
               <p>
@@ -99,9 +99,9 @@ const Privacy = () => {
                 please visit <strong><a href="/contact" className="text-primary hover:underline">nexacore-innovations.com/contact</a></strong>.
               </p>
               <p>
-                Information about the specific NexaCore entity (or entities) that are responsible for your personal 
-                information (known as the "data controller" in certain countries) is available at 
-                <strong> nexacore-innovations.com/legal/corpinfo</strong>.
+                Information about the specific NexaCore Innovations entity (or entities) that are responsible for your personal 
+                information (known as the "data controller" in certain countries) is available upon request by contacting us at 
+                <strong> <a href="mailto:privacy@nexacore-innovations.com" className="text-primary hover:underline">privacy@nexacore-innovations.com</a></strong>.
               </p>
             </div>
           </div>
@@ -931,7 +931,7 @@ const Privacy = () => {
 
           {/* Footer note */}
           <div className="mt-8 text-center text-sm text-muted-foreground bg-muted/20 rounded-lg p-6">
-            <p className="mb-2"><strong>Last Updated:</strong> [Insert Date] • <strong>Version:</strong> 3.0</p>
+            <p className="mb-2"><strong>Last Updated:</strong> January 1, 2025 • <strong>Version:</strong> 3.0</p>
             <p>
               We encourage you to review this Privacy Policy periodically for any updates or changes. 
               Your continued use of our services after any modifications indicates your acceptance of the updated Privacy Policy.
