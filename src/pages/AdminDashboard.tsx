@@ -15,6 +15,8 @@ import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab';
 import { AdminTeamTab } from '@/components/admin/AdminTeamTab';
 import { AdminFileRepositoryTab } from '@/components/admin/AdminFileRepositoryTab';
 import { AdminMessagingTab } from '@/components/admin/AdminMessagingTab';
+import AdminQuoteRequestsTab from '@/components/admin/AdminQuoteRequestsTab';
+import AdminAnalytics from '@/components/analytics/AdminAnalytics';
 import { CreateInvoiceModal } from '@/components/admin/CreateInvoiceModal';
 import { toast } from 'sonner';
 
@@ -214,8 +216,10 @@ export default function AdminDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+        <Tabs defaultValue="analytics" className="w-full">
+          <TabsList className="grid w-full grid-cols-9">
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="quotes">Quotes</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="invoices">Invoices</TabsTrigger>
             <TabsTrigger value="requests">Requests</TabsTrigger>
@@ -224,6 +228,14 @@ export default function AdminDashboard() {
             <TabsTrigger value="files">Files</TabsTrigger>
             <TabsTrigger value="messages">Messages</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="analytics" className="mt-6">
+            <AdminAnalytics />
+          </TabsContent>
+
+          <TabsContent value="quotes" className="mt-6">
+            <AdminQuoteRequestsTab />
+          </TabsContent>
 
           <TabsContent value="projects" className="mt-6">
             <AdminProjectsTab onStatsUpdate={loadDashboardStats} />

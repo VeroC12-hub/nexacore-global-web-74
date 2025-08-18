@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
 import ClientPortal from "./pages/ClientPortal";
 import Dashboard from "./pages/Dashboard";
+import QuoteReview from "./pages/QuoteReview";
 import AIAssistant from "./components/AIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
@@ -54,6 +55,7 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/client-portal" element={<ClientPortal />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/quote/:id" element={<QuoteReview />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AIAssistant />

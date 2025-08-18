@@ -1,12 +1,23 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, LogOut } from 'lucide-react';
 import logo from '@/assets/nexacore-logo.png';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   const navigation = [
     { name: 'Home', href: '/' },
@@ -47,6 +58,42 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {/* Auth Buttons */}
+            {user ? (
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/dashboard"
+                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Dashboard
+                </Link>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Link
+                  to="/auth"
+                  className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/auth"
+                  className="text-white bg-primary px-4 py-2 rounded-md hover:bg-primary/80 transition-all text-sm font-medium"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Mobile Menu Button */}

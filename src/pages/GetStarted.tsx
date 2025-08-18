@@ -18,6 +18,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 // Full country and currency map
 const currencyMap = {
@@ -587,38 +589,56 @@ const GetStarted = () => {
 
   const handleSubmit = async () => {
     if (!clientName.trim()) {
-      alert("Please provide your name");
+      toast.error("Please provide your name");
       return;
     }
     if (!clientEmail.trim()) {
-      alert("Please provide your email address");
+      toast.error("Please provide your email address");
       return;
     }
     
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(clientEmail.trim())) {
-      alert("Please provide a valid email address");
+      toast.error("Please provide a valid email address");
       return;
     }
     
     if (!projectDescription.trim()) {
-      alert("Please provide a project description");
+      toast.error("Please provide a project description");
       return;
     }
 
     setSubmitting(true);
 
     try {
-      // Get current pricing for email
+      // Get current pricing for budget estimate
       const currentServiceInfo = getCurrentServiceData();
       const currentMinPrice = currentServiceInfo.min;
       const currentMaxPrice = currentServiceInfo.max;
       const currentConvertedMinPrice = (currentMinPrice * rate).toFixed(2);
       const currentConvertedMaxPrice = (currentMaxPrice * rate).toFixed(2);
       
-      // Check if this is a quote or request
-      const requestType = sessionStorage.getItem('requestType') || 'request';
-      
+      // Save quote request to database
+      const { data: quoteRequest, error: quoteError } = await supabase
+        .from('quote_requests')
+        .insert({
+          full_name: clientName.trim(),
+          email: clientEmail.trim(),
+          phone: clientPhone.trim() || null,
+          service_type: selectedService,
+          tier: selectedTier,
+          description: projectDescription.trim(),
+          budget_estimate: currentMaxPrice,
+          country: country,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (quoteError) {
+        throw quoteError;
+      }
+
       // Send email notification using the edge function
       const emailResponse = await fetch(`https://nmwfevhetlwehbuikflk.supabase.co/functions/v1/send-email`, {
         method: 'POST',
@@ -627,7 +647,7 @@ const GetStarted = () => {
           'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5td2ZldmhldGx3ZWhidWlrZmxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMzk3MDIsImV4cCI6MjA2OTkxNTcwMn0.u7SelY4lGordT1Kh1Sa_xd7EmZ-5aT_IxIHx2-gvLvo`,
         },
         body: JSON.stringify({
-          type: requestType,
+          type: 'request',
           name: clientName.trim(),
           email: clientEmail.trim(),
           phone: clientPhone.trim(),
@@ -639,13 +659,11 @@ const GetStarted = () => {
       });
 
       if (!emailResponse.ok) {
-        throw new Error('Failed to send email notification');
+        console.warn('Email notification failed, but quote request was saved');
       }
       
-      // Clear the request type from storage
-      sessionStorage.removeItem('requestType');
-      
       setSubmitted(true);
+      toast.success('Quote request submitted successfully!');
       
       // Redirect to client portal after 2 seconds
       setTimeout(() => {
@@ -660,63 +678,15 @@ const GetStarted = () => {
 
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Sorry, there was an error submitting your request. Please try again or contact us directly at info@nexacore-innovations.com');
+      toast.error('Sorry, there was an error submitting your request. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleGetQuote = async () => {
-    if (!clientEmail.trim()) {
-      alert("Please provide your email address first so we can send you the quote!");
-      return;
-    }
-    
-    setSubmitting(true);
-    try {
-      // Get current pricing for email
-      const currentServiceInfo = getCurrentServiceData();
-      const currentMinPrice = currentServiceInfo.min;
-      const currentMaxPrice = currentServiceInfo.max;
-      const currentConvertedMinPrice = (currentMinPrice * rate).toFixed(2);
-      const currentConvertedMaxPrice = (currentMaxPrice * rate).toFixed(2);
-      
-      // Send quote email
-      const emailResponse = await fetch(`https://nmwfevhetlwehbuikflk.supabase.co/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5td2ZldmhldGx3ZWhidWlrZmxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMzk3MDIsImV4cCI6MjA2OTkxNTcwMn0.u7SelY4lGordT1Kh1Sa_xd7EmZ-5aT_IxIHx2-gvLvo`,
-        },
-        body: JSON.stringify({
-          type: 'quote',
-          name: clientName.trim(),
-          email: clientEmail.trim(),
-          phone: clientPhone.trim(),
-          service: selectedService,
-          description: projectDescription.trim() || 'Free quote request',
-          budget: `${currency.symbol} ${currentConvertedMinPrice} - ${currency.symbol} ${currentConvertedMaxPrice}+`,
-          timeline: selectedTier
-        })
-      });
-
-      if (!emailResponse.ok) {
-        throw new Error('Failed to send quote request');
-      }
-      
-      alert("Free quote request submitted! We'll send a detailed quote to your email within 24 hours.");
-      
-      // Redirect to client portal
-      setTimeout(() => {
-        window.location.href = '/client-portal';
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Error submitting quote:', error);
-      alert('Sorry, there was an error submitting your quote request. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+    // Use the same function for both submit and get quote
+    await handleSubmit();
   };
 
   const handleBackToHome = () => {
@@ -1128,10 +1098,17 @@ const GetStarted = () => {
                 
                 <Button 
                   className="flex-1 text-lg py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                  onClick={() => window.location.href = '/client-portal'}
-                  disabled={submitting}
+                  onClick={handleGetQuote}
+                  disabled={!clientEmail.trim() || submitting}
                 >
-                  Get Free Quote
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    'Get Free Quote'
+                  )}
                 </Button>
               </div>
             </div>
