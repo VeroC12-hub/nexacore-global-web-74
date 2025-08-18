@@ -1067,7 +1067,7 @@ const GetStarted = () => {
                 
                 <Button 
                   className="flex-1 text-lg py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                  onClick={handleGetQuote}
+                  onClick={() => window.location.href = '/client-portal'}
                   disabled={submitting}
                 >
                   Get Free Quote

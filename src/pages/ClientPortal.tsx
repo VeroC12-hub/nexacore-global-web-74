@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,10 +20,13 @@ import {
   LogOut,
   CheckCircle,
   AlertCircle,
-  Download
+  Download,
+  ExternalLink
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ServiceRequestModal from '@/components/ServiceRequestModal';
+import { toast } from 'sonner';
 
 interface Project {
   id: string;
@@ -61,16 +64,31 @@ interface ServiceRequest {
 
 const ClientPortal = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isServiceRequestModalOpen, setIsServiceRequestModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
       loadDashboardData();
     }
   }, [user]);
+
+  useEffect(() => {
+    // Check for payment status in URL
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      toast.success('Payment completed successfully!');
+      // Reload data to reflect payment status
+      loadDashboardData();
+    } else if (paymentStatus === 'cancelled') {
+      toast.error('Payment was cancelled.');
+    }
+  }, [searchParams]);
 
   const loadDashboardData = async () => {
     try {
@@ -92,6 +110,42 @@ const ClientPortal = () => {
 
   const handleSignOut = async () => {
     await signOut();
+  };
+
+  const handlePayInvoice = async (invoice: Invoice) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-payment', {
+        body: {
+          invoiceId: invoice.id,
+          amount: invoice.total_amount,
+          currency: 'USD'
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error('Failed to process payment. Please try again.');
+    }
+  };
+
+  const handleDownloadInvoice = (invoiceId: string) => {
+    // Placeholder for invoice download functionality
+    toast.info('Invoice download feature coming soon!');
+  };
+
+  const handleViewMessages = (projectId: string) => {
+    // Navigate to messages view for specific project
+    toast.info('Project messaging feature coming soon!');
+  };
+
+  const handleViewFiles = (projectId: string) => {
+    // Navigate to files view for specific project
+    toast.info('Project files feature coming soon!');
   };
 
   const getStatusColor = (status: string) => {
@@ -144,6 +198,10 @@ const ClientPortal = () => {
             <p className="text-muted-foreground">Manage your projects and services</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => navigate('/get-started')}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Project
+            </Button>
             <Button variant="outline" size="sm">
               <Settings className="w-4 h-4 mr-2" />
               Settings
@@ -220,7 +278,7 @@ const ClientPortal = () => {
           <TabsContent value="projects" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Your Projects</h2>
-              <Button>
+              <Button onClick={() => navigate('/get-started')}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Project Request
               </Button>
@@ -277,13 +335,17 @@ const ClientPortal = () => {
                     )}
                     
                     <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleViewMessages(project.id)}>
                         <MessageSquare className="w-4 h-4 mr-2" />
                         Messages
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleViewFiles(project.id)}>
                         <FileText className="w-4 h-4 mr-2" />
                         Files
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        View Details
                       </Button>
                     </div>
                   </CardContent>
@@ -298,7 +360,7 @@ const ClientPortal = () => {
                     <p className="text-muted-foreground mb-4">
                       Get started by requesting a new project or service
                     </p>
-                    <Button>
+                    <Button onClick={() => navigate('/get-started')}>
                       <Plus className="w-4 h-4 mr-2" />
                       Request New Project
                     </Button>
@@ -337,12 +399,12 @@ const ClientPortal = () => {
                     </div>
                     
                     <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleDownloadInvoice(invoice.id)}>
                         <Download className="w-4 h-4 mr-2" />
                         Download
                       </Button>
                       {invoice.status !== 'paid' && (
-                        <Button size="sm">
+                        <Button size="sm" onClick={() => handlePayInvoice(invoice)}>
                           <DollarSign className="w-4 h-4 mr-2" />
                           Pay Now
                         </Button>
@@ -369,7 +431,7 @@ const ClientPortal = () => {
           <TabsContent value="requests" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Service Requests</h2>
-              <Button>
+              <Button onClick={() => setIsServiceRequestModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Request
               </Button>
@@ -410,7 +472,7 @@ const ClientPortal = () => {
                     <p className="text-muted-foreground mb-4">
                       Need help or want to request changes to a project?
                     </p>
-                    <Button>
+                    <Button onClick={() => setIsServiceRequestModalOpen(true)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Create Request
                     </Button>
@@ -437,6 +499,12 @@ const ClientPortal = () => {
       </div>
       
       <Footer />
+      
+      <ServiceRequestModal
+        isOpen={isServiceRequestModalOpen}
+        onClose={() => setIsServiceRequestModalOpen(false)}
+        onSuccess={loadDashboardData}
+      />
     </div>
   );
 };
