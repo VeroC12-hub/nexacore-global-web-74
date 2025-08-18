@@ -8,6 +8,7 @@ import Contact from "./pages/Contact";
 import GetStarted from "./pages/GetStarted";
 import Portfolio from "./pages/Portfolio";
 import Privacy from "./pages/Privacy"; // Add this import
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import BookConsultation from "./pages/BookConsultation";
 import AIAssistant from "./components/AIAssistant";
@@ -41,6 +42,7 @@ const App = () => {
             <Route path="/get-started" element={<GetStarted />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/privacy" element={<Privacy />} /> {/* Add this route */}
+            <Route path="/terms" element={<Terms />} /> {/* Add this line */}
             <Route path="/book-consultation" element={<BookConsultation />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
