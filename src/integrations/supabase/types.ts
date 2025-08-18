@@ -1288,6 +1288,8 @@ export type Database = {
           created_at: string
           description: string
           email: string
+          email_sent_at: string | null
+          email_thread_id: string | null
           full_name: string
           id: string
           phone: string | null
@@ -1304,6 +1306,8 @@ export type Database = {
           created_at?: string
           description: string
           email: string
+          email_sent_at?: string | null
+          email_thread_id?: string | null
           full_name: string
           id?: string
           phone?: string | null
@@ -1320,6 +1324,8 @@ export type Database = {
           created_at?: string
           description?: string
           email?: string
+          email_sent_at?: string | null
+          email_thread_id?: string | null
           full_name?: string
           id?: string
           phone?: string | null
@@ -1339,8 +1345,10 @@ export type Database = {
           created_by: string | null
           currency: string | null
           deliverables: Json | null
+          email_thread_id: string | null
           expires_at: string | null
           id: string
+          last_email_sent_at: string | null
           price: number
           quote_request_id: string | null
           scope: string
@@ -1358,8 +1366,10 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           deliverables?: Json | null
+          email_thread_id?: string | null
           expires_at?: string | null
           id?: string
+          last_email_sent_at?: string | null
           price: number
           quote_request_id?: string | null
           scope: string
@@ -1377,8 +1387,10 @@ export type Database = {
           created_by?: string | null
           currency?: string | null
           deliverables?: Json | null
+          email_thread_id?: string | null
           expires_at?: string | null
           id?: string
+          last_email_sent_at?: string | null
           price?: number
           quote_request_id?: string | null
           scope?: string

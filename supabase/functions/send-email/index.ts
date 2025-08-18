@@ -1,7 +1,12 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
 import { Resend } from "npm:resend@2.0.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,15 +14,9 @@ const corsHeaders = {
 };
 
 interface EmailRequest {
-  type: 'quote' | 'request';
-  name: string;
-  email: string;
-  company?: string;
-  phone?: string;
-  service?: string;
-  description: string;
-  budget?: string;
-  timeline?: string;
+  type: 'quote_request' | 'quote_sent' | 'quote_approved' | 'quote_revision_requested';
+  to: string;
+  data: any;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -27,43 +26,169 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const emailData: EmailRequest = await req.json();
-    
-    // Determine email subject and content based on type
-    const subject = emailData.type === 'quote' 
-      ? `New Quote Request from ${emailData.name}` 
-      : `New Service Request from ${emailData.name}`;
+    const { type, to, data }: EmailRequest = await req.json();
+    console.log('Email request:', { type, to, data });
 
-    const emailHtml = `
-      <h2>${emailData.type === 'quote' ? 'New Quote Request' : 'New Service Request'}</h2>
-      <p><strong>Name:</strong> ${emailData.name}</p>
-      <p><strong>Email:</strong> ${emailData.email}</p>
-      ${emailData.company ? `<p><strong>Company:</strong> ${emailData.company}</p>` : ''}
-      ${emailData.phone ? `<p><strong>Phone:</strong> ${emailData.phone}</p>` : ''}
-      ${emailData.service ? `<p><strong>Service:</strong> ${emailData.service}</p>` : ''}
-      ${emailData.budget ? `<p><strong>Budget:</strong> ${emailData.budget}</p>` : ''}
-      ${emailData.timeline ? `<p><strong>Timeline:</strong> ${emailData.timeline}</p>` : ''}
-      <p><strong>Description:</strong></p>
-      <p>${emailData.description}</p>
-      
-      <hr style="margin: 20px 0;">
-      <p style="color: #666; font-size: 12px;">
-        This ${emailData.type} was submitted through the NexaCore Innovations website.
-      </p>
-    `;
+    let emailResponse;
 
-    // Send email to company
-    const emailResponse = await resend.emails.send({
-      from: "NexaCore Innovations <noreply@nexacore-innovations.com>",
-      to: ["info@nexacore-innovations.com"],
-      replyTo: emailData.email,
-      subject: subject,
-      html: emailHtml,
-    });
+    switch (type) {
+      case 'quote_request':
+        emailResponse = await resend.emails.send({
+          from: "NexaCore <noreply@nexacore-innovations.com>",
+          to: ["projects@nexacore-innovations.com"],
+          subject: `New Quote Request from ${data.full_name}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">New Quote Request</h2>
+              <p>A new quote request has been submitted:</p>
+              
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>Client Information:</h3>
+                <p><strong>Name:</strong> ${data.full_name}</p>
+                <p><strong>Email:</strong> ${data.email}</p>
+                <p><strong>Phone:</strong> ${data.phone || 'Not provided'}</p>
+                <p><strong>Company:</strong> ${data.company || 'Not provided'}</p>
+                <p><strong>Country:</strong> ${data.country || 'Not provided'}</p>
+              </div>
+
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>Project Details:</h3>
+                <p><strong>Service:</strong> ${data.service_type}</p>
+                <p><strong>Timeline:</strong> ${data.timeline || 'Not specified'}</p>
+                <p><strong>Budget:</strong> ${data.budget_estimate ? '$' + data.budget_estimate : 'Not specified'}</p>
+                <p><strong>Description:</strong></p>
+                <p style="background: white; padding: 10px; border-left: 4px solid #2563eb;">${data.description}</p>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'vercel.app') || 'https://your-app.vercel.app'}/admin" 
+                   style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Review Request & Create Quote
+                </a>
+              </div>
+
+              <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+                This request is waiting for your response in the admin dashboard.
+              </p>
+            </div>
+          `,
+        });
+        break;
+
+      case 'quote_sent':
+        emailResponse = await resend.emails.send({
+          from: "NexaCore <noreply@nexacore-innovations.com>",
+          to: [to],
+          subject: `Your Project Quote from NexaCore Innovations`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #2563eb;">Your Project Quote is Ready</h2>
+              <p>Hi ${data.client_name || 'there'},</p>
+              
+              <p>Thank you for your interest in our services. We've prepared a detailed quote for your project:</p>
+              
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>${data.service_type} Project</h3>
+                <p><strong>Quote Amount:</strong> ${data.currency} ${data.price}</p>
+                <p><strong>Timeline:</strong> ${data.timeline}</p>
+                <p><strong>Valid Until:</strong> ${new Date(data.expires_at).toLocaleDateString()}</p>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'vercel.app') || 'https://your-app.vercel.app'}/quote/${data.quote_id}" 
+                   style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Review & Approve Quote
+                </a>
+              </div>
+
+              <p style="color: #6b7280; font-size: 14px;">
+                You'll be able to review the complete details, accept the quote, or request revisions.
+                If you don't have an account yet, you'll be guided through a quick signup process.
+              </p>
+
+              <p>We look forward to working with you!</p>
+              <p>Best regards,<br>The NexaCore Team</p>
+            </div>
+          `,
+        });
+        break;
+
+      case 'quote_approved':
+        emailResponse = await resend.emails.send({
+          from: "NexaCore <noreply@nexacore-innovations.com>",
+          to: ["projects@nexacore-innovations.com"],
+          subject: `Quote Approved - Project Ready to Start`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #10b981;">Quote Approved! 🎉</h2>
+              
+              <p>Great news! The quote has been approved by the client:</p>
+              
+              <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+                <p><strong>Client:</strong> ${data.client_email}</p>
+                <p><strong>Service:</strong> ${data.service_type}</p>
+                <p><strong>Amount:</strong> ${data.currency} ${data.price}</p>
+                <p><strong>Approved on:</strong> ${new Date().toLocaleDateString()}</p>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'vercel.app') || 'https://your-app.vercel.app'}/admin" 
+                   style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Start Project
+                </a>
+              </div>
+
+              <p>The project has been automatically created and is ready to begin. You can now:</p>
+              <ul>
+                <li>Set up project tasks and milestones</li>
+                <li>Assign team members</li>
+                <li>Begin client communication</li>
+                <li>Create the first invoice</li>
+              </ul>
+            </div>
+          `,
+        });
+        break;
+
+      case 'quote_revision_requested':
+        emailResponse = await resend.emails.send({
+          from: "NexaCore <noreply@nexacore-innovations.com>",
+          to: ["projects@nexacore-innovations.com"],
+          subject: `Quote Revision Requested`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px 0; auto;">
+              <h2 style="color: #f59e0b;">Quote Revision Requested</h2>
+              
+              <p>The client has requested revisions to the quote:</p>
+              
+              <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                <p><strong>Client:</strong> ${data.client_email}</p>
+                <p><strong>Service:</strong> ${data.service_type}</p>
+                <p><strong>Current Amount:</strong> ${data.currency} ${data.price}</p>
+                <p><strong>Revision Notes:</strong></p>
+                <p style="background: white; padding: 10px; border-radius: 4px;">${data.revision_notes || 'No specific notes provided'}</p>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'vercel.app') || 'https://your-app.vercel.app'}/admin" 
+                   style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Review & Update Quote
+                </a>
+              </div>
+
+              <p>Please review the client's feedback and update the quote accordingly.</p>
+            </div>
+          `,
+        });
+        break;
+
+      default:
+        throw new Error(`Unknown email type: ${type}`);
+    }
 
     console.log("Email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify({ success: true, emailResponse }), {
+    return new Response(JSON.stringify(emailResponse), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

@@ -117,7 +117,7 @@ const AdminQuoteRequestsTab = () => {
       
       const { data: userData } = await supabase.auth.getUser();
       
-      const { error } = await supabase
+      const { data: quote, error } = await supabase
         .from('quotes')
         .insert({
           quote_request_id: request.id,
@@ -130,8 +130,21 @@ const AdminQuoteRequestsTab = () => {
           deliverables: deliverables,
           terms: quoteForm.terms,
           created_by: userData.user?.id,
-          status: 'draft'
+          status: 'sent',
+          sent_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (!error) {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'quote_sent',
+            to: request.email,
+            data: { ...quote, quote_id: quote.id }
+          }
         });
+      }
 
       if (error) throw error;
 

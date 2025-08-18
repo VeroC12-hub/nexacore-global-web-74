@@ -90,6 +90,14 @@ const QuoteReview = () => {
 
       if (projectError) throw projectError;
 
+      await supabase.functions.invoke('send-email', {
+        body: {
+          type: 'quote_approved',
+          to: 'projects@nexacore-innovations.com',
+          data: quote
+        }
+      });
+
       toast.success('Quote approved! Your project has been created.');
       navigate('/dashboard');
     } catch (error) {
@@ -100,8 +108,19 @@ const QuoteReview = () => {
     }
   };
 
-  const requestRevision = () => {
-    toast.info('Revision request feature coming soon! Please contact us directly for now.');
+  const requestRevision = async () => {
+    const notes = prompt("Please describe what changes you'd like:");
+    if (!notes) return;
+
+    await supabase.functions.invoke('send-email', {
+      body: {
+        type: 'quote_revision_requested',
+        to: 'projects@nexacore-innovations.com',
+        data: { ...quote, revision_notes: notes }
+      }
+    });
+
+    toast.success('Revision request sent to our team!');
   };
 
   if (loading) {
