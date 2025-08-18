@@ -124,7 +124,7 @@ const BookConsultation = () => {
       title: 'Data & Digital Growth',
       icon: BarChart3,
       description: 'Analytics, digital marketing, data science, growth strategies',
-      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/data-digital-growth',
+      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/30min',
       duration: '30-45 minutes',
       color: 'from-orange-500 to-orange-600',
       features: ['Data Analytics', 'Digital Marketing', 'Growth Strategies', 'SEO Optimization']
@@ -133,7 +133,7 @@ const BookConsultation = () => {
       title: 'Creative & Branding',
       icon: Palette,
       description: 'UI/UX design, branding, graphic design, creative solutions',
-      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/creative-branding',
+      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/30min',
       duration: '30-45 minutes',
       color: 'from-purple-500 to-purple-600',
       features: ['UI/UX Design', 'Brand Identity', 'Graphic Design', 'User Research']
@@ -142,7 +142,7 @@ const BookConsultation = () => {
       title: 'Software Development',
       icon: Code,
       description: 'Web applications, mobile apps, custom software development',
-      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/software-development',
+      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/30min',
       duration: '30-60 minutes',
       color: 'from-green-500 to-green-600',
       features: ['Web Applications', 'Mobile Apps', 'Custom Software', 'API Development']
@@ -151,7 +151,7 @@ const BookConsultation = () => {
       title: 'Engineering Consultation',
       icon: Wrench,
       description: 'Technical consulting, system architecture, engineering solutions',
-      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/engineering-consultation',
+      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/30min',
       duration: '30-45 minutes',
       color: 'from-blue-500 to-blue-600',
       features: ['System Architecture', 'Technical Consulting', 'Integration Solutions', 'Performance Optimization']
