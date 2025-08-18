@@ -7,9 +7,11 @@ import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import GetStarted from "./pages/GetStarted";
 import Portfolio from "./pages/Portfolio";
+import Privacy from "./pages/Privacy"; // Add this import
 import NotFound from "./pages/NotFound";
 import BookConsultation from "./pages/BookConsultation";
 import AIAssistant from "./components/AIAssistant";
+import CookieConsent from "./components/CookieConsent"; // Add this import
 
 // Optional: Only import these if they exist in your project
 // If you get import errors, comment these out
@@ -38,10 +40,12 @@ const App = () => {
             <Route path="/contact" element={<Contact />} />
             <Route path="/get-started" element={<GetStarted />} />
             <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/privacy" element={<Privacy />} /> {/* Add this route */}
             <Route path="/book-consultation" element={<BookConsultation />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <AIAssistant />
+          <CookieConsent /> {/* Add this component */}
           <Toaster />
           <Sonner />
         </BrowserRouter>
