@@ -59,7 +59,7 @@ export function AdminTeamTab({ onStatsUpdate }: AdminTeamTabProps) {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .in('role', ['admin', 'staff', 'project_manager'])
+        .in('role', ['admin', 'staff', 'project_manager', 'operations_manager', 'business_analyst', 'quality_assurance', 'sales_manager'])
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -76,15 +76,15 @@ export function AdminTeamTab({ onStatsUpdate }: AdminTeamTabProps) {
     try {
       // In a real implementation, you would invite the user via email
       // For now, we'll just add a placeholder entry
-      const { error } = await supabase
-        .from('profiles')
-        .insert([{
-          id: crypto.randomUUID(),
-          email: newMember.email,
-          full_name: newMember.full_name,
-          role: newMember.role,
-          status: 'invited'
-        }]);
+        const { error } = await supabase
+          .from('profiles')
+          .insert([{
+            id: crypto.randomUUID(),
+            email: newMember.email,
+            full_name: newMember.full_name,
+            role: newMember.role,
+            status: 'pending'
+          }]);
 
       if (error) throw error;
 
@@ -141,6 +141,10 @@ export function AdminTeamTab({ onStatsUpdate }: AdminTeamTabProps) {
     switch (role) {
       case 'admin': return 'bg-red-500 text-white';
       case 'project_manager': return 'bg-blue-500 text-white';
+      case 'operations_manager': return 'bg-purple-500 text-white';
+      case 'business_analyst': return 'bg-indigo-500 text-white';
+      case 'quality_assurance': return 'bg-orange-500 text-white';
+      case 'sales_manager': return 'bg-pink-500 text-white';
       case 'staff': return 'bg-green-500 text-white';
       default: return 'bg-gray-500 text-white';
     }
@@ -206,6 +210,10 @@ export function AdminTeamTab({ onStatsUpdate }: AdminTeamTabProps) {
                   <SelectContent>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="project_manager">Project Manager</SelectItem>
+                    <SelectItem value="operations_manager">Operations Manager</SelectItem>
+                    <SelectItem value="business_analyst">Business Analyst</SelectItem>
+                    <SelectItem value="quality_assurance">Quality Assurance</SelectItem>
+                    <SelectItem value="sales_manager">Sales Manager</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
@@ -268,6 +276,10 @@ export function AdminTeamTab({ onStatsUpdate }: AdminTeamTabProps) {
                       <SelectContent>
                         <SelectItem value="staff">Staff</SelectItem>
                         <SelectItem value="project_manager">Project Manager</SelectItem>
+                        <SelectItem value="operations_manager">Operations Manager</SelectItem>
+                        <SelectItem value="business_analyst">Business Analyst</SelectItem>
+                        <SelectItem value="quality_assurance">Quality Assurance</SelectItem>
+                        <SelectItem value="sales_manager">Sales Manager</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>
