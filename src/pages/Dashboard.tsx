@@ -380,15 +380,15 @@ const Dashboard = () => {
                   <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button className="w-full justify-start" onClick={() => navigate('/get-started')}>
+                  <Button className="w-full justify-start" onClick={() => setIsServiceRequestModalOpen(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Request New Service
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => toast.info('Files upload coming soon')}>
                     <Upload className="w-4 h-4 mr-2" />
                     Upload Files
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button variant="outline" className="w-full justify-start" onClick={() => toast.info('Support messaging coming soon')}>
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Contact Support
                   </Button>
@@ -431,7 +431,7 @@ const Dashboard = () => {
           <TabsContent value="services" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">My Services</h2>
-              <Button onClick={() => navigate('/get-started')}>
+              <Button onClick={() => setIsServiceRequestModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Request New Service
               </Button>
@@ -479,7 +479,7 @@ const Dashboard = () => {
           <TabsContent value="projects" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Project Management</h2>
-              <Button onClick={() => navigate('/get-started')}>
+              <Button onClick={() => setIsServiceRequestModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Project Request
               </Button>

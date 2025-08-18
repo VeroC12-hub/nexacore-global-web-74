@@ -192,7 +192,7 @@ const ClientPortal = () => {
             <p className="text-muted-foreground">Manage your projects and services</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate('/get-started')}>
+            <Button variant="outline" size="sm" onClick={() => setIsServiceRequestModalOpen(true)}>
               <Plus className="w-4 h-4 mr-2" />
               New Project
             </Button>
@@ -272,7 +272,7 @@ const ClientPortal = () => {
           <TabsContent value="projects" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">Your Projects</h2>
-              <Button onClick={() => navigate('/get-started')}>
+              <Button onClick={() => setIsServiceRequestModalOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Project Request
               </Button>
@@ -354,7 +354,7 @@ const ClientPortal = () => {
                     <p className="text-muted-foreground mb-4">
                       Get started by requesting a new project or service
                     </p>
-                    <Button onClick={() => navigate('/get-started')}>
+                    <Button onClick={() => setIsServiceRequestModalOpen(true)}>
                       <Plus className="w-4 h-4 mr-2" />
                       Request New Project
                     </Button>

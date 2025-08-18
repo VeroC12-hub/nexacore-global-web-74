@@ -21,8 +21,22 @@ const AuthPage = () => {
   const [message, setMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const routeAfterLogin = async () => {
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        navigate(profile?.role === 'admin' ? '/admin' : '/client-portal');
+      }
+    };
+    routeAfterLogin();
+  }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

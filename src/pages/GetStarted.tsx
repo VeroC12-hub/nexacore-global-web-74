@@ -639,27 +639,38 @@ const GetStarted = () => {
         throw quoteError;
       }
 
-      // Send email notification using the edge function
-      const emailResponse = await fetch(`https://nmwfevhetlwehbuikflk.supabase.co/functions/v1/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5td2ZldmhldGx3ZWhidWlrZmxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMzk3MDIsImV4cCI6MjA2OTkxNTcwMn0.u7SelY4lGordT1Kh1Sa_xd7EmZ-5aT_IxIHx2-gvLvo`,
-        },
-        body: JSON.stringify({
-          type: 'request',
-          name: clientName.trim(),
-          email: clientEmail.trim(),
-          phone: clientPhone.trim(),
-          service: selectedService,
-          description: projectDescription.trim(),
-          budget: `${currency.symbol} ${currentConvertedMinPrice} - ${currency.symbol} ${currentConvertedMaxPrice}+`,
-          timeline: selectedTier
-        })
-      });
+      // Send email notifications using the Edge Function
+      try {
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'quote_request',
+            to: 'projects@nexacore-innovations.com',
+            data: {
+              full_name: clientName.trim(),
+              email: clientEmail.trim(),
+              phone: (clientPhone || '').trim() || null,
+              country,
+              service_type: selectedService,
+              timeline: selectedTier || null,
+              budget_estimate: currentMaxPrice,
+              description: projectDescription.trim(),
+            },
+          },
+        });
 
-      if (!emailResponse.ok) {
-        console.warn('Email notification failed, but quote request was saved');
+        // Client confirmation email
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'quote_request_confirmation',
+            to: clientEmail.trim(),
+            data: {
+              full_name: clientName.trim(),
+              service_type: selectedService,
+            },
+          },
+        });
+      } catch (e) {
+        console.warn('Email notification failed, but quote request was saved', e);
       }
       
       setSubmitted(true);

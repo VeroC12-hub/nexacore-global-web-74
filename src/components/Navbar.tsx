@@ -1,14 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, LogOut } from 'lucide-react';
 import logo from '@/assets/nexacore-logo.png';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRole = async () => {
+      if (user) {
+        const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        setRole(data?.role || 'member');
+      } else {
+        setRole(null);
+      }
+    };
+    loadRole();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -63,7 +77,7 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center gap-4">
                 <Link
-                  to="/dashboard"
+                  to={role === 'admin' ? '/admin' : '/client-portal'}
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
                   Dashboard
@@ -85,12 +99,6 @@ const Navbar = () => {
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
                   Sign In
-                </Link>
-                <Link
-                  to="/auth"
-                  className="text-white bg-primary px-4 py-2 rounded-md hover:bg-primary/80 transition-all text-sm font-medium"
-                >
-                  Sign Up
                 </Link>
               </div>
             )}
