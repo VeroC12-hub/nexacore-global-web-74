@@ -772,6 +772,70 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          attachments: Json | null
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message_type: string | null
+          project_id: string | null
+          recipient_id: string | null
+          sender_id: string | null
+          subject: string | null
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          project_id?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          project_id?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+          subject?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -1215,6 +1279,132 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      quote_requests: {
+        Row: {
+          budget_estimate: number | null
+          company: string | null
+          country: string | null
+          created_at: string
+          description: string
+          email: string
+          full_name: string
+          id: string
+          phone: string | null
+          service_type: string
+          status: string | null
+          tier: string | null
+          timeline: string | null
+          updated_at: string
+        }
+        Insert: {
+          budget_estimate?: number | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          description: string
+          email: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          service_type: string
+          status?: string | null
+          tier?: string | null
+          timeline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          budget_estimate?: number | null
+          company?: string | null
+          country?: string | null
+          created_at?: string
+          description?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          service_type?: string
+          status?: string | null
+          tier?: string | null
+          timeline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          approved_at: string | null
+          client_email: string
+          created_at: string
+          created_by: string | null
+          currency: string | null
+          deliverables: Json | null
+          expires_at: string | null
+          id: string
+          price: number
+          quote_request_id: string | null
+          scope: string
+          sent_at: string | null
+          service_type: string
+          status: string | null
+          terms: string | null
+          timeline: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          client_email: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          deliverables?: Json | null
+          expires_at?: string | null
+          id?: string
+          price: number
+          quote_request_id?: string | null
+          scope: string
+          sent_at?: string | null
+          service_type: string
+          status?: string | null
+          terms?: string | null
+          timeline: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          client_email?: string
+          created_at?: string
+          created_by?: string | null
+          currency?: string | null
+          deliverables?: Json | null
+          expires_at?: string | null
+          id?: string
+          price?: number
+          quote_request_id?: string | null
+          scope?: string
+          sent_at?: string | null
+          service_type?: string
+          status?: string | null
+          terms?: string | null
+          timeline?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_quote_request_id_fkey"
+            columns: ["quote_request_id"]
+            isOneToOne: false
+            referencedRelation: "quote_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {

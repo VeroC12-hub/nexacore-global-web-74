@@ -1,0 +1,286 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { TrendingUp, DollarSign, Clock, CheckCircle } from 'lucide-react';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+interface Project {
+  id: string;
+  title: string;
+  service_type: string;
+  status: string;
+  budget: number;
+  created_at: string;
+}
+
+interface Invoice {
+  id: string;
+  status: string;
+  amount: number;
+  total_amount: number;
+  due_date: string;
+  created_at: string;
+}
+
+const ClientAnalytics = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      // Fetch projects
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (projectError) throw projectError;
+
+      // Fetch invoices
+      const { data: invoiceData, error: invoiceError } = await supabase
+        .from('invoices')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (invoiceError) throw invoiceError;
+
+      setProjects(projectData || []);
+      setInvoices(invoiceData || []);
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate project status distribution
+  const projectStatusData = projects.reduce((acc, project) => {
+    const status = project.status;
+    const existing = acc.find(item => item.name === status);
+    if (existing) {
+      existing.value++;
+    } else {
+      acc.push({ name: status, value: 1 });
+    }
+    return acc;
+  }, [] as { name: string; value: number }[]);
+
+  // Calculate service type distribution
+  const serviceTypeData = projects.reduce((acc, project) => {
+    const service = project.service_type;
+    const existing = acc.find(item => item.name === service);
+    if (existing) {
+      existing.value++;
+    } else {
+      acc.push({ name: service, value: 1 });
+    }
+    return acc;
+  }, [] as { name: string; value: number }[]);
+
+  // Calculate invoice status
+  const invoiceStats = invoices.reduce((acc, invoice) => {
+    if (invoice.status === 'paid') {
+      acc.paid += invoice.total_amount;
+    } else {
+      acc.outstanding += invoice.total_amount;
+    }
+    acc.total += invoice.total_amount;
+    return acc;
+  }, { paid: 0, outstanding: 0, total: 0 });
+
+  const invoiceStatusData = [
+    { name: 'Paid', value: invoiceStats.paid, color: '#00C49F' },
+    { name: 'Outstanding', value: invoiceStats.outstanding, color: '#FF8042' }
+  ];
+
+  // Calculate project timeline (last 6 months)
+  const projectTimelineData = () => {
+    const months = [];
+    const now = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      
+      const projectsInMonth = projects.filter(project => {
+        const projectDate = new Date(project.created_at);
+        return projectDate.getMonth() === date.getMonth() && 
+               projectDate.getFullYear() === date.getFullYear();
+      }).length;
+
+      months.push({
+        month: monthName,
+        projects: projectsInMonth
+      });
+    }
+    
+    return months;
+  };
+
+  if (loading) {
+    return <div className="p-6">Loading analytics...</div>;
+  }
+
+  const activeProjects = projects.filter(p => p.status === 'active').length;
+  const completedProjects = projects.filter(p => p.status === 'completed').length;
+  const totalBudget = projects.reduce((sum, p) => sum + (p.budget || 0), 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2">
+              <TrendingUp className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
+                <p className="text-2xl font-bold">{activeProjects}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                <p className="text-2xl font-bold">{completedProjects}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2">
+              <DollarSign className="h-5 w-5 text-emerald-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Investment</p>
+                <p className="text-2xl font-bold">${totalBudget.toLocaleString()}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center space-x-2">
+              <Clock className="h-5 w-5 text-orange-500" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Avg. Timeline</p>
+                <p className="text-2xl font-bold">6-8 weeks</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Project Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Project Status Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={projectStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {projectStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Service Types */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Services Breakdown</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={serviceTypeData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Invoice Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Invoice Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={invoiceStatusData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name} $${value.toLocaleString()}`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {invoiceStatusData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `$${Number(value).toLocaleString()}`} />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Project Timeline */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Project Activity (6 Months)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={projectTimelineData()}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="projects" stroke="#8884d8" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default ClientAnalytics;
