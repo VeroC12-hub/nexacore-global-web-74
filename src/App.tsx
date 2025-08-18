@@ -1,18 +1,21 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import GetStarted from "./pages/GetStarted";
 import Portfolio from "./pages/Portfolio";
-import Privacy from "./pages/Privacy"; // Add this import
+import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import BookConsultation from "./pages/BookConsultation";
+import Auth from "./pages/Auth";
+import ClientPortal from "./pages/ClientPortal";
 import AIAssistant from "./components/AIAssistant";
-import CookieConsent from "./components/CookieConsent"; // Add this import
+import CookieConsent from "./components/CookieConsent";
 
 // Optional: Only import these if they exist in your project
 // If you get import errors, comment these out
@@ -33,24 +36,28 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/get-started" element={<GetStarted />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/privacy" element={<Privacy />} /> {/* Add this route */}
-            <Route path="/terms" element={<Terms />} /> {/* Add this line */}
-            <Route path="/book-consultation" element={<BookConsultation />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <AIAssistant />
-          <CookieConsent /> {/* Add this component */}
-          <Toaster />
-          <Sonner />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/services" element={<Services />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/get-started" element={<GetStarted />} />
+              <Route path="/portfolio" element={<Portfolio />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/book-consultation" element={<BookConsultation />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/client-portal" element={<ClientPortal />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <AIAssistant />
+            <CookieConsent />
+            <Toaster />
+            <Sonner />
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

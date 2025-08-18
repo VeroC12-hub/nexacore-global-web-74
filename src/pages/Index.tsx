@@ -410,6 +410,13 @@ const Index = () => {
             >
               Schedule Consultation
             </Button>
+            <Button 
+              variant="outline" 
+              className="text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary"
+              onClick={() => navigate('/auth')}
+            >
+              Client Portal
+            </Button>
           </div>
         </div>
       </section>
