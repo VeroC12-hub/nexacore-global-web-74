@@ -55,22 +55,26 @@ export function AdminSettingsTab() {
     try {
       const { data, error } = await supabase
         .from('admin_settings')
-        .select('*')
-        .single();
+        .select('*');
 
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
-      if (data) {
+      if (data && data.length > 0) {
+        const settingsMap = data.reduce((acc: any, setting: any) => {
+          acc[setting.setting_key] = setting.setting_value;
+          return acc;
+        }, {});
+
         setSettings({
-          company_name: data.company_name || '',
-          company_email: data.company_email || '',
-          company_phone: data.company_phone || '',
-          default_currency: data.default_currency || 'USD',
-          auto_send_invoices: data.auto_send_invoices ?? true,
-          payment_reminder_days: data.payment_reminder_days || 7,
-          require_approval: data.require_approval ?? true
+          company_name: settingsMap.company_name || '',
+          company_email: settingsMap.company_email || '',
+          company_phone: settingsMap.company_phone || '',
+          default_currency: settingsMap.default_currency || 'USD',
+          auto_send_invoices: settingsMap.auto_send_invoices ?? true,
+          payment_reminder_days: settingsMap.payment_reminder_days || 7,
+          require_approval: settingsMap.require_approval ?? true
         });
       }
     } catch (error) {
@@ -97,12 +101,15 @@ export function AdminSettingsTab() {
 
   const saveSettings = async () => {
     try {
+      const updates = Object.entries(settings).map(([key, value]) => ({
+        setting_key: key,
+        setting_value: value
+      }));
+
       const { error } = await supabase
         .from('admin_settings')
-        .upsert({
-          id: 1, // Using a fixed ID for singleton settings
-          ...settings,
-          updated_at: new Date().toISOString()
+        .upsert(updates, { 
+          onConflict: 'setting_key'
         });
 
       if (error) throw error;

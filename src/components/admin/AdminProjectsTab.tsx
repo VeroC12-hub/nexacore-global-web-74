@@ -10,16 +10,14 @@ import { toast } from 'sonner';
 
 interface Project {
   id: string;
-  project_name: string;
+  title: string;
   description: string;
   status: string;
   start_date: string;
   end_date: string;
   client_id: string;
-  profiles?: {
-    full_name: string;
-    email: string;
-  };
+  budget: number;
+  service_type: string;
 }
 
 interface AdminProjectsTabProps {
@@ -39,13 +37,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .select(`
-          *,
-          profiles (
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -117,7 +109,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                 <TableHead>Project Title</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Progress</TableHead>
+                <TableHead>Service Type</TableHead>
                 <TableHead>Start Date</TableHead>
                 <TableHead>End Date</TableHead>
                 <TableHead>Actions</TableHead>
@@ -126,11 +118,10 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
             <TableBody>
               {projects.map((project) => (
                 <TableRow key={project.id}>
-                  <TableCell className="font-medium">{project.project_name}</TableCell>
+                  <TableCell className="font-medium">{project.title}</TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{project.profiles?.full_name}</div>
-                      <div className="text-sm text-muted-foreground">{project.profiles?.email}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Client ID: {project.client_id}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -139,15 +130,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-primary h-2 rounded-full"
-                          style={{ width: `${project.progress}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-sm">{project.progress}%</span>
-                    </div>
+                    <span className="text-sm text-muted-foreground">{project.service_type}</span>
                   </TableCell>
                   <TableCell>{new Date(project.start_date).toLocaleDateString()}</TableCell>
                   <TableCell>{new Date(project.end_date).toLocaleDateString()}</TableCell>

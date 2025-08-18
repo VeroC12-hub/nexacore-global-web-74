@@ -23,14 +23,13 @@ interface CreateProjectModalProps {
 export function CreateProjectModal({ isOpen, onClose, onSuccess }: CreateProjectModalProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [formData, setFormData] = useState({
-    title: '',
+    projectName: '',
     description: '',
-    client_id: '',
-    status: 'planning',
-    start_date: '',
-    end_date: '',
+    clientId: '',
+    serviceType: 'web_development',
     budget: '',
-    progress: '0'
+    startDate: '',
+    endDate: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,7 +40,7 @@ export function CreateProjectModal({ isOpen, onClose, onSuccess }: CreateProject
       const today = new Date().toISOString().split('T')[0];
       setFormData(prev => ({
         ...prev,
-        start_date: today
+        startDate: today
       }));
     }
   }, [isOpen]);
@@ -70,14 +69,14 @@ export function CreateProjectModal({ isOpen, onClose, onSuccess }: CreateProject
       const { error } = await supabase
         .from('projects')
         .insert({
-          title: formData.title,
+          title: formData.projectName,
           description: formData.description,
-          client_id: formData.client_id,
-          status: formData.status,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          budget: formData.budget ? parseFloat(formData.budget) : null,
-          progress: parseInt(formData.progress)
+          client_id: formData.clientId,
+          service_type: formData.serviceType,
+          budget: parseFloat(formData.budget),
+          start_date: formData.startDate,
+          end_date: formData.endDate,
+          status: 'planning'
         });
 
       if (error) throw error;
@@ -85,14 +84,13 @@ export function CreateProjectModal({ isOpen, onClose, onSuccess }: CreateProject
       toast.success('Project created successfully');
       onSuccess();
       setFormData({
-        title: '',
+        projectName: '',
         description: '',
-        client_id: '',
-        status: 'planning',
-        start_date: '',
-        end_date: '',
+        clientId: '',
+        serviceType: 'web_development',
         budget: '',
-        progress: '0'
+        startDate: '',
+        endDate: ''
       });
     } catch (error) {
       console.error('Error creating project:', error);
@@ -121,12 +119,12 @@ export function CreateProjectModal({ isOpen, onClose, onSuccess }: CreateProject
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Project Title</Label>
+            <Label htmlFor="projectName">Project Name</Label>
             <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Enter project title"
+              id="projectName"
+              value={formData.projectName}
+              onChange={(e) => handleInputChange('projectName', e.target.value)}
+              placeholder="Enter project name"
               required
             />
           </div>
@@ -145,8 +143,8 @@ export function CreateProjectModal({ isOpen, onClose, onSuccess }: CreateProject
           <div className="space-y-2">
             <Label htmlFor="client">Client</Label>
             <Select
-              value={formData.client_id}
-              onValueChange={(value) => handleInputChange('client_id', value)}
+              value={formData.clientId}
+              onValueChange={(value) => handleInputChange('clientId', value)}
               required
             >
               <SelectTrigger>
@@ -162,56 +160,43 @@ export function CreateProjectModal({ isOpen, onClose, onSuccess }: CreateProject
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => handleInputChange('status', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="planning">Planning</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="on_hold">On Hold</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="progress">Progress (%)</Label>
-              <Input
-                id="progress"
-                type="number"
-                min="0"
-                max="100"
-                value={formData.progress}
-                onChange={(e) => handleInputChange('progress', e.target.value)}
-                placeholder="0"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="serviceType">Service Type</Label>
+            <Select
+              value={formData.serviceType}
+              onValueChange={(value) => handleInputChange('serviceType', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="web_development">Web Development</SelectItem>
+                <SelectItem value="mobile_development">Mobile Development</SelectItem>
+                <SelectItem value="consulting">Consulting</SelectItem>
+                <SelectItem value="design">Design</SelectItem>
+                <SelectItem value="marketing">Marketing</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="start_date">Start Date</Label>
+              <Label htmlFor="startDate">Start Date</Label>
               <Input
-                id="start_date"
+                id="startDate"
                 type="date"
-                value={formData.start_date}
-                onChange={(e) => handleInputChange('start_date', e.target.value)}
+                value={formData.startDate}
+                onChange={(e) => handleInputChange('startDate', e.target.value)}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end_date">End Date</Label>
+              <Label htmlFor="endDate">End Date</Label>
               <Input
-                id="end_date"
+                id="endDate"
                 type="date"
-                value={formData.end_date}
-                onChange={(e) => handleInputChange('end_date', e.target.value)}
+                value={formData.endDate}
+                onChange={(e) => handleInputChange('endDate', e.target.value)}
                 required
               />
             </div>

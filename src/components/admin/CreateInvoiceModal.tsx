@@ -23,12 +23,13 @@ interface CreateInvoiceModalProps {
 export function CreateInvoiceModal({ isOpen, onClose, onSuccess }: CreateInvoiceModalProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [formData, setFormData] = useState({
-    client_id: '',
+    title: '',
+    clientId: '',
     amount: '',
+    taxAmount: '0',
     currency: 'USD',
     description: '',
-    due_date: '',
-    payment_terms: ''
+    dueDate: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,7 +41,7 @@ export function CreateInvoiceModal({ isOpen, onClose, onSuccess }: CreateInvoice
       defaultDueDate.setDate(defaultDueDate.getDate() + 30);
       setFormData(prev => ({
         ...prev,
-        due_date: defaultDueDate.toISOString().split('T')[0]
+        dueDate: defaultDueDate.toISOString().split('T')[0]
       }));
     }
   }, [isOpen]);
@@ -69,12 +70,15 @@ export function CreateInvoiceModal({ isOpen, onClose, onSuccess }: CreateInvoice
       const { error } = await supabase
         .from('invoices')
         .insert({
-          client_id: formData.client_id,
-          amount: parseFloat(formData.amount),
-          currency: formData.currency,
+          title: formData.title,
           description: formData.description,
-          due_date: formData.due_date,
-          payment_terms: formData.payment_terms,
+          client_id: formData.clientId,
+          amount: parseFloat(formData.amount),
+          tax_amount: parseFloat(formData.taxAmount),
+          total_amount: parseFloat(formData.amount) + parseFloat(formData.taxAmount),
+          due_date: formData.dueDate,
+          currency: formData.currency,
+          invoice_number: `INV-${Date.now()}`,
           status: 'pending'
         });
 
@@ -83,12 +87,13 @@ export function CreateInvoiceModal({ isOpen, onClose, onSuccess }: CreateInvoice
       toast.success('Invoice created successfully');
       onSuccess();
       setFormData({
-        client_id: '',
+        title: '',
+        clientId: '',
         amount: '',
+        taxAmount: '0',
         currency: 'USD',
         description: '',
-        due_date: '',
-        payment_terms: ''
+        dueDate: ''
       });
     } catch (error) {
       console.error('Error creating invoice:', error);
@@ -117,10 +122,21 @@ export function CreateInvoiceModal({ isOpen, onClose, onSuccess }: CreateInvoice
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="title">Invoice Title</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              placeholder="Enter invoice title"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="client">Client</Label>
             <Select
-              value={formData.client_id}
-              onValueChange={(value) => handleInputChange('client_id', value)}
+              value={formData.clientId}
+              onValueChange={(value) => handleInputChange('clientId', value)}
               required
             >
               <SelectTrigger>
@@ -180,23 +196,25 @@ export function CreateInvoiceModal({ isOpen, onClose, onSuccess }: CreateInvoice
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="due_date">Due Date</Label>
+            <Label htmlFor="taxAmount">Tax Amount</Label>
             <Input
-              id="due_date"
-              type="date"
-              value={formData.due_date}
-              onChange={(e) => handleInputChange('due_date', e.target.value)}
-              required
+              id="taxAmount"
+              type="number"
+              step="0.01"
+              value={formData.taxAmount}
+              onChange={(e) => handleInputChange('taxAmount', e.target.value)}
+              placeholder="0.00"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="payment_terms">Payment Terms</Label>
-            <Textarea
-              id="payment_terms"
-              value={formData.payment_terms}
-              onChange={(e) => handleInputChange('payment_terms', e.target.value)}
-              placeholder="Net 30, or specific payment instructions"
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
+              type="date"
+              value={formData.dueDate}
+              onChange={(e) => handleInputChange('dueDate', e.target.value)}
+              required
             />
           </div>
 

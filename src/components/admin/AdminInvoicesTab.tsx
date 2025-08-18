@@ -18,10 +18,6 @@ interface Invoice {
   due_date: string;
   created_at: string;
   description: string;
-  profiles?: {
-    full_name: string;
-    email: string;
-  };
 }
 
 interface AdminInvoicesTabProps {
@@ -41,13 +37,7 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
     try {
       const { data, error } = await supabase
         .from('invoices')
-        .select(`
-          *,
-          profiles (
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -150,9 +140,8 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{invoice.profiles?.full_name}</div>
-                      <div className="text-sm text-muted-foreground">{invoice.profiles?.email}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Client ID: {invoice.client_id}
                     </div>
                   </TableCell>
                   <TableCell>

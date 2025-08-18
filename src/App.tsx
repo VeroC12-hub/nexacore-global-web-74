@@ -12,6 +12,7 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import BookConsultation from "./pages/BookConsultation";
+import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
 import ClientPortal from "./pages/ClientPortal";
 import AIAssistant from "./components/AIAssistant";

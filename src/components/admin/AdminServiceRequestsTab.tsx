@@ -11,17 +11,13 @@ interface ServiceRequest {
   id: string;
   title: string;
   description: string;
-  service_type: string;
+  request_type: string;
   priority: string;
   status: string;
   budget_estimate: number;
-  requested_completion_date: string;
+  requested_completion: string;
   created_at: string;
-  user_id: string;
-  profiles?: {
-    full_name: string;
-    email: string;
-  };
+  client_id: string;
 }
 
 interface AdminServiceRequestsTabProps {
@@ -40,13 +36,7 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
     try {
       const { data, error } = await supabase
         .from('service_requests')
-        .select(`
-          *,
-          profiles (
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -160,14 +150,13 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">{request.profiles?.full_name}</div>
-                      <div className="text-sm text-muted-foreground">{request.profiles?.email}</div>
+                    <div className="text-sm text-muted-foreground">
+                      Client ID: {request.client_id}
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">
-                      {request.service_type.replace('_', ' ')}
+                      {request.request_type.replace('_', ' ')}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -184,8 +173,8 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
                     ${request.budget_estimate?.toLocaleString() || 'N/A'}
                   </TableCell>
                   <TableCell>
-                    {request.requested_completion_date ? 
-                      new Date(request.requested_completion_date).toLocaleDateString() : 
+                    {request.requested_completion ? 
+                      new Date(request.requested_completion).toLocaleDateString() : 
                       'Not specified'
                     }
                   </TableCell>
