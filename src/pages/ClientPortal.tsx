@@ -28,6 +28,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ServiceRequestModal from '@/components/ServiceRequestModal';
 import VisaPaymentForm from '@/components/VisaPaymentForm';
+import ClientSettings from '@/components/ClientSettings';
 import { toast } from 'sonner';
 
 interface Project {
@@ -74,6 +75,7 @@ const ClientPortal = () => {
   const [loading, setLoading] = useState(true);
   const [isServiceRequestModalOpen, setIsServiceRequestModalOpen] = useState(false);
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -182,7 +184,7 @@ const ClientPortal = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <Navbar />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 pt-24">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -194,7 +196,7 @@ const ClientPortal = () => {
               <Plus className="w-4 h-4 mr-2" />
               New Project
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setIsSettingsOpen(true)}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </Button>
@@ -396,7 +398,7 @@ const ClientPortal = () => {
                         Download
                       </Button>
                       {invoice.status !== 'paid' && (
-                        <Button size="sm" onClick={() => handlePayInvoice(invoice)}>
+                        <Button size="sm" onClick={() => handlePayInvoice(invoice)} className="bg-blue-600 hover:bg-blue-700">
                           <CreditCard className="w-4 h-4 mr-2" />
                           Pay with Visa
                         </Button>
@@ -506,6 +508,11 @@ const ClientPortal = () => {
           onPaymentComplete={handlePaymentComplete}
         />
       )}
+      
+      <ClientSettings
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 };

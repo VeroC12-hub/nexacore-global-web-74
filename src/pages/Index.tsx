@@ -398,7 +398,10 @@ const Index = () => {
             <Button 
               variant="secondary" 
               className="text-lg px-8 py-4 bg-white text-primary hover:bg-white/90"
-              onClick={() => navigate('/client-portal')}
+              onClick={() => {
+                sessionStorage.setItem('requestType', 'quote');
+                navigate('/get-started');
+              }}
             >
               Get Free Quote
               <ArrowRight className="ml-2 w-5 h-5" />

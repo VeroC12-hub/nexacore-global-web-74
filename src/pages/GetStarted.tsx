@@ -616,26 +616,42 @@ const GetStarted = () => {
       const currentConvertedMinPrice = (currentMinPrice * rate).toFixed(2);
       const currentConvertedMaxPrice = (currentMaxPrice * rate).toFixed(2);
       
-      // For demonstration purposes - simulate successful submission
-      console.log('Submitting:', {
-        client: clientName.trim(),
-        email: clientEmail.trim(),
-        service: selectedService,
-        tier: selectedTier,
-        serviceDescription: serviceDescription,
-        projectDescription: projectDescription.trim(),
-        pricing: `${currency.symbol} ${currentConvertedMinPrice} - ${currency.symbol} ${currentConvertedMaxPrice}+`,
-        basePricing: `${currentMinPrice} - ${currentMaxPrice}+`,
-        country: country,
-        currency: currency.code,
-        exchangeRate: rate
-      });
+      // Check if this is a quote or request
+      const requestType = sessionStorage.getItem('requestType') || 'request';
       
-      // Simulate email sending
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Send email notification using the edge function
+      const emailResponse = await fetch(`https://nmwfevhetlwehbuikflk.supabase.co/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5td2ZldmhldGx3ZWhidWlrZmxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMzk3MDIsImV4cCI6MjA2OTkxNTcwMn0.u7SelY4lGordT1Kh1Sa_xd7EmZ-5aT_IxIHx2-gvLvo`,
+        },
+        body: JSON.stringify({
+          type: requestType,
+          name: clientName.trim(),
+          email: clientEmail.trim(),
+          phone: clientPhone.trim(),
+          service: selectedService,
+          description: projectDescription.trim(),
+          budget: `${currency.symbol} ${currentConvertedMinPrice} - ${currency.symbol} ${currentConvertedMaxPrice}+`,
+          timeline: selectedTier
+        })
+      });
+
+      if (!emailResponse.ok) {
+        throw new Error('Failed to send email notification');
+      }
+      
+      // Clear the request type from storage
+      sessionStorage.removeItem('requestType');
       
       setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 5000);
+      
+      // Redirect to client portal after 2 seconds
+      setTimeout(() => {
+        setSubmitted(false);
+        window.location.href = '/client-portal';
+      }, 2000);
 
       setClientName("");
       setClientEmail("");
@@ -650,12 +666,57 @@ const GetStarted = () => {
     }
   };
 
-  const handleGetQuote = () => {
+  const handleGetQuote = async () => {
     if (!clientEmail.trim()) {
       alert("Please provide your email address first so we can send you the quote!");
       return;
     }
-    alert("Free quote request submitted! We'll send a detailed quote to your email within 24 hours.");
+    
+    setSubmitting(true);
+    try {
+      // Get current pricing for email
+      const currentServiceInfo = getCurrentServiceData();
+      const currentMinPrice = currentServiceInfo.min;
+      const currentMaxPrice = currentServiceInfo.max;
+      const currentConvertedMinPrice = (currentMinPrice * rate).toFixed(2);
+      const currentConvertedMaxPrice = (currentMaxPrice * rate).toFixed(2);
+      
+      // Send quote email
+      const emailResponse = await fetch(`https://nmwfevhetlwehbuikflk.supabase.co/functions/v1/send-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5td2ZldmhldGx3ZWhidWlrZmxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQzMzk3MDIsImV4cCI6MjA2OTkxNTcwMn0.u7SelY4lGordT1Kh1Sa_xd7EmZ-5aT_IxIHx2-gvLvo`,
+        },
+        body: JSON.stringify({
+          type: 'quote',
+          name: clientName.trim(),
+          email: clientEmail.trim(),
+          phone: clientPhone.trim(),
+          service: selectedService,
+          description: projectDescription.trim() || 'Free quote request',
+          budget: `${currency.symbol} ${currentConvertedMinPrice} - ${currency.symbol} ${currentConvertedMaxPrice}+`,
+          timeline: selectedTier
+        })
+      });
+
+      if (!emailResponse.ok) {
+        throw new Error('Failed to send quote request');
+      }
+      
+      alert("Free quote request submitted! We'll send a detailed quote to your email within 24 hours.");
+      
+      // Redirect to client portal
+      setTimeout(() => {
+        window.location.href = '/client-portal';
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error submitting quote:', error);
+      alert('Sorry, there was an error submitting your quote request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleBackToHome = () => {
