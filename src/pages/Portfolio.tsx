@@ -99,8 +99,8 @@ const ImageUploader = ({ onImageSelect, label = "Select Image", currentImage = n
     }
   };
 
-  const simulateImageUpload = (file) => {
-    return new Promise((resolve) => {
+  const simulateImageUpload = (file: File) => {
+    return new Promise<void>((resolve) => {
       setTimeout(() => {
         resolve();
       }, 2000); // Simulate upload delay
@@ -366,7 +366,7 @@ const ProjectForm = ({ project = null, onSave, onCancel }) => {
             value={formData.description}
             onChange={(e) => setFormData({...formData, description: e.target.value})}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            rows="3"
+            rows={3}
             required
           />
         </div>
@@ -377,7 +377,7 @@ const ProjectForm = ({ project = null, onSave, onCancel }) => {
             value={formData.longDescription}
             onChange={(e) => setFormData({...formData, longDescription: e.target.value})}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            rows="4"
+            rows={4}
             required
           />
         </div>
@@ -450,7 +450,7 @@ const ProjectForm = ({ project = null, onSave, onCancel }) => {
             value={formData.teamMembers}
             onChange={(e) => setFormData({...formData, teamMembers: e.target.value})}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            rows="4"
+            rows={4}
             placeholder="Manasseh Kabutey (Lead Developer): Full-stack development, architecture design"
           />
         </div>

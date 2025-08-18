@@ -671,7 +671,7 @@ const Contact = () => {
     setSubmitStatus(null);
 
     try {
-      const emailjs = window.emailjs;
+      const emailjs = (window as any).emailjs;
       
       if (!emailjs) {
         throw new Error('EmailJS library not loaded. Please ensure the EmailJS script is included in your HTML.');

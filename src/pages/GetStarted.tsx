@@ -1117,7 +1117,7 @@ const GetStarted = () => {
 
       <Footer />
 
-      <style jsx>{`
+      <style>{`
         .text-gradient-primary {
           background: linear-gradient(135deg, #2563eb, #059669);
           -webkit-background-clip: text;

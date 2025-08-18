@@ -237,8 +237,8 @@ const BookConsultation = () => {
     console.log('📅 Booking initiated:', service.title, 'Method:', method);
     
     // Track booking attempt for analytics
-    if (typeof gtag !== 'undefined') {
-      gtag('event', 'consultation_booking_attempt', {
+    if (typeof window !== 'undefined' && 'gtag' in window) {
+      (window as any).gtag('event', 'consultation_booking_attempt', {
         'service_type': serviceKey,
         'urgency_level': formData.urgency,
         'budget_range': formData.budget,
