@@ -15,6 +15,7 @@ import BookConsultation from "./pages/BookConsultation";
 import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
 import ClientPortal from "./pages/ClientPortal";
+import Dashboard from "./pages/Dashboard";
 import AIAssistant from "./components/AIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
@@ -50,8 +51,9 @@ const App = () => {
               <Route path="/terms" element={<Terms />} />
               <Route path="/book-consultation" element={<BookConsultation />} />
               <Route path="/auth" element={<Auth />} />
-            <Route path="/client-portal" element={<ClientPortal />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/client-portal" element={<ClientPortal />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AIAssistant />
