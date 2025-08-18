@@ -49,7 +49,8 @@ const App = () => {
               <Route path="/terms" element={<Terms />} />
               <Route path="/book-consultation" element={<BookConsultation />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/client-portal" element={<ClientPortal />} />
+            <Route path="/client-portal" element={<ClientPortal />} />
+            <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AIAssistant />
