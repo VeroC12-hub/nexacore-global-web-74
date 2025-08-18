@@ -177,6 +177,39 @@ export type Database = {
         }
         Relationships: []
       }
+      client_portal_settings: {
+        Row: {
+          client_id: string | null
+          created_at: string | null
+          dashboard_layout: Json | null
+          id: string
+          language: string | null
+          notification_preferences: Json | null
+          timezone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          client_id?: string | null
+          created_at?: string | null
+          dashboard_layout?: Json | null
+          id?: string
+          language?: string | null
+          notification_preferences?: Json | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string | null
+          created_at?: string | null
+          dashboard_layout?: Json | null
+          id?: string
+          language?: string | null
+          notification_preferences?: Json | null
+          timezone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       event_analytics: {
         Row: {
           created_at: string | null
@@ -547,6 +580,80 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount: number
+          client_id: string | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          line_items: Json | null
+          notes: string | null
+          paid_date: string | null
+          payment_method: string | null
+          project_id: string | null
+          status: string | null
+          stripe_payment_intent_id: string | null
+          tax_amount: number | null
+          title: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          client_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          line_items?: Json | null
+          notes?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          project_id?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          tax_amount?: number | null
+          title: string
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          client_id?: string | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          line_items?: Json | null
+          notes?: string | null
+          paid_date?: string | null
+          payment_method?: string | null
+          project_id?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          tax_amount?: number | null
+          title?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       media_files: {
         Row: {
           backup_url_1: string | null
@@ -813,6 +920,232 @@ export type Database = {
         }
         Relationships: []
       }
+      project_files: {
+        Row: {
+          access_level: string | null
+          category: string | null
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          is_latest: boolean | null
+          project_id: string | null
+          uploaded_by: string | null
+          version: number | null
+        }
+        Insert: {
+          access_level?: string | null
+          category?: string | null
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_latest?: boolean | null
+          project_id?: string | null
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Update: {
+          access_level?: string | null
+          category?: string | null
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          is_latest?: boolean | null
+          project_id?: string | null
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_messages: {
+        Row: {
+          attachments: Json | null
+          created_at: string | null
+          id: string
+          is_internal: boolean | null
+          message: string
+          message_type: string | null
+          parent_message_id: string | null
+          project_id: string | null
+          read_by: Json | null
+          sender_id: string | null
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message: string
+          message_type?: string | null
+          parent_message_id?: string | null
+          project_id?: string | null
+          read_by?: Json | null
+          sender_id?: string | null
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string | null
+          id?: string
+          is_internal?: boolean | null
+          message?: string
+          message_type?: string | null
+          parent_message_id?: string | null
+          project_id?: string | null
+          read_by?: Json | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "project_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          actual_hours: number | null
+          assigned_to: string | null
+          completed_at: string | null
+          created_at: string | null
+          dependencies: string[] | null
+          description: string | null
+          due_date: string | null
+          estimated_hours: number | null
+          id: string
+          priority: string | null
+          project_id: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          dependencies?: string[] | null
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          priority?: string | null
+          project_id?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          actual_hours?: number | null
+          assigned_to?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          dependencies?: string[] | null
+          description?: string | null
+          due_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          priority?: string | null
+          project_id?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          actual_completion: string | null
+          budget: number | null
+          client_id: string | null
+          created_at: string | null
+          description: string | null
+          end_date: string | null
+          estimated_completion: string | null
+          id: string
+          metadata: Json | null
+          priority: string | null
+          project_manager_id: string | null
+          service_type: string
+          spent_amount: number | null
+          start_date: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          actual_completion?: string | null
+          budget?: number | null
+          client_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          estimated_completion?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          project_manager_id?: string | null
+          service_type: string
+          spent_amount?: number | null
+          start_date?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          actual_completion?: string | null
+          budget?: number | null
+          client_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          end_date?: string | null
+          estimated_completion?: string | null
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          project_manager_id?: string | null
+          service_type?: string
+          spent_amount?: number | null
+          start_date?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           comment: string | null
@@ -852,6 +1185,63 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      service_requests: {
+        Row: {
+          assigned_to: string | null
+          budget_estimate: number | null
+          client_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          metadata: Json | null
+          priority: string | null
+          request_type: string
+          requested_completion: string | null
+          response_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          budget_estimate?: number | null
+          client_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          request_type: string
+          requested_completion?: string | null
+          response_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          budget_estimate?: number | null
+          client_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+          priority?: string | null
+          request_type?: string
+          requested_completion?: string | null
+          response_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
