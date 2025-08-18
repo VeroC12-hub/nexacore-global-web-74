@@ -843,8 +843,10 @@ const Dashboard = () => {
 
         {selectedInvoiceForPayment && (
           <VisaPaymentForm
+            isOpen={true}
             invoice={selectedInvoiceForPayment}
             onClose={() => setSelectedInvoiceForPayment(null)}
+            onPaymentComplete={handlePaymentComplete}
           />
         )}
 

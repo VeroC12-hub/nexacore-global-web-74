@@ -39,8 +39,8 @@ interface ProjectMessage {
   projects?: {
     title: string;
     client_id: string;
-  };
-  profiles?: {
+  } | null;
+  sender_profile?: {
     full_name: string | null;
     email: string | null;
   } | null;
@@ -72,8 +72,7 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
         .from('project_messages')
         .select(`
           *,
-          projects (title, client_id),
-          profiles:sender_id (full_name, email)
+          projects (title, client_id)
         `)
         .order('created_at', { ascending: false });
 
@@ -136,7 +135,7 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
         .from('project_messages')
         .update({
           read_by: {
-            [user.user?.id || '']: new Date().toISOString()
+            [user?.id || '']: new Date().toISOString()
           }
         })
         .eq('id', messageId);
@@ -152,7 +151,7 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
     const matchesSearch = 
       message.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
       message.projects?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      message.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      message.sender_profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesType = typeFilter === 'all' || message.message_type === typeFilter;
     const matchesProject = projectFilter === 'all' || message.project_id === projectFilter;
@@ -171,8 +170,7 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
   };
 
   const isUnread = (message: ProjectMessage) => {
-    const { data: user } = supabase.auth.getUser();
-    return !message.read_by || !message.read_by[user.user?.id || ''];
+    return !message.read_by;
   };
 
   if (loading) {
@@ -267,7 +265,7 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{message.profiles?.full_name || message.profiles?.email || 'Unknown'}</span>
+                    <span>{message.sender_profile?.full_name || message.sender_profile?.email || 'Unknown'}</span>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -368,7 +366,7 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
               <div className="space-y-4">
                 <div className="p-4 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground mb-2">
-                    Original message from {selectedMessage.profiles?.full_name || 'Unknown'}:
+                    Original message from {selectedMessage.sender_profile?.full_name || 'Unknown'}:
                   </p>
                   <p>{selectedMessage.message}</p>
                 </div>

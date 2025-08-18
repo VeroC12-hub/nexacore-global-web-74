@@ -30,8 +30,8 @@ interface ProjectFile {
   projects?: {
     title: string;
     client_id: string;
-  };
-  profiles?: {
+  } | null;
+  uploaded_profile?: {
     full_name: string | null;
     email: string | null;
   } | null;
@@ -60,8 +60,7 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
         .from('project_files')
         .select(`
           *,
-          projects (title, client_id),
-          profiles:uploaded_by (full_name, email)
+          projects (title, client_id)
         `)
         .order('created_at', { ascending: false });
 
@@ -122,7 +121,7 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
     const matchesSearch = 
       file.file_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       file.projects?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      file.profiles?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      file.uploaded_profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = categoryFilter === 'all' || file.category === categoryFilter;
     const matchesProject = projectFilter === 'all' || file.project_id === projectFilter;
@@ -254,7 +253,7 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {file.profiles?.full_name || file.profiles?.email || 'Unknown'}
+                  {file.uploaded_profile?.full_name || file.uploaded_profile?.email || 'Unknown'}
                 </TableCell>
                 <TableCell>
                   {new Date(file.created_at).toLocaleDateString()}

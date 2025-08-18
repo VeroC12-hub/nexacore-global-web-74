@@ -12,6 +12,9 @@ import { AdminInvoicesTab } from '@/components/admin/AdminInvoicesTab';
 import { AdminServiceRequestsTab } from '@/components/admin/AdminServiceRequestsTab';
 import { AdminUsersTab } from '@/components/admin/AdminUsersTab';
 import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab';
+import { AdminTeamTab } from '@/components/admin/AdminTeamTab';
+import { AdminFileRepositoryTab } from '@/components/admin/AdminFileRepositoryTab';
+import { AdminMessagingTab } from '@/components/admin/AdminMessagingTab';
 import { CreateInvoiceModal } from '@/components/admin/CreateInvoiceModal';
 import { toast } from 'sonner';
 
@@ -212,12 +215,14 @@ export default function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="projects" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="projects">Projects</TabsTrigger>
             <TabsTrigger value="invoices">Invoices</TabsTrigger>
-            <TabsTrigger value="requests">Service Requests</TabsTrigger>
+            <TabsTrigger value="requests">Requests</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+            <TabsTrigger value="team">Team</TabsTrigger>
+            <TabsTrigger value="files">Files</TabsTrigger>
+            <TabsTrigger value="messages">Messages</TabsTrigger>
           </TabsList>
 
           <TabsContent value="projects" className="mt-6">
@@ -234,6 +239,18 @@ export default function AdminDashboard() {
 
           <TabsContent value="users" className="mt-6">
             <AdminUsersTab onStatsUpdate={loadDashboardStats} />
+          </TabsContent>
+
+          <TabsContent value="team" className="mt-6">
+            <AdminTeamTab onStatsUpdate={loadDashboardStats} />
+          </TabsContent>
+
+          <TabsContent value="files" className="mt-6">
+            <AdminFileRepositoryTab onStatsUpdate={loadDashboardStats} />
+          </TabsContent>
+
+          <TabsContent value="messages" className="mt-6">
+            <AdminMessagingTab onStatsUpdate={loadDashboardStats} />
           </TabsContent>
 
           <TabsContent value="settings" className="mt-6">
