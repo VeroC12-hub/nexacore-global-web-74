@@ -211,7 +211,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Bottom Bar */}
+        {/* Bottom Bar with Legal Links */}
         <div className="border-t border-background/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center text-sm text-muted">
           <p>&copy; {new Date().getFullYear()} NexaCore Innovations. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
