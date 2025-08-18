@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +33,18 @@ const AuthPage = () => {
     if (error) {
       setError(error.message);
     } else {
-      navigate('/client-portal');
+      // Check user role and redirect accordingly
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('email', email)
+        .single();
+      
+      if (profile?.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/client-portal');
+      }
     }
     
     setLoading(false);
