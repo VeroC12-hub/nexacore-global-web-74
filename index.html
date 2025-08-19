@@ -11,19 +11,32 @@
     <meta name="description" content="Multi-disciplinary engineering, software development, design, and analytics services. Global team delivering technical, creative, and digital solutions worldwide.">
     <meta name="author" content="NexaCore Innovations" />
 
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.nexacore-innovations.com/">
+
     <!-- Open Graph for social sharing -->
     <meta property="og:title" content="NexaCore Innovations - Engineering Global Innovation with Excellence" />
     <meta property="og:description" content="Multi-disciplinary engineering, software development, design, and analytics services. Global team delivering technical, creative, and digital solutions worldwide." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://nexacore-innovations.com/og-image.png" />
-    <meta property="og:url" content="https://nexacore-innovations.com" />
+    <meta property="og:image" content="https://www.nexacore-innovations.com/og-image.png" />
+    <meta property="og:url" content="https://www.nexacore-innovations.com/" />
+    <meta property="og:site_name" content="NexaCore Innovations" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@NexaCoreGlobal" />
-    <meta name="twitter:image" content="https://nexacore-innovations.com/og-image.png" />
+    <meta name="twitter:image" content="https://www.nexacore-innovations.com/og-image.png" />
     <meta name="twitter:title" content="NexaCore Innovations - Engineering Global Innovation with Excellence" />
     <meta name="twitter:description" content="Global engineering, software, and design solutions for modern businesses and industries." />
+
+    <!-- Security Headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+
+    <!-- Performance Optimization -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
 
     <!-- 📧 EmailJS Script - REQUIRED FOR CONTACT FORM -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -39,20 +52,72 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "NexaCore Innovations",
-      "url": "https://nexacore-innovations.com",
-      "logo": "https://nexacore-innovations.com/og-image.png",
+      "url": "https://www.nexacore-innovations.com",
+      "logo": "https://www.nexacore-innovations.com/og-image.png",
       "sameAs": [
         "https://www.linkedin.com/company/nexacore",
         "https://www.facebook.com/nexacore",
         "https://twitter.com/nexacore"
       ],
       "description": "NexaCore Innovations is a multidisciplinary services company offering CAD training, data analytics, BIM, software development, and engineering consultancy for clients globally.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "Ghana",
+        "addressRegion": "Greater Accra"
+      },
       "contactPoint": {
         "@type": "ContactPoint",
         "telephone": "+233-XXX-XXX-XXX",
         "contactType": "Customer Support",
         "areaServed": "Global",
-        "availableLanguage": "English"
+        "availableLanguage": ["English"]
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "Ocloo Godwin"
+      },
+      "foundingDate": "2023",
+      "serviceArea": {
+        "@type": "Place",
+        "name": "Global"
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "NexaCore Services",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "CAD Design & Engineering",
+              "description": "Professional CAD design, 3D modeling, and engineering consultation services"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service", 
+              "name": "Software Development",
+              "description": "Custom software development, web applications, and mobile app development"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "AI & Machine Learning",
+              "description": "Artificial intelligence solutions, machine learning models, and data analytics"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Creative & Branding",
+              "description": "UI/UX design, graphic design, branding, and creative content creation"
+            }
+          }
+        ]
       }
     }
     </script>
@@ -63,5 +128,25 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Domain enforcement script -->
+    <script>
+      // Ensure proper domain redirection
+      (function() {
+        if (typeof window !== 'undefined' && window.location) {
+          const currentDomain = window.location.hostname;
+          const targetDomain = 'www.nexacore-innovations.com';
+          
+          // Only redirect in production (not localhost)
+          if (currentDomain !== 'localhost' && currentDomain !== '127.0.0.1') {
+            if (currentDomain !== targetDomain) {
+              const targetUrl = 'https://' + targetDomain + window.location.pathname + window.location.search;
+              console.log('🔄 Redirecting to canonical domain:', targetUrl);
+              window.location.replace(targetUrl);
+            }
+          }
+        }
+      })();
+    </script>
   </body>
 </html>
