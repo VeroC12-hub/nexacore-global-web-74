@@ -1,6 +1,6 @@
 /**
  * Environment Detection Utilities for NexaCore Innovations
- * This file enforces proper domain handling and removes any Lovable references
+ * This file enforces proper domain handling and ensures all redirects go to nexacore-innovations.com
  */
 
 export interface EnvironmentInfo {
@@ -71,9 +71,10 @@ export function getEnvironmentInfo(): EnvironmentInfo {
   const isProduction = mode === 'production';
 
   // Get domain information
-  const domain = typeof window !== 'undefined' ? window.location.hostname : 'nexacore-innovations.com';
+  const domain = typeof window !== 'undefined' ? 
+    window.location.hostname : 'www.nexacore-innovations.com';
   
-  // Determine base URL
+  // Determine base URL - always enforce NexaCore domain in production
   let baseUrl = getEnvVar('VITE_APP_URL') || '';
   if (!baseUrl) {
     if (isDevelopment) {
@@ -100,19 +101,20 @@ export function getEnvironmentInfo(): EnvironmentInfo {
 }
 
 /**
- * Enforce correct domain and prevent unwanted redirects
+ * Enforce correct domain and redirect all traffic to nexacore-innovations.com
  */
 export function enforceCorrectDomain(): void {
   if (typeof window === 'undefined') return;
   
   const env = getEnvironmentInfo();
   const currentUrl = window.location.href;
+  const targetDomain = 'https://www.nexacore-innovations.com';
   
   // Only redirect in production and non-localhost environments
   if (env.isProduction && !env.isLocalhost) {
-    // If we're on a Vercel domain but should be on NexaCore domain
-    if (env.isVercel && !env.isNexaCoreDomain) {
-      const targetUrl = currentUrl.replace(window.location.origin, 'https://www.nexacore-innovations.com');
+    // If we're on any domain that is NOT nexacore-innovations.com, redirect
+    if (!env.isNexaCoreDomain) {
+      const targetUrl = targetDomain + window.location.pathname + window.location.search;
       console.log('🔄 Redirecting to NexaCore domain:', targetUrl);
       window.location.replace(targetUrl);
       return;
@@ -120,16 +122,9 @@ export function enforceCorrectDomain(): void {
     
     // If we're on nexacore-innovations.com without www, redirect to www
     if (env.domain === 'nexacore-innovations.com') {
-      const targetUrl = currentUrl.replace('https://nexacore-innovations.com', 'https://www.nexacore-innovations.com');
+      const targetUrl = currentUrl.replace('https://nexacore-innovations.com', targetDomain);
       console.log('🔄 Redirecting to www subdomain:', targetUrl);
       window.location.replace(targetUrl);
-      return;
-    }
-    
-    // Block any domains that are not NexaCore (except localhost)
-    if (!env.isNexaCoreDomain && !env.isLocalhost) {
-      console.log('🚫 Blocking unauthorized domain, redirecting to NexaCore');
-      window.location.replace('https://www.nexacore-innovations.com' + window.location.pathname + window.location.search);
       return;
     }
   }
@@ -195,3 +190,5 @@ export function initializeEnvironment(): void {
 // Declare global build-time constants for TypeScript
 declare const __DEV__: boolean;
 declare const __PROD__: boolean;
+declare const __BUILD_TIME__: string;
+declare const __BUILD_MODE__: string;
