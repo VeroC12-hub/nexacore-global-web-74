@@ -1,4 +1,5 @@
-// src/components/admin/AdminTeamTab.tsx - Fixed with correct Supabase import
+// Quick fix for AdminTeamTab.tsx export issue
+// Copy this entire content and replace your AdminTeamTab.tsx file
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
@@ -9,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Badge } from '../ui/badge';
 import { UserPlus, Settings, Trash2, Mail, Phone, Calendar } from 'lucide-react';
-// Use the correct Supabase import based on your project structure
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -35,6 +35,7 @@ interface AdminTeamTabProps {
   onStatsUpdate: () => void;
 }
 
+// Component definition
 const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +46,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     role: 'staff'
   });
 
-  // Load team members on component mount
   useEffect(() => {
     loadTeamMembers();
   }, []);
@@ -53,7 +53,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
   const loadTeamMembers = async () => {
     try {
       setLoading(true);
-      
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -64,7 +63,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
         toast.error('Failed to load team members');
         return;
       }
-
       setTeamMembers(data || []);
     } catch (error: any) {
       console.error('Error loading team members:', error);
@@ -74,7 +72,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     }
   };
 
-  // Generate a secure temporary password
   const generateTemporaryPassword = (): string => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
     let password = '';
@@ -84,13 +81,11 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     return password;
   };
 
-  // Validate email format
   const isValidEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Check if user already exists
   const checkUserExists = async (email: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
@@ -98,17 +93,14 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
         .select('id')
         .eq('email', email)
         .single();
-
       return !error && !!data;
     } catch {
       return false;
     }
   };
 
-  // Main function to add new team member
   const handleAddMember = async () => {
     try {
-      // Validation
       if (!newMember.email || !newMember.full_name || !newMember.role) {
         toast.error('Please fill in all required fields');
         return;
@@ -119,17 +111,14 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
         return;
       }
 
-      // Check if user already exists
       const userExists = await checkUserExists(newMember.email);
       if (userExists) {
         toast.error('A user with this email already exists');
         return;
       }
 
-      // Show loading state
       toast.loading('Creating team member account...');
 
-      // Step 1: Create the authenticated user first using Supabase Auth
       const temporaryPassword = generateTemporaryPassword();
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -156,15 +145,14 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
         return;
       }
 
-      // Step 2: Create/update the profile using the auth user's ID
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert([{
-          id: authData.user.id, // Use the auth user's ID, not a random UUID
+          id: authData.user.id,
           email: newMember.email,
           full_name: newMember.full_name,
           role: newMember.role,
-          status: 'pending' // They'll need to reset password and activate account
+          status: 'pending'
         }]);
 
       if (profileError) {
@@ -174,7 +162,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
         return;
       }
 
-      // Step 3: Send invitation email with password reset link
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         newMember.email,
         {
@@ -184,17 +171,13 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
 
       if (resetError) {
         console.warn('Password reset email failed:', resetError);
-        // Don't fail the whole process if email fails
       }
 
       toast.dismiss();
       toast.success('Team member invited successfully! They will receive an email to set up their account.');
       
-      // Reset form and close modal
       setIsAddModalOpen(false);
       setNewMember({ email: '', full_name: '', role: 'staff' });
-      
-      // Reload team members and update stats
       loadTeamMembers();
       onStatsUpdate();
 
@@ -205,7 +188,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     }
   };
 
-  // Update team member role
   const handleUpdateRole = async (memberId: string, newRole: string) => {
     try {
       const { error } = await supabase
@@ -224,12 +206,10 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     }
   };
 
-  // Remove team member
   const handleRemoveMember = async (memberId: string) => {
     if (!confirm('Are you sure you want to remove this team member?')) return;
 
     try {
-      // Update status to inactive instead of deleting
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'inactive' })
@@ -246,7 +226,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     }
   };
 
-  // Resend invitation
   const handleResendInvitation = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(
@@ -267,7 +246,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     }
   };
 
-  // Get role color for badges
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'bg-red-500 text-white';
@@ -281,7 +259,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     }
   };
 
-  // Get status color for badges
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'bg-green-500 text-white';
@@ -501,4 +478,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
   );
 };
 
+// Export statements - This is crucial for the import to work
+export { AdminTeamTab };
 export default AdminTeamTab;
