@@ -31,7 +31,7 @@ import {
   Clock,
   UserMinus
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface TeamMember {
@@ -66,6 +66,7 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     role: 'staff'
   });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const { toast } = useToast();
 
   // Load team members from Supabase
   const loadTeamMembers = async () => {
@@ -88,14 +89,22 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
 
       if (error) {
         console.error('Error loading team members:', error);
-        toast.error('Failed to load team members');
+        toast({
+          title: 'Error',
+          description: 'Failed to load team members',
+          variant: 'destructive'
+        });
         return;
       }
 
       setTeamMembers(data || []);
     } catch (error) {
       console.error('Error loading team members:', error);
-      toast.error('Failed to load team members');
+      toast({
+        title: 'Error',
+        description: 'Failed to load team members',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -108,13 +117,17 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
   // Add new team member
   const handleAddMember = async () => {
     if (!newMember.email || !newMember.full_name) {
-      toast.error('Please fill in all required fields');
+      toast({
+        title: 'Validation Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive'
+      });
       return;
     }
 
     try {
       setActionLoading('adding');
-      toast.loading('Adding team member...');
+      // Note: Loading toast not needed with shadcn/ui toast system
 
       // First, invite the user to create an account
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -179,8 +192,10 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
         });
       }
 
-      toast.dismiss();
-      toast.success('Team member added successfully! They will receive an email to set up their account.');
+      toast({
+        title: 'Success',
+        description: 'Team member added successfully! They will receive an email to set up their account.'
+      });
       
       setIsAddModalOpen(false);
       setNewMember({ email: '', full_name: '', role: 'staff' });
@@ -207,12 +222,19 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
 
       if (error) throw error;
 
-      toast.success('Role updated successfully');
+      toast({
+        title: 'Success',
+        description: 'Role updated successfully'
+      });
       loadTeamMembers();
       onStatsUpdate();
     } catch (error: any) {
       console.error('Error updating role:', error);
-      toast.error(error.message || 'Failed to update role');
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update role',
+        variant: 'destructive'
+      });
     } finally {
       setActionLoading(null);
     }
@@ -233,12 +255,19 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
                         newStatus === 'inactive' ? 'deactivated' : 
                         newStatus === 'suspended' ? 'suspended' : 'updated';
       
-      toast.success(`User ${statusText} successfully`);
+      toast({
+        title: 'Success',
+        description: `User ${statusText} successfully`
+      });
       loadTeamMembers();
       onStatsUpdate();
     } catch (error: any) {
       console.error('Error updating status:', error);
-      toast.error(error.message || 'Failed to update status');
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update status',
+        variant: 'destructive'
+      });
     } finally {
       setActionLoading(null);
     }
@@ -263,12 +292,19 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
 
       if (error) throw error;
 
-      toast.success('Team member removed successfully');
+      toast({
+        title: 'Success',
+        description: 'Team member removed successfully'
+      });
       loadTeamMembers();
       onStatsUpdate();
     } catch (error: any) {
       console.error('Error removing team member:', error);
-      toast.error(error.message || 'Failed to remove team member');
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to remove team member',
+        variant: 'destructive'
+      });
     } finally {
       setActionLoading(null);
     }
@@ -293,12 +329,19 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
 
       if (error) throw error;
 
-      toast.success('Team member deleted permanently');
+      toast({
+        title: 'Success',
+        description: 'Team member deleted permanently'
+      });
       loadTeamMembers();
       onStatsUpdate();
     } catch (error: any) {
       console.error('Error deleting team member:', error);
-      toast.error(error.message || 'Failed to delete team member');
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete team member',
+        variant: 'destructive'
+      });
     } finally {
       setActionLoading(null);
     }
@@ -313,13 +356,24 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
       });
 
       if (error) {
-        toast.error('Failed to send invitation email');
+        toast({
+          title: 'Error',
+          description: 'Failed to send invitation email',
+          variant: 'destructive'
+        });
         return;
       }
 
-      toast.success('Invitation email sent successfully');
+      toast({
+        title: 'Success',
+        description: 'Invitation email sent successfully'
+      });
     } catch (error) {
-      toast.error('Failed to send invitation email');
+      toast({
+        title: 'Error',
+        description: 'Failed to send invitation email',
+        variant: 'destructive'
+      });
     } finally {
       setActionLoading(null);
     }
