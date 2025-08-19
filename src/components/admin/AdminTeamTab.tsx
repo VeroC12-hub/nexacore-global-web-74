@@ -1,4 +1,4 @@
-// src/components/admin/AdminTeamTab.tsx - Complete Fixed Implementation
+// src/components/admin/AdminTeamTab.tsx - Fixed with correct Supabase import
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Badge } from '../ui/badge';
 import { UserPlus, Settings, Trash2, Mail, Phone, Calendar } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+// Use the correct Supabase import based on your project structure
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface TeamMember {
@@ -194,86 +195,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
       setNewMember({ email: '', full_name: '', role: 'staff' });
       
       // Reload team members and update stats
-      loadTeamMembers();
-      onStatsUpdate();
-
-    } catch (error: any) {
-      console.error('Error adding team member:', error);
-      toast.dismiss();
-      toast.error(error.message || 'Failed to add team member');
-    }
-  };
-
-  // Alternative approach using admin API (requires service role key)
-  const handleAddMemberWithAdminAPI = async () => {
-    try {
-      // Validation
-      if (!newMember.email || !newMember.full_name || !newMember.role) {
-        toast.error('Please fill in all required fields');
-        return;
-      }
-
-      if (!isValidEmail(newMember.email)) {
-        toast.error('Please enter a valid email address');
-        return;
-      }
-
-      // Check if user already exists
-      const userExists = await checkUserExists(newMember.email);
-      if (userExists) {
-        toast.error('A user with this email already exists');
-        return;
-      }
-
-      toast.loading('Creating team member account...');
-
-      // This approach requires your service role key to be configured
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: newMember.email,
-        password: generateTemporaryPassword(),
-        email_confirm: true, // Auto-confirm email
-        user_metadata: {
-          full_name: newMember.full_name,
-          role: newMember.role
-        }
-      });
-
-      if (authError || !authData.user) {
-        toast.dismiss();
-        toast.error(`Account creation failed: ${authError?.message || 'Unknown error'}`);
-        return;
-      }
-
-      // Create profile with the auth user's ID
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert([{
-          id: authData.user.id,
-          email: newMember.email,
-          full_name: newMember.full_name,
-          role: newMember.role,
-          status: 'approved' // Auto-approve since we're using admin API
-        }]);
-
-      if (profileError) {
-        toast.dismiss();
-        toast.error(`Profile creation failed: ${profileError.message}`);
-        return;
-      }
-
-      // Send password reset email for them to set their own password
-      await supabase.auth.resetPasswordForEmail(
-        newMember.email,
-        {
-          redirectTo: `${window.location.origin}/auth/reset-password`
-        }
-      );
-
-      toast.dismiss();
-      toast.success('Team member created successfully!');
-      
-      setIsAddModalOpen(false);
-      setNewMember({ email: '', full_name: '', role: 'staff' });
       loadTeamMembers();
       onStatsUpdate();
 
