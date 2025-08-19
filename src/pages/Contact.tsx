@@ -1,26 +1,25 @@
 /*
-🚀 COMPLETE ENHANCED CONTACT PAGE WITH SMART INTEGRATION
+🚀 COMPLETE CONTACT PAGE - REDIRECT BOOKING TO DEDICATED PAGE
 
 ✅ Features Included:
-- Smart Calendly routing form with multi-step consultation matching
-- Multiple booking options with embedded Calendly widgets
-- Enhanced user experience with guided consultation booking
-- Complete EmailJS integration with error handling
-- WhatsApp integration with confirmation modals
+- Smart consultation matching form with service recommendations
+- All WhatsApp integrations with confirmation modals
 - Social media links with professional transitions
-- Emergency support with fallback methods
-- Form validation and analytics tracking
-- Responsive design with professional branding
-- All original functionality preserved + smart improvements
+- Complete EmailJS contact form integration
+- Emergency support and multiple contact methods
+- Form validation and comprehensive error handling
+- Toast notifications and user feedback
+- Smart routing redirects to dedicated booking page
 
-🔧 Smart Integration Added:
-- Embedded Calendly widgets (users stay on site)
-- Confirmation modals for external links
-- Professional transitions for all external services
-- Better error handling and user feedback
+🔧 Booking Strategy:
+- SmartRoutingForm recommendations redirect to /book-consultation
+- All booking buttons redirect to dedicated booking page
+- Maintains all other contact functionalities
+- Clean separation between contact and booking flows
 */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,64 +64,6 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-
-// ===== SMART CALENDLY WIDGET COMPONENT =====
-const SmartCalendlyWidget = ({ isOpen, onClose, calendlyUrl, serviceTitle, serviceDuration }) => {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true);
-      const timer = setTimeout(() => setIsLoading(false), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-card rounded-2xl w-full max-w-5xl h-[85vh] relative shadow-2xl">
-        <div className="p-4 border-b border-border flex justify-between items-center bg-card rounded-t-2xl">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">
-              {serviceTitle || 'Book Your Consultation'}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              ✅ {serviceDuration} session • 📅 Instant confirmation • 🔔 Calendar sync
-            </p>
-          </div>
-          <Button 
-            variant="ghost" 
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        </div>
-        
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-card/90 rounded-2xl z-10">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-muted-foreground">Loading booking calendar...</p>
-            </div>
-          </div>
-        )}
-        
-        <iframe
-          src={calendlyUrl}
-          width="100%"
-          height="calc(100% - 80px)"
-          frameBorder="0"
-          className="rounded-b-2xl"
-          title={`Book ${serviceTitle || 'Consultation'} with NexaCore Innovations`}
-          onLoad={() => setIsLoading(false)}
-        />
-      </div>
-    </div>
-  );
-};
 
 // ===== SMART SOCIAL MEDIA MODAL =====
 const SmartSocialModal = ({ platform, isOpen, onClose, onConfirm }) => {
@@ -229,17 +170,15 @@ const SmartRoutingForm = () => {
     preferredMeeting: ''
   });
   const [routingResult, setRoutingResult] = useState(null);
-  const [showCalendly, setShowCalendly] = useState(false);
-  const [selectedService, setSelectedService] = useState(null);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Service Categories with Calendly URLs
+  // Service Categories for recommendations
   const serviceCategories = {
     'engineering': {
       title: 'Engineering & Technical Services',
       icon: Wrench,
       description: 'CAD Design, 3D Animation, AI/ML Engineering, Blockchain Solutions',
-      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/engineering-consultation',
       duration: '45 minutes',
       color: 'from-blue-500 to-blue-600'
     },
@@ -247,7 +186,6 @@ const SmartRoutingForm = () => {
       title: 'Software & App Development',
       icon: Code,
       description: 'Web applications, mobile apps, custom software development',
-      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/software-development-consultation',
       duration: '60 minutes',
       color: 'from-green-500 to-green-600'
     },
@@ -255,7 +193,6 @@ const SmartRoutingForm = () => {
       title: 'Creative & Branding',
       icon: Palette,
       description: 'UI/UX design, branding, graphic design, creative solutions',
-      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/creative-consultation',
       duration: '45 minutes',
       color: 'from-purple-500 to-purple-600'
     },
@@ -263,7 +200,6 @@ const SmartRoutingForm = () => {
       title: 'Data & Digital Growth',
       icon: BarChart3,
       description: 'Analytics, Excel automation, Power BI, digital marketing',
-      calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/data-consultation',
       duration: '45 minutes',
       color: 'from-orange-500 to-orange-600'
     }
@@ -382,32 +318,29 @@ const SmartRoutingForm = () => {
     }
   };
 
-  const handleSmartBooking = (serviceKey) => {
+  // ===== REDIRECT TO BOOKING PAGE =====
+  const handleBookingRedirect = (serviceKey) => {
     const service = serviceCategories[serviceKey];
-    console.log('📅 Smart booking initiated:', service.title);
+    console.log('📅 Redirecting to booking page:', service.title);
     
-    // Track booking attempt for analytics
-    if (typeof window !== 'undefined' && 'gtag' in window) {
-      (window as any).gtag('event', 'consultation_booking_attempt', {
-        'service_type': serviceKey,
-        'urgency_level': formData.urgency,
-        'budget_range': formData.budget,
-        'project_type': formData.projectType,
-        'booking_method': 'embedded'
-      });
-    }
+    // Store form data in sessionStorage for booking page
+    sessionStorage.setItem('consultationData', JSON.stringify({
+      ...formData,
+      recommendedService: serviceKey,
+      serviceInfo: service
+    }));
     
-    setSelectedService(service);
-    setShowCalendly(true);
+    // Navigate to booking page with service parameter
+    navigate(`/book-consultation?service=${serviceKey}&from=contact`);
     
     toast({
       title: "🎯 Perfect Match Found!",
-      description: `Opening ${service.title} booking calendar...`,
+      description: `Redirecting to ${service.title} booking...`,
       duration: 3000,
     });
   };
 
-  const handleWhatsAppFallback = () => {
+  const handleWhatsAppBooking = () => {
     const message = `🚨 URGENT CONSULTATION REQUEST
 
 Hi NexaCore Innovations! I need immediate assistance with my project.
@@ -658,7 +591,7 @@ Thank you!`;
     </Card>
   );
 
-  // Step 4: Recommendations & Booking
+  // Step 4: Recommendations & Booking Redirect
   const renderStep4 = () => {
     if (!routingResult) return null;
 
@@ -685,23 +618,24 @@ Thank you!`;
 
           {/* Booking Options */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Primary: Smart Calendly Booking */}
+            {/* Primary: Redirect to Booking Page */}
             <Card className="p-6 border-2 border-primary/20 hover:border-primary/40 transition-all">
               <Calendar className="w-12 h-12 text-primary mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-3">Book Online Calendar</h3>
               <p className="text-muted-foreground text-sm mb-4">
-                Choose your preferred time slot instantly. Get automatic confirmation and calendar invite.
+                Go to our booking page to choose your preferred time slot. Instant confirmation and calendar invite.
               </p>
               <Button 
-                onClick={() => handleSmartBooking(routingResult.recommendedService)}
+                onClick={() => handleBookingRedirect(routingResult.recommendedService)}
                 className="w-full btn-hero"
                 size="lg"
               >
                 <Calendar className="w-4 h-4 mr-2" />
-                Book {serviceInfo.duration} Session
+                Go to Booking Page
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
               <p className="text-xs text-muted-foreground mt-2">
-                ✅ Instant booking • 📅 Calendar sync • 🔔 Reminders
+                ✅ Dedicated booking page • 📅 Calendar integration • 🔔 Reminders
               </p>
             </Card>
 
@@ -713,7 +647,7 @@ Thank you!`;
                 Prefer instant messaging? Book via WhatsApp with our team for flexible scheduling.
               </p>
               <Button 
-                onClick={handleWhatsAppFallback}
+                onClick={handleWhatsAppBooking}
                 className="w-full bg-green-500 hover:bg-green-600"
                 size="lg"
               >
@@ -811,15 +745,6 @@ Thank you!`;
       {currentStep === 2 && renderStep2()}
       {currentStep === 3 && renderStep3()}
       {currentStep === 4 && renderStep4()}
-
-      {/* Smart Calendly Widget */}
-      <SmartCalendlyWidget
-        isOpen={showCalendly}
-        onClose={() => setShowCalendly(false)}
-        calendlyUrl={selectedService?.calendlyUrl}
-        serviceTitle={selectedService?.title}
-        serviceDuration={selectedService?.duration}
-      />
     </div>
   );
 };
@@ -838,21 +763,8 @@ const Contact = () => {
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
   const [currentWhatsAppMessage, setCurrentWhatsAppMessage] = useState('');
+  const navigate = useNavigate();
   const { toast } = useToast();
-
-  // EmailJS Configuration
-  const EMAILJS_CONFIG = {
-    serviceId: process.env.REACT_APP_EMAILJS_SERVICE_ID || 'service_nexacore',
-    templateId: process.env.REACT_APP_EMAILJS_TEMPLATE_ID || 'template_contact',
-    publicKey: process.env.REACT_APP_EMAILJS_PUBLIC_KEY || 'your_public_key',
-    enabled: true
-  };
-
-  // Calendly Configuration
-  const CALENDLY_CONFIG = {
-    consultationUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/consultation',
-    fallbackEnabled: true
-  };
 
   const contactInfo = [
     {
@@ -954,33 +866,6 @@ Thank you! 😊`;
     setShowWhatsAppModal(true);
   };
 
-  const handleWhatsAppBooking = () => {
-    const message = `🗓️ Hello NexaCore Innovations!
-
-I'd like to book a FREE 30-minute consultation to discuss my project requirements.
-
-📋 PROJECT DETAILS:
-• Project Type: [Web Development, Mobile App, Design, etc.]
-• Timeline: [When do you need this completed?]
-• Budget Range: [Optional - helps us prepare better]
-• Special Requirements: [Any specific needs?]
-
-⏰ PREFERRED CONSULTATION TIMES:
-• Option 1: [Your preferred day/time]
-• Option 2: [Alternative day/time]
-• Option 3: [Another backup option]
-
-🌍 My Timezone: [Your timezone - e.g., GMT, EST, PST]
-📞 My Contact: [Your phone number]
-
-I'm excited to discuss how NexaCore Innovations can help bring my project to life!
-
-Thank you! 😊`;
-
-    setCurrentWhatsAppMessage(message);
-    setShowWhatsAppModal(true);
-  };
-
   const confirmWhatsAppVisit = () => {
     const phoneNumber = "233209628907";
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(currentWhatsAppMessage)}`;
@@ -995,34 +880,15 @@ Thank you! 😊`;
     });
   };
 
-  // Smart Calendly Handler
+  // Redirect to Booking Page
   const handleBookConsultation = () => {
-    try {
-      window.open(CALENDLY_CONFIG.consultationUrl, '_blank');
-      
-      toast({
-        title: "📅 Opening Booking Calendar...",
-        description: "Select your preferred time slot. Instant confirmation & calendar invite included!",
-        duration: 5000,
-      });
-      
-      console.log('📊 Consultation booking initiated via Calendly');
-      
-    } catch (error) {
-      console.error('Error opening Calendly:', error);
-      
-      if (CALENDLY_CONFIG.fallbackEnabled) {
-        toast({
-          title: "⚠️ Calendly Unavailable",
-          description: "Redirecting to WhatsApp for instant booking assistance...",
-          duration: 4000,
-        });
-        
-        setTimeout(() => {
-          handleWhatsAppBooking();
-        }, 1000);
-      }
-    }
+    navigate('/book-consultation');
+    
+    toast({
+      title: "📅 Redirecting to Booking...",
+      description: "Taking you to our consultation booking page!",
+      duration: 3000,
+    });
   };
 
   // Emergency Support Handler
@@ -1031,17 +897,9 @@ Thank you! 😊`;
     
     toast({
       title: "🚨 Calling Emergency Line",
-      description: "Connecting you to our 24/7 emergency support. If call doesn't connect, try WhatsApp.",
-      duration: 5000,
+      description: "Connecting you to our support line...",
+      duration: 3000,
     });
-
-    setTimeout(() => {
-      toast({
-        title: "📱 Alternative Contact Options",
-        description: "Call not connecting? Try our WhatsApp for immediate assistance!",
-        duration: 4000,
-      });
-    }, 3000);
   };
 
   // Enhanced Contact Form Handler with EmailJS
@@ -1052,7 +910,7 @@ Thank you! 😊`;
 
     try {
       // Check if EmailJS is available
-      if (typeof window !== 'undefined' && window.emailjs && EMAILJS_CONFIG.enabled) {
+      if (typeof window !== 'undefined' && window.emailjs) {
         const templateParams = {
           from_name: contactForm.name,
           from_email: contactForm.email,
@@ -1060,15 +918,14 @@ Thank you! 😊`;
           message: contactForm.message,
           to_email: 'info@nexacore-innovations.com',
           reply_to: contactForm.email,
-          timestamp: new Date().toISOString(),
-          user_agent: navigator.userAgent
+          timestamp: new Date().toISOString()
         };
 
         const response = await window.emailjs.send(
-          EMAILJS_CONFIG.serviceId,
-          EMAILJS_CONFIG.templateId,
+          'service_nexacore',
+          'template_contact',
           templateParams,
-          EMAILJS_CONFIG.publicKey
+          'your_public_key'
         );
 
         if (response.status === 200) {
@@ -1077,23 +934,12 @@ Thank you! 😊`;
           
           toast({
             title: "✅ Message Sent Successfully!",
-            description: "We'll get back to you within 24 hours with a detailed response.",
+            description: "We'll get back to you within 24 hours.",
             duration: 6000,
           });
-
-          // Analytics tracking
-          if (typeof window !== 'undefined' && 'gtag' in window) {
-            (window as any).gtag('event', 'contact_form_submission', {
-              'method': 'emailjs',
-              'success': true
-            });
-          }
         }
       } else {
         // Fallback method
-        console.log('EmailJS not available, using fallback method');
-        
-        // Simulate form submission
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         setSubmitStatus('success');
@@ -1109,25 +955,12 @@ Thank you! 😊`;
       console.error('Contact form submission error:', error);
       setSubmitStatus('error');
       
-      let errorMessage = "Please try again or contact us directly via phone or WhatsApp.";
-      let errorTitle = "❌ Error Sending Message";
-      
-      if (error.message.includes('EmailJS library not loaded')) {
-        errorTitle = "⚙️ EmailJS Not Available";
-        errorMessage = "Email service temporarily unavailable. Please contact us via phone or WhatsApp for immediate assistance.";
-      } else if (error.message.includes('Invalid service ID') || error.message.includes('service_id')) {
-        errorTitle = "🔧 Service Configuration Error";
-        errorMessage = "Email service configuration issue. Please contact us directly at info@nexacore-innovations.com";
-      }
-      
       toast({
-        title: errorTitle,
-        description: errorMessage,
+        title: "❌ Error Sending Message",
+        description: "Please try again or contact us directly via phone or WhatsApp.",
         variant: "destructive",
         duration: 8000,
       });
-      
-      setTimeout(() => setSubmitStatus(null), 10000);
     } finally {
       setIsSubmitting(false);
     }
@@ -1141,7 +974,7 @@ Thank you! 😊`;
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero Section with Primary Contact Options */}
+      {/* Hero Section */}
       <section className="pt-20 pb-16 bg-gradient-to-br from-primary/5 via-background to-card/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <Badge className="mb-6 text-sm font-medium px-4 py-2">
@@ -1157,10 +990,9 @@ Thank you! 😊`;
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-12 leading-relaxed">
             Connect with our global team of experts for personalized consultation, 
             project planning, and innovative solutions tailored to your needs.
-            Our global team is here to help you achieve your goals with innovative solutions.
           </p>
 
-          {/* Enhanced Hero CTA Section */}
+          {/* Hero CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
             <Button 
               onClick={handleBookConsultation}
@@ -1169,7 +1001,7 @@ Thank you! 😊`;
             >
               <Calendar className="w-5 h-5 mr-2" />
               Book Free Consultation
-              <ExternalLink className="w-4 h-4 ml-2" />
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
             <Button 
               variant="outline" 
@@ -1183,7 +1015,7 @@ Thank you! 😊`;
           </div>
 
           <p className="text-sm text-muted-foreground">
-            ✅ Free consultation • 📅 Instant booking • 💬 24/7 support available
+            ✅ Free consultation • 📅 Dedicated booking page • 💬 24/7 support available
           </p>
         </div>
       </section>
@@ -1202,7 +1034,7 @@ Thank you! 😊`;
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Answer a few quick questions and we'll automatically match you with the right specialist 
-              and consultation type for your specific project needs.
+              and redirect you to the appropriate booking page.
             </p>
           </div>
 
@@ -1351,29 +1183,24 @@ Thank you! 😊`;
                     </div>
                   )}
 
-                  <div className="space-y-4">
-                    <Button 
-                      type="submit" 
-                      className="w-full btn-hero"
-                      disabled={isSubmitting}
-                      size="lg"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Sending...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4 mr-2" />
-                          Send Message
-                        </>
-                      )}
-                    </Button>
-                    <p className="text-sm text-muted-foreground text-center">
-                      * Required fields
-                    </p>
-                  </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full btn-hero"
+                    disabled={isSubmitting}
+                    size="lg"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Send Message
+                      </>
+                    )}
+                  </Button>
                 </form>
               </Card>
             </div>
@@ -1394,7 +1221,7 @@ Thank you! 😊`;
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Primary: Calendly Booking */}
+            {/* Primary: Go to Booking Page */}
             <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer border-2 border-primary/20" onClick={handleBookConsultation}>
               <div className="p-6">
                 <div className="relative">
@@ -1404,17 +1231,17 @@ Thank you! 😊`;
                     INSTANT
                   </Badge>
                 </div>
-                <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Schedule a Call</h3>
+                <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Go to Booking Page</h3>
                 <p className="text-muted-foreground mb-6">
-                  Book a free 30-minute consultation instantly. Pick your preferred time slot and get automatic confirmation.
+                  Visit our dedicated booking page with multiple consultation options and instant scheduling.
                 </p>
-                <Button className="btn-hero w-full group" onClick={(e) => {e.stopPropagation(); handleBookConsultation();}}>
+                <Button className="btn-hero w-full group">
                   <Calendar className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-                  Book Now - Calendly
-                  <ExternalLink className="w-4 h-4 ml-2" />
+                  Open Booking Page
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">
-                  ✅ Instant confirmation • 📅 Calendar sync • 🔔 Reminders
+                  ✅ Multiple consultation types • 📅 Instant booking • 🔔 Confirmations
                 </p>
               </div>
             </Card>
@@ -1427,48 +1254,27 @@ Thank you! 😊`;
                 <p className="text-muted-foreground mb-6">
                   Get instant responses to your questions via WhatsApp messaging with our team.
                 </p>
-                <Button className="bg-green-500 hover:bg-green-600 text-white w-full" onClick={(e) => {e.stopPropagation(); handleWhatsAppChat();}}>
+                <Button className="bg-green-500 hover:bg-green-600 text-white w-full">
                   <MessageSquare className="w-4 h-4 mr-2" />
                   Start Chat
                 </Button>
               </div>
             </Card>
 
-            {/* Tertiary: Emergency Support */}
+            {/* Tertiary: Direct Call */}
             <Card className="card-service text-center group hover:scale-105 transition-all duration-300 cursor-pointer" onClick={handleEmergencyCall}>
               <div className="p-6">
-                <Phone className="w-12 h-12 text-red-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
-                <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Emergency Support</h3>
+                <Phone className="w-12 h-12 text-blue-500 mx-auto mb-4 group-hover:scale-110 transition-transform" />
+                <h3 className="text-xl font-semibold mb-3 text-gradient-primary">Direct Call</h3>
                 <p className="text-muted-foreground mb-6">
-                  Need urgent assistance? Our emergency line is available 24/7 for critical issues.
+                  Speak directly with our team for urgent matters and immediate assistance.
                 </p>
-                <Button variant="outline" className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white w-full" onClick={(e) => {e.stopPropagation(); handleEmergencyCall();}}>
+                <Button variant="outline" className="border-blue-500 text-blue-600 hover:bg-blue-500 hover:text-white w-full">
                   <Phone className="w-4 h-4 mr-2" />
                   Call Now
                 </Button>
               </div>
             </Card>
-          </div>
-
-          {/* Alternative Booking Methods */}
-          <div className="mt-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              Prefer other booking methods?
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Button variant="outline" onClick={handleWhatsAppBooking}>
-                <MessageSquare className="w-4 h-4 mr-2" />
-                WhatsApp Booking
-              </Button>
-              <Button variant="outline" onClick={() => window.location.href = 'mailto:info@nexacore-innovations.com?subject=Consultation Request'}>
-                <Mail className="w-4 h-4 mr-2" />
-                Email Booking
-              </Button>
-              <Button variant="outline" onClick={() => window.location.href = 'tel:+233209628907'}>
-                <Phone className="w-4 h-4 mr-2" />
-                Call Direct
-              </Button>
-            </div>
           </div>
         </div>
       </section>
