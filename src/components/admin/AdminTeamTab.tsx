@@ -1,49 +1,38 @@
+// src/components/admin/AdminTeamTab.tsx - Updated with Production Domain Configuration
+
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { 
-  UserPlus, 
-  Settings, 
-  Mail, 
-  Trash2, 
-  Phone, 
-  Shield,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  UserMinus
-} from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Badge } from '../ui/badge';
+import { UserPlus, Settings, Trash2, Mail, Phone, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+// Production domain configuration
+const PRODUCTION_DOMAIN = 'https://nexacore-innovations.com';
+const getResetPasswordRedirectUrl = () => {
+  // Always use production domain for password resets in production
+  if (import.meta.env.PROD) {
+    return `${PRODUCTION_DOMAIN}/auth/reset-password`;
+  }
+  // Use current origin for development
+  return `${window.location.origin}/auth/reset-password`;
+};
 
 interface TeamMember {
   id: string;
   email: string;
-  full_name: string | null;
-  phone: string | null;
+  full_name: string;
   role: string;
   status: string;
   created_at: string;
-  last_sign_in_at: string | null;
-  bio: string | null;
+  last_sign_in_at?: string;
+  phone?: string;
+  avatar_url?: string;
 }
 
 interface NewMemberData {
@@ -65,137 +54,137 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     full_name: '',
     role: 'staff'
   });
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  // Load team members from Supabase
-  const loadTeamMembers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          email,
-          full_name,
-          phone,
-          role,
-          status,
-          created_at,
-          last_sign_in_at,
-          bio
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error loading team members:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load team members',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      setTeamMembers(data || []);
-    } catch (error) {
-      console.error('Error loading team members:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load team members',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     loadTeamMembers();
   }, []);
 
-  // Add new team member
-  const handleAddMember = async () => {
-    if (!newMember.email || !newMember.full_name) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please fill in all required fields',
-        variant: 'destructive'
-      });
-      return;
-    }
-
+  const loadTeamMembers = async () => {
     try {
-      setActionLoading('adding');
-      // Note: Loading toast not needed with shadcn/ui toast system
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      // First, invite the user to create an account
+      if (error) {
+        console.error('Error loading team members:', error);
+        toast.error('Failed to load team members');
+        return;
+      }
+      setTeamMembers(data || []);
+    } catch (error: any) {
+      console.error('Error loading team members:', error);
+      toast.error('Failed to load team members');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const generateTemporaryPassword = (): string => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+    let password = '';
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const checkUserExists = async (email: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single();
+      return !error && !!data;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleAddMember = async () => {
+    try {
+      if (!newMember.email || !newMember.full_name || !newMember.role) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      if (!isValidEmail(newMember.email)) {
+        toast.error('Please enter a valid email address');
+        return;
+      }
+
+      const userExists = await checkUserExists(newMember.email);
+      if (userExists) {
+        toast.error('A user with this email already exists');
+        return;
+      }
+
+      toast.loading('Creating team member account...');
+
+      const temporaryPassword = generateTemporaryPassword();
+      
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: newMember.email,
-        password: generateTempPassword(), // Generate a temporary password
+        password: temporaryPassword,
         options: {
           data: {
             full_name: newMember.full_name,
-            role: newMember.role,
+            role: newMember.role
           }
         }
       });
 
       if (authError) {
-        // If user already exists, try to create profile directly
-        if (authError.message.includes('already registered')) {
-          // Get existing user and update profile
-          const { data: existingUser, error: fetchError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('email', newMember.email)
-            .single();
-
-          if (fetchError) {
-            throw new Error('User email already exists but profile not found');
-          }
-
-          // Update existing profile
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({
-              full_name: newMember.full_name,
-              role: newMember.role,
-              status: 'approved'
-            })
-            .eq('email', newMember.email);
-
-          if (updateError) throw updateError;
-        } else {
-          throw authError;
-        }
-      } else if (authData.user) {
-        // Create profile for new user
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: authData.user.id,
-            email: newMember.email,
-            full_name: newMember.full_name,
-            role: newMember.role,
-            status: 'pending'
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          throw profileError;
-        }
-
-        // Send password reset email so they can set their own password
-        await supabase.auth.resetPasswordForEmail(newMember.email, {
-          redirectTo: `${window.location.origin}/reset-password`
-        });
+        console.error('Auth creation failed:', authError);
+        toast.dismiss();
+        toast.error(`Account creation failed: ${authError.message}`);
+        return;
       }
 
-      toast({
-        title: 'Success',
-        description: 'Team member added successfully! They will receive an email to set up their account.'
-      });
+      if (!authData.user) {
+        toast.dismiss();
+        toast.error('User creation failed - no user returned');
+        return;
+      }
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert([{
+          id: authData.user.id,
+          email: newMember.email,
+          full_name: newMember.full_name,
+          role: newMember.role,
+          status: 'pending'
+        }]);
+
+      if (profileError) {
+        console.error('Profile creation failed:', profileError);
+        toast.dismiss();
+        toast.error(`Profile creation failed: ${profileError.message}`);
+        return;
+      }
+
+      // Send password reset email with production domain redirect
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+        newMember.email,
+        {
+          redirectTo: getResetPasswordRedirectUrl()
+        }
+      );
+
+      if (resetError) {
+        console.warn('Password reset email failed:', resetError);
+      }
+
+      toast.dismiss();
+      toast.success('Team member invited successfully! They will receive an email to set up their account.');
       
       setIsAddModalOpen(false);
       setNewMember({ email: '', full_name: '', role: 'staff' });
@@ -206,15 +195,11 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
       console.error('Error adding team member:', error);
       toast.dismiss();
       toast.error(error.message || 'Failed to add team member');
-    } finally {
-      setActionLoading(null);
     }
   };
 
-  // Update team member role
   const handleUpdateRole = async (memberId: string, newRole: string) => {
     try {
-      setActionLoading(memberId);
       const { error } = await supabase
         .from('profiles')
         .update({ role: newRole })
@@ -222,69 +207,19 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
 
       if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: 'Role updated successfully'
-      });
+      toast.success('Role updated successfully');
       loadTeamMembers();
       onStatsUpdate();
     } catch (error: any) {
       console.error('Error updating role:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update role',
-        variant: 'destructive'
-      });
-    } finally {
-      setActionLoading(null);
+      toast.error(error.message || 'Failed to update role');
     }
   };
 
-  // Update team member status
-  const handleUpdateStatus = async (memberId: string, newStatus: string) => {
-    try {
-      setActionLoading(memberId);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: newStatus })
-        .eq('id', memberId);
-
-      if (error) throw error;
-
-      const statusText = newStatus === 'approved' ? 'approved' : 
-                        newStatus === 'inactive' ? 'deactivated' : 
-                        newStatus === 'suspended' ? 'suspended' : 'updated';
-      
-      toast({
-        title: 'Success',
-        description: `User ${statusText} successfully`
-      });
-      loadTeamMembers();
-      onStatsUpdate();
-    } catch (error: any) {
-      console.error('Error updating status:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update status',
-        variant: 'destructive'
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Remove team member (set status to inactive)
   const handleRemoveMember = async (memberId: string) => {
-    const member = teamMembers.find(m => m.id === memberId);
-    if (!member) return;
-
-    const confirmMessage = `Are you sure you want to remove ${member.full_name || member.email}? This will deactivate their account.`;
-    if (!confirm(confirmMessage)) return;
+    if (!confirm('Are you sure you want to remove this team member?')) return;
 
     try {
-      setActionLoading(memberId);
-      
-      // Set status to inactive instead of deleting
       const { error } = await supabase
         .from('profiles')
         .update({ status: 'inactive' })
@@ -292,100 +227,36 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
 
       if (error) throw error;
 
-      toast({
-        title: 'Success',
-        description: 'Team member removed successfully'
-      });
+      toast.success('Team member removed successfully');
       loadTeamMembers();
       onStatsUpdate();
     } catch (error: any) {
       console.error('Error removing team member:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to remove team member',
-        variant: 'destructive'
-      });
-    } finally {
-      setActionLoading(null);
+      toast.error(error.message || 'Failed to remove team member');
     }
   };
 
-  // Permanently delete team member
-  const handleDeleteMember = async (memberId: string) => {
-    const member = teamMembers.find(m => m.id === memberId);
-    if (!member) return;
-
-    const confirmMessage = `Are you sure you want to PERMANENTLY DELETE ${member.full_name || member.email}? This action cannot be undone and will remove all their data.`;
-    if (!confirm(confirmMessage)) return;
-
-    try {
-      setActionLoading(memberId);
-      
-      // Delete from profiles table (this will cascade due to foreign key constraints)
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', memberId);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: 'Team member deleted permanently'
-      });
-      loadTeamMembers();
-      onStatsUpdate();
-    } catch (error: any) {
-      console.error('Error deleting team member:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to delete team member',
-        variant: 'destructive'
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  // Resend invitation email
   const handleResendInvitation = async (email: string) => {
     try {
-      setActionLoading(email);
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email,
+        {
+          redirectTo: getResetPasswordRedirectUrl()
+        }
+      );
 
       if (error) {
-        toast({
-          title: 'Error',
-          description: 'Failed to send invitation email',
-          variant: 'destructive'
-        });
+        toast.error('Failed to send invitation email');
         return;
       }
 
-      toast({
-        title: 'Success',
-        description: 'Invitation email sent successfully'
-      });
+      toast.success('Invitation email sent successfully');
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to send invitation email',
-        variant: 'destructive'
-      });
-    } finally {
-      setActionLoading(null);
+      toast.error('Failed to send invitation email');
     }
   };
 
-  // Generate temporary password
-  const generateTempPassword = (): string => {
-    return Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-  };
-
-  // Get role color styling
-  const getRoleColor = (role: string): string => {
+  const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return 'bg-red-500 text-white';
       case 'project_manager': return 'bg-blue-500 text-white';
@@ -398,8 +269,7 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     }
   };
 
-  // Get status color styling
-  const getStatusColor = (status: string): string => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'bg-green-500 text-white';
       case 'pending': return 'bg-yellow-500 text-white';
@@ -407,26 +277,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
       case 'suspended': return 'bg-red-500 text-white';
       default: return 'bg-gray-500 text-white';
     }
-  };
-
-  // Get status icon
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'approved': return <CheckCircle className="h-4 w-4" />;
-      case 'pending': return <Clock className="h-4 w-4" />;
-      case 'inactive': return <UserMinus className="h-4 w-4" />;
-      case 'suspended': return <AlertCircle className="h-4 w-4" />;
-      default: return <AlertCircle className="h-4 w-4" />;
-    }
-  };
-
-  // Format date
-  const formatDate = (dateString: string): string => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
   };
 
   if (loading) {
@@ -448,9 +298,9 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
         <CardTitle className="text-2xl font-bold">Team Management</CardTitle>
         <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
           <DialogTrigger asChild>
-            <Button disabled={actionLoading === 'adding'}>
+            <Button>
               <UserPlus className="h-4 w-4 mr-2" />
-              {actionLoading === 'adding' ? 'Adding...' : 'Add Team Member'}
+              Add Team Member
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
@@ -460,35 +310,34 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
                 Invite a new team member to join NexaCore Innovations. They will receive an email to set up their account.
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="email">Email Address</Label>
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email Address *</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="john@example.com"
+                  placeholder="benjamin.agbesi@nexacore-innovations.com"
                   value={newMember.email}
-                  onChange={(e) => setNewMember(prev => ({ ...prev, email: e.target.value }))}
-                  disabled={actionLoading === 'adding'}
+                  onChange={(e) => setNewMember({ ...newMember, email: e.target.value })}
+                  required
                 />
               </div>
-              <div>
-                <Label htmlFor="full_name">Full Name</Label>
+              
+              <div className="grid gap-2">
+                <Label htmlFor="full_name">Full Name *</Label>
                 <Input
                   id="full_name"
-                  placeholder="John Smith"
+                  placeholder="Benjamin Agbesi"
                   value={newMember.full_name}
-                  onChange={(e) => setNewMember(prev => ({ ...prev, full_name: e.target.value }))}
-                  disabled={actionLoading === 'adding'}
+                  onChange={(e) => setNewMember({ ...newMember, full_name: e.target.value })}
+                  required
                 />
               </div>
-              <div>
-                <Label htmlFor="role">Role</Label>
-                <Select 
-                  value={newMember.role} 
-                  onValueChange={(value) => setNewMember(prev => ({ ...prev, role: value }))}
-                  disabled={actionLoading === 'adding'}
-                >
+              
+              <div className="grid gap-2">
+                <Label htmlFor="role">Role *</Label>
+                <Select value={newMember.role} onValueChange={(value) => setNewMember({ ...newMember, role: value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a role" />
                   </SelectTrigger>
@@ -504,25 +353,20 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsAddModalOpen(false)}
-                  disabled={actionLoading === 'adding'}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleAddMember}
-                  disabled={actionLoading === 'adding'}
-                >
-                  {actionLoading === 'adding' ? 'Adding...' : 'Add Member'}
-                </Button>
-              </div>
+            </div>
+            
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleAddMember}>
+                Send Invitation
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </CardHeader>
+
       <CardContent>
         {teamMembers.length === 0 ? (
           <div className="text-center py-8">
@@ -566,37 +410,36 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-2 text-sm text-gray-600">{member.email}</td>
+                    <td className="p-2">
+                      <div className="flex items-center gap-1">
+                        <Mail className="h-3 w-3 text-gray-400" />
+                        {member.email}
+                      </div>
+                    </td>
                     <td className="p-2">
                       <Badge className={getRoleColor(member.role)}>
-                        {member.role.replace('_', ' ')}
+                        {member.role?.replace('_', ' ') || 'No role'}
                       </Badge>
                     </td>
                     <td className="p-2">
-                      <div className="flex items-center gap-2">
-                        <Badge className={getStatusColor(member.status)}>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(member.status)}
-                            {member.status}
-                          </div>
-                        </Badge>
-                      </div>
+                      <Badge className={getStatusColor(member.status)}>
+                        {member.status || 'Unknown'}
+                      </Badge>
                     </td>
-                    <td className="p-2 text-sm text-gray-500">
-                      <div>
+                    <td className="p-2">
+                      <div className="flex items-center gap-1 text-sm text-gray-500">
+                        <Calendar className="h-3 w-3" />
                         {member.last_sign_in_at 
-                          ? formatDate(member.last_sign_in_at)
+                          ? new Date(member.last_sign_in_at).toLocaleDateString()
                           : 'Never'
                         }
                       </div>
                     </td>
                     <td className="p-2">
                       <div className="flex gap-1">
-                        {/* Role Update */}
                         <Select 
                           value={member.role} 
                           onValueChange={(newRole) => handleUpdateRole(member.id, newRole)}
-                          disabled={actionLoading === member.id}
                         >
                           <SelectTrigger className="w-auto h-8 text-xs">
                             <Settings className="h-3 w-3" />
@@ -612,58 +455,23 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
                             <SelectItem value="member">Member</SelectItem>
                           </SelectContent>
                         </Select>
-
-                        {/* Status Update */}
-                        <Select 
-                          value={member.status} 
-                          onValueChange={(newStatus) => handleUpdateStatus(member.id, newStatus)}
-                          disabled={actionLoading === member.id}
-                        >
-                          <SelectTrigger className="w-auto h-8 text-xs">
-                            {getStatusIcon(member.status)}
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="inactive">Inactive</SelectItem>
-                            <SelectItem value="suspended">Suspended</SelectItem>
-                          </SelectContent>
-                        </Select>
                         
-                        {/* Resend Invitation */}
                         {member.status === 'pending' && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleResendInvitation(member.email)}
                             className="h-8 px-2"
-                            disabled={actionLoading === member.email}
-                            title="Resend invitation email"
                           >
                             <Mail className="h-3 w-3" />
                           </Button>
                         )}
                         
-                        {/* Remove/Deactivate */}
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleRemoveMember(member.id)}
-                          className="h-8 px-2 text-orange-600 hover:text-orange-700"
-                          disabled={actionLoading === member.id}
-                          title="Deactivate user"
-                        >
-                          <UserMinus className="h-3 w-3" />
-                        </Button>
-
-                        {/* Permanent Delete */}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteMember(member.id)}
                           className="h-8 px-2 text-red-600 hover:text-red-700"
-                          disabled={actionLoading === member.id}
-                          title="Permanently delete user"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
