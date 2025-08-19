@@ -1,5 +1,4 @@
-// Quick fix for AdminTeamTab.tsx export issue
-// Copy this entire content and replace your AdminTeamTab.tsx file
+// src/components/admin/AdminTeamTab.tsx - Updated with Production Domain Configuration
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
@@ -12,6 +11,17 @@ import { Badge } from '../ui/badge';
 import { UserPlus, Settings, Trash2, Mail, Phone, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+
+// Production domain configuration
+const PRODUCTION_DOMAIN = 'https://nexacore-innovations.com';
+const getResetPasswordRedirectUrl = () => {
+  // Always use production domain for password resets in production
+  if (import.meta.env.PROD) {
+    return `${PRODUCTION_DOMAIN}/auth/reset-password`;
+  }
+  // Use current origin for development
+  return `${window.location.origin}/auth/reset-password`;
+};
 
 interface TeamMember {
   id: string;
@@ -35,7 +45,6 @@ interface AdminTeamTabProps {
   onStatsUpdate: () => void;
 }
 
-// Component definition
 const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,10 +171,11 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
         return;
       }
 
+      // Send password reset email with production domain redirect
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         newMember.email,
         {
-          redirectTo: `${window.location.origin}/auth/reset-password`
+          redirectTo: getResetPasswordRedirectUrl()
         }
       );
 
@@ -231,7 +241,7 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
       const { error } = await supabase.auth.resetPasswordForEmail(
         email,
         {
-          redirectTo: `${window.location.origin}/auth/reset-password`
+          redirectTo: getResetPasswordRedirectUrl()
         }
       );
 
@@ -297,7 +307,7 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
             <DialogHeader>
               <DialogTitle>Add New Team Member</DialogTitle>
               <DialogDescription>
-                Invite a new team member to join your organization. They will receive an email to set up their account.
+                Invite a new team member to join NexaCore Innovations. They will receive an email to set up their account.
               </DialogDescription>
             </DialogHeader>
             
@@ -362,7 +372,7 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
           <div className="text-center py-8">
             <UserPlus className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No team members yet</h3>
-            <p className="text-gray-500 mb-4">Start building your team by inviting members.</p>
+            <p className="text-gray-500 mb-4">Start building your NexaCore team by inviting members.</p>
             <Button onClick={() => setIsAddModalOpen(true)}>
               <UserPlus className="h-4 w-4 mr-2" />
               Add First Team Member
@@ -478,6 +488,5 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
   );
 };
 
-// Export statements - This is crucial for the import to work
 export { AdminTeamTab };
 export default AdminTeamTab;
