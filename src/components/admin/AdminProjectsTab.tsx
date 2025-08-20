@@ -1,4 +1,4 @@
-// src/components/admin/AdminProjectsTab.tsx
+// src/components/admin/AdminProjectsTab.tsx - ENHANCED VERSION WITH ALL ORIGINAL FEATURES
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +30,9 @@ import {
   Download,
   Upload,
   FileText,
-  BarChart3
+  BarChart3,
+  Bell,
+  Mail
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -38,11 +40,12 @@ interface Project {
   id: string;
   title: string;
   description: string;
-  status: 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled';
+  status: 'planning' | 'in_progress' | 'on_hold' | 'completed' | 'cancelled' | 'review';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   start_date: string;
   end_date: string;
   deadline: string;
+  estimated_completion: string;
   client_id: string;
   client_name?: string;
   client_email?: string;
@@ -60,6 +63,12 @@ interface Project {
   milestones: ProjectMilestone[];
   risks: ProjectRisk[];
   documents: ProjectDocument[];
+  project_manager_id?: string;
+  metadata?: any;
+  profiles?: {
+    full_name: string;
+    email: string;
+  };
 }
 
 interface ProjectMilestone {
@@ -94,6 +103,12 @@ interface AdminProjectsTabProps {
   onStatsUpdate: () => void;
 }
 
+interface FormValidation {
+  basic: boolean;
+  details: boolean;
+  team: boolean;
+}
+
 export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,8 +124,14 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [currentTab, setCurrentTab] = useState('basic');
+  const [formValidation, setFormValidation] = useState<FormValidation>({
+    basic: false,
+    details: false,
+    team: false
+  });
 
-  // Form state for create/edit
+  // Enhanced form state for create/edit
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -119,6 +140,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
     start_date: '',
     end_date: '',
     deadline: '',
+    estimated_completion: '',
     client_id: '',
     client_name: '',
     client_email: '',
@@ -126,57 +148,165 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
     service_type: '',
     estimated_hours: 0,
     deliverables: [] as string[],
-    team_members: [] as string[]
+    team_members: [] as string[],
+    project_manager_id: ''
   });
 
   const [newDeliverable, setNewDeliverable] = useState('');
   const [newTeamMember, setNewTeamMember] = useState('');
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [clientUsers, setClientUsers] = useState<any[]>([]);
 
   useEffect(() => {
     loadProjects();
+    loadAvailableUsers();
+    loadClientUsers();
   }, []);
+
+  // Real-time form validation
+  useEffect(() => {
+    validateForm();
+  }, [formData]);
 
   const loadProjects = async () => {
     try {
       setLoading(true);
+      
+      // Enhanced query to match actual database schema
       const { data, error } = await supabase
         .from('projects')
         .select(`
           *,
-          profiles!projects_client_id_fkey (
+          profiles!client_id (
             full_name,
             email
           )
         `)
         .order(sortBy, { ascending: sortOrder === 'asc' });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
 
-      // Enhance projects with calculated fields
-      const enhancedProjects = (data || []).map(project => ({
-        ...project,
-        client_name: project.profiles?.full_name || 'Unknown Client',
-        client_email: project.profiles?.email || '',
-        spent_amount: project.budget * (project.progress || 0) / 100,
-        completion_percentage: project.progress || 0,
-        actual_hours: project.estimated_hours * (project.progress || 0) / 100,
-        milestones: [],
-        risks: [],
-        documents: []
-      }));
+      // Enhanced projects with calculated fields and proper client info
+      const enhancedProjects = (data || []).map(project => {
+        // Calculate progress from metadata or direct field
+        const progress = project.metadata?.progress || project.progress || 0;
+        
+        return {
+          ...project,
+          client_name: project.profiles?.full_name || 'Unknown Client',
+          client_email: project.profiles?.email || '',
+          spent_amount: project.budget ? (project.budget * progress / 100) : 0,
+          completion_percentage: progress,
+          progress: progress,
+          actual_hours: project.estimated_hours ? (project.estimated_hours * progress / 100) : 0,
+          deliverables: project.metadata?.deliverables || project.deliverables || [],
+          team_members: project.metadata?.team_members || project.team_members || [],
+          milestones: project.metadata?.milestones || [],
+          risks: project.metadata?.risks || [],
+          documents: project.metadata?.documents || [],
+          estimated_completion: project.estimated_completion || project.deadline
+        };
+      });
 
       setProjects(enhancedProjects);
     } catch (error) {
       console.error('Error loading projects:', error);
-      toast.error('Failed to load projects');
+      toast.error('Failed to load projects. Please check your database connection.');
     } finally {
       setLoading(false);
     }
   };
 
+  const loadAvailableUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .in('role', ['admin', 'staff', 'project_manager'])
+        .eq('status', 'approved');
+
+      if (error) throw error;
+      setAvailableUsers(data || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
+
+  const loadClientUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('role', 'member')
+        .eq('status', 'approved');
+
+      if (error) throw error;
+      setClientUsers(data || []);
+    } catch (error) {
+      console.error('Error loading clients:', error);
+    }
+  };
+
+  const validateForm = () => {
+    const basicValid = !!(
+      formData.title.trim() &&
+      formData.service_type &&
+      formData.client_id &&
+      formData.priority &&
+      formData.status
+    );
+
+    const detailsValid = !!(
+      formData.start_date &&
+      formData.end_date &&
+      formData.estimated_completion &&
+      formData.budget > 0 &&
+      formData.estimated_hours > 0
+    );
+
+    const teamValid = formData.deliverables.length > 0 && formData.team_members.length > 0;
+
+    setFormValidation({
+      basic: basicValid,
+      details: detailsValid,
+      team: teamValid
+    });
+  };
+
+  const isFormComplete = () => {
+    return formValidation.basic && formValidation.details && formValidation.team;
+  };
+
+  // Enhanced notification system
+  const sendClientNotification = async (project: any, type: 'created' | 'updated') => {
+    try {
+      // Use the stored function to create notification
+      const { data, error } = await supabase.rpc('create_project_notification', {
+        p_project_id: project.id,
+        p_notification_type: type === 'created' ? 'project_created' : 'project_updated',
+        p_title: type === 'created' 
+          ? `New Project Created: ${project.title}`
+          : `Project Updated: ${project.title}`,
+        p_message: type === 'created'
+          ? `A new project "${project.title}" has been created for you. You can track its progress in your client portal.`
+          : `Project "${project.title}" has been updated. Check your client portal for details.`,
+        p_metadata: { project_status: project.status, project_progress: project.progress || 0 }
+      });
+
+      if (error) throw error;
+      toast.success(`Client notification sent for project ${type}`);
+    } catch (error) {
+      console.error('Error sending client notification:', error);
+      toast.error('Failed to send client notification');
+    }
+  };
+
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.service_type.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -195,25 +325,73 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
 
   const handleCreateProject = async () => {
+    // Enforce form completion
+    if (!isFormComplete()) {
+      toast.error('Please complete all required sections (Basic Info, Details, and Team & Deliverables) before creating the project.');
+      
+      // Switch to the first incomplete tab
+      if (!formValidation.basic) {
+        setCurrentTab('basic');
+      } else if (!formValidation.details) {
+        setCurrentTab('details');
+      } else if (!formValidation.team) {
+        setCurrentTab('team');
+      }
+      return;
+    }
+
     try {
+      // Prepare project data with proper metadata structure
+      const projectData = {
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+        priority: formData.priority,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        estimated_completion: formData.estimated_completion,
+        deadline: formData.estimated_completion, // Keep compatibility
+        client_id: formData.client_id,
+        budget: formData.budget,
+        service_type: formData.service_type,
+        project_manager_id: formData.project_manager_id || null,
+        progress: 0,
+        estimated_hours: formData.estimated_hours,
+        deliverables: formData.deliverables,
+        team_members: formData.team_members,
+        metadata: {
+          deliverables: formData.deliverables,
+          team_members: formData.team_members,
+          estimated_hours: formData.estimated_hours,
+          progress: 0,
+          milestones: [],
+          risks: [],
+          documents: []
+        }
+      };
+
       const { data, error } = await supabase
         .from('projects')
-        .insert([{
-          ...formData,
-          progress: 0,
-          deliverables: formData.deliverables,
-          team_members: formData.team_members
-        }])
-        .select()
+        .insert([projectData])
+        .select(`
+          *,
+          profiles!client_id (
+            full_name,
+            email
+          )
+        `)
         .single();
 
       if (error) throw error;
+
+      // Send notification to client
+      await sendClientNotification(data, 'created');
 
       await loadProjects();
       onStatsUpdate();
       setIsCreateModalOpen(false);
       resetForm();
-      toast.success('Project created successfully');
+      toast.success('Project created successfully and client has been notified');
     } catch (error) {
       console.error('Error creating project:', error);
       toast.error('Failed to create project');
@@ -223,25 +401,62 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
   const handleUpdateProject = async () => {
     if (!selectedProject) return;
 
+    // Enforce form completion for updates too
+    if (!isFormComplete()) {
+      toast.error('Please complete all required sections before updating the project.');
+      return;
+    }
+
     try {
-      const { error } = await supabase
-        .from('projects')
-        .update({
-          ...formData,
+      const projectData = {
+        title: formData.title,
+        description: formData.description,
+        status: formData.status,
+        priority: formData.priority,
+        start_date: formData.start_date,
+        end_date: formData.end_date,
+        estimated_completion: formData.estimated_completion,
+        deadline: formData.estimated_completion,
+        client_id: formData.client_id,
+        budget: formData.budget,
+        service_type: formData.service_type,
+        project_manager_id: formData.project_manager_id || null,
+        estimated_hours: formData.estimated_hours,
+        deliverables: formData.deliverables,
+        team_members: formData.team_members,
+        metadata: {
+          ...selectedProject.metadata,
           deliverables: formData.deliverables,
           team_members: formData.team_members,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedProject.id);
+          estimated_hours: formData.estimated_hours
+        },
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('projects')
+        .update(projectData)
+        .eq('id', selectedProject.id)
+        .select(`
+          *,
+          profiles!client_id (
+            full_name,
+            email
+          )
+        `)
+        .single();
 
       if (error) throw error;
+
+      // Send notification to client about update
+      await sendClientNotification(data, 'updated');
 
       await loadProjects();
       onStatsUpdate();
       setIsEditModalOpen(false);
       setSelectedProject(null);
       resetForm();
-      toast.success('Project updated successfully');
+      toast.success('Project updated successfully and client has been notified');
     } catch (error) {
       console.error('Error updating project:', error);
       toast.error('Failed to update project');
@@ -270,10 +485,19 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
 
   const handleUpdateProgress = async (projectId: string, newProgress: number) => {
     try {
+      const project = projects.find(p => p.id === projectId);
+      if (!project) return;
+
+      const updatedMetadata = {
+        ...project.metadata,
+        progress: newProgress
+      };
+
       const { error } = await supabase
         .from('projects')
         .update({ 
           progress: newProgress,
+          metadata: updatedMetadata,
           status: newProgress === 100 ? 'completed' : 'in_progress',
           updated_at: new Date().toISOString()
         })
@@ -283,7 +507,16 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
 
       await loadProjects();
       onStatsUpdate();
-      toast.success('Project progress updated');
+      
+      // Notify client of progress update if significant change
+      if (project && Math.abs((project.progress || 0) - newProgress) >= 10) {
+        await sendClientNotification({ 
+          ...project, 
+          progress: newProgress 
+        }, 'updated');
+      }
+      
+      toast.success('Project progress updated and client notified');
     } catch (error) {
       console.error('Error updating progress:', error);
       toast.error('Failed to update progress');
@@ -299,6 +532,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
       start_date: '',
       end_date: '',
       deadline: '',
+      estimated_completion: '',
       client_id: '',
       client_name: '',
       client_email: '',
@@ -306,30 +540,39 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
       service_type: '',
       estimated_hours: 0,
       deliverables: [],
-      team_members: []
+      team_members: [],
+      project_manager_id: ''
     });
     setNewDeliverable('');
     setNewTeamMember('');
+    setCurrentTab('basic');
+    setFormValidation({
+      basic: false,
+      details: false,
+      team: false
+    });
   };
 
   const openEditModal = (project: Project) => {
     setSelectedProject(project);
     setFormData({
       title: project.title,
-      description: project.description,
+      description: project.description || '',
       status: project.status,
       priority: project.priority,
-      start_date: project.start_date.split('T')[0],
-      end_date: project.end_date.split('T')[0],
+      start_date: project.start_date?.split('T')[0] || '',
+      end_date: project.end_date?.split('T')[0] || '',
       deadline: project.deadline?.split('T')[0] || '',
+      estimated_completion: project.estimated_completion?.split('T')[0] || '',
       client_id: project.client_id,
       client_name: project.client_name || '',
       client_email: project.client_email || '',
-      budget: project.budget,
+      budget: project.budget || 0,
       service_type: project.service_type,
       estimated_hours: project.estimated_hours || 0,
       deliverables: project.deliverables || [],
-      team_members: project.team_members || []
+      team_members: project.team_members || [],
+      project_manager_id: project.project_manager_id || ''
     });
     setIsEditModalOpen(true);
   };
@@ -379,6 +622,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
       case 'in_progress': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
       case 'on_hold': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'planning': return 'bg-purple-500/20 text-purple-400 border-purple-500/30';
+      case 'review': return 'bg-orange-500/20 text-orange-400 border-orange-500/30';
       case 'cancelled': return 'bg-red-500/20 text-red-400 border-red-500/30';
       default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
     }
@@ -399,6 +643,14 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
     if (progress >= 50) return 'text-yellow-400';
     if (progress >= 20) return 'text-orange-400';
     return 'text-red-400';
+  };
+
+  const getValidationIcon = (isValid: boolean) => {
+    return isValid ? (
+      <CheckCircle className="h-4 w-4 text-green-400" />
+    ) : (
+      <AlertCircle className="h-4 w-4 text-red-400" />
+    );
   };
 
   if (loading) {
@@ -452,6 +704,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="planning">Planning</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="review">Review</SelectItem>
                   <SelectItem value="on_hold">On Hold</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -585,17 +838,20 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">${project.budget.toLocaleString()}</div>
+                          <div className="font-medium">${project.budget?.toLocaleString() || 0}</div>
                           <div className="text-sm text-muted-foreground">
-                            Spent: ${project.spent_amount.toLocaleString()}
+                            Spent: ${project.spent_amount?.toLocaleString() || 0}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {project.deadline ? new Date(project.deadline).toLocaleDateString() : 'No deadline'}
+                          {project.deadline ? new Date(project.deadline).toLocaleDateString() : 
+                           project.estimated_completion ? new Date(project.estimated_completion).toLocaleDateString() : 'No deadline'}
                         </div>
-                        {project.deadline && new Date(project.deadline) < new Date() && project.status !== 'completed' && (
+                        {((project.deadline && new Date(project.deadline) < new Date()) || 
+                          (project.estimated_completion && new Date(project.estimated_completion) < new Date())) && 
+                         project.status !== 'completed' && (
                           <Badge className="bg-red-500/20 text-red-400 text-xs">Overdue</Badge>
                         )}
                       </TableCell>
@@ -666,18 +922,30 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
         </CardContent>
       </Card>
 
-      {/* Create Project Modal */}
+      {/* Enhanced Create Project Modal */}
       <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Create New Project</DialogTitle>
+            <div className="text-sm text-muted-foreground">
+              Complete all sections to create the project
+            </div>
           </DialogHeader>
           
-          <Tabs defaultValue="basic" className="w-full">
+          <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="team">Team & Deliverables</TabsTrigger>
+              <TabsTrigger value="basic" className="flex items-center gap-2">
+                {getValidationIcon(formValidation.basic)}
+                Basic Info
+              </TabsTrigger>
+              <TabsTrigger value="details" className="flex items-center gap-2">
+                {getValidationIcon(formValidation.details)}
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="team" className="flex items-center gap-2">
+                {getValidationIcon(formValidation.team)}
+                Team & Deliverables
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4">
@@ -689,6 +957,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter project title"
+                    required
                   />
                 </div>
                 
@@ -697,6 +966,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                   <Select 
                     value={formData.service_type}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, service_type: value }))}
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select service type" />
@@ -714,31 +984,58 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="client_name">Client Name *</Label>
-                  <Input
-                    id="client_name"
-                    value={formData.client_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
-                    placeholder="Enter client name"
-                  />
+                  <Label htmlFor="client_id">Client *</Label>
+                  <Select 
+                    value={formData.client_id}
+                    onValueChange={(value) => {
+                      const selectedClient = clientUsers.find(c => c.id === value);
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        client_id: value,
+                        client_name: selectedClient?.full_name || '',
+                        client_email: selectedClient?.email || ''
+                      }));
+                    }}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientUsers.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.full_name} ({client.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="client_email">Client Email *</Label>
-                  <Input
-                    id="client_email"
-                    type="email"
-                    value={formData.client_email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, client_email: e.target.value }))}
-                    placeholder="Enter client email"
-                  />
+                  <Label htmlFor="project_manager_id">Project Manager</Label>
+                  <Select 
+                    value={formData.project_manager_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, project_manager_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select project manager" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableUsers.map(user => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name} ({user.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status">Status *</Label>
                   <Select 
                     value={formData.status}
                     onValueChange={(value: Project['status']) => setFormData(prev => ({ ...prev, status: value }))}
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -746,6 +1043,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     <SelectContent>
                       <SelectItem value="planning">Planning</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="review">Review</SelectItem>
                       <SelectItem value="on_hold">On Hold</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -754,10 +1052,11 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="priority">Priority</Label>
+                  <Label htmlFor="priority">Priority *</Label>
                   <Select 
                     value={formData.priority}
                     onValueChange={(value: Project['priority']) => setFormData(prev => ({ ...prev, priority: value }))}
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -787,54 +1086,61 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
             <TabsContent value="details" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="start_date">Start Date</Label>
+                  <Label htmlFor="start_date">Start Date *</Label>
                   <Input
                     id="start_date"
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="end_date">End Date</Label>
+                  <Label htmlFor="end_date">End Date *</Label>
                   <Input
                     id="end_date"
                     type="date"
                     value={formData.end_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="deadline">Deadline</Label>
+                  <Label htmlFor="estimated_completion">Estimated Completion *</Label>
                   <Input
-                    id="deadline"
+                    id="estimated_completion"
                     type="date"
-                    value={formData.deadline}
-                    onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                    value={formData.estimated_completion}
+                    onChange={(e) => setFormData(prev => ({ ...prev, estimated_completion: e.target.value }))}
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="estimated_hours">Estimated Hours</Label>
+                  <Label htmlFor="estimated_hours">Estimated Hours *</Label>
                   <Input
                     id="estimated_hours"
                     type="number"
+                    min="1"
                     value={formData.estimated_hours}
                     onChange={(e) => setFormData(prev => ({ ...prev, estimated_hours: parseInt(e.target.value) || 0 }))}
                     placeholder="0"
+                    required
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="budget">Budget ($)</Label>
+                  <Label htmlFor="budget">Budget ($) *</Label>
                   <Input
                     id="budget"
                     type="number"
+                    min="1"
                     value={formData.budget}
                     onChange={(e) => setFormData(prev => ({ ...prev, budget: parseFloat(e.target.value) || 0 }))}
                     placeholder="0.00"
+                    required
                   />
                 </div>
               </div>
@@ -842,7 +1148,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
 
             <TabsContent value="team" className="space-y-4">
               <div>
-                <Label>Team Members</Label>
+                <Label>Team Members *</Label>
                 <div className="flex gap-2 mb-2">
                   <Input
                     value={newTeamMember}
@@ -873,10 +1179,13 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     </Badge>
                   ))}
                 </div>
+                {formData.team_members.length === 0 && (
+                  <p className="text-sm text-red-400 mt-1">At least one team member is required</p>
+                )}
               </div>
 
               <div>
-                <Label>Deliverables</Label>
+                <Label>Deliverables *</Label>
                 <div className="flex gap-2 mb-2">
                   <Input
                     value={newDeliverable}
@@ -909,6 +1218,9 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     </div>
                   ))}
                 </div>
+                {formData.deliverables.length === 0 && (
+                  <p className="text-sm text-red-400 mt-1">At least one deliverable is required</p>
+                )}
               </div>
             </TabsContent>
           </Tabs>
@@ -917,27 +1229,52 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
             <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateProject}>
-              Create Project
+            <Button 
+              onClick={handleCreateProject}
+              disabled={!isFormComplete()}
+              className="flex items-center gap-2"
+            >
+              {!isFormComplete() && <AlertCircle className="h-4 w-4" />}
+              <Bell className="h-4 w-4" />
+              Create Project & Notify Client
             </Button>
           </DialogFooter>
+          
+          {!isFormComplete() && (
+            <div className="text-sm text-muted-foreground text-center">
+              Complete all sections to enable project creation
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
-      {/* Edit Project Modal */}
+      {/* Enhanced Edit Project Modal - same structure as create */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Project</DialogTitle>
+            <div className="text-sm text-muted-foreground">
+              Complete all sections to save changes
+            </div>
           </DialogHeader>
           
-          <Tabs defaultValue="basic" className="w-full">
+          <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="team">Team & Deliverables</TabsTrigger>
+              <TabsTrigger value="basic" className="flex items-center gap-2">
+                {getValidationIcon(formValidation.basic)}
+                Basic Info
+              </TabsTrigger>
+              <TabsTrigger value="details" className="flex items-center gap-2">
+                {getValidationIcon(formValidation.details)}
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="team" className="flex items-center gap-2">
+                {getValidationIcon(formValidation.team)}
+                Team & Deliverables
+              </TabsTrigger>
             </TabsList>
 
+            {/* Same content structure as create modal but with edit- prefixed IDs */}
             <TabsContent value="basic" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -947,6 +1284,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                     placeholder="Enter project title"
+                    required
                   />
                 </div>
                 
@@ -955,6 +1293,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                   <Select 
                     value={formData.service_type}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, service_type: value }))}
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select service type" />
@@ -972,31 +1311,58 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-client_name">Client Name *</Label>
-                  <Input
-                    id="edit-client_name"
-                    value={formData.client_name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, client_name: e.target.value }))}
-                    placeholder="Enter client name"
-                  />
+                  <Label htmlFor="edit-client_id">Client *</Label>
+                  <Select 
+                    value={formData.client_id}
+                    onValueChange={(value) => {
+                      const selectedClient = clientUsers.find(c => c.id === value);
+                      setFormData(prev => ({ 
+                        ...prev, 
+                        client_id: value,
+                        client_name: selectedClient?.full_name || '',
+                        client_email: selectedClient?.email || ''
+                      }));
+                    }}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clientUsers.map(client => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.full_name} ({client.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-client_email">Client Email *</Label>
-                  <Input
-                    id="edit-client_email"
-                    type="email"
-                    value={formData.client_email}
-                    onChange={(e) => setFormData(prev => ({ ...prev, client_email: e.target.value }))}
-                    placeholder="Enter client email"
-                  />
+                  <Label htmlFor="edit-project_manager_id">Project Manager</Label>
+                  <Select 
+                    value={formData.project_manager_id}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, project_manager_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select project manager" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableUsers.map(user => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name} ({user.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-status">Status</Label>
+                  <Label htmlFor="edit-status">Status *</Label>
                   <Select 
                     value={formData.status}
                     onValueChange={(value: Project['status']) => setFormData(prev => ({ ...prev, status: value }))}
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1004,6 +1370,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     <SelectContent>
                       <SelectItem value="planning">Planning</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="review">Review</SelectItem>
                       <SelectItem value="on_hold">On Hold</SelectItem>
                       <SelectItem value="completed">Completed</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -1012,10 +1379,11 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-priority">Priority</Label>
+                  <Label htmlFor="edit-priority">Priority *</Label>
                   <Select 
                     value={formData.priority}
                     onValueChange={(value: Project['priority']) => setFormData(prev => ({ ...prev, priority: value }))}
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1045,54 +1413,61 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
             <TabsContent value="details" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-start_date">Start Date</Label>
+                  <Label htmlFor="edit-start_date">Start Date *</Label>
                   <Input
                     id="edit-start_date"
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_date: e.target.value }))}
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-end_date">End Date</Label>
+                  <Label htmlFor="edit-end_date">End Date *</Label>
                   <Input
                     id="edit-end_date"
                     type="date"
                     value={formData.end_date}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_date: e.target.value }))}
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-deadline">Deadline</Label>
+                  <Label htmlFor="edit-estimated_completion">Estimated Completion *</Label>
                   <Input
-                    id="edit-deadline"
+                    id="edit-estimated_completion"
                     type="date"
-                    value={formData.deadline}
-                    onChange={(e) => setFormData(prev => ({ ...prev, deadline: e.target.value }))}
+                    value={formData.estimated_completion}
+                    onChange={(e) => setFormData(prev => ({ ...prev, estimated_completion: e.target.value }))}
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="edit-estimated_hours">Estimated Hours</Label>
+                  <Label htmlFor="edit-estimated_hours">Estimated Hours *</Label>
                   <Input
                     id="edit-estimated_hours"
                     type="number"
+                    min="1"
                     value={formData.estimated_hours}
                     onChange={(e) => setFormData(prev => ({ ...prev, estimated_hours: parseInt(e.target.value) || 0 }))}
                     placeholder="0"
+                    required
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="edit-budget">Budget ($)</Label>
+                  <Label htmlFor="edit-budget">Budget ($) *</Label>
                   <Input
                     id="edit-budget"
                     type="number"
+                    min="1"
                     value={formData.budget}
                     onChange={(e) => setFormData(prev => ({ ...prev, budget: parseFloat(e.target.value) || 0 }))}
                     placeholder="0.00"
+                    required
                   />
                 </div>
               </div>
@@ -1100,7 +1475,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
 
             <TabsContent value="team" className="space-y-4">
               <div>
-                <Label>Team Members</Label>
+                <Label>Team Members *</Label>
                 <div className="flex gap-2 mb-2">
                   <Input
                     value={newTeamMember}
@@ -1131,10 +1506,13 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     </Badge>
                   ))}
                 </div>
+                {formData.team_members.length === 0 && (
+                  <p className="text-sm text-red-400 mt-1">At least one team member is required</p>
+                )}
               </div>
 
               <div>
-                <Label>Deliverables</Label>
+                <Label>Deliverables *</Label>
                 <div className="flex gap-2 mb-2">
                   <Input
                     value={newDeliverable}
@@ -1167,6 +1545,9 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                     </div>
                   ))}
                 </div>
+                {formData.deliverables.length === 0 && (
+                  <p className="text-sm text-red-400 mt-1">At least one deliverable is required</p>
+                )}
               </div>
             </TabsContent>
           </Tabs>
@@ -1175,14 +1556,20 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
             <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdateProject}>
-              Update Project
+            <Button 
+              onClick={handleUpdateProject}
+              disabled={!isFormComplete()}
+              className="flex items-center gap-2"
+            >
+              {!isFormComplete() && <AlertCircle className="h-4 w-4" />}
+              <Bell className="h-4 w-4" />
+              Update Project & Notify Client
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* View Project Modal */}
+      {/* COMPREHENSIVE View Project Modal - Your Original Design Enhanced */}
       <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1265,11 +1652,11 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                           {new Date(selectedProject.end_date).toLocaleDateString()}
                         </p>
                       </div>
-                      {selectedProject.deadline && (
+                      {(selectedProject.deadline || selectedProject.estimated_completion) && (
                         <div>
                           <Label className="text-sm font-medium">Deadline</Label>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(selectedProject.deadline).toLocaleDateString()}
+                            {new Date(selectedProject.deadline || selectedProject.estimated_completion).toLocaleDateString()}
                           </p>
                         </div>
                       )}
