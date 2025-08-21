@@ -539,6 +539,7 @@ const serviceData = {
 };
 
 const GetStarted = () => {
+  const [searchParams] = useSearchParams(); // Add this hook
   const [country, setCountry] = useState("USA");
   const [currency, setCurrency] = useState(currencyMap["USA"]);
   const [rate, setRate] = useState(1);
@@ -552,6 +553,43 @@ const GetStarted = () => {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [exchangeError, setExchangeError] = useState(false);
+
+  // Auto-scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  // Load service from URL parameter
+  useEffect(() => {
+    const serviceFromUrl = searchParams.get('service');
+    console.log('GetStarted - Service from URL:', serviceFromUrl);
+    console.log('GetStarted - Available services:', Object.keys(serviceData));
+    
+    if (serviceFromUrl && serviceData[serviceFromUrl]) {
+      setSelectedService(serviceFromUrl);
+      console.log('GetStarted - Service set to:', serviceFromUrl);
+    } else if (serviceFromUrl) {
+      // If service name doesn't match exactly, try to find a close match
+      const availableServices = Object.keys(serviceData);
+      const closeMatch = availableServices.find(service => 
+        service.toLowerCase().includes(serviceFromUrl.toLowerCase()) ||
+        serviceFromUrl.toLowerCase().includes(service.toLowerCase())
+      );
+      
+      if (closeMatch) {
+        setSelectedService(closeMatch);
+        console.log('GetStarted - Close match found and set:', closeMatch);
+      } else {
+        console.log('GetStarted - No match found for service:', serviceFromUrl);
+      }
+    }
+
+    // Check if this is a quote request from services page
+    const requestType = sessionStorage.getItem('requestType');
+    if (requestType === 'quote') {
+      sessionStorage.removeItem('requestType');
+    }
+  }, [searchParams]);
 
   const handleCountryChange = async (e) => {
     const selected = e.target.value;
