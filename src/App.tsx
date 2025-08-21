@@ -17,6 +17,7 @@ import Auth from "./pages/Auth";
 import ClientPortal from "./pages/ClientPortal";
 import Dashboard from "./pages/Dashboard";
 import QuoteReview from "./pages/QuoteReview";
+import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation"; // NEW IMPORT
 import AIAssistant from "./components/AIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
@@ -42,6 +43,7 @@ const App = () => {
         <AuthProvider>
           <BrowserRouter>
             <Routes>
+              {/* PUBLIC ROUTES */}
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/services" element={<Services />} />
@@ -51,11 +53,20 @@ const App = () => {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/book-consultation" element={<BookConsultation />} />
+              
+              {/* AUTH ROUTES */}
               <Route path="/auth" element={<Auth />} />
+              
+              {/* CLIENT ROUTES */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/client-portal" element={<ClientPortal />} />
-              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/quote/:id" element={<QuoteReview />} />
+              
+              {/* ADMIN/PM ROUTES */}
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/create-quote" element={<ProjectManagerQuoteCreation />} /> {/* NEW ROUTE */}
+              
+              {/* 404 FALLBACK */}
               <Route path="*" element={<NotFound />} />
             </Routes>
             <AIAssistant />
