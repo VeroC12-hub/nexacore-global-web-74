@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { 
   ArrowRight, 
   Globe, 
@@ -639,26 +640,30 @@ const GetStarted = () => {
         throw quoteError;
       }
 
-      // Send email notifications using the Edge Function
+      console.log('Quote request created:', quoteRequest);
+
+      // ENHANCED EMAIL SYSTEM - Send email with secure login link to project manager
       try {
-        await supabase.functions.invoke('send-email', {
+        const emailResponse = await supabase.functions.invoke('send-enhanced-quote-emails', {
           body: {
-            type: 'quote_request',
-            to: 'projects@nexacore-innovations.com',
+            type: 'quote_request_to_pm',
             data: {
               full_name: clientName.trim(),
               email: clientEmail.trim(),
-              phone: (clientPhone || '').trim() || null,
-              country,
+              phone: clientPhone.trim() || null,
+              country: country || null,
               service_type: selectedService,
               timeline: selectedTier || null,
               budget_estimate: currentMaxPrice,
               description: projectDescription.trim(),
+              quote_request_id: quoteRequest.id,
             },
           },
         });
 
-        // Client confirmation email
+        console.log('Enhanced email sent to PM:', emailResponse);
+
+        // Client confirmation email (using existing function)
         await supabase.functions.invoke('send-email', {
           body: {
             type: 'quote_request_confirmation',
@@ -669,8 +674,31 @@ const GetStarted = () => {
             },
           },
         });
-      } catch (e) {
-        console.warn('Email notification failed, but quote request was saved', e);
+
+      } catch (emailError) {
+        console.warn('Enhanced email notification failed, but quote request was saved:', emailError);
+        // Don't throw here - the quote request is still saved
+        // Try fallback to old email system
+        try {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              type: 'quote_request',
+              to: 'projects@nexacore-innovations.com',
+              data: {
+                full_name: clientName.trim(),
+                email: clientEmail.trim(),
+                phone: (clientPhone || '').trim() || null,
+                country,
+                service_type: selectedService,
+                timeline: selectedTier || null,
+                budget_estimate: currentMaxPrice,
+                description: projectDescription.trim(),
+              },
+            },
+          });
+        } catch (fallbackError) {
+          console.warn('Fallback email also failed:', fallbackError);
+        }
       }
       
       setSubmitted(true);
@@ -832,7 +860,7 @@ const GetStarted = () => {
                     Request submitted successfully!
                   </p>
                   <p className="text-green-700 text-sm">
-                    You'll receive a confirmation email shortly. We'll contact you within 24 hours.
+                    Our project manager will receive a secure email with your request and will create your custom quote shortly.
                   </p>
                 </div>
               </div>
@@ -921,7 +949,7 @@ const GetStarted = () => {
                       ))}
                     </select>
                     <p className="text-xs text-gray-500">
-                      💡 Used for currency conversion and invoicing. Choose any service tier regardless of location.
+                      Used for currency conversion and invoicing. Choose any service tier regardless of location.
                     </p>
                   </div>
                 </div>
@@ -955,7 +983,7 @@ const GetStarted = () => {
                     
                     {/* Service Description */}
                     <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <p className="font-medium text-blue-800 mb-1">📋 About {selectedService}:</p>
+                      <p className="font-medium text-blue-800 mb-1">About {selectedService}:</p>
                       <p>{serviceData[selectedService]?.description}</p>
                     </div>
                   </div>
@@ -988,11 +1016,6 @@ const GetStarted = () => {
                           {selectedTier} Tier - ${minPrice} - ${maxPrice}+
                         </p>
                         <div className="flex items-center space-x-1">
-                          {selectedTier === "Basic" && <span className="text-green-600">💰</span>}
-                          {selectedTier === "Essential" && <span className="text-blue-600">⭐</span>}
-                          {selectedTier === "Professional" && <span className="text-purple-600">🏆</span>}
-                          {selectedTier === "Premium" && <span className="text-orange-600">💎</span>}
-                          {selectedTier === "Enterprise" && <span className="text-red-600">🚀</span>}
                           <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-200">
                             {selectedTier}
                           </span>
@@ -1001,7 +1024,7 @@ const GetStarted = () => {
                       <p className="text-gray-700 leading-relaxed">{serviceDescription}</p>
                       <div className="mt-3 pt-2 border-t border-gray-200">
                         <p className="text-xs text-gray-500">
-                          💡 All tiers include our quality guarantee and post-delivery support. Higher tiers offer more features, faster delivery, and dedicated expertise.
+                          All tiers include our quality guarantee and post-delivery support. Higher tiers offer more features, faster delivery, and dedicated expertise.
                         </p>
                       </div>
                     </div>
@@ -1034,11 +1057,6 @@ const GetStarted = () => {
                     </h3>
                   </div>
                   <div className="flex items-center space-x-2">
-                    {selectedTier === "Basic" && <span className="text-green-600 text-lg">💰</span>}
-                    {selectedTier === "Essential" && <span className="text-blue-600 text-lg">⭐</span>}
-                    {selectedTier === "Professional" && <span className="text-purple-600 text-lg">🏆</span>}
-                    {selectedTier === "Premium" && <span className="text-orange-600 text-lg">💎</span>}
-                    {selectedTier === "Enterprise" && <span className="text-red-600 text-lg">🚀</span>}
                     <span className="text-sm font-medium px-3 py-1 rounded-full bg-white border border-gray-300">
                       {selectedTier} Tier
                     </span>
@@ -1071,7 +1089,7 @@ const GetStarted = () => {
                     <div className="text-xs text-gray-500 bg-white p-2 rounded border border-gray-200">
                       <p>*Prices updated with real-time exchange rates. Final cost depends on project complexity and specific requirements.</p>
                       <p className="mt-1 font-medium text-gray-700">
-                        🌍 Same transparent pricing worldwide - choose what fits your needs and budget!
+                        Same transparent pricing worldwide - choose what fits your needs and budget!
                       </p>
                     </div>
                   </div>
