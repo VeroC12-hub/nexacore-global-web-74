@@ -15,7 +15,8 @@ import {
   Star,
   Quote
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Add this import
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react'; // Add this import for scroll to top
 import heroImage from '@/assets/hero-main.jpg';
 import teamImage from '@/assets/team-collaboration.jpg';
 import abstractBg from '@/assets/abstract-tech.jpg';
@@ -24,7 +25,12 @@ import Footer from '@/components/Footer';
 import EnhancedHeroButtons from '@/components/EnhancedHeroButtons';
 
 const Index = () => {
-  const navigate = useNavigate(); // Add this hook
+  const navigate = useNavigate();
+
+  // Auto-scroll to top when component mounts
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   // Function to handle service card click
   const handleServiceClick = (serviceTitle) => {
@@ -37,6 +43,10 @@ const Index = () => {
     };
 
     const selectedService = serviceMapping[serviceTitle] || 'Software Engineering';
+    
+    // Debug logging to track service selection
+    console.log('Index.tsx - Service clicked:', serviceTitle);
+    console.log('Index.tsx - Mapped to service:', selectedService);
     
     // Navigate to GetStarted with the selected service as a URL parameter
     navigate(`/get-started?service=${encodeURIComponent(selectedService)}`);
