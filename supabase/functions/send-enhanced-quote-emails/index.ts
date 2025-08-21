@@ -1,151 +1,87 @@
-// supabase/functions/send-enhanced-quote-emails/index.ts
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!;
 
-interface QuoteRequestEmailData {
-  full_name: string;
-  email: string;
-  phone?: string;
-  country?: string;
-  service_type: string;
-  timeline?: string;
-  budget_estimate?: number;
-  description: string;
-  quote_request_id: string;
-}
-
-interface QuoteToClientData {
-  quote_id: string;
-  client_email: string;
-  client_name: string;
-  service_type: string;
-  price: number;
-  currency: string;
-  timeline: string;
-  token: string;
-}
-
-interface QuoteActionNotificationData {
-  quote_id: string;
-  action_type: 'approved' | 'revision_requested' | 'new_service_requested';
-  client_name: string;
-  client_email: string;
-  message?: string;
-  new_service_type?: string;
-}
-
-Deno.serve(async (req) => {
-  // Handle CORS preflight requests
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { type, to, data } = await req.json()
-
-    // Initialize Supabase admin client
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
-
-    // Get Resend API key from environment
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-    if (!RESEND_API_KEY) {
-      throw new Error('RESEND_API_KEY not found')
-    }
+    const { type, data } = await req.json();
 
     let emailResponse;
 
     switch (type) {
       case 'quote_request_to_pm':
-        emailResponse = await sendQuoteRequestToPM(data as QuoteRequestEmailData, RESEND_API_KEY, supabaseAdmin);
+        emailResponse = await sendQuoteRequestToPM(data);
         break;
-      
       case 'quote_to_client':
-        emailResponse = await sendQuoteToClient(data as QuoteToClientData, RESEND_API_KEY);
+        emailResponse = await sendQuoteToClient(data);
         break;
-      
-      case 'quote_action_notification':
-        emailResponse = await sendQuoteActionNotification(data as QuoteActionNotificationData, RESEND_API_KEY);
+      case 'quote_response_to_pm':
+        emailResponse = await sendQuoteResponseToPM(data);
         break;
-      
       default:
-        throw new Error(`Unknown email type: ${type}`);
+        throw new Error(`Unsupported email type: ${type}`);
     }
 
-    return new Response(JSON.stringify(emailResponse), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
+    return new Response(
+      JSON.stringify({ success: true, data: emailResponse }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200 
+      }
+    );
 
   } catch (error) {
-    console.error('Error sending email:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+    console.error('Email sending error:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400 
+      }
+    );
   }
-})
+});
 
-async function sendQuoteRequestToPM(
-  data: QuoteRequestEmailData, 
-  apiKey: string, 
-  supabaseAdmin: any
-): Promise<any> {
-  // Create PM invitation token
-  const { data: tokenData, error: tokenError } = await supabaseAdmin
-    .from('pm_invitation_tokens')
-    .insert({
-      quote_request_id: data.quote_request_id,
-      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
-    })
-    .select()
-    .single();
-
-  if (tokenError) {
-    throw new Error(`Failed to create PM token: ${tokenError.message}`);
-  }
-
-  // Update quote request with token reference
-  await supabaseAdmin
-    .from('quote_requests')
-    .update({ pm_token_id: tokenData.id })
-    .eq('id', data.quote_request_id);
-
-  const loginUrl = `https://nexacore-innovations.com/auth?pm_token=${tokenData.token}&redirect=/admin`;
-
+async function sendQuoteRequestToPM(data: any) {
+  // Use environment variable for domain, fallback to localhost for development
+  const baseUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000';
+  const loginUrl = `${baseUrl}/admin/create-quote?request_id=${data.quote_request_id}&token=${generateSecureToken()}`;
+  
   const emailHtml = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>New Quote Request - NexaCore Innovations</title>
       <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: white; padding: 30px; border: 1px solid #e1e5e9; border-top: none; }
-        .quote-details { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .detail-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 5px 0; border-bottom: 1px solid #e2e8f0; }
-        .detail-label { font-weight: 600; color: #4a5568; }
-        .detail-value { color: #2d3748; }
-        .cta-button { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
-        .footer { background: #f7fafc; padding: 20px; text-align: center; color: #718096; border-radius: 0 0 8px 8px; }
-        .urgent { background: #fed7d7; border-left: 4px solid #e53e3e; padding: 15px; margin: 15px 0; border-radius: 4px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .header { background: linear-gradient(135deg, #2563eb, #059669); color: white; padding: 30px; text-align: center; }
+        .content { padding: 30px; }
+        .urgent { background: #fef2f2; border: 2px solid #ef4444; padding: 15px; border-radius: 8px; margin: 20px 0; color: #dc2626; }
+        .quote-details { background: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #2563eb; }
+        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+        .detail-label { font-weight: 600; color: #64748b; }
+        .detail-value { color: #1e293b; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #2563eb, #059669); color: white !important; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0; }
+        .footer { background: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 14px; }
+        .priority-high { border-left-color: #ef4444; }
+        .priority-urgent { border-left-color: #dc2626; background: #fef2f2; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>🚀 New Quote Request</h1>
-          <p>A new client is requesting a quote for ${data.service_type}</p>
+          <h1 style="margin: 0; font-size: 28px;">🚨 New Quote Request</h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">Action Required - Create Quote</p>
         </div>
-        
+
         <div class="content">
           ${data.budget_estimate && data.budget_estimate > 10000 ? 
             '<div class="urgent"><strong>🔥 High-Value Lead:</strong> This request has a budget estimate above $10,000</div>' 
@@ -219,7 +155,7 @@ async function sendQuoteRequestToPM(
 
         <div class="footer">
           <p><strong>NexaCore Innovations</strong> - Projects Management System</p>
-          <p>This secure link expires in 7 days. If you need assistance, contact: admin@nexacore-innovations.com</p>
+          <p>This secure link expires in 7 days.</p>
         </div>
       </div>
     </body>
@@ -229,91 +165,100 @@ async function sendQuoteRequestToPM(
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       from: 'NexaCore Projects <projects@nexacore-innovations.com>',
       to: ['projects@nexacore-innovations.com'],
-      subject: `🚀 New Quote Request: ${data.service_type} from ${data.full_name}`,
+      subject: `🚨 New Quote Request: ${data.service_type} - ${data.full_name}`,
       html: emailHtml,
-      reply_to: data.email,
     }),
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Resend API error: ${error}`);
+    throw new Error(`Failed to send email: ${response.statusText}`);
   }
 
   return await response.json();
 }
 
-async function sendQuoteToClient(data: QuoteToClientData, apiKey: string): Promise<any> {
-  const quoteUrl = `https://nexacore-innovations.com/quote/${data.quote_id}?token=${data.token}`;
-
+async function sendQuoteToClient(data: any) {
+  const baseUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000';
+  const quoteUrl = `${baseUrl}/quote/${data.quote_id}`;
+  
   const emailHtml = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Your Quote is Ready - NexaCore Innovations</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Your Quote from NexaCore Innovations</title>
       <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: white; padding: 30px; border: 1px solid #e1e5e9; border-top: none; }
-        .quote-summary { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
-        .price { font-size: 2em; font-weight: bold; color: #2d3748; margin: 10px 0; }
-        .cta-button { display: inline-block; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
-        .footer { background: #f7fafc; padding: 20px; text-align: center; color: #718096; border-radius: 0 0 8px 8px; }
-        .features { background: #edf2f7; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .header { background: linear-gradient(135deg, #2563eb, #059669); color: white; padding: 30px; text-align: center; }
+        .content { padding: 30px; }
+        .quote-summary { background: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #059669; }
+        .price-highlight { font-size: 32px; font-weight: bold; color: #059669; text-align: center; margin: 20px 0; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #2563eb, #059669); color: white !important; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0; }
+        .footer { background: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 14px; }
+        .deliverables { list-style: none; padding: 0; }
+        .deliverables li { padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+        .deliverables li:before { content: "✓"; color: #059669; font-weight: bold; margin-right: 10px; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>✨ Your Quote is Ready!</h1>
-          <p>We've prepared a customized quote for your ${data.service_type} project</p>
+          <h1 style="margin: 0; font-size: 28px;">💼 Your Quote is Ready!</h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">From NexaCore Innovations</p>
         </div>
-        
+
         <div class="content">
-          <p>Dear ${data.client_name},</p>
+          <h2>Hello ${data.client_name},</h2>
           
-          <p>Thank you for your interest in NexaCore Innovations! We've carefully reviewed your project requirements and prepared a detailed quote for you.</p>
+          <p>Thank you for your interest in our ${data.service_type} services. We've prepared a detailed quote based on your requirements.</p>
 
           <div class="quote-summary">
-            <h2>Project Quote Summary</h2>
-            <div class="price">${data.currency} ${data.price.toLocaleString()}</div>
-            <p><strong>Service:</strong> ${data.service_type}</p>
+            <h3 style="margin-top: 0; color: #1e293b;">Quote Summary</h3>
+            <div class="price-highlight">${data.currency} ${data.price.toLocaleString()}</div>
             <p><strong>Timeline:</strong> ${data.timeline}</p>
+            <p><strong>Service:</strong> ${data.service_type}</p>
           </div>
+
+          ${data.deliverables && data.deliverables.length > 0 ? `
+          <h3>What's Included:</h3>
+          <ul class="deliverables">
+            ${data.deliverables.map(item => `<li>${item}</li>`).join('')}
+          </ul>
+          ` : ''}
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${quoteUrl}" class="cta-button">
-              📋 View Full Quote & Take Action
+              📋 Review & Respond to Quote
             </a>
           </div>
 
-          <div class="features">
-            <h3>What you can do with your quote:</h3>
-            <ul style="text-align: left; display: inline-block;">
-              <li>✅ <strong>Accept</strong> - Start your project immediately</li>
-              <li>📝 <strong>Request Revision</strong> - Ask for adjustments</li>
-              <li>🔄 <strong>Request Different Service</strong> - Explore other options</li>
-              <li>💬 <strong>Ask Questions</strong> - Get clarification from our team</li>
-            </ul>
+          <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #1e40af; margin: 0 0 10px 0;">Next Steps:</h4>
+            <ol style="color: #1e40af; margin: 0; padding-left: 20px;">
+              <li>Click the button above to review your complete quote</li>
+              <li>Create an account or sign in to your client portal</li>
+              <li>Accept, request changes, or ask questions</li>
+              <li>Once accepted, we'll begin work immediately</li>
+            </ol>
           </div>
 
-          <p><strong>Important:</strong> This quote is valid for 30 days. You can review all details, terms, and deliverables by clicking the link above.</p>
-          
-          <p>If you have any questions or need clarification, simply reply to this email or use the communication tools in your quote portal.</p>
+          <p style="color: #64748b; font-size: 14px;">
+            <strong>Quote expires:</strong> ${new Date(data.expires_at).toLocaleDateString()}
+          </p>
         </div>
 
         <div class="footer">
           <p><strong>NexaCore Innovations</strong></p>
-          <p>Innovative Engineering & Technology Solutions</p>
-          <p>Questions? Reply to this email or call us at +233 54087377</p>
+          <p>Building the future, one innovation at a time.</p>
+          <p>Questions? Reply to this email or visit our website.</p>
         </div>
       </div>
     </body>
@@ -323,111 +268,109 @@ async function sendQuoteToClient(data: QuoteToClientData, apiKey: string): Promi
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'NexaCore Innovations <quotes@nexacore-innovations.com>',
+      from: 'NexaCore Projects <projects@nexacore-innovations.com>',
       to: [data.client_email],
-      subject: `Your ${data.service_type} Quote is Ready - ${data.currency} ${data.price.toLocaleString()}`,
+      subject: `Your Quote is Ready - ${data.service_type}`,
       html: emailHtml,
-      reply_to: 'projects@nexacore-innovations.com',
     }),
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Resend API error: ${error}`);
+    throw new Error(`Failed to send email: ${response.statusText}`);
   }
 
   return await response.json();
 }
 
-async function sendQuoteActionNotification(data: QuoteActionNotificationData, apiKey: string): Promise<any> {
-  let actionEmoji = '';
-  let actionText = '';
-  let actionColor = '#667eea';
-
-  switch (data.action_type) {
-    case 'approved':
-      actionEmoji = '🎉';
-      actionText = 'APPROVED';
-      actionColor = '#48bb78';
-      break;
-    case 'revision_requested':
-      actionEmoji = '📝';
-      actionText = 'REVISION REQUESTED';
-      actionColor = '#ed8936';
-      break;
-    case 'new_service_requested':
-      actionEmoji = '🔄';
-      actionText = 'NEW SERVICE REQUESTED';
-      actionColor = '#4299e1';
-      break;
-  }
-
+async function sendQuoteResponseToPM(data: any) {
+  const baseUrl = Deno.env.get('SITE_URL') || 'http://localhost:3000';
+  const dashboardUrl = `${baseUrl}/admin`;
+  
   const emailHtml = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Quote ${actionText} - ${data.client_name}</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Quote Response - ${data.action}</title>
       <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: ${actionColor}; color: white; padding: 30px 20px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: white; padding: 30px; border: 1px solid #e1e5e9; border-top: none; }
-        .action-details { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .footer { background: #f7fafc; padding: 20px; text-align: center; color: #718096; border-radius: 0 0 8px 8px; }
-        .cta-button { display: inline-block; background: ${actionColor}; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .header { background: linear-gradient(135deg, #2563eb, #059669); color: white; padding: 30px; text-align: center; }
+        .content { padding: 30px; }
+        .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin: 10px 0; }
+        .status-approved { background: #dcfce7; color: #166534; }
+        .status-revision { background: #fef3c7; color: #92400e; }
+        .status-declined { background: #fecaca; color: #991b1b; }
+        .quote-details { background: #f8fafc; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #2563eb; }
+        .cta-button { display: inline-block; background: linear-gradient(135deg, #2563eb, #059669); color: white !important; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0; }
+        .footer { background: #f1f5f9; padding: 20px; text-align: center; color: #64748b; font-size: 14px; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>${actionEmoji} Quote ${actionText}</h1>
-          <p>Action taken by ${data.client_name}</p>
+          <h1 style="margin: 0; font-size: 28px;">
+            ${data.action === 'approved' ? '✅ Quote Approved!' : 
+              data.action === 'revision_requested' ? '📝 Revision Requested' : 
+              '❌ Quote Declined'}
+          </h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">${data.client_name} has responded</p>
         </div>
-        
+
         <div class="content">
-          <p><strong>Client:</strong> ${data.client_name} (${data.client_email})</p>
-          <p><strong>Quote ID:</strong> ${data.quote_id}</p>
-          <p><strong>Action:</strong> ${actionText}</p>
+          <div class="status-badge ${data.action === 'approved' ? 'status-approved' : 
+            data.action === 'revision_requested' ? 'status-revision' : 'status-declined'}">
+            ${data.action.toUpperCase().replace('_', ' ')}
+          </div>
+
+          <div class="quote-details">
+            <h3 style="margin-top: 0;">Quote Details</h3>
+            <p><strong>Client:</strong> ${data.client_name} (${data.client_email})</p>
+            <p><strong>Service:</strong> ${data.service_type}</p>
+            <p><strong>Amount:</strong> ${data.currency} ${data.price}</p>
+            <p><strong>Action Date:</strong> ${new Date().toLocaleDateString()}</p>
+          </div>
 
           ${data.message ? `
-          <div class="action-details">
-            <h3>Client Message:</h3>
-            <p>"${data.message}"</p>
-          </div>
-          ` : ''}
-
-          ${data.new_service_type ? `
-          <div class="action-details">
-            <h3>Requested New Service:</h3>
-            <p><strong>${data.new_service_type}</strong></p>
+          <div style="background: #fffbeb; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #92400e; margin: 0 0 10px 0;">Client Message:</h4>
+            <p style="color: #92400e; margin: 0;">"${data.message}"</p>
           </div>
           ` : ''}
 
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://nexacore-innovations.com/admin" class="cta-button">
-              📊 View in Admin Dashboard
+            <a href="${dashboardUrl}" class="cta-button">
+              🔧 Manage in Admin Dashboard
             </a>
           </div>
 
-          <div class="action-details">
-            <h3>Next Steps:</h3>
-            ${data.action_type === 'approved' ? 
-              '<p>🎯 The client has approved the quote! You can now start the project and create tasks in the project management system.</p>' :
-              data.action_type === 'revision_requested' ?
-              '<p>📝 The client has requested revisions. Please review their feedback and update the quote accordingly.</p>' :
-              '<p>🔄 The client is interested in a different service. Create a new quote for the requested service type.</p>'
-            }
+          <div style="background: #f0f9ff; border: 1px solid #0ea5e9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h4 style="color: #0c4a6e; margin: 0 0 10px 0;">Next Steps:</h4>
+            <ul style="color: #0c4a6e; margin: 0; padding-left: 20px;">
+              ${data.action === 'approved' ? `
+                <li>Begin project work</li>
+                <li>Set up project timeline</li>
+                <li>Send welcome/onboarding materials</li>
+              ` : data.action === 'revision_requested' ? `
+                <li>Review client feedback</li>
+                <li>Modify quote as requested</li>
+                <li>Resend updated quote</li>
+              ` : `
+                <li>Follow up with client if appropriate</li>
+                <li>Archive quote request</li>
+                <li>Add notes for future reference</li>
+              `}
+            </ul>
           </div>
         </div>
 
         <div class="footer">
           <p><strong>NexaCore Innovations</strong> - Project Management System</p>
-          <p>Respond promptly to maintain excellent client relationships</p>
         </div>
       </div>
     </body>
@@ -437,22 +380,30 @@ async function sendQuoteActionNotification(data: QuoteActionNotificationData, ap
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${RESEND_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       from: 'NexaCore Projects <projects@nexacore-innovations.com>',
       to: ['projects@nexacore-innovations.com'],
-      subject: `${actionEmoji} Quote ${actionText}: ${data.client_name}`,
+      subject: `Quote ${data.action === 'approved' ? 'APPROVED' : 
+        data.action === 'revision_requested' ? 'REVISION REQUESTED' : 'DECLINED'} - ${data.client_name}`,
       html: emailHtml,
-      reply_to: data.client_email,
     }),
   });
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Resend API error: ${error}`);
+    throw new Error(`Failed to send email: ${response.statusText}`);
   }
 
   return await response.json();
+}
+
+function generateSecureToken(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 32; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
