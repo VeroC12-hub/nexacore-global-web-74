@@ -11,10 +11,11 @@ const supabase = createClient(
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
 interface EmailRequest {
-  type: 'quote_request' | 'quote_sent' | 'quote_approved' | 'quote_revision_requested';
+  type: 'quote_request' | 'quote_sent' | 'quote_approved' | 'quote_revision_requested' | 'quote_request_confirmation';
   to: string;
   data: any;
 }
@@ -26,8 +27,23 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { type, to, data }: EmailRequest = await req.json();
+    const requestBody = await req.text();
+    console.log('Raw request body:', requestBody);
+    
+    let requestData;
+    try {
+      requestData = JSON.parse(requestBody);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      throw new Error('Invalid JSON in request body');
+    }
+
+    const { type, to, data }: EmailRequest = requestData;
     console.log('Email request:', { type, to, data });
+
+    if (!type) {
+      throw new Error('Email type is required');
+    }
 
     let emailResponse;
 
@@ -55,13 +71,14 @@ const handler = async (req: Request): Promise<Response> => {
                 <h3>Project Details:</h3>
                 <p><strong>Service:</strong> ${data.service_type}</p>
                 <p><strong>Timeline:</strong> ${data.timeline || 'Not specified'}</p>
-                <p><strong>Budget:</strong> ${data.budget_estimate ? '$' + data.budget_estimate : 'Not specified'}</p>
+                <p><strong>Budget:</strong> ${data.budget_estimate ? 
+                  '$' + data.budget_estimate.toLocaleString() : 'Not specified'}</p>
                 <p><strong>Description:</strong></p>
                 <p style="background: white; padding: 10px; border-left: 4px solid #2563eb;">${data.description}</p>
               </div>
 
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'vercel.app') || 'https://your-app.vercel.app'}/admin" 
+                <a href="${Deno.env.get('SITE_URL') || 'https://nexacore-innovations.com'}/admin" 
                    style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                   Review Request & Create Quote
                 </a>
@@ -103,29 +120,26 @@ const handler = async (req: Request): Promise<Response> => {
               <h2 style="color: #2563eb;">Your Project Quote is Ready</h2>
               <p>Hi ${data.client_name || 'there'},</p>
               
-              <p>Thank you for your interest in our services. We've prepared a detailed quote for your project:</p>
+              <p>Thank you for your interest in our services. We've prepared a detailed quote for your project.</p>
               
-              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3>${data.service_type} Project</h3>
-                <p><strong>Quote Amount:</strong> ${data.currency} ${data.price}</p>
-                <p><strong>Timeline:</strong> ${data.timeline}</p>
-                <p><strong>Valid Until:</strong> ${new Date(data.expires_at).toLocaleDateString()}</p>
+              <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+                <h3>Quote Summary</h3>
+                <p><strong>Service:</strong> ${data.service_type}</p>
+                <p><strong>Total Amount:</strong> ${data.currency || '$'} ${data.price?.toLocaleString() || 'N/A'}</p>
+                ${data.timeline ? `<p><strong>Timeline:</strong> ${data.timeline}</p>` : ''}
               </div>
 
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'vercel.app') || 'https://your-app.vercel.app'}/quote/${data.quote_id}" 
-                   style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  Review & Approve Quote
+                <a href="${Deno.env.get('SITE_URL') || 'https://nexacore-innovations.com'}/quote/${data.quote_id}" 
+                   style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  View Full Quote
                 </a>
               </div>
 
-              <p style="color: #6b7280; font-size: 14px;">
-                You'll be able to review the complete details, accept the quote, or request revisions.
-                If you don't have an account yet, you'll be guided through a quick signup process.
-              </p>
-
-              <p>We look forward to working with you!</p>
-              <p>Best regards,<br>The NexaCore Team</p>
+              <p>Please review the quote and let us know if you have any questions.</p>
+              
+              <p>Best regards,<br>
+              The NexaCore Team</p>
             </div>
           `,
         });
@@ -135,28 +149,29 @@ const handler = async (req: Request): Promise<Response> => {
         emailResponse = await resend.emails.send({
           from: "NexaCore <noreply@nexacore-innovations.com>",
           to: ["projects@nexacore-innovations.com"],
-          subject: `Quote Approved - Project Ready to Start`,
+          subject: `Quote APPROVED - ${data.client_name}`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #10b981;">Quote Approved! 🎉</h2>
+              <h2 style="color: #059669;">🎉 Quote Approved!</h2>
               
-              <p>Great news! The quote has been approved by the client:</p>
+              <p>Great news! The client has approved the quote:</p>
               
-              <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-                <p><strong>Client:</strong> ${data.client_email}</p>
+              <div style="background: #dcfce7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
+                <p><strong>Client:</strong> ${data.client_name}</p>
+                <p><strong>Email:</strong> ${data.client_email}</p>
                 <p><strong>Service:</strong> ${data.service_type}</p>
                 <p><strong>Amount:</strong> ${data.currency} ${data.price}</p>
-                <p><strong>Approved on:</strong> ${new Date().toLocaleDateString()}</p>
+                ${data.message ? `<p><strong>Client Message:</strong></p><p style="background: white; padding: 10px; border-radius: 4px;">${data.message}</p>` : ''}
               </div>
 
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'vercel.app') || 'https://your-app.vercel.app'}/admin" 
-                   style="background: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  Start Project
+                <a href="${Deno.env.get('SITE_URL') || 'https://nexacore-innovations.com'}/admin" 
+                   style="background: #059669; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Begin Project Setup
                 </a>
               </div>
 
-              <p>The project has been automatically created and is ready to begin. You can now:</p>
+              <p>You can now:</p>
               <ul>
                 <li>Set up project tasks and milestones</li>
                 <li>Assign team members</li>
@@ -172,23 +187,24 @@ const handler = async (req: Request): Promise<Response> => {
         emailResponse = await resend.emails.send({
           from: "NexaCore <noreply@nexacore-innovations.com>",
           to: ["projects@nexacore-innovations.com"],
-          subject: `Quote Revision Requested`,
+          subject: `Quote Revision Requested - ${data.client_name}`,
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px 0; auto;">
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #f59e0b;">Quote Revision Requested</h2>
               
               <p>The client has requested revisions to the quote:</p>
               
               <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
-                <p><strong>Client:</strong> ${data.client_email}</p>
+                <p><strong>Client:</strong> ${data.client_name}</p>
+                <p><strong>Email:</strong> ${data.client_email}</p>
                 <p><strong>Service:</strong> ${data.service_type}</p>
                 <p><strong>Current Amount:</strong> ${data.currency} ${data.price}</p>
                 <p><strong>Revision Notes:</strong></p>
-                <p style="background: white; padding: 10px; border-radius: 4px;">${data.revision_notes || 'No specific notes provided'}</p>
+                <p style="background: white; padding: 10px; border-radius: 4px;">${data.message || 'No specific notes provided'}</p>
               </div>
 
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${Deno.env.get('SUPABASE_URL')?.replace('supabase.co', 'vercel.app') || 'https://your-app.vercel.app'}/admin" 
+                <a href="${Deno.env.get('SITE_URL') || 'https://nexacore-innovations.com'}/admin" 
                    style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                   Review & Update Quote
                 </a>
