@@ -1,4 +1,3 @@
-// api/quotes/[id]/pdf.ts - Vercel API Route for PDF Generation
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
