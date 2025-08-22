@@ -19,9 +19,24 @@ serve(async (req) => {
   }
 
   try {
-    const { type, data } = await req.json();
+    const requestBody = await req.text();
+    console.log('Raw request body:', requestBody);
+    
+    let requestData;
+    try {
+      requestData = JSON.parse(requestBody);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      throw new Error('Invalid JSON in request body');
+    }
+
+    const { type, data } = requestData;
     console.log('Email request type:', type);
     console.log('Email data:', JSON.stringify(data, null, 2));
+
+    if (!type) {
+      throw new Error('Email type is required');
+    }
 
     if (!RESEND_API_KEY) {
       throw new Error('RESEND_API_KEY environment variable not set');
@@ -123,62 +138,48 @@ async function sendQuoteRequestToPM(data: any) {
         .detail-row { 
           display: flex; 
           justify-content: space-between; 
+          margin: 10px 0; 
           padding: 8px 0; 
           border-bottom: 1px solid #e2e8f0; 
         }
-        .detail-label { 
-          font-weight: 600; 
-          color: #64748b; 
-        }
-        .detail-value { 
-          color: #1e293b; 
-        }
+        .detail-label { font-weight: bold; color: #64748b; }
+        .detail-value { color: #1e293b; }
+        .highlight { color: #2563eb; font-weight: bold; }
         .cta-button { 
           display: inline-block; 
-          background: linear-gradient(135deg, #dc2626, #ef4444); 
-          color: white !important; 
+          background: #2563eb; 
+          color: white; 
           padding: 15px 30px; 
-          border-radius: 8px; 
           text-decoration: none; 
-          font-weight: 600; 
-          margin: 20px 0;
-          text-align: center;
-          font-size: 18px;
+          border-radius: 8px; 
+          font-weight: bold; 
+          font-size: 16px; 
         }
         .footer { 
-          background: #f1f5f9; 
+          background: #f8fafc; 
           padding: 20px; 
           text-align: center; 
           color: #64748b; 
           font-size: 14px; 
-        }
-        .highlight { 
-          background: #fef3c7; 
-          padding: 2px 6px; 
-          border-radius: 4px; 
-          font-weight: bold; 
         }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1 style="margin: 0; font-size: 28px;">🚨 URGENT: New Quote Request!</h1>
-          <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 18px;">
-            Action Required - Create Quote Now
-          </p>
+          <h1 style="margin: 0; font-size: 28px;">🚨 URGENT: New Quote Request</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Action Required within 24 hours</p>
         </div>
 
         <div class="content">
-          ${data.budget_estimate && data.budget_estimate > 10000 ? 
-            '<div class="urgent">⚡ HIGH-VALUE LEAD: Budget estimate above $10,000 ⚡<br>Client is waiting for your response!</div>' 
-            : '<div class="urgent">⚡ NEW QUOTE REQUEST REQUIRES IMMEDIATE ATTENTION ⚡<br>Client is waiting for your response!</div>'
-          }
+          <div class="urgent">
+            ⏰ TIME SENSITIVE: A new client is waiting for your quote response!
+          </div>
 
           <h3>👤 Client Information:</h3>
           <div class="quote-details">
             <div class="detail-row">
-              <span class="detail-label">Client Name:</span>
+              <span class="detail-label">Name:</span>
               <span class="detail-value highlight">${data.full_name}</span>
             </div>
             <div class="detail-row">
@@ -335,88 +336,56 @@ async function sendQuoteToClient(data: any) {
         }
         .cta-button { 
           display: inline-block; 
-          background: linear-gradient(135deg, #2563eb, #059669); 
-          color: white !important; 
+          background: #059669; 
+          color: white; 
           padding: 15px 30px; 
-          border-radius: 8px; 
           text-decoration: none; 
-          font-weight: 600; 
-          margin: 20px 0; 
-          font-size: 16px;
+          border-radius: 8px; 
+          font-weight: bold; 
+          font-size: 16px; 
         }
         .footer { 
-          background: #f1f5f9; 
+          background: #f8fafc; 
           padding: 20px; 
           text-align: center; 
           color: #64748b; 
           font-size: 14px; 
-        }
-        .deliverables { 
-          list-style: none; 
-          padding: 0; 
-        }
-        .deliverables li { 
-          padding: 8px 0; 
-          border-bottom: 1px solid #e2e8f0; 
-        }
-        .deliverables li:before { 
-          content: "✓"; 
-          color: #059669; 
-          font-weight: bold; 
-          margin-right: 10px; 
         }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1 style="margin: 0; font-size: 28px;">💼 Your Quote is Ready!</h1>
-          <p style="margin: 10px 0 0 0; opacity: 0.9;">From NexaCore Innovations</p>
+          <h1 style="margin: 0; font-size: 28px;">📋 Your Quote is Ready!</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Professional project quote from NexaCore Innovations</p>
         </div>
 
         <div class="content">
-          <h2>Hello ${data.client_name},</h2>
+          <p>Hi ${data.client_name || 'there'},</p>
           
-          <p>Thank you for your interest in our ${data.service_type} services. We've prepared a detailed quote based on your requirements.</p>
+          <p>Great news! We've prepared a detailed quote for your <strong>${data.service_type}</strong> project.</p>
 
           <div class="quote-summary">
-            <h3 style="margin-top: 0; color: #1e293b;">Quote Summary</h3>
-            <div class="price-highlight">${data.currency} ${data.price.toLocaleString()}</div>
-            <p><strong>Timeline:</strong> ${data.timeline}</p>
-            <p><strong>Service:</strong> ${data.service_type}</p>
-            <p><strong>Scope:</strong> ${data.scope.substring(0, 200)}...</p>
+            <h3 style="margin: 0 0 15px 0; color: #1e293b;">Quote Summary</h3>
+            <div class="price-highlight">${data.currency || '$'} ${data.price?.toLocaleString() || 'N/A'}</div>
+            <p style="margin: 10px 0; color: #64748b;">For: ${data.service_type}</p>
+            ${data.timeline ? `<p style="margin: 5px 0; color: #64748b;">Timeline: ${data.timeline}</p>` : ''}
           </div>
-
-          ${data.deliverables && data.deliverables.length > 0 ? `
-          <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h4 style="margin-top: 0; color: #059669;">What's Included:</h4>
-            <ul class="deliverables">
-              ${data.deliverables.map(item => `<li>${item}</li>`).join('')}
-            </ul>
-          </div>
-          ` : ''}
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${quoteUrl}" class="cta-button">
-              📄 Review Full Quote & Respond
+              📊 VIEW FULL QUOTE
             </a>
           </div>
 
-          <div style="background: #eff6ff; border: 1px solid #3b82f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <h4 style="color: #1e40af; margin: 0 0 10px 0;">Next Steps:</h4>
-            <ol style="color: #1e40af; margin: 0; padding-left: 20px;">
-              <li>Click the button above to review your complete quote</li>
-              <li>Create an account or sign in to your client portal</li>
-              <li>Accept, request changes, or ask questions</li>
-              <li>Once accepted, we'll begin work immediately</li>
-            </ol>
-          </div>
-
-          <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b;">
-            <p style="margin: 0; color: #92400e;">
-              <strong>Quote expires:</strong> ${new Date(data.expires_at).toLocaleDateString()}<br>
-              Please review and respond by this date to secure your spot.
-            </p>
+          <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; border-left: 4px solid #0284c7;">
+            <h4 style="margin: 0 0 10px 0; color: #0369a1;">What's Next?</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #0369a1;">
+              <li>Review the detailed quote and project scope</li>
+              <li>Ask any questions you might have</li>
+              <li>Approve the quote to begin your project</li>
+              <li>Request revisions if needed</li>
+            </ul>
           </div>
 
           <p>We're excited about the possibility of working with you and bringing your vision to life!</p>
@@ -506,15 +475,14 @@ async function sendQuoteResponseToPM(data: any) {
         }
         .content { padding: 30px; }
         .status-badge { 
-          display: inline-block; 
           background: ${currentStatus.bg}; 
           color: ${currentStatus.color}; 
-          padding: 8px 16px; 
-          border-radius: 20px; 
-          font-weight: 600; 
-          font-size: 14px; 
-          margin: 10px 0; 
-          text-transform: uppercase;
+          padding: 15px; 
+          border-radius: 8px; 
+          text-align: center; 
+          font-weight: bold; 
+          margin: 20px 0; 
+          font-size: 18px; 
         }
         .quote-details { 
           background: #f8fafc; 
@@ -523,18 +491,27 @@ async function sendQuoteResponseToPM(data: any) {
           margin: 20px 0; 
           border-left: 4px solid #2563eb; 
         }
+        .detail-row { 
+          display: flex; 
+          justify-content: space-between; 
+          margin: 10px 0; 
+          padding: 8px 0; 
+          border-bottom: 1px solid #e2e8f0; 
+        }
+        .detail-label { font-weight: bold; color: #64748b; }
+        .detail-value { color: #1e293b; }
         .cta-button { 
           display: inline-block; 
-          background: linear-gradient(135deg, #2563eb, #059669); 
-          color: white !important; 
+          background: #2563eb; 
+          color: white; 
           padding: 15px 30px; 
-          border-radius: 8px; 
           text-decoration: none; 
-          font-weight: 600; 
-          margin: 20px 0; 
+          border-radius: 8px; 
+          font-weight: bold; 
+          font-size: 16px; 
         }
         .footer { 
-          background: #f1f5f9; 
+          background: #f8fafc; 
           padding: 20px; 
           text-align: center; 
           color: #64748b; 
@@ -546,42 +523,53 @@ async function sendQuoteResponseToPM(data: any) {
       <div class="container">
         <div class="header">
           <h1 style="margin: 0; font-size: 28px;">
-            Quote ${data.action === 'approved' ? 'Approved! 🎉' : 
-                  data.action === 'revision_requested' ? 'Revision Requested 📝' : 'Declined 📋'}
+            ${data.action === 'approved' ? '✅ QUOTE APPROVED!' : 
+              data.action === 'revision_requested' ? '🔄 REVISION REQUESTED' : '❌ QUOTE DECLINED'}
           </h1>
-          <p style="margin: 10px 0 0 0; opacity: 0.9;">Client Response Received</p>
+          <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Client response received</p>
         </div>
 
         <div class="content">
-          <div style="text-align: center; margin: 20px 0;">
-            <span class="status-badge">${data.action.replace('_', ' ')}</span>
+          <div class="status-badge">
+            Quote Status: ${data.action.replace('_', ' ').toUpperCase()}
           </div>
 
+          <h3>📋 Quote Details:</h3>
           <div class="quote-details">
-            <h3 style="margin-top: 0;">Quote Details</h3>
-            <p><strong>Client:</strong> ${data.client_name}</p>
-            <p><strong>Email:</strong> ${data.client_email}</p>
-            <p><strong>Service:</strong> ${data.service_type}</p>
-            <p><strong>Quote Value:</strong> ${data.currency} ${data.price.toLocaleString()}</p>
-            <p><strong>Action Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <div class="detail-row">
+              <span class="detail-label">Client:</span>
+              <span class="detail-value">${data.client_name}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Email:</span>
+              <span class="detail-value">${data.client_email}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Service:</span>
+              <span class="detail-value">${data.service_type}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Quote Amount:</span>
+              <span class="detail-value">${data.currency} ${data.price?.toLocaleString()}</span>
+            </div>
           </div>
 
           ${data.message ? `
-            <div style="background: #fffbeb; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <h4 style="color: #92400e; margin: 0 0 10px 0;">Client Message:</h4>
-              <p style="color: #92400e; margin: 0; font-style: italic;">"${data.message}"</p>
-            </div>
+          <div style="background: white; padding: 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin: 20px 0;">
+            <h4 style="margin: 0 0 10px 0; color: #1e293b;">Client Message:</h4>
+            <p style="margin: 0; color: #64748b;">${data.message}</p>
+          </div>
           ` : ''}
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${dashboardUrl}" class="cta-button">
-              🔧 Manage in Admin Dashboard
+              🎯 GO TO DASHBOARD
             </a>
           </div>
 
-          <div style="background: #f0f9ff; border: 1px solid #0ea5e9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <h4 style="color: #0c4a6e; margin: 0 0 10px 0;">Next Steps:</h4>
-            <ul style="color: #0c4a6e; margin: 0; padding-left: 20px;">
+          <div style="background: ${currentStatus.bg}; padding: 15px; border-radius: 8px; border-left: 4px solid ${currentStatus.header};">
+            <h4 style="margin: 0 0 10px 0; color: ${currentStatus.color};">Next Steps:</h4>
+            <ul style="margin: 0; padding-left: 20px; color: ${currentStatus.color};">
               ${data.action === 'approved' ? `
                 <li>Begin project work immediately</li>
                 <li>Set up project timeline and milestones</li>
