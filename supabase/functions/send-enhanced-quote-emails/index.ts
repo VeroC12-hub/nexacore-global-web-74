@@ -266,11 +266,10 @@ async function sendQuoteRequestToPM(data: any) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'NexaCore Projects <onboarding@resend.dev>',
+      from: 'NexaCore Projects <projects@nexacore-innovations.com>',
       to: ['projects@nexacore-innovations.com'],
       subject: `🚨 URGENT: New Quote Request - ${data.service_type} - ${data.full_name}`,
-      html: emailHtml,
-      reply_to: 'projects@nexacore-innovations.com'
+      html: emailHtml
     }),
   });
 
@@ -445,11 +444,10 @@ async function sendQuoteToClient(data: any) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'NexaCore Projects <onboarding@resend.dev>',
+      from: 'NexaCore Projects <projects@nexacore-innovations.com>',
       to: [data.client_email],
       subject: `Your Quote is Ready - ${data.service_type} Project`,
-      html: emailHtml,
-      reply_to: 'projects@nexacore-innovations.com'
+      html: emailHtml
     }),
   });
 
