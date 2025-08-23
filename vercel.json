@@ -1,5 +1,5 @@
 {
-  "name": "NexaCore-Innovations",
+  "name": "nexacore-innovations-website",
   "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
@@ -9,57 +9,6 @@
       "runtime": "nodejs18.x"
     }
   },
-  "rewrites": [
-    {
-      "source": "/api/quotes/(.*)/pdf",
-      "destination": "/api/quotes/[id]/pdf"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/quotes/:id",
-      "destination": "/quote/:id",
-      "permanent": true
-    },
-    {
-      "source": "/quote-review/:id", 
-      "destination": "/quote/:id",
-      "permanent": true
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Frame-Options",
-          "value": "DENY"
-        },
-        {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
-        },
-        {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
-        }
-      ]
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/quotes/([^/]+)/pdf",
-      "dest": "/api/quotes/[id]/pdf?id=$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
-  ],
   "env": {
     "NODE_ENV": "production"
   }
