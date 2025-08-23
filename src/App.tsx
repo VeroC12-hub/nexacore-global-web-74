@@ -26,31 +26,38 @@ import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation";
 import AIAssistant from "./components/AIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
-// UI Component imports with fallbacks
-let Toaster: any = ({ ...props }) => null;
-let Sonner: any = ({ ...props }) => null;
-let TooltipProvider: any = ({ children, ...props }: any) => <>{children}</>;
+// UI Component imports with proper error handling
+import { Toaster as ToasterComponent } from "./components/ui/toaster";
+import { Toaster as SonnerComponent } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
 
-try {
-  const toasterModule = await import("./components/ui/toaster");
-  Toaster = toasterModule.Toaster;
-} catch (error) {
-  console.warn("Toaster component not found, using fallback");
-}
+// Fallback components for UI elements
+const SafeToaster = ({ ...props }) => {
+  try {
+    return <ToasterComponent {...props} />;
+  } catch (error) {
+    console.warn("Toaster component failed to render:", error);
+    return null;
+  }
+};
 
-try {
-  const sonnerModule = await import("./components/ui/sonner");
-  Sonner = sonnerModule.Toaster;
-} catch (error) {
-  console.warn("Sonner component not found, using fallback");
-}
+const SafeSonner = ({ ...props }) => {
+  try {
+    return <SonnerComponent {...props} />;
+  } catch (error) {
+    console.warn("Sonner component failed to render:", error);
+    return null;
+  }
+};
 
-try {
-  const tooltipModule = await import("./components/ui/tooltip");
-  TooltipProvider = tooltipModule.TooltipProvider;
-} catch (error) {
-  console.warn("TooltipProvider component not found, using fallback");
-}
+const SafeTooltipProvider = ({ children, ...props }) => {
+  try {
+    return <TooltipProvider {...props}>{children}</TooltipProvider>;
+  } catch (error) {
+    console.warn("TooltipProvider failed to render:", error);
+    return <>{children}</>;
+  }
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -180,7 +187,7 @@ const App = () => {
       </div>
       
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
+        <SafeTooltipProvider>
           <AuthProvider>
             <BrowserRouter>
               <Routes>
@@ -234,11 +241,11 @@ const App = () => {
               {/* Global Components */}
               <AIAssistant />
               <CookieConsent />
-              <Toaster />
-              <Sonner />
+              <SafeToaster />
+              <SafeSonner />
             </BrowserRouter>
           </AuthProvider>
-        </TooltipProvider>
+        </SafeTooltipProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
