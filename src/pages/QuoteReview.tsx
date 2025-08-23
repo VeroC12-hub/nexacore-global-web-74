@@ -38,6 +38,8 @@ interface Quote {
   created_at: string;
   expires_at: string;
   quote_request_id: string;
+  sent_at?: string;
+  approved_at?: string;
 }
 
 interface QuoteRequest {
@@ -50,16 +52,22 @@ interface QuoteRequest {
   description: string;
 }
 
+interface User {
+  id: string;
+  email?: string;
+}
+
 const QuoteReview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [quote, setQuote] = useState<Quote | null>(null);
   const [quoteRequest, setQuoteRequest] = useState<QuoteRequest | null>(null);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [action, setAction] = useState<'approved' | 'revision_requested' | 'declined' | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
 
   useEffect(() => {
     loadQuoteData();
@@ -73,14 +81,23 @@ const QuoteReview = () => {
     }
 
     try {
-      // Load quote data
+      // Load quote data first (before authentication check)
       const { data: quoteData, error: quoteError } = await supabase
         .from('quotes')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (quoteError) throw quoteError;
+      if (quoteError) {
+        console.error('Quote fetch error:', quoteError);
+        
+        if (quoteError.code === 'PGRST116') {
+          toast.error('Quote not found');
+          navigate('/');
+          return;
+        }
+        throw quoteError;
+      }
 
       if (!quoteData) {
         toast.error('Quote not found');
@@ -89,8 +106,8 @@ const QuoteReview = () => {
       }
 
       // Check if quote is expired
-      if (new Date(quoteData.expires_at) < new Date()) {
-        toast.error('This quote has expired');
+      if (quoteData.expires_at && new Date(quoteData.expires_at) < new Date()) {
+        toast.warning('This quote has expired');
       }
 
       setQuote(quoteData);
@@ -108,6 +125,9 @@ const QuoteReview = () => {
         }
       }
 
+      // Check authentication status (but don't block viewing)
+      await checkAuthStatus();
+
     } catch (error) {
       console.error('Error loading quote:', error);
       toast.error('Failed to load quote data');
@@ -117,10 +137,34 @@ const QuoteReview = () => {
     }
   };
 
-  const checkAuthAndRedirect = async () => {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error || !user) {
+  const checkAuthStatus = async () => {
+    try {
+      const { data: { user: authUser }, error } = await supabase.auth.getUser();
+      
+      if (error) {
+        console.warn('Auth check error:', error);
+        setAuthRequired(true);
+        return;
+      }
+
+      if (authUser) {
+        setUser(authUser);
+        // Optional: Check if user email matches quote email
+        if (quote && authUser.email !== quote.client_email) {
+          console.warn('User email does not match quote client email');
+          // Don't block access, but note for actions
+        }
+      } else {
+        setAuthRequired(true);
+      }
+    } catch (error) {
+      console.error('Auth status check failed:', error);
+      setAuthRequired(true);
+    }
+  };
+
+  const requireAuthForAction = () => {
+    if (!user) {
       // Redirect to auth with return URL
       const returnUrl = encodeURIComponent(window.location.pathname);
       navigate(`/auth?redirect=${returnUrl}`);
@@ -129,20 +173,20 @@ const QuoteReview = () => {
 
     // Check if user email matches quote client email
     if (quote && user.email !== quote.client_email) {
-      toast.error('You can only view quotes sent to your email address');
-      navigate('/client-portal');
+      toast.error('You can only respond to quotes sent to your email address');
       return false;
     }
 
-    setUser(user);
     return true;
   };
 
   const handleQuoteAction = async (actionType: 'approved' | 'revision_requested' | 'declined') => {
-    // Check authentication first
-    const isAuthenticated = await checkAuthAndRedirect();
-    if (!isAuthenticated) return;
+    // Check authentication for actions
+    if (!requireAuthForAction()) {
+      return;
+    }
 
+    // Validation
     if (actionType === 'revision_requested' && !message.trim()) {
       toast.error('Please provide details about the changes you would like');
       return;
@@ -156,35 +200,46 @@ const QuoteReview = () => {
     setSubmitting(true);
     try {
       // Update quote status
+      const updateData = {
+        status: actionType,
+        updated_at: new Date().toISOString()
+      };
+
+      // Add approved_at timestamp for approved quotes
+      if (actionType === 'approved') {
+        updateData.approved_at = new Date().toISOString();
+      }
+
       const { error: updateError } = await supabase
         .from('quotes')
-        .update({ 
-          status: actionType,
-          [actionType === 'approved' ? 'approved_at' : 'updated_at']: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', quote!.id);
 
       if (updateError) throw updateError;
 
       // Send notification email to project manager
-      const { error: emailError } = await supabase.functions.invoke('send-enhanced-quote-emails', {
-        body: {
-          type: 'quote_response_to_pm',
-          data: {
-            action: actionType,
-            quote_id: quote!.id,
-            client_name: quoteRequest?.full_name || user?.email || 'Client',
-            client_email: quote!.client_email,
-            service_type: quote!.service_type,
-            price: quote!.price,
-            currency: quote!.currency,
-            message: message.trim() || null
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-enhanced-quote-emails', {
+          body: {
+            type: 'quote_response_to_pm',
+            data: {
+              action: actionType,
+              quote_id: quote!.id,
+              client_name: quoteRequest?.full_name || user?.email || 'Client',
+              client_email: quote!.client_email,
+              service_type: quote!.service_type,
+              price: quote!.price,
+              currency: quote!.currency,
+              message: message.trim() || null
+            }
           }
-        }
-      });
+        });
 
-      if (emailError) {
-        console.warn('Email notification failed:', emailError);
+        if (emailError) {
+          console.warn('Email notification failed:', emailError);
+        }
+      } catch (emailError) {
+        console.warn('Email notification error:', emailError);
       }
 
       // Show success message
@@ -200,10 +255,15 @@ const QuoteReview = () => {
       setQuote(prev => prev ? { ...prev, status: actionType } : null);
       setAction(actionType);
 
-      // Redirect to client portal after a delay
-      setTimeout(() => {
-        navigate('/client-portal');
-      }, 3000);
+      // Clear message
+      setMessage('');
+
+      // Redirect to client portal after a delay if user is authenticated
+      if (user) {
+        setTimeout(() => {
+          navigate('/client-portal');
+        }, 3000);
+      }
 
     } catch (error) {
       console.error('Error updating quote:', error);
@@ -240,8 +300,9 @@ const QuoteReview = () => {
     );
   }
 
-  const isExpired = new Date(quote.expires_at) < new Date();
+  const isExpired = quote.expires_at && new Date(quote.expires_at) < new Date();
   const isResponsed = ['approved', 'revision_requested', 'declined'].includes(quote.status);
+  const canRespond = quote.status === 'sent' && !isExpired;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
@@ -254,11 +315,11 @@ const QuoteReview = () => {
             <div className="flex items-center justify-center mb-4">
               <Button 
                 variant="ghost" 
-                onClick={() => navigate('/client-portal')}
+                onClick={() => user ? navigate('/client-portal') : navigate('/')}
                 className="mr-4"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Portal
+                {user ? 'Back to Portal' : 'Back to Home'}
               </Button>
             </div>
             
@@ -298,6 +359,7 @@ const QuoteReview = () => {
       </section>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        {/* Success Message */}
         {isResponsed && (
           <Card className="p-6 mb-8 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
             <div className="flex items-center">
@@ -318,6 +380,30 @@ const QuoteReview = () => {
           </Card>
         )}
 
+        {/* Authentication Required Warning */}
+        {authRequired && canRespond && (
+          <Card className="p-6 mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            <div className="flex items-center">
+              <Shield className="w-6 h-6 text-blue-600 mr-3" />
+              <div>
+                <h3 className="text-lg font-semibold text-blue-800">Sign In Required</h3>
+                <p className="text-blue-700 mb-3">
+                  To respond to this quote, please sign in with the email address it was sent to.
+                </p>
+                <Button 
+                  onClick={() => {
+                    const returnUrl = encodeURIComponent(window.location.pathname);
+                    navigate(`/auth?redirect=${returnUrl}`);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Sign In to Respond
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         <div className="space-y-8">
           {/* Quote Overview */}
           <Card className="p-6">
@@ -328,10 +414,10 @@ const QuoteReview = () => {
               </h2>
               <div className="text-right">
                 <div className="text-3xl font-bold text-blue-600">
-                  {quote.currency} {quote.price.toLocaleString()}
+                  {quote.currency || '$'} {(quote.price || 0).toLocaleString()}
                 </div>
                 <div className="text-sm text-gray-500">
-                  Expires: {new Date(quote.expires_at).toLocaleDateString()}
+                  {quote.expires_at ? `Expires: ${new Date(quote.expires_at).toLocaleDateString()}` : 'No expiration set'}
                 </div>
               </div>
             </div>
@@ -339,14 +425,14 @@ const QuoteReview = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <h3 className="font-semibold text-gray-700 mb-2">Service Type</h3>
-                <Badge variant="secondary">{quote.service_type}</Badge>
+                <Badge variant="secondary">{quote.service_type || 'Not specified'}</Badge>
               </div>
               
               <div>
                 <h3 className="font-semibold text-gray-700 mb-2">Timeline</h3>
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                  <span>{quote.timeline}</span>
+                  <span>{quote.timeline || 'To be determined'}</span>
                 </div>
               </div>
             </div>
@@ -354,7 +440,7 @@ const QuoteReview = () => {
             <div className="mb-6">
               <h3 className="font-semibold text-gray-700 mb-3">Project Scope</h3>
               <div className="bg-gray-50 p-4 rounded-lg border">
-                <p className="whitespace-pre-wrap text-gray-700">{quote.scope}</p>
+                <p className="whitespace-pre-wrap text-gray-700">{quote.scope || 'Project scope will be defined upon discussion.'}</p>
               </div>
             </div>
 
@@ -365,7 +451,7 @@ const QuoteReview = () => {
                   Deliverables
                 </h3>
                 <ul className="space-y-2">
-                  {quote.deliverables.map((item, index) => (
+                  {quote.deliverables.filter(item => item && item.trim()).map((item, index) => (
                     <li key={index} className="flex items-center">
                       <CheckCircle className="w-4 h-4 text-green-500 mr-3 flex-shrink-0" />
                       <span className="text-gray-700">{item}</span>
@@ -378,7 +464,7 @@ const QuoteReview = () => {
             <div>
               <h3 className="font-semibold text-gray-700 mb-3">Terms & Conditions</h3>
               <div className="bg-gray-50 p-4 rounded-lg border text-sm">
-                <pre className="whitespace-pre-wrap text-gray-600 font-sans">{quote.terms}</pre>
+                <pre className="whitespace-pre-wrap text-gray-600 font-sans">{quote.terms || 'Standard terms and conditions apply.'}</pre>
               </div>
             </div>
           </Card>
@@ -417,7 +503,7 @@ const QuoteReview = () => {
           )}
 
           {/* Action Buttons */}
-          {quote.status === 'sent' && !isExpired && (
+          {canRespond && (
             <Card className="p-6">
               <h2 className="text-xl font-bold mb-4">Respond to Quote</h2>
               
@@ -433,7 +519,7 @@ const QuoteReview = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   onClick={() => handleQuoteAction('approved')}
-                  disabled={submitting}
+                  disabled={submitting || authRequired}
                   className="flex-1 bg-green-600 hover:bg-green-700"
                 >
                   {submitting ? (
@@ -446,7 +532,7 @@ const QuoteReview = () => {
                 
                 <Button
                   onClick={() => handleQuoteAction('revision_requested')}
-                  disabled={submitting || !message.trim()}
+                  disabled={submitting || !message.trim() || authRequired}
                   variant="outline"
                   className="flex-1"
                 >
@@ -460,7 +546,7 @@ const QuoteReview = () => {
                 
                 <Button
                   onClick={() => handleQuoteAction('declined')}
-                  disabled={submitting || !message.trim()}
+                  disabled={submitting || !message.trim() || authRequired}
                   variant="destructive"
                   className="flex-1"
                 >
@@ -485,6 +571,7 @@ const QuoteReview = () => {
             </Card>
           )}
 
+          {/* Expired Quote Message */}
           {isExpired && quote.status === 'sent' && (
             <Card className="p-6 bg-red-50 border-red-200">
               <div className="flex items-center">
@@ -495,6 +582,11 @@ const QuoteReview = () => {
                     This quote expired on {new Date(quote.expires_at).toLocaleDateString()}. 
                     Please contact us for a new quote.
                   </p>
+                  <div className="mt-3">
+                    <Button variant="outline" onClick={() => navigate('/contact')}>
+                      Request New Quote
+                    </Button>
+                  </div>
                 </div>
               </div>
             </Card>
