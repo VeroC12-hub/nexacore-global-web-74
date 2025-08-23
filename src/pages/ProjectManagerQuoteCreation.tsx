@@ -1,34 +1,24 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { 
-  ArrowRight, 
-  DollarSign, 
-  FileText, 
-  CheckCircle,
-  User,
-  Mail,
-  Phone,
-  Globe,
-  Calendar,
-  Package,
-  AlertCircle,
-  Send,
-  Save,
-  Eye,
-  Clock,
-  Building
-} from "lucide-react";
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { 
+  User, Mail, Phone, MapPin, Building2, Calendar, DollarSign, 
+  FileText, Clock, Save, Send, Plus, Trash2, AlertTriangle,
+  CheckCircle, ArrowLeft, Eye, Download
+} from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+// ADD THIS IMPORT
+import { getQuotePDFUrl } from '@/utils/urlHelpers';
 
 interface QuoteRequest {
   id: string;
@@ -56,104 +46,46 @@ interface QuoteData {
   expires_in_days: number;
 }
 
-const ProjectManagerQuoteCreation = () => {
-  const [searchParams] = useSearchParams();
+const ProjectManagerQuoteCreation: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [quoteRequest, setQuoteRequest] = useState<QuoteRequest | null>(null);
-  const [user, setUser] = useState(null);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-
-  // Quote form state
+  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null); // ADD THIS LINE
+  
   const [quoteData, setQuoteData] = useState<QuoteData>({
     scope: '',
     price: 0,
     currency: 'USD',
     timeline: '',
     deliverables: [''],
-    terms: `Payment Terms:
-- 50% upfront deposit required to begin work
-- Remaining 50% due upon project completion
-- Payment accepted via bank transfer, PayPal, or Stripe
-- Net 15 payment terms for approved corporate clients
-
-Scope & Revisions:
-- Up to 3 rounds of revisions included in quoted price
-- Additional revisions available at $150/hour
-- Scope changes may result in timeline and cost adjustments
-
-Delivery & Timeline:
-- Project timeline begins after deposit is received
-- All deliverables provided digitally unless otherwise specified
-- 30-day support period included for bug fixes and minor adjustments
-
-Legal:
-- Client retains full rights to final deliverables upon final payment
-- NexaCore retains rights to use project in portfolio (with client approval)
-- Confidentiality agreement available upon request
-
-Cancellation:
-- Project may be cancelled with 48-hour notice
-- Completed work will be billed at hourly rate
-- Refunds calculated based on work completed`,
-    expires_in_days: 30
+    terms: 'Payment terms: 50% deposit required to begin work, 50% upon project completion. All deliverables will be provided as outlined in the scope. Project timeline begins after deposit receipt and final approval of requirements.',
+    expires_in_days: 14
   });
 
-  // Get quote request ID from URL
-  const quoteRequestId = searchParams.get('request_id');
-
   useEffect(() => {
-    checkAuthAndLoadData();
-  }, [quoteRequestId]);
-
-  const checkAuthAndLoadData = async () => {
-    try {
-      // Check if user is authenticated
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      
-      if (authError || !user) {
-        toast.error('Please sign in to access this page');
-        navigate('/auth?redirect=' + encodeURIComponent(window.location.pathname + window.location.search));
-        return;
-      }
-
-      setUser(user);
-
-      // Check if user has permission (admin, staff, or project_manager)
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError || !profile || !['admin', 'staff', 'project_manager'].includes(profile.role)) {
-        toast.error('You do not have permission to access this page');
-        navigate('/');
-        return;
-      }
-
-      setIsAuthorized(true);
-
-      // Load quote request data
-      if (quoteRequestId) {
-        await loadQuoteRequest(quoteRequestId);
-      } else {
-        toast.error('No quote request specified');
-        navigate('/admin');
-      }
-
-    } catch (error) {
-      console.error('Error checking auth:', error);
-      toast.error('Authentication error');
-      navigate('/');
-    } finally {
-      setLoading(false);
+    if (!user) {
+      navigate('/auth');
+      return;
     }
-  };
+    
+    loadQuoteRequest();
+  }, [user, location.search]);
 
-  const loadQuoteRequest = async (requestId: string) => {
+  const loadQuoteRequest = async () => {
     try {
+      const params = new URLSearchParams(location.search);
+      const requestId = params.get('request_id');
+      
+      if (!requestId) {
+        toast.error('Quote request ID is required');
+        navigate('/admin');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('quote_requests')
         .select('*')
@@ -161,7 +93,7 @@ Cancellation:
         .single();
 
       if (error) throw error;
-
+      
       if (!data) {
         toast.error('Quote request not found');
         navigate('/admin');
@@ -169,18 +101,42 @@ Cancellation:
       }
 
       setQuoteRequest(data);
+      
+      // Check if there's already a quote for this request
+      const { data: existingQuote } = await supabase
+        .from('quotes')
+        .select('*')
+        .eq('quote_request_id', requestId)
+        .single();
 
-      // Pre-populate quote data based on request
-      setQuoteData(prev => ({
-        ...prev,
-        scope: `${data.service_type} - ${data.tier || 'Custom'} Package\n\nProject Overview:\n${data.description}\n\nDeliverables will include:\n- `,
-        price: data.budget_estimate || 0,
-        timeline: data.timeline || '2-4 weeks'
-      }));
+      if (existingQuote) {
+        setSavedQuoteId(existingQuote.id);
+        // Pre-populate with existing quote data
+        setQuoteData({
+          scope: existingQuote.scope || '',
+          price: existingQuote.price || 0,
+          currency: existingQuote.currency || 'USD',
+          timeline: existingQuote.timeline || '',
+          deliverables: existingQuote.deliverables || [''],
+          terms: existingQuote.terms || quoteData.terms,
+          expires_in_days: existingQuote.expires_at ? 
+            Math.max(1, Math.ceil((new Date(existingQuote.expires_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000))) : 14
+        });
+      } else {
+        // Pre-populate quote data based on request
+        setQuoteData(prev => ({
+          ...prev,
+          timeline: data.timeline || '',
+          scope: `${data.service_type} project as described: ${data.description}`
+        }));
+      }
 
     } catch (error) {
       console.error('Error loading quote request:', error);
       toast.error('Failed to load quote request');
+      navigate('/admin');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -194,7 +150,7 @@ Cancellation:
   const updateDeliverable = (index: number, value: string) => {
     setQuoteData(prev => ({
       ...prev,
-      deliverables: prev.deliverables.map((item, i) => i === index ? value : item)
+      deliverables: prev.deliverables.map((d, i) => i === index ? value : d)
     }));
   };
 
@@ -207,32 +163,56 @@ Cancellation:
     }
   };
 
-  const saveQuoteDraft = async () => {
+  const saveDraft = async () => {
     if (!quoteRequest || !user) return;
 
     setSubmitting(true);
     try {
+      // FIXED: Proper expires_at calculation
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + quoteData.expires_in_days);
+      
+      console.log('Saving quote with expires_at:', expiresAt.toISOString());
 
-      const { data, error } = await supabase
-        .from('quotes')
-        .insert({
-          quote_request_id: quoteRequest.id,
-          client_email: quoteRequest.email,
-          service_type: quoteRequest.service_type,
-          scope: quoteData.scope,
-          price: quoteData.price,
-          currency: quoteData.currency,
-          timeline: quoteData.timeline,
-          deliverables: quoteData.deliverables.filter(d => d.trim() !== ''),
-          terms: quoteData.terms,
-          status: 'draft',
-          created_by: user.id,
-          expires_at: expiresAt.toISOString()
-        })
-        .select()
-        .single();
+      const quotePayload = {
+        quote_request_id: quoteRequest.id,
+        client_email: quoteRequest.email,
+        service_type: quoteRequest.service_type,
+        scope: quoteData.scope,
+        price: quoteData.price,
+        currency: quoteData.currency,
+        timeline: quoteData.timeline,
+        deliverables: quoteData.deliverables.filter(d => d.trim() !== ''),
+        terms: quoteData.terms,
+        status: 'draft',
+        created_by: user.id,
+        expires_at: expiresAt.toISOString(), // FIXED: Proper date setting
+        updated_at: new Date().toISOString()
+      };
+
+      let data, error;
+
+      if (savedQuoteId) {
+        // Update existing quote
+        const result = await supabase
+          .from('quotes')
+          .update(quotePayload)
+          .eq('id', savedQuoteId)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+      } else {
+        // Create new quote
+        const result = await supabase
+          .from('quotes')
+          .insert(quotePayload)
+          .select()
+          .single();
+        data = result.data;
+        error = result.error;
+        if (data) setSavedQuoteId(data.id);
+      }
 
       if (error) throw error;
 
@@ -258,31 +238,63 @@ Cancellation:
 
     setSubmitting(true);
     try {
-      // First save/update the quote
+      // FIXED: Proper expires_at calculation with validation
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + quoteData.expires_in_days);
+      
+      // Ensure the date is valid
+      if (isNaN(expiresAt.getTime())) {
+        throw new Error('Invalid expiration date calculation');
+      }
+      
+      console.log('Creating quote with proper expires_at:', {
+        expires_in_days: quoteData.expires_in_days,
+        calculated_date: expiresAt.toISOString(),
+        timestamp: expiresAt.getTime()
+      });
 
-      const { data: quote, error: quoteError } = await supabase
-        .from('quotes')
-        .insert({
-          quote_request_id: quoteRequest.id,
-          client_email: quoteRequest.email,
-          service_type: quoteRequest.service_type,
-          scope: quoteData.scope,
-          price: quoteData.price,
-          currency: quoteData.currency,
-          timeline: quoteData.timeline,
-          deliverables: quoteData.deliverables.filter(d => d.trim() !== ''),
-          terms: quoteData.terms,
-          status: 'sent',
-          created_by: user.id,
-          expires_at: expiresAt.toISOString(),
-          sent_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+      const quotePayload = {
+        quote_request_id: quoteRequest.id,
+        client_email: quoteRequest.email,
+        service_type: quoteRequest.service_type,
+        scope: quoteData.scope,
+        price: quoteData.price,
+        currency: quoteData.currency,
+        timeline: quoteData.timeline,
+        deliverables: quoteData.deliverables.filter(d => d.trim() !== ''),
+        terms: quoteData.terms,
+        status: 'sent',
+        created_by: user.id,
+        expires_at: expiresAt.toISOString(), // FIXED: Proper date with validation
+        sent_at: new Date().toISOString()
+      };
+
+      let quote, quoteError;
+
+      if (savedQuoteId) {
+        // Update existing quote and change status to sent
+        const result = await supabase
+          .from('quotes')
+          .update(quotePayload)
+          .eq('id', savedQuoteId)
+          .select()
+          .single();
+        quote = result.data;
+        quoteError = result.error;
+      } else {
+        // Create new quote
+        const result = await supabase
+          .from('quotes')
+          .insert(quotePayload)
+          .select()
+          .single();
+        quote = result.data;
+        quoteError = result.error;
+      }
 
       if (quoteError) throw quoteError;
+
+      console.log('Quote created/updated successfully:', quote);
 
       // Send email to client with quote
       const { error: emailError } = await supabase.functions.invoke('send-enhanced-quote-emails', {
@@ -299,7 +311,7 @@ Cancellation:
             scope: quoteData.scope,
             deliverables: quoteData.deliverables.filter(d => d.trim() !== ''),
             terms: quoteData.terms,
-            expires_at: expiresAt.toISOString()
+            expires_at: expiresAt.toISOString() // FIXED: Send proper expiration date
           }
         }
       });
@@ -317,7 +329,10 @@ Cancellation:
         .update({ status: 'quoted' })
         .eq('id', quoteRequest.id);
 
-      // Redirect to admin dashboard after success
+      // Update local state
+      setSavedQuoteId(quote.id);
+
+      // Redirect to admin dashboard
       setTimeout(() => {
         navigate('/admin');
       }, 2000);
@@ -327,6 +342,34 @@ Cancellation:
       toast.error('Failed to send quote');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // UPDATED: Fix the preview function
+  const previewQuote = async () => {
+    if (!quoteRequest) return;
+
+    try {
+      // First save as draft to get a quote ID if we don't have one
+      if (!savedQuoteId) {
+        const savedQuote = await saveDraft();
+        if (!savedQuote) {
+          toast.error('Please save the quote first');
+          return;
+        }
+      }
+
+      // Use the PDF URL helper to get the correct URL
+      const pdfUrl = getQuotePDFUrl(savedQuoteId!);
+      console.log('Opening PDF preview:', pdfUrl);
+      
+      // Open PDF in new window
+      window.open(pdfUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+      
+      toast.success('PDF preview opened in new window');
+    } catch (error) {
+      console.error('Error opening PDF preview:', error);
+      toast.error('Failed to generate preview. Please save the quote first.');
     }
   };
 
@@ -341,15 +384,16 @@ Cancellation:
     );
   }
 
-  if (!isAuthorized || !quoteRequest) {
+  if (!quoteRequest) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
         <Navbar />
         <div className="flex items-center justify-center min-h-screen">
-          <Card className="p-8 text-center">
-            <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Access Denied</h2>
-            <p className="text-gray-600">You do not have permission to access this page.</p>
+          <Card className="p-8 text-center max-w-md">
+            <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-bold mb-2">Quote Request Not Found</h2>
+            <p className="text-gray-600 mb-4">The requested quote could not be loaded.</p>
+            <Button onClick={() => navigate('/admin')}>Return to Dashboard</Button>
           </Card>
         </div>
       </div>
@@ -362,20 +406,32 @@ Cancellation:
       
       {/* Header Section */}
       <section className="pt-24 pb-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
-            <Badge className="mb-4 bg-gradient-to-r from-blue-100 to-teal-100 text-blue-700 border border-blue-200">
-              <FileText className="w-4 h-4 mr-2" />
-              Quote Creation
-            </Badge>
+            <div className="flex items-center justify-center mb-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate('/admin')}
+                className="mr-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+            </div>
+            
             <h1 className="text-3xl lg:text-4xl font-bold mb-4">
               <span className="bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-                Create Quote
+                {savedQuoteId ? 'Edit Quote' : 'Create Quote'}
               </span>
             </h1>
             <p className="text-lg text-gray-600">
               Review the client request and create a detailed quote
             </p>
+            {savedQuoteId && (
+              <p className="text-sm text-gray-500 mt-2">
+                Quote ID: {savedQuoteId}
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -425,7 +481,7 @@ Cancellation:
                     <div>
                       <Label className="text-sm font-medium text-gray-600">Company</Label>
                       <div className="flex items-center mt-1">
-                        <Building className="w-4 h-4 text-gray-400 mr-2" />
+                        <Building2 className="w-4 h-4 text-gray-400 mr-2" />
                         <span className="font-medium">{quoteRequest.company}</span>
                       </div>
                     </div>
@@ -433,67 +489,53 @@ Cancellation:
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {quoteRequest.country && (
                 <div>
-                  <Label className="text-sm font-medium text-gray-600">Service Type</Label>
-                  <div className="mt-1">
-                    <Badge variant="secondary">{quoteRequest.service_type}</Badge>
+                  <Label className="text-sm font-medium text-gray-600">Country</Label>
+                  <div className="flex items-center mt-1">
+                    <MapPin className="w-4 h-4 text-gray-400 mr-2" />
+                    <span className="font-medium">{quoteRequest.country}</span>
                   </div>
                 </div>
-                
-                {quoteRequest.tier && (
-                  <div>
-                    <Label className="text-sm font-medium text-gray-600">Tier</Label>
-                    <div className="mt-1">
-                      <Badge variant="outline">{quoteRequest.tier}</Badge>
-                    </div>
-                  </div>
-                )}
+              )}
+
+              <div>
+                <Label className="text-sm font-medium text-gray-600">Service Type</Label>
+                <Badge variant="secondary" className="mt-1">{quoteRequest.service_type}</Badge>
               </div>
 
-              {(quoteRequest.budget_estimate || quoteRequest.country) && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {quoteRequest.budget_estimate && (
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">Budget Estimate</Label>
-                      <div className="flex items-center mt-1">
-                        <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="font-medium">${quoteRequest.budget_estimate.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {quoteRequest.country && (
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">Country</Label>
-                      <div className="flex items-center mt-1">
-                        <Globe className="w-4 h-4 text-gray-400 mr-2" />
-                        <span className="font-medium">{quoteRequest.country}</span>
-                      </div>
-                    </div>
-                  )}
+              {quoteRequest.budget_estimate && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Client Budget Estimate</Label>
+                  <div className="flex items-center mt-1">
+                    <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
+                    <span className="font-medium">${quoteRequest.budget_estimate.toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+
+              {quoteRequest.timeline && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-600">Requested Timeline</Label>
+                  <div className="flex items-center mt-1">
+                    <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                    <span className="font-medium">{quoteRequest.timeline}</span>
+                  </div>
                 </div>
               )}
 
               <div>
                 <Label className="text-sm font-medium text-gray-600">Project Description</Label>
-                <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{quoteRequest.description}</p>
+                <div className="mt-1 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-700">{quoteRequest.description}</p>
                 </div>
               </div>
 
               <div>
                 <Label className="text-sm font-medium text-gray-600">Request Date</Label>
-                <div className="flex items-center mt-1">
-                  <Calendar className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="font-medium">
-                    {new Date(quoteRequest.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </span>
-                </div>
+                <p className="text-sm text-gray-500">
+                  {new Date(quoteRequest.created_at).toLocaleDateString()}
+                </p>
               </div>
             </div>
           </Card>
@@ -502,40 +544,28 @@ Cancellation:
           <Card className="p-6">
             <h3 className="text-xl font-bold mb-6 flex items-center">
               <FileText className="w-5 h-5 mr-2 text-blue-600" />
-              Create Quote
+              {savedQuoteId ? 'Edit Quote' : 'Create Quote'}
             </h3>
 
             <div className="space-y-6">
-              {/* Scope */}
-              <div>
-                <Label htmlFor="scope">Project Scope *</Label>
-                <Textarea
-                  id="scope"
-                  value={quoteData.scope}
-                  onChange={(e) => setQuoteData(prev => ({ ...prev, scope: e.target.value }))}
-                  className="mt-2 min-h-[200px]"
-                  placeholder="Detailed description of what will be delivered..."
-                />
-              </div>
-
-              {/* Price and Currency */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
+              {/* Pricing Section */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
                   <Label htmlFor="price">Price *</Label>
                   <Input
                     id="price"
                     type="number"
-                    value={quoteData.price}
-                    onChange={(e) => setQuoteData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                    className="mt-2"
-                    min="0"
-                    step="0.01"
+                    value={quoteData.price || ''}
+                    onChange={(e) => setQuoteData(prev => ({ ...prev, price: Number(e.target.value) }))}
+                    placeholder="5000"
+                    className="mt-1"
                   />
                 </div>
+                
                 <div>
                   <Label htmlFor="currency">Currency</Label>
                   <Select value={quoteData.currency} onValueChange={(value) => setQuoteData(prev => ({ ...prev, currency: value }))}>
-                    <SelectTrigger className="mt-2">
+                    <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -543,7 +573,6 @@ Cancellation:
                       <SelectItem value="EUR">EUR (€)</SelectItem>
                       <SelectItem value="GBP">GBP (£)</SelectItem>
                       <SelectItem value="CAD">CAD (C$)</SelectItem>
-                      <SelectItem value="AUD">AUD (A$)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -556,32 +585,63 @@ Cancellation:
                   id="timeline"
                   value={quoteData.timeline}
                   onChange={(e) => setQuoteData(prev => ({ ...prev, timeline: e.target.value }))}
-                  className="mt-2"
-                  placeholder="e.g., 2-3 weeks, 1 month, etc."
+                  placeholder="6-8 weeks"
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Expiration */}
+              <div>
+                <Label htmlFor="expires_in_days">Quote Valid For (Days)</Label>
+                <Input
+                  id="expires_in_days"
+                  type="number"
+                  value={quoteData.expires_in_days}
+                  onChange={(e) => setQuoteData(prev => ({ ...prev, expires_in_days: Number(e.target.value) }))}
+                  placeholder="14"
+                  className="mt-1"
+                  min="1"
+                  max="90"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Quote will expire on: {new Date(Date.now() + (quoteData.expires_in_days * 24 * 60 * 60 * 1000)).toLocaleDateString()}
+                </p>
+              </div>
+
+              {/* Project Scope */}
+              <div>
+                <Label htmlFor="scope">Project Scope *</Label>
+                <Textarea
+                  id="scope"
+                  value={quoteData.scope}
+                  onChange={(e) => setQuoteData(prev => ({ ...prev, scope: e.target.value }))}
+                  placeholder="Detailed description of the project scope, what will be delivered, and any limitations..."
+                  className="mt-1 min-h-[120px]"
                 />
               </div>
 
               {/* Deliverables */}
               <div>
                 <Label>Deliverables</Label>
-                <div className="space-y-3 mt-2">
+                <div className="space-y-2 mt-2">
                   {quoteData.deliverables.map((deliverable, index) => (
                     <div key={index} className="flex gap-2">
                       <Input
                         value={deliverable}
                         onChange={(e) => updateDeliverable(index, e.target.value)}
-                        placeholder="Enter deliverable item..."
+                        placeholder={`Deliverable ${index + 1}`}
                         className="flex-1"
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeDeliverable(index)}
-                        disabled={quoteData.deliverables.length === 1}
-                      >
-                        Remove
-                      </Button>
+                      {quoteData.deliverables.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeDeliverable(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   ))}
                   <Button
@@ -591,76 +651,69 @@ Cancellation:
                     onClick={addDeliverable}
                     className="w-full"
                   >
+                    <Plus className="w-4 h-4 mr-2" />
                     Add Deliverable
                   </Button>
                 </div>
               </div>
 
-              {/* Quote Expiration */}
-              <div>
-                <Label htmlFor="expires">Quote Expires In (Days)</Label>
-                <Input
-                  id="expires"
-                  type="number"
-                  value={quoteData.expires_in_days}
-                  onChange={(e) => setQuoteData(prev => ({ ...prev, expires_in_days: parseInt(e.target.value) || 30 }))}
-                  className="mt-2"
-                  min="1"
-                  max="90"
-                />
-              </div>
-
-              {/* Terms and Conditions */}
+              {/* Terms */}
               <div>
                 <Label htmlFor="terms">Terms & Conditions</Label>
                 <Textarea
                   id="terms"
                   value={quoteData.terms}
                   onChange={(e) => setQuoteData(prev => ({ ...prev, terms: e.target.value }))}
-                  className="mt-2 min-h-[200px]"
-                  placeholder="Payment terms, deliverables, revisions, etc."
+                  className="mt-1 min-h-[100px]"
                 />
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-4 mt-8">
-              <Button
-                variant="outline"
-                onClick={saveQuoteDraft}
-                disabled={submitting}
-                className="flex-1"
-              >
-                {submitting ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full mr-2"></div>
-                    Saving...
-                  </>
-                ) : (
-                  <>
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button
+                  onClick={previewQuote}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={!quoteData.scope.trim() || !quoteData.price}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  Preview PDF
+                </Button>
+                
+                <Button
+                  onClick={saveDraft}
+                  disabled={submitting}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  {submitting ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full mr-2" />
+                  ) : (
                     <Save className="w-4 h-4 mr-2" />
-                    Save Draft
-                  </>
-                )}
-              </Button>
-              
-              <Button
-                onClick={sendQuoteToClient}
-                disabled={submitting || !quoteData.scope.trim() || !quoteData.price || !quoteData.timeline.trim()}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
-              >
-                {submitting ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                    Sending...
-                  </>
-                ) : (
-                  <>
+                  )}
+                  Save Draft
+                </Button>
+                
+                <Button
+                  onClick={sendQuoteToClient}
+                  disabled={submitting || !quoteData.scope.trim() || !quoteData.price || !quoteData.timeline.trim()}
+                  className="flex-1"
+                >
+                  {submitting ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  ) : (
                     <Send className="w-4 h-4 mr-2" />
-                    Send to Client
-                  </>
-                )}
-              </Button>
+                  )}
+                  Send to Client
+                </Button>
+              </div>
+
+              <div className="text-center pt-4 border-t">
+                <p className="text-sm text-gray-500">
+                  <CheckCircle className="w-4 h-4 inline mr-1 text-green-500" />
+                  Quote will be sent via email with secure review link
+                </p>
+              </div>
             </div>
           </Card>
         </div>
