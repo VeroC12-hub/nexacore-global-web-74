@@ -152,8 +152,33 @@ const AdminErrorFallback = ({ error, resetErrorBoundary }: { error: Error; reset
 );
 
 const App = () => {
+  // Console log for debugging - confirm app is mounting
+  React.useEffect(() => {
+    console.log("🚀 NexaCore App mounted successfully at:", new Date().toISOString());
+    console.log("🎯 Environment:", process.env.NODE_ENV || 'unknown');
+    console.log("📱 User Agent:", navigator.userAgent);
+  }, []);
+
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
+      {/* Debug Banner - Visible indicator that app is rendering */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        backgroundColor: '#10B981',
+        color: 'white',
+        padding: '8px 16px',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+      }}>
+        ✅ NexaCore App is rendering - Debug Banner Active ({new Date().toLocaleTimeString()})
+      </div>
+      
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <AuthProvider>

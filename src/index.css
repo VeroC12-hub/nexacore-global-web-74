@@ -122,6 +122,24 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    /* Fallback styles if Tailwind fails to load */
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    min-height: 100vh;
+  }
+
+  /* Fallback for root element */
+  #root {
+    min-height: 100vh;
+    background-color: #ffffff;
+    color: #1f2937;
+  }
+
+  /* Ensure visibility of main content areas */
+  main, .main-content, [role="main"] {
+    background-color: #ffffff;
+    color: #1f2937;
+    min-height: 50vh;
   }
 }
 
