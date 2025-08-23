@@ -1,14 +1,12 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-// Fixed environment variable handling for API routes
 const supabase = createClient(
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!,
+  process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Enhanced CORS handling
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -31,8 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log('Generating PDF for quote:', quoteId);
 
-    // Enhanced error handling for database connection
-    if (!process.env.SUPABASE_URL && !process.env.VITE_SUPABASE_URL) {
+    if (!process.env.VITE_SUPABASE_URL) {
       console.error('Supabase URL not configured');
       return res.status(500).json({ error: 'Database configuration error' });
     }
@@ -42,7 +39,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(500).json({ error: 'Database authentication error' });
     }
 
-    // Fetch quote data from database with enhanced error handling
     const { data: quote, error: quoteError } = await supabase
       .from('quotes')
       .select(`
@@ -71,11 +67,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: 'Quote not found' });
     }
 
-    console.log('Quote data retrieved successfully:', { id: quote.id, status: quote.status });
-
     const pdfHtml = generateQuotePDF(quote);
 
-    // Set proper headers for PDF display
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', `inline; filename="quote-${quoteId}.html"`);
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -102,7 +95,6 @@ function generateQuotePDF(quote: any) {
   const clientPhone = quote.quote_requests?.phone || '';
   const clientCountry = quote.quote_requests?.country || '';
   
-  // Enhanced date formatting with error handling
   let formattedExpiresDate = 'Invalid Date';
   let formattedCreatedDate = 'Invalid Date';
   let formattedSentDate = '';
@@ -145,7 +137,6 @@ function generateQuotePDF(quote: any) {
     console.warn('Date formatting error:', dateError);
   }
 
-  // Enhanced deliverables handling
   const deliverables = Array.isArray(quote.deliverables) ? 
     quote.deliverables.filter(item => item && item.trim() !== '') : [];
 
@@ -167,11 +158,10 @@ function generateQuotePDF(quote: any) {
           .no-print { display: none !important; }
           .page-break { page-break-before: always; }
           .container { box-shadow: none; border-radius: 0; }
-          .header { border-radius: 0; }
         }
         
         body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
           line-height: 1.6; 
           color: #1f2937; 
           margin: 0; 
@@ -184,9 +174,6 @@ function generateQuotePDF(quote: any) {
           max-width: 800px; 
           margin: 0 auto; 
           background: white; 
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-          border-radius: 8px;
-          overflow: hidden;
         }
         
         .header { 
@@ -264,16 +251,6 @@ function generateQuotePDF(quote: any) {
           line-height: 1.4;
         }
         
-        .quote-details {
-          background: #f8fafc;
-          padding: 25px;
-          margin: 20px 30px;
-          border-radius: 8px;
-          border-left: 4px solid #2563eb;
-          white-space: pre-wrap;
-          word-wrap: break-word;
-        }
-        
         .price-section {
           background: linear-gradient(135deg, #f0fdf4, #dcfce7);
           padding: 35px;
@@ -288,7 +265,6 @@ function generateQuotePDF(quote: any) {
           font-weight: 900;
           color: #059669;
           margin-bottom: 8px;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
         }
         
         .price-label {
@@ -318,13 +294,15 @@ function generateQuotePDF(quote: any) {
           margin-bottom: 15px;
           padding-bottom: 8px;
           border-bottom: 2px solid #e5e7eb;
-          display: flex;
-          align-items: center;
         }
         
-        .section-icon {
-          margin-right: 8px;
-          font-size: 16px;
+        .quote-details {
+          background: #f8fafc;
+          padding: 25px;
+          border-radius: 8px;
+          border-left: 4px solid #2563eb;
+          white-space: pre-wrap;
+          word-wrap: break-word;
         }
         
         .deliverable-list {
@@ -387,25 +365,6 @@ function generateQuotePDF(quote: any) {
           border-left: 4px solid #f59e0b;
         }
         
-        .important-info {
-          background: #fef2f2;
-          padding: 20px;
-          margin: 30px;
-          border-radius: 8px;
-          border-left: 4px solid #ef4444;
-        }
-        
-        .important-list {
-          margin: 0;
-          padding-left: 18px;
-          color: #dc2626;
-          line-height: 1.7;
-        }
-        
-        .important-list li {
-          margin-bottom: 6px;
-        }
-        
         .footer {
           background: #1f2937;
           color: white;
@@ -413,58 +372,6 @@ function generateQuotePDF(quote: any) {
           text-align: center;
           margin-top: 40px;
         }
-        
-        .footer-title {
-          font-size: 18px;
-          font-weight: bold;
-          margin-bottom: 12px;
-        }
-        
-        .footer-subtitle {
-          margin-bottom: 20px;
-          opacity: 0.9;
-        }
-        
-        .contact-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-          gap: 15px;
-          margin: 20px 0;
-        }
-        
-        .contact-item {
-          font-size: 13px;
-        }
-        
-        .contact-label {
-          font-weight: bold;
-          display: block;
-          margin-bottom: 4px;
-        }
-        
-        .footer-bottom {
-          margin-top: 25px;
-          padding-top: 15px;
-          border-top: 1px solid #4b5563;
-          font-size: 12px;
-          opacity: 0.8;
-        }
-        
-        .status-badge {
-          display: inline-block;
-          padding: 4px 12px;
-          border-radius: 12px;
-          font-size: 11px;
-          font-weight: bold;
-          margin-left: 10px;
-          text-transform: uppercase;
-        }
-        
-        .status-sent { background: #fef3c7; color: #92400e; }
-        .status-approved { background: #dcfce7; color: #166534; }
-        .status-draft { background: #f3f4f6; color: #4b5563; }
-        .status-declined { background: #fecaca; color: #991b1b; }
-        .status-revision_requested { background: #fef3c7; color: #92400e; }
         
         .print-controls {
           padding: 15px;
@@ -485,7 +392,6 @@ function generateQuotePDF(quote: any) {
           text-decoration: none;
           display: inline-block;
           margin: 0 8px;
-          transition: background-color 0.2s;
         }
         
         .btn:hover {
@@ -495,42 +401,26 @@ function generateQuotePDF(quote: any) {
         .btn-secondary {
           background: #6b7280;
         }
-        
-        .btn-secondary:hover {
-          background: #4b5563;
-        }
-
-        .error-message {
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #dc2626;
-          padding: 15px;
-          border-radius: 8px;
-          margin: 20px;
-        }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="print-controls no-print">
-          <button class="btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-          <button class="btn btn-secondary" onclick="window.close()">✕ Close</button>
+          <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+          <button class="btn btn-secondary" onclick="window.close()">Close</button>
         </div>
         
         <div class="header">
           <div class="company-logo">NEXACORE INNOVATIONS</div>
           <div class="company-tagline">Building the future, one innovation at a time</div>
           <div class="company-contact">
-            📧 projects@nexacore-innovations.com • 🌐 nexacore-innovations.com
+            projects@nexacore-innovations.com • nexacore-innovations.com
           </div>
         </div>
 
         <div class="quote-header">
           <div class="quote-info">
-            <div class="quote-number">
-              Quote #${quote.id}
-              <span class="status-badge status-${quote.status}">${quote.status.replace('_', ' ')}</span>
-            </div>
+            <div class="quote-number">Quote #${quote.id}</div>
             <div class="quote-meta">
               <div><strong>Created:</strong> ${formattedCreatedDate}</div>
               <div><strong>Valid Until:</strong> ${formattedExpiresDate}</div>
@@ -545,8 +435,8 @@ function generateQuotePDF(quote: any) {
             <div class="client-details">
               <div>${clientEmail}</div>
               ${clientCompany ? `<div>${clientCompany}</div>` : ''}
-              ${clientPhone ? `<div>📞 ${clientPhone}</div>` : ''}
-              ${clientCountry ? `<div>🌍 ${clientCountry}</div>` : ''}
+              ${clientPhone ? `<div>${clientPhone}</div>` : ''}
+              ${clientCountry ? `<div>${clientCountry}</div>` : ''}
             </div>
           </div>
         </div>
@@ -570,10 +460,7 @@ function generateQuotePDF(quote: any) {
         </div>
 
         <div class="section">
-          <div class="section-title">
-            <span class="section-icon">📋</span>
-            Project Scope
-          </div>
+          <div class="section-title">Project Scope</div>
           <div class="quote-details">
             ${quote.scope || 'Project scope will be defined upon discussion.'}
           </div>
@@ -581,10 +468,7 @@ function generateQuotePDF(quote: any) {
 
         ${deliverables.length > 0 ? `
         <div class="section">
-          <div class="section-title">
-            <span class="section-icon">🎯</span>
-            Project Deliverables
-          </div>
+          <div class="section-title">Project Deliverables</div>
           <ul class="deliverable-list">
             ${deliverables.map((deliverable: string) => 
               `<li class="deliverable-item">${deliverable}</li>`
@@ -595,65 +479,26 @@ function generateQuotePDF(quote: any) {
 
         <div class="terms-section">
           <div class="section-title" style="margin-bottom: 15px; border: none; padding: 0;">
-            <span class="section-icon">📄</span>
             Terms & Conditions
           </div>
           <div style="white-space: pre-wrap; line-height: 1.7;">${quote.terms || 'Standard terms and conditions apply.'}</div>
         </div>
 
-        <div class="important-info">
-          <div class="section-title" style="margin-bottom: 15px; border: none; padding: 0; color: #dc2626;">
-            <span class="section-icon">⚠️</span>
-            Important Information
-          </div>
-          <ul class="important-list">
-            <li>This quote is valid until <strong>${formattedExpiresDate}</strong></li>
-            <li>Pricing may change after the expiration date</li>
-            <li>Project timeline begins after deposit receipt and final scope approval</li>
-            <li>All deliverables will be provided as outlined in the project scope</li>
-            <li>Changes to scope may affect pricing and timeline</li>
-          </ul>
-        </div>
-
         <div class="footer">
-          <div class="footer-title">Ready to Get Started?</div>
-          <div class="footer-subtitle">
-            Contact us to accept this quote and begin your project
-          </div>
-          
-          <div class="contact-grid">
-            <div class="contact-item">
-              <span class="contact-label">Email</span>
-              projects@nexacore-innovations.com
-            </div>
-            <div class="contact-item">
-              <span class="contact-label">Website</span>
-              nexacore-innovations.com
-            </div>
-            <div class="contact-item">
-              <span class="contact-label">Quote Valid Until</span>
-              ${formattedExpiresDate}
-            </div>
-          </div>
-          
-          <div class="footer-bottom">
-            © ${new Date().getFullYear()} NexaCore Innovations. All rights reserved.<br>
-            Quote #${quote.id} • Generated on ${new Date().toLocaleDateString()}
-          </div>
+          <h3>Ready to Get Started?</h3>
+          <p>Contact us to accept this quote and begin your project</p>
+          <p>Email: projects@nexacore-innovations.com</p>
+          <p>Website: nexacore-innovations.com</p>
+          <p>© ${new Date().getFullYear()} NexaCore Innovations. All rights reserved.</p>
         </div>
       </div>
 
       <script>
-        // Enhanced functionality
         window.onload = function() {
           console.log('Quote PDF loaded for Quote #${quote.id}');
           document.title = 'Quote #${quote.id} - ${clientName} - NexaCore Innovations';
-          
-          // Auto-focus for better accessibility
-          document.body.focus();
         };
         
-        // Enhanced keyboard shortcuts
         document.addEventListener('keydown', function(e) {
           if (e.ctrlKey && e.key === 'p') {
             e.preventDefault();
@@ -662,15 +507,6 @@ function generateQuotePDF(quote: any) {
           if (e.key === 'Escape') {
             window.close();
           }
-          if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            window.print(); // Trigger save dialog
-          }
-        });
-        
-        // Error handling for failed loads
-        window.addEventListener('error', function(e) {
-          console.error('PDF loading error:', e);
         });
       </script>
     </body>
