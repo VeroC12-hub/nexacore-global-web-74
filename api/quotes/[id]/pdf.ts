@@ -1,15 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
+// Fixed environment variable handling for API routes
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Handle CORS
+  // Enhanced CORS handling
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 
   if (req.method === 'OPTIONS') {
@@ -24,12 +25,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { id: quoteId } = req.query;
 
     if (!quoteId || typeof quoteId !== 'string') {
+      console.error('Invalid quote ID:', quoteId);
       return res.status(400).json({ error: 'Quote ID is required' });
     }
 
     console.log('Generating PDF for quote:', quoteId);
 
-    // Fetch quote data from database
+    // Enhanced error handling for database connection
+    if (!process.env.SUPABASE_URL && !process.env.VITE_SUPABASE_URL) {
+      console.error('Supabase URL not configured');
+      return res.status(500).json({ error: 'Database configuration error' });
+    }
+
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Supabase service role key not configured');
+      return res.status(500).json({ error: 'Database authentication error' });
+    }
+
+    // Fetch quote data from database with enhanced error handling
     const { data: quote, error: quoteError } = await supabase
       .from('quotes')
       .select(`
@@ -47,23 +60,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (quoteError) {
       console.error('Quote fetch error:', quoteError);
-      throw new Error('Quote not found');
+      if (quoteError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Quote not found' });
+      }
+      throw new Error(`Database error: ${quoteError.message}`);
     }
 
     if (!quote) {
-      throw new Error('Quote not found');
+      console.error('Quote not found for ID:', quoteId);
+      return res.status(404).json({ error: 'Quote not found' });
     }
+
+    console.log('Quote data retrieved successfully:', { id: quote.id, status: quote.status });
 
     const pdfHtml = generateQuotePDF(quote);
 
-    res.setHeader('Content-Type', 'text/html');
+    // Set proper headers for PDF display
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', `inline; filename="quote-${quoteId}.html"`);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    
     res.status(200).send(pdfHtml);
 
   } catch (error) {
     console.error('PDF generation error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     res.status(500).json({ 
-      error: error instanceof Error ? error.message : 'Internal server error' 
+      error: 'PDF generation failed',
+      details: errorMessage,
+      quoteId: req.query.id
     });
   }
 }
@@ -75,21 +102,56 @@ function generateQuotePDF(quote: any) {
   const clientPhone = quote.quote_requests?.phone || '';
   const clientCountry = quote.quote_requests?.country || '';
   
-  // Ensure expires_at is properly formatted
-  const expiresDate = new Date(quote.expires_at);
-  const isValidDate = !isNaN(expiresDate.getTime());
-  const formattedExpiresDate = isValidDate 
-    ? expiresDate.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      })
-    : 'Invalid Date';
+  // Enhanced date formatting with error handling
+  let formattedExpiresDate = 'Invalid Date';
+  let formattedCreatedDate = 'Invalid Date';
+  let formattedSentDate = '';
+  let formattedApprovedDate = '';
+  
+  try {
+    if (quote.expires_at) {
+      const expiresDate = new Date(quote.expires_at);
+      if (!isNaN(expiresDate.getTime())) {
+        formattedExpiresDate = expiresDate.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        });
+      }
+    }
+    
+    if (quote.created_at) {
+      const createdDate = new Date(quote.created_at);
+      if (!isNaN(createdDate.getTime())) {
+        formattedCreatedDate = createdDate.toLocaleDateString('en-US');
+      }
+    }
+    
+    if (quote.sent_at) {
+      const sentDate = new Date(quote.sent_at);
+      if (!isNaN(sentDate.getTime())) {
+        formattedSentDate = sentDate.toLocaleDateString('en-US');
+      }
+    }
+    
+    if (quote.approved_at) {
+      const approvedDate = new Date(quote.approved_at);
+      if (!isNaN(approvedDate.getTime())) {
+        formattedApprovedDate = approvedDate.toLocaleDateString('en-US');
+      }
+    }
+  } catch (dateError) {
+    console.warn('Date formatting error:', dateError);
+  }
+
+  // Enhanced deliverables handling
+  const deliverables = Array.isArray(quote.deliverables) ? 
+    quote.deliverables.filter(item => item && item.trim() !== '') : [];
 
   const pdfHtml = `
     <!DOCTYPE html>
-    <html>
+    <html lang="en">
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -106,11 +168,10 @@ function generateQuotePDF(quote: any) {
           .page-break { page-break-before: always; }
           .container { box-shadow: none; border-radius: 0; }
           .header { border-radius: 0; }
-          .price-section { border-radius: 8px; }
         }
         
         body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
           line-height: 1.6; 
           color: #1f2937; 
           margin: 0; 
@@ -209,6 +270,8 @@ function generateQuotePDF(quote: any) {
           margin: 20px 30px;
           border-radius: 8px;
           border-left: 4px solid #2563eb;
+          white-space: pre-wrap;
+          word-wrap: break-word;
         }
         
         .price-section {
@@ -401,6 +464,7 @@ function generateQuotePDF(quote: any) {
         .status-approved { background: #dcfce7; color: #166534; }
         .status-draft { background: #f3f4f6; color: #4b5563; }
         .status-declined { background: #fecaca; color: #991b1b; }
+        .status-revision_requested { background: #fef3c7; color: #92400e; }
         
         .print-controls {
           padding: 15px;
@@ -421,6 +485,7 @@ function generateQuotePDF(quote: any) {
           text-decoration: none;
           display: inline-block;
           margin: 0 8px;
+          transition: background-color 0.2s;
         }
         
         .btn:hover {
@@ -433,6 +498,15 @@ function generateQuotePDF(quote: any) {
         
         .btn-secondary:hover {
           background: #4b5563;
+        }
+
+        .error-message {
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          color: #dc2626;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 20px;
         }
       </style>
     </head>
@@ -455,13 +529,13 @@ function generateQuotePDF(quote: any) {
           <div class="quote-info">
             <div class="quote-number">
               Quote #${quote.id}
-              <span class="status-badge status-${quote.status}">${quote.status}</span>
+              <span class="status-badge status-${quote.status}">${quote.status.replace('_', ' ')}</span>
             </div>
             <div class="quote-meta">
-              <div><strong>Created:</strong> ${new Date(quote.created_at).toLocaleDateString()}</div>
+              <div><strong>Created:</strong> ${formattedCreatedDate}</div>
               <div><strong>Valid Until:</strong> ${formattedExpiresDate}</div>
-              ${quote.sent_at ? `<div><strong>Sent:</strong> ${new Date(quote.sent_at).toLocaleDateString()}</div>` : ''}
-              ${quote.approved_at ? `<div><strong>Approved:</strong> ${new Date(quote.approved_at).toLocaleDateString()}</div>` : ''}
+              ${formattedSentDate ? `<div><strong>Sent:</strong> ${formattedSentDate}</div>` : ''}
+              ${formattedApprovedDate ? `<div><strong>Approved:</strong> ${formattedApprovedDate}</div>` : ''}
             </div>
           </div>
           
@@ -480,17 +554,17 @@ function generateQuotePDF(quote: any) {
         <div class="info-grid">
           <div class="info-box">
             <div class="info-label">Service Type</div>
-            <div class="info-value">${quote.service_type}</div>
+            <div class="info-value">${quote.service_type || 'Not specified'}</div>
           </div>
           
           <div class="info-box">
             <div class="info-label">Project Timeline</div>
-            <div class="info-value">${quote.timeline}</div>
+            <div class="info-value">${quote.timeline || 'To be determined'}</div>
           </div>
         </div>
 
         <div class="price-section">
-          <div class="price">${quote.currency} ${quote.price.toLocaleString()}</div>
+          <div class="price">${quote.currency || '$'} ${(quote.price || 0).toLocaleString()}</div>
           <div class="price-label">Total Project Investment</div>
           <div class="price-validity">Valid until ${formattedExpiresDate}</div>
         </div>
@@ -501,18 +575,18 @@ function generateQuotePDF(quote: any) {
             Project Scope
           </div>
           <div class="quote-details">
-            <p style="margin: 0; line-height: 1.7;">${quote.scope}</p>
+            ${quote.scope || 'Project scope will be defined upon discussion.'}
           </div>
         </div>
 
-        ${quote.deliverables && quote.deliverables.length > 0 ? `
+        ${deliverables.length > 0 ? `
         <div class="section">
           <div class="section-title">
             <span class="section-icon">🎯</span>
             Project Deliverables
           </div>
           <ul class="deliverable-list">
-            ${quote.deliverables.map((deliverable: string) => 
+            ${deliverables.map((deliverable: string) => 
               `<li class="deliverable-item">${deliverable}</li>`
             ).join('')}
           </ul>
@@ -521,10 +595,10 @@ function generateQuotePDF(quote: any) {
 
         <div class="terms-section">
           <div class="section-title" style="margin-bottom: 15px; border: none; padding: 0;">
-            <span class="section-icon">📝</span>
+            <span class="section-icon">📄</span>
             Terms & Conditions
           </div>
-          <p style="margin: 0; line-height: 1.7;">${quote.terms}</p>
+          <div style="white-space: pre-wrap; line-height: 1.7;">${quote.terms || 'Standard terms and conditions apply.'}</div>
         </div>
 
         <div class="important-info">
@@ -570,13 +644,16 @@ function generateQuotePDF(quote: any) {
       </div>
 
       <script>
-        // Print functionality
+        // Enhanced functionality
         window.onload = function() {
           console.log('Quote PDF loaded for Quote #${quote.id}');
           document.title = 'Quote #${quote.id} - ${clientName} - NexaCore Innovations';
+          
+          // Auto-focus for better accessibility
+          document.body.focus();
         };
         
-        // Keyboard shortcuts
+        // Enhanced keyboard shortcuts
         document.addEventListener('keydown', function(e) {
           if (e.ctrlKey && e.key === 'p') {
             e.preventDefault();
@@ -585,6 +662,15 @@ function generateQuotePDF(quote: any) {
           if (e.key === 'Escape') {
             window.close();
           }
+          if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            window.print(); // Trigger save dialog
+          }
+        });
+        
+        // Error handling for failed loads
+        window.addEventListener('error', function(e) {
+          console.error('PDF loading error:', e);
         });
       </script>
     </body>
