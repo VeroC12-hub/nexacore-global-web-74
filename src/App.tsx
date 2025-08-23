@@ -1,7 +1,10 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ErrorBoundary } from "react-error-boundary";
 import { AuthProvider } from "./contexts/AuthContext";
+
+// Page imports
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -18,16 +21,36 @@ import ClientPortal from "./pages/ClientPortal";
 import Dashboard from "./pages/Dashboard";
 import QuoteReview from "./pages/QuoteReview";
 import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation";
+
+// Component imports
 import AIAssistant from "./components/AIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
-// Error Boundary Component
-import { ErrorBoundary } from "react-error-boundary";
+// UI Component imports with fallbacks
+let Toaster: any = ({ ...props }) => null;
+let Sonner: any = ({ ...props }) => null;
+let TooltipProvider: any = ({ children, ...props }: any) => <>{children}</>;
 
-// UI Components with error handling
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+try {
+  const toasterModule = await import("./components/ui/toaster");
+  Toaster = toasterModule.Toaster;
+} catch (error) {
+  console.warn("Toaster component not found, using fallback");
+}
+
+try {
+  const sonnerModule = await import("./components/ui/sonner");
+  Sonner = sonnerModule.Toaster;
+} catch (error) {
+  console.warn("Sonner component not found, using fallback");
+}
+
+try {
+  const tooltipModule = await import("./components/ui/tooltip");
+  TooltipProvider = tooltipModule.TooltipProvider;
+} catch (error) {
+  console.warn("TooltipProvider component not found, using fallback");
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +66,7 @@ const queryClient = new QueryClient({
 const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
   <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50 flex items-center justify-center">
     <div className="max-w-md mx-auto text-center p-6">
+      <div className="text-6xl mb-4">⚠️</div>
       <h2 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong</h2>
       <p className="text-gray-600 mb-4">
         We're sorry, but something unexpected happened. Please try refreshing the page.
@@ -50,13 +74,13 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
       <div className="space-x-4">
         <button
           onClick={resetErrorBoundary}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
         >
           Try Again
         </button>
         <button
           onClick={() => window.location.href = '/'}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
+          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors"
         >
           Go Home
         </button>
@@ -66,10 +90,63 @@ const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetError
           <summary className="cursor-pointer text-red-600">Error Details</summary>
           <pre className="mt-2 text-xs bg-red-50 p-2 rounded overflow-auto">
             {error.message}
+            {"\n"}
             {error.stack}
           </pre>
         </details>
       )}
+    </div>
+  </div>
+);
+
+// Quote Error Fallback Component
+const QuoteErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
+  <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50 flex items-center justify-center">
+    <div className="max-w-md mx-auto text-center p-6">
+      <h2 className="text-2xl font-bold text-red-600 mb-4">Quote Loading Error</h2>
+      <p className="text-gray-600 mb-4">
+        We couldn't load your quote. This might be due to an invalid link or network issue.
+      </p>
+      <div className="space-x-4">
+        <button
+          onClick={resetErrorBoundary}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+        >
+          Try Again
+        </button>
+        <button
+          onClick={() => window.location.href = '/contact'}
+          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors"
+        >
+          Contact Support
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+// Admin Error Fallback Component
+const AdminErrorFallback = ({ error, resetErrorBoundary }: { error: Error; resetErrorBoundary: () => void }) => (
+  <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50 flex items-center justify-center">
+    <div className="max-w-md mx-auto text-center p-6">
+      <h2 className="text-2xl font-bold text-red-600 mb-4">Admin Panel Error</h2>
+      <p className="text-gray-600 mb-4">
+        There was an error loading the admin panel.
+      </p>
+      <div className="space-x-4">
+        <button
+          onClick={resetErrorBoundary}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+        >
+          Try Again
+        </button>
+        <button
+          onClick={() => window.location.href = '/admin'}
+          className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors"
+        >
+          Back to Admin
+        </button>
+      </div>
     </div>
   </div>
 );
@@ -104,32 +181,7 @@ const App = () => {
                 <Route 
                   path="/quote/:id" 
                   element={
-                    <ErrorBoundary
-                      FallbackComponent={({ error, resetErrorBoundary }) => (
-                        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50 flex items-center justify-center">
-                          <div className="max-w-md mx-auto text-center p-6">
-                            <h2 className="text-2xl font-bold text-red-600 mb-4">Quote Loading Error</h2>
-                            <p className="text-gray-600 mb-4">
-                              We couldn't load your quote. This might be due to an invalid link or network issue.
-                            </p>
-                            <div className="space-x-4">
-                              <button
-                                onClick={resetErrorBoundary}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-                              >
-                                Try Again
-                              </button>
-                              <button
-                                onClick={() => window.location.href = '/contact'}
-                                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
-                              >
-                                Contact Support
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    >
+                    <ErrorBoundary FallbackComponent={QuoteErrorFallback}>
                       <QuoteReview />
                     </ErrorBoundary>
                   } 
@@ -144,32 +196,7 @@ const App = () => {
                 <Route 
                   path="/admin/create-quote" 
                   element={
-                    <ErrorBoundary
-                      FallbackComponent={({ error, resetErrorBoundary }) => (
-                        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50 flex items-center justify-center">
-                          <div className="max-w-md mx-auto text-center p-6">
-                            <h2 className="text-2xl font-bold text-red-600 mb-4">Quote Creation Error</h2>
-                            <p className="text-gray-600 mb-4">
-                              There was an error loading the quote creation page.
-                            </p>
-                            <div className="space-x-4">
-                              <button
-                                onClick={resetErrorBoundary}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md"
-                              >
-                                Try Again
-                              </button>
-                              <button
-                                onClick={() => window.location.href = '/admin'}
-                                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md"
-                              >
-                                Back to Admin
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    >
+                    <ErrorBoundary FallbackComponent={AdminErrorFallback}>
                       <ProjectManagerQuoteCreation />
                     </ErrorBoundary>
                   } 
