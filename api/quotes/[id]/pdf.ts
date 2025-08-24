@@ -1,5 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 // Use correct env variable names for serverless backend
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
@@ -11,7 +10,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -57,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Escape potentially problematic HTML characters
-    const escapeHtml = (str: string) =>
+    const escapeHtml = (str) =>
       String(str)
         .replace(/&/g, "&amp;")
         .replace(/"/g, "&quot;")
@@ -81,9 +80,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       quoteId: req.query.id
     });
   }
-}
+};
 
-function generateComprehensivePDF(quote: any, escapeHtml: (str: string) => string) {
+function generateComprehensivePDF(quote, escapeHtml) {
   const clientName = escapeHtml(quote.quote_requests?.full_name || 'Valued Client');
   const clientEmail = escapeHtml(quote.quote_requests?.email || '');
   const clientCompany = escapeHtml(quote.quote_requests?.company || '');
@@ -93,7 +92,7 @@ function generateComprehensivePDF(quote: any, escapeHtml: (str: string) => strin
   const projectDescription = escapeHtml(quote.quote_requests?.description || '');
 
   // Format dates
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString) => {
     try {
       return new Date(dateString).toLocaleDateString('en-US', { 
         weekday: 'long', 
@@ -509,7 +508,7 @@ function generateComprehensivePDF(quote: any, escapeHtml: (str: string) => strin
         <div class="content-section">
           <h2 class="content-title">📦 Project Deliverables</h2>
           <ul class="list-style">
-            ${deliverables.map((deliverable: string) => 
+            ${deliverables.map((deliverable) => 
               `<li>✅ ${escapeHtml(deliverable)}</li>`
             ).join('')}
           </ul>
