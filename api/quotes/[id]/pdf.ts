@@ -1,4 +1,4 @@
-// api/quotes/[id]/pdf.ts - ENHANCED PDF GENERATION WITH ALL FEATURES INTACT
+// api/quotes/[id]/pdf.ts - ENHANCED PDF GENERATION WITH REDUCED LOGO SIZE
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
@@ -24,13 +24,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Extract quote ID from URL path or query params
     const quoteId = req.query.id || req.query.quoteId;
     
-    console.log('Request query:', req.query);
-    console.log('Request URL:', req.url);
-    console.log('Extracted quote ID:', quoteId);
-
     if (!quoteId || typeof quoteId !== 'string') {
-      console.error('Invalid quote ID:', quoteId);
-      console.error('Full request query object:', JSON.stringify(req.query));
       return res.status(400).json({ 
         error: 'Quote ID is required',
         debug: {
@@ -40,8 +34,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
       });
     }
-
-    console.log('Generating comprehensive PDF for quote:', quoteId);
 
     const { data: quote, error: quoteError } = await supabase
       .from('quotes')
@@ -61,7 +53,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (quoteError || !quote) {
-      console.error('Quote fetch error:', quoteError);
       return res.status(404).json({ error: 'Quote not found' });
     }
 
@@ -72,7 +63,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).send(pdfHtml);
 
   } catch (error) {
-    console.error('PDF generation error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ 
       error: 'PDF generation failed',
@@ -171,6 +161,14 @@ function generateComprehensivePDF(quote: any) {
           background: white;
           box-shadow: 0 0 30px rgba(0,0,0,0.1);
           position: relative;
+        }
+
+        /* REDUCED LOGO SIZE */
+        .company-logo-img {
+          width: 90px; /* Reduce this to 60px or 70px for even smaller logo */
+          height: auto;
+          display: block;
+          margin-bottom: 6px;
         }
         
         /* Header Section */
@@ -639,7 +637,6 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
       <script>
         // PDF functionality
         window.onload = function() {
-          console.log('Enhanced Quote PDF loaded');
           document.title = 'Quote-${quote.id}-${clientName}-NexaCore';
         };
         
