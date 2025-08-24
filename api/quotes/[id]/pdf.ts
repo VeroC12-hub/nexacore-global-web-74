@@ -440,7 +440,13 @@ function generateComprehensivePDF(quote: any) {
       <div class="pdf-container">
         <!-- Header -->
         <div class="header">
-          <div class="company-logo">NexaCore Innovations</div>
+          <div class="logo-section">
+            <img src="https://www.nexacore-innovations.com/nexacore-logo.png" 
+                 alt="NexaCore Innovations Logo" 
+                 class="company-logo-img"
+                 onerror="this.style.display='none'; document.querySelector('.company-logo-text').style.display='block';">
+            <div class="company-logo-text" style="display: none;">NexaCore Innovations</div>
+          </div>
           <div class="company-tagline">Building Tomorrow's Technology Today</div>
           
           <h1 class="quote-title">PROJECT QUOTE</h1>
