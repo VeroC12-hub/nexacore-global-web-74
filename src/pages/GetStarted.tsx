@@ -1,6 +1,6 @@
-// src/pages/GetStarted.tsx - COMPLETE VERSION WITH ALL ORIGINAL COUNTRIES + FIX
+// src/pages/GetStarted.tsx - COMPLETE VERSION WITH "WHY CHOOSE NEXACORE" SECTION
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom"; // ✅ FIXED: Added useNavigate
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
   ArrowRight, 
   Globe, 
@@ -25,12 +25,12 @@ import { toast } from 'sonner';
 
 // COMPLETE COUNTRY AND CURRENCY MAP - ALL YOUR ORIGINAL COUNTRIES
 const currencyMap = {
-  Afghanistan: { code: "AFN", symbol: "؋" },
+  Afghanistan: { code: "AFN", symbol: "Ø‹" },
   Albania: { code: "ALL", symbol: "L" },
-  Algeria: { code: "DZD", symbol: "دج" },
+  Algeria: { code: "DZD", symbol: "Ø¯Ø¬" },
   Angola: { code: "AOA", symbol: "Kz" },
   Argentina: { code: "ARS", symbol: "$" },
-  Armenia: { code: "AMD", symbol: "֏" },
+  Armenia: { code: "AMD", symbol: "Ö" },
   Australia: { code: "AUD", symbol: "A$" },
   Austria: { code: "EUR", symbol: "€" },
   Azerbaijan: { code: "AZN", symbol: "₼" },
@@ -188,7 +188,7 @@ const currencyMap = {
 
 // Real currency exchange API function
 const getExchangeRate = async (currencyCode) => {
-  if (currencyCode === 'USD') return 1; // Base currency
+  if (currencyCode === 'USD') return 1;
   
   try {
     const response = await fetch(`https://api.exchangerate-api.com/v4/latest/USD`);
@@ -357,7 +357,7 @@ const serviceData = {
 
 const GetStarted = () => {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate(); // ✅ FIXED: Added navigate hook
+  const navigate = useNavigate();
   
   const [country, setCountry] = useState("USA");
   const [currency, setCurrency] = useState(currencyMap["USA"]);
@@ -388,7 +388,6 @@ const GetStarted = () => {
       setSelectedService(serviceFromUrl);
       console.log('GetStarted - Service set to:', serviceFromUrl);
     } else if (serviceFromUrl) {
-      // If service name doesn't match exactly, try to find a close match
       const availableServices = Object.keys(serviceData);
       const closeMatch = availableServices.find(service => 
         service.toLowerCase().includes(serviceFromUrl.toLowerCase()) ||
@@ -403,7 +402,6 @@ const GetStarted = () => {
       }
     }
 
-    // Check if this is a quote request from services page
     const requestType = sessionStorage.getItem('requestType');
     if (requestType === 'quote') {
       sessionStorage.removeItem('requestType');
@@ -460,7 +458,6 @@ const GetStarted = () => {
       const currentPricing = getCurrentServiceData();
       const currentMaxPrice = Math.round(currentPricing.max * rate);
 
-      // Insert into quote_requests table
       const { data: quoteRequest, error: quoteError } = await supabase
         .from('quote_requests')
         .insert({
@@ -484,7 +481,6 @@ const GetStarted = () => {
 
       console.log('Quote request created:', quoteRequest);
 
-      // ENHANCED EMAIL SYSTEM - Send email with secure login link to project manager
       try {
         const emailResponse = await supabase.functions.invoke('send-enhanced-quote-emails', {
           body: {
@@ -505,7 +501,6 @@ const GetStarted = () => {
 
         console.log('Enhanced email sent to PM:', emailResponse);
 
-        // Client confirmation email (using existing function)
         await supabase.functions.invoke('send-email', {
           body: {
             type: 'quote_request_confirmation',
@@ -519,8 +514,6 @@ const GetStarted = () => {
 
       } catch (emailError) {
         console.warn('Enhanced email notification failed, but quote request was saved:', emailError);
-        // Don't throw here - the quote request is still saved
-        // Try fallback to old email system
         try {
           await supabase.functions.invoke('send-email', {
             body: {
@@ -546,10 +539,9 @@ const GetStarted = () => {
       setSubmitted(true);
       toast.success('Quote request submitted successfully!');
       
-      // ✅ FIXED: Use React Router navigation instead of window.location.href
       setTimeout(() => {
         setSubmitted(false);
-        navigate('/client-portal'); // Use navigate instead of window.location.href
+        navigate('/client-portal');
       }, 2000);
 
       setClientName("");
@@ -570,7 +562,7 @@ const GetStarted = () => {
   };
 
   const handleBackToHome = () => {
-    navigate("/"); // Use navigate instead of window.location.href
+    navigate("/");
   };
 
   useEffect(() => {
@@ -592,7 +584,6 @@ const GetStarted = () => {
     initializeExchangeRate();
   }, []);
 
-  // Initialize with valid service and tier
   useEffect(() => {
     const firstService = Object.keys(serviceData)[0];
     if (firstService && !serviceData[selectedService]) {
@@ -612,7 +603,6 @@ const GetStarted = () => {
   const convertedMinPrice = (minPrice * rate).toFixed(0);
   const convertedMaxPrice = (maxPrice * rate).toFixed(0);
 
-  // Get available tiers for current service (exclude description)
   const availableTiers = selectedService ? 
     Object.keys(serviceData[selectedService] || {}).filter(key => key !== 'description') : [];
 
@@ -675,7 +665,6 @@ const GetStarted = () => {
             developers, and designers. No commitment required.
           </p>
           
-          {/* Trust indicators */}
           <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500 mb-8">
             <div className="flex items-center">
               <Shield className="w-4 h-4 mr-2 text-green-500" />
@@ -962,6 +951,43 @@ const GetStarted = () => {
               </div>
             </div>
           </Card>
+        </div>
+      </section>
+
+      {/* Why Choose NexaCore Section - FROM YOUR OLD CODE */}
+      <section className="py-16 bg-white/60 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+              Why Choose <span className="bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">NexaCore</span>
+            </h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 bg-gradient-to-br from-white/95 to-blue-50/90 backdrop-blur-sm border border-white/30">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">Expert Team</h3>
+              <p className="text-gray-600">Global team of certified professionals with international experience</p>
+            </Card>
+            
+            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 bg-gradient-to-br from-white/95 to-green-50/90 backdrop-blur-sm border border-white/30">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">Proven Results</h3>
+              <p className="text-gray-600">98% success rate with 25+ satisfied clients worldwide</p>
+            </Card>
+            
+            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 bg-gradient-to-br from-white/95 to-purple-50/90 backdrop-blur-sm border border-white/30">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                <Clock className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-bold mb-3 bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">Fast Delivery</h3>
+              <p className="text-gray-600">Quick turnaround times without compromising on quality</p>
+            </Card>
+          </div>
         </div>
       </section>
 
