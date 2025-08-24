@@ -21,6 +21,9 @@ import ClientPortal from "./pages/ClientPortal";
 import Dashboard from "./pages/Dashboard";
 import QuoteReview from "./pages/QuoteReview";
 import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Components
 import AIAssistant from "./components/AIAssistant";
