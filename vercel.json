@@ -1,17 +1,7 @@
 {
   "version": 2,
-  "framework": null,
-  "buildCommand": "npm install && npm run build",
+  "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install --include=dev",
-  "devCommand": "npm run dev",
-  "functions": {
-    "api/**/*.ts": {
-      "runtime": "@vercel/node@3.0.0",
-      "includeFiles": "api/**",
-      "excludeFiles": "node_modules/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/quotes/([^/]+)/pdf",
