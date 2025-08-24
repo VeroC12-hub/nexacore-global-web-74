@@ -1,4 +1,5 @@
-const { createClient } = require('@supabase/supabase-js');
+import { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 
 // Use correct env variable names for serverless backend
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
@@ -10,7 +11,7 @@ if (!SUPABASE_URL || !SUPABASE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-module.exports = async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -56,7 +57,7 @@ module.exports = async function handler(req, res) {
     }
 
     // Escape potentially problematic HTML characters
-    const escapeHtml = (str) =>
+    const escapeHtml = (str: string) =>
       String(str)
         .replace(/&/g, "&amp;")
         .replace(/"/g, "&quot;")
@@ -80,9 +81,9 @@ module.exports = async function handler(req, res) {
       quoteId: req.query.id
     });
   }
-};
+}
 
-function generateComprehensivePDF(quote, escapeHtml) {
+function generateComprehensivePDF(quote: any, escapeHtml: (str: string) => string) {
   const clientName = escapeHtml(quote.quote_requests?.full_name || 'Valued Client');
   const clientEmail = escapeHtml(quote.quote_requests?.email || '');
   const clientCompany = escapeHtml(quote.quote_requests?.company || '');
@@ -92,7 +93,7 @@ function generateComprehensivePDF(quote, escapeHtml) {
   const projectDescription = escapeHtml(quote.quote_requests?.description || '');
 
   // Format dates
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-US', { 
         weekday: 'long', 
@@ -508,7 +509,7 @@ function generateComprehensivePDF(quote, escapeHtml) {
         <div class="content-section">
           <h2 class="content-title">📦 Project Deliverables</h2>
           <ul class="list-style">
-            ${deliverables.map((deliverable) => 
+            ${deliverables.map((deliverable: string) => 
               `<li>✅ ${escapeHtml(deliverable)}</li>`
             ).join('')}
           </ul>
