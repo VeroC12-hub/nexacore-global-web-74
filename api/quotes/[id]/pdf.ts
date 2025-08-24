@@ -21,11 +21,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { id: quoteId } = req.query;
+    // Extract quote ID from URL path or query params
+    const quoteId = req.query.id || req.query.quoteId;
+    
+    console.log('Request query:', req.query);
+    console.log('Request URL:', req.url);
+    console.log('Extracted quote ID:', quoteId);
 
     if (!quoteId || typeof quoteId !== 'string') {
       console.error('Invalid quote ID:', quoteId);
-      return res.status(400).json({ error: 'Quote ID is required' });
+      console.error('Full request query object:', JSON.stringify(req.query));
+      return res.status(400).json({ 
+        error: 'Quote ID is required',
+        debug: {
+          query: req.query,
+          url: req.url,
+          extractedId: quoteId
+        }
+      });
     }
 
     console.log('Generating comprehensive PDF for quote:', quoteId);
