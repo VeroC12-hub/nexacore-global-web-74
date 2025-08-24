@@ -1,10 +1,7 @@
-// src/App.tsx - COMPLETE CORRECTED VERSION - NO MORE 404 ERRORS
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-
-// ===== PAGE IMPORTS - ALL VERIFIED =====
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -20,18 +17,16 @@ import Auth from "./pages/Auth";
 import ClientPortal from "./pages/ClientPortal";
 import Dashboard from "./pages/Dashboard";
 import QuoteReview from "./pages/QuoteReview";
-import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation";
-
-// ===== COMPONENTS IMPORTS - ALL VERIFIED =====
+import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation"; // NEW IMPORT
 import AIAssistant from "./components/AIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
-// ===== UI COMPONENTS - CORRECT IMPORTS =====
+// Optional: Only import these if they exist in your project
+// If you get import errors, comment these out
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-// ===== QUERY CLIENT CONFIGURATION =====
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -42,16 +37,13 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  console.log("🚀 NexaCore Innovations - App Starting with ALL Routes");
-  console.log("📍 Domain: nexacore-innovations.com");
-  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
           <BrowserRouter>
             <Routes>
-              {/* ===== PUBLIC ROUTES - FULLY FUNCTIONAL ===== */}
+              {/* PUBLIC ROUTES */}
               <Route path="/" element={<Index />} />
               <Route path="/about" element={<About />} />
               <Route path="/services" element={<Services />} />
@@ -62,42 +54,30 @@ const App = () => {
               <Route path="/terms" element={<Terms />} />
               <Route path="/book-consultation" element={<BookConsultation />} />
               
-              {/* ===== AUTHENTICATION ROUTES ===== */}
+              {/* AUTH ROUTES */}
               <Route path="/auth" element={<Auth />} />
               
-              {/* ===== CLIENT PORTAL ROUTES - CRITICAL BUSINESS ROUTES ===== */}
+              {/* CLIENT ROUTES */}
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/client-portal" element={<ClientPortal />} />
               <Route path="/quote/:id" element={<QuoteReview />} />
               
-              {/* ===== ADMIN ROUTES - CRITICAL BUSINESS ROUTES ===== */}
+              {/* ADMIN/PM ROUTES */}
               <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/create-quote" element={<ProjectManagerQuoteCreation />} />
+              <Route path="/admin/create-quote" element={<ProjectManagerQuoteCreation />} /> {/* NEW ROUTE */}
               
-              {/* ===== 404 FALLBACK - MUST BE LAST ===== */}
+              {/* 404 FALLBACK */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-            
-            {/* ===== GLOBAL COMPONENTS - ALWAYS ACTIVE ===== */}
             <AIAssistant />
             <CookieConsent />
+            <Toaster />
+            <Sonner />
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>
-      
-      {/* ===== TOAST NOTIFICATIONS - GLOBAL ===== */}
-      <Toaster />
-      <Sonner />
     </QueryClientProvider>
   );
 };
-
-// ===== DEBUG LOGGING FOR PRODUCTION MONITORING =====
-console.log("🔧 NexaCore App.tsx - All Routes Registered:");
-console.log("✅ PUBLIC: /, /about, /services, /contact, /get-started, /portfolio");
-console.log("✅ BUSINESS: /client-portal, /admin/create-quote, /quote/:id");
-console.log("✅ AUTH: /auth, /dashboard, /admin");
-console.log("✅ UI Components: Toaster, Sonner, TooltipProvider loaded");
-console.log("🌐 Ready for nexacore-innovations.com production");
 
 export default App;
