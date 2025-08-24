@@ -1,11 +1,15 @@
-// api/quotes/[id]/pdf.ts - ENHANCED PDF GENERATION WITH PROPER PDF DOWNLOAD
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Use correct env variable names for serverless backend
+const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  throw new Error("Supabase environment variables are missing. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your environment.");
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -52,10 +56,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Quote not found' });
     }
 
-    const pdfHtml = generateComprehensivePDF(quote);
+    // Escape potentially problematic HTML characters
+    const escapeHtml = (str: string) =>
+      String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/`/g, "&#96;");
 
-    // For now, return HTML that can be converted to PDF using browser printing
-    // In the future, you can integrate with Puppeteer for server-side PDF generation
+    const pdfHtml = generateComprehensivePDF(quote, escapeHtml);
+
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', `inline; filename="Quote-${quoteId}-NexaCore.html"`);
     res.status(200).send(pdfHtml);
@@ -71,14 +83,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-function generateComprehensivePDF(quote: any) {
-  const clientName = quote.quote_requests?.full_name || 'Valued Client';
-  const clientEmail = quote.quote_requests?.email || '';
-  const clientCompany = quote.quote_requests?.company || '';
-  const clientPhone = quote.quote_requests?.phone || '';
-  const clientCountry = quote.quote_requests?.country || '';
-  const serviceType = quote.quote_requests?.service_type || quote.service_type;
-  const projectDescription = quote.quote_requests?.description || '';
+function generateComprehensivePDF(quote: any, escapeHtml: (str: string) => string) {
+  const clientName = escapeHtml(quote.quote_requests?.full_name || 'Valued Client');
+  const clientEmail = escapeHtml(quote.quote_requests?.email || '');
+  const clientCompany = escapeHtml(quote.quote_requests?.company || '');
+  const clientPhone = escapeHtml(quote.quote_requests?.phone || '');
+  const clientCountry = escapeHtml(quote.quote_requests?.country || '');
+  const serviceType = escapeHtml(quote.quote_requests?.service_type || quote.service_type);
+  const projectDescription = escapeHtml(quote.quote_requests?.description || '');
 
   // Format dates
   const formatDate = (dateString: string) => {
@@ -98,9 +110,8 @@ function generateComprehensivePDF(quote: any) {
   const expiresDate = formatDate(quote.expires_at);
   const deliverables = Array.isArray(quote.deliverables) ? quote.deliverables : [];
   const totalPrice = (quote.price || 0).toLocaleString();
-  const currency = quote.currency || '$';
+  const currency = escapeHtml(quote.currency || '$');
 
-  // Enhanced quote sections
   const projectPhases = [
     "🔍 Discovery & Requirements Analysis",
     "📋 Project Planning & Architecture Design", 
@@ -428,11 +439,9 @@ function generateComprehensivePDF(quote: any) {
         <div class="header">
           <div class="company-logo">NexaCore Innovations</div>
           <div class="company-tagline">Building Tomorrow's Technology Today</div>
-          
           <h1 class="quote-title">PROJECT QUOTE</h1>
           <div class="quote-subtitle">Professional Technology Solutions</div>
         </div>
-
         <!-- Client & Quote Info -->
         <div class="client-section">
           <div class="client-info">
@@ -445,7 +454,6 @@ function generateComprehensivePDF(quote: any) {
               ${clientCountry ? `<div><strong>Location:</strong> ${clientCountry}</div>` : ''}
             </div>
           </div>
-          
           <div class="quote-info">
             <div class="section-title">Quote Details</div>
             <div class="quote-number">Quote #${quote.id}</div>
@@ -456,14 +464,12 @@ function generateComprehensivePDF(quote: any) {
             </div>
           </div>
         </div>
-
         <!-- Total Price -->
         <div class="price-section">
           <div class="total-price">${currency}${totalPrice}</div>
           <div class="price-label">Total Project Investment</div>
           <div class="validity-info">Valid until ${expiresDate}</div>
         </div>
-
         <!-- Project Overview -->
         <div class="content-section">
           <h2 class="content-title">📋 Project Overview</h2>
@@ -475,22 +481,19 @@ function generateComprehensivePDF(quote: any) {
             ${projectDescription || 'Custom requirements as discussed with our team.'}
           </p>
         </div>
-
         <!-- Project Scope -->
         <div class="content-section">
           <h2 class="content-title">🎯 Detailed Project Scope</h2>
           <p class="content-text">
-            ${quote.scope || 'Comprehensive solution tailored to your specific requirements. Our team will work closely with you to ensure all objectives are met with the highest quality standards.'}
+            ${escapeHtml(quote.scope || 'Comprehensive solution tailored to your specific requirements. Our team will work closely with you to ensure all objectives are met with the highest quality standards.')}
           </p>
         </div>
-
         <!-- Project Timeline -->
         <div class="content-section">
           <h2 class="content-title">⏱️ Project Timeline</h2>
           <p class="content-text">
-            <strong>Estimated Duration:</strong> ${quote.timeline || 'To be determined based on project complexity'}
+            <strong>Estimated Duration:</strong> ${escapeHtml(quote.timeline || 'To be determined based on project complexity')}
           </p>
-          
           <div class="phase-timeline">
             <h3 style="margin-bottom: 20px; color: #2c3e50;">Project Phases:</h3>
             ${projectPhases.map((phase, index) => `
@@ -501,19 +504,17 @@ function generateComprehensivePDF(quote: any) {
             `).join('')}
           </div>
         </div>
-
         <!-- Deliverables -->
         ${deliverables.length > 0 ? `
         <div class="content-section">
           <h2 class="content-title">📦 Project Deliverables</h2>
           <ul class="list-style">
             ${deliverables.map((deliverable: string) => 
-              `<li>✅ ${deliverable}</li>`
+              `<li>✅ ${escapeHtml(deliverable)}</li>`
             ).join('')}
           </ul>
         </div>
         ` : ''}
-
         <!-- What's Included -->
         <div class="content-section">
           <h2 class="content-title">✨ What's Included in This Quote</h2>
@@ -521,7 +522,6 @@ function generateComprehensivePDF(quote: any) {
             ${whatIncludes.map(item => `<li>${item}</li>`).join('')}
           </ul>
         </div>
-
         <!-- Payment Schedule -->
         <div class="content-section">
           <h2 class="content-title">💳 Payment Schedule</h2>
@@ -535,12 +535,11 @@ function generateComprehensivePDF(quote: any) {
             <strong>Payment Methods:</strong> Wire transfer, ACH, major credit cards, or PayPal. International clients: Wire transfer or PayPal preferred.
           </p>
         </div>
-
         <!-- Terms & Conditions -->
         <div class="content-section">
           <h2 class="content-title">📄 Terms & Conditions</h2>
           <div class="content-text" style="white-space: pre-wrap; line-height: 1.8;">
-${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date above.
+${escapeHtml(quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date above.
 
 2. PAYMENT TERMS: 
    - Net 30 days from invoice date
@@ -569,10 +568,9 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
 7. LIMITATION OF LIABILITY:
    - Liability limited to project value
    - No consequential damages
-   - Client responsible for data backups`}
+   - Client responsible for data backups`)}
           </div>
         </div>
-
         <!-- Call to Action -->
         <div class="content-section" style="background: #f8f9fa; text-align: center;">
           <h2 class="content-title">🚀 Ready to Get Started?</h2>
@@ -594,36 +592,28 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
             </div>
           </div>
         </div>
-
         <!-- Footer -->
         <div class="footer">
           <h3>🤝 Let's Build Something Amazing Together</h3>
-          
           <div class="contact-info">
             <p><strong>📧 Email:</strong> projects@nexacore-innovations.com</p>
             <p><strong>🌐 Website:</strong> nexacore-innovations.com</p>
             <p><strong>📞 Questions:</strong> Available for consultation calls</p>
             <p><strong>⏰ Response Time:</strong> Within 24 hours</p>
           </div>
-          
           <p style="margin-top: 30px; font-size: 14px; opacity: 0.8;">
             © ${new Date().getFullYear()} NexaCore Innovations. All rights reserved.
           </p>
-          
           <p style="font-size: 12px; margin-top: 10px; opacity: 0.7;">
             This quote was generated on ${new Date().toLocaleString()} and contains confidential information.
           </p>
         </div>
       </div>
-
       <script>
-        // PDF functionality
         window.onload = function() {
           console.log('Enhanced Quote PDF loaded');
           document.title = 'Quote-${quote.id}-${clientName}-NexaCore';
         };
-        
-        // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
           if (e.ctrlKey && e.key === 'p') {
             e.preventDefault();
@@ -633,17 +623,10 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
             window.close();
           }
         });
-        
-        // Auto-download functionality (optional)
-        function downloadPDF() {
-          window.print();
-        }
-        
-        // Add download button after page loads
         setTimeout(() => {
           const downloadBtn = document.createElement('button');
           downloadBtn.innerHTML = '📄 Download PDF';
-          downloadBtn.style.cssText = `
+          downloadBtn.style.cssText = \`
             position: fixed;
             top: 20px;
             right: 20px;
@@ -656,7 +639,7 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
             font-weight: 600;
             z-index: 1000;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-          `;
+          \`;
           downloadBtn.onclick = () => window.print();
           document.body.appendChild(downloadBtn);
         }, 1000);
