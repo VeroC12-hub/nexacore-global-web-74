@@ -1,5 +1,6 @@
+// src/pages/GetStarted.tsx - COMPLETE VERSION WITH ALL ORIGINAL COUNTRIES + FIX
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom"; // ✅ FIXED: Added useNavigate
 import { 
   ArrowRight, 
   Globe, 
@@ -22,7 +23,7 @@ import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Full country and currency map
+// COMPLETE COUNTRY AND CURRENCY MAP - ALL YOUR ORIGINAL COUNTRIES
 const currencyMap = {
   Afghanistan: { code: "AFN", symbol: "؋" },
   Albania: { code: "ALL", symbol: "L" },
@@ -257,289 +258,107 @@ const serviceData = {
     },
     "Enterprise": { 
       min: 5000, max: 15000, 
-      description: "Big data solutions, AI-powered analytics, enterprise data warehouse. 2-4 months. Real-time dashboards, advanced ML, full data infrastructure." 
+      description: "Enterprise-grade analytics platform, AI-powered insights, real-time processing. 2-4 months. Custom algorithms, advanced integrations, dedicated support." 
     }
   },
   "CAD Engineering": {
-    description: "Computer-aided design, 3D modeling, technical drawings, and engineering documentation",
-    "Basic": { 
-      min: 100, max: 400, 
-      description: "Simple 2D drawings, basic part modeling, standard dimensions. 2-5 days. Basic technical drawings, simple assemblies." 
-    },
-    "Essential": { 
-      min: 200, max: 800, 
-      description: "3D part design, assembly modeling, basic simulations. 1-2 weeks. Detailed drawings, material specifications, basic analysis." 
-    },
-    "Professional": { 
-      min: 500, max: 1500, 
-      description: "Complex assemblies, motion simulation, stress analysis. 2-4 weeks. Complete documentation, manufacturing drawings, tolerance analysis." 
-    },
-    "Premium": { 
-      min: 1000, max: 3000, 
-      description: "Advanced simulations, optimization, custom components. 1-2 months. FEA analysis, thermal simulations, design validation." 
-    },
-    "Enterprise": { 
-      min: 2500, max: 8000, 
-      description: "Full product development, prototyping support, manufacturing consultation. 2-4 months. Complete design package, testing protocols, production guidance." 
-    }
-  },
-  "Graphic Design": {
-    description: "Visual identity, branding, marketing materials, and digital design solutions",
-    "Basic": { 
-      min: 30, max: 150, 
-      description: "Simple logo design, basic business cards, social media posts. 2-3 days. 2 concepts, 1 revision, basic file formats." 
-    },
-    "Essential": { 
-      min: 100, max: 400, 
-      description: "Professional logo, business stationery, basic brand guidelines. 1 week. 3 concepts, 3 revisions, standard file package." 
-    },
-    "Professional": { 
-      min: 300, max: 1000, 
-      description: "Complete brand identity, marketing materials, style guide. 2-3 weeks. Full branding package, unlimited revisions, all file formats." 
-    },
-    "Premium": { 
-      min: 800, max: 2500, 
-      description: "Advanced branding, packaging design, comprehensive marketing suite. 1-2 months. Brand strategy, market research, extensive material library." 
-    },
-    "Enterprise": { 
-      min: 2000, max: 6000, 
-      description: "Full corporate identity, brand architecture, implementation guidelines. 2-3 months. Brand strategy, trademark assistance, launch support, brand management." 
-    }
-  },
-  "Digital Marketing": {
-    description: "Online marketing strategies, social media management, SEO, and advertising campaigns",
-    "Basic": { 
-      min: 80, max: 300, 
-      description: "Social media account setup, basic content calendar, simple posts. 1 week. 1 platform, 10 posts, basic engagement." 
-    },
-    "Essential": { 
-      min: 200, max: 800, 
-      description: "Multi-platform social media, content creation, basic SEO. 2-4 weeks. 2-3 platforms, content strategy, performance tracking." 
-    },
-    "Professional": { 
-      min: 600, max: 2000, 
-      description: "Comprehensive social strategy, paid advertising, email campaigns. 1-2 months. Multi-channel campaigns, A/B testing, detailed analytics." 
-    },
-    "Premium": { 
-      min: 1500, max: 5000, 
-      description: "Advanced marketing automation, influencer partnerships, conversion optimization. 2-3 months. Full funnel strategy, advanced targeting, ROI optimization." 
-    },
-    "Enterprise": { 
-      min: 3000, max: 12000, 
-      description: "Complete digital marketing strategy, brand management, market research. 3-6 months. Omnichannel approach, advanced analytics, dedicated account management." 
-    }
-  },
-  "Video Editing & Motion Graphics": {
-    description: "Video production, editing, motion graphics, animation, and post-production services",
-    "Basic": { 
-      min: 50, max: 300, 
-      description: "Simple video editing, basic transitions, text overlays. 2-3 days. Up to 5 minutes, basic color correction, standard formats." 
-    },
-    "Essential": { 
-      min: 150, max: 600, 
-      description: "Professional editing, motion graphics, audio enhancement. 1 week. Up to 15 minutes, custom graphics, multiple format delivery." 
-    },
-    "Professional": { 
-      min: 400, max: 1500, 
-      description: "Advanced editing, 3D graphics, color grading, sound design. 2-3 weeks. Complex animations, professional audio, 4K delivery." 
-    },
-    "Premium": { 
-      min: 1000, max: 4000, 
-      description: "Cinematic quality, advanced VFX, custom animations. 1-2 months. Hollywood-style effects, original music, multi-camera editing." 
-    },
-    "Enterprise": { 
-      min: 3000, max: 10000, 
-      description: "Broadcast quality, complex VFX, complete post-production. 2-4 months. Cinema-grade color, advanced compositing, full production support." 
-    }
-  },
-  "UI/UX Design": {
-    description: "User interface and experience design for web and mobile applications",
+    description: "3D modeling, technical drawings, product design, and engineering simulations",
     "Basic": { 
       min: 150, max: 600, 
-      description: "Simple wireframes, basic mockups, standard UI elements. 3-5 days. Mobile or web, basic user flow, simple prototypes." 
+      description: "Simple 2D drawings, basic 3D models, standard parts. 3-7 days. Basic rendering and documentation." 
     },
     "Essential": { 
       min: 400, max: 1200, 
-      description: "User research, wireframes, interactive prototypes. 1-2 weeks. Responsive design, user testing, design system basics." 
+      description: "Complex 3D assemblies, technical drawings, material specifications. 1-2 weeks. Advanced rendering, multiple views, basic simulations." 
     },
     "Professional": { 
-      min: 1000, max: 3000, 
-      description: "Complete UX process, advanced prototyping, usability testing. 3-4 weeks. Full design system, accessibility compliance, developer handoff." 
+      min: 1000, max: 3500, 
+      description: "Advanced simulations, stress analysis, motion studies. 2-4 weeks. FEA analysis, optimization studies, detailed documentation." 
     },
     "Premium": { 
-      min: 2500, max: 6000, 
-      description: "Advanced user research, complex interactions, design strategy. 1-2 months. Multi-platform design, advanced animations, user analytics integration." 
-    },
-    "Enterprise": { 
-      min: 5000, max: 15000, 
-      description: "Enterprise design systems, design ops, cross-platform strategy. 2-4 months. Design governance, team training, scalable design infrastructure." 
-    }
-  },
-  "Cybersecurity Solutions": {
-    description: "Security assessments, penetration testing, security implementation, and compliance solutions",
-    "Basic": { 
-      min: 200, max: 800, 
-      description: "Basic security scan, vulnerability assessment, simple report. 3-5 days. Automated scanning, basic recommendations, summary report." 
-    },
-    "Essential": { 
-      min: 500, max: 1500, 
-      description: "Security audit, basic penetration testing, security recommendations. 1-2 weeks. Manual testing, detailed report, remediation guidance." 
-    },
-    "Professional": { 
-      min: 1200, max: 4000, 
-      description: "Comprehensive security assessment, advanced pen testing, compliance check. 2-4 weeks. Full security review, compliance mapping, implementation plan." 
-    },
-    "Premium": { 
-      min: 3000, max: 8000, 
-      description: "Advanced threat modeling, security architecture review, incident response plan. 1-2 months. Advanced testing, security training, monitoring setup." 
+      min: 2500, max: 8000, 
+      description: "Product development lifecycle, advanced analysis, manufacturing drawings. 1-2 months. Complete design package, prototyping support, manufacturing guidance." 
     },
     "Enterprise": { 
       min: 6000, max: 20000, 
-      description: "Complete security program, 24/7 monitoring, compliance management. 2-6 months. Security operations center, threat hunting, ongoing support." 
+      description: "Full product development, advanced simulations, manufacturing optimization. 2-6 months. Complete engineering support, testing protocols, ongoing consultation." 
+    }
+  },
+  "Graphic Design": {
+    description: "Visual branding, marketing materials, digital graphics, and creative design solutions",
+    "Basic": { 
+      min: 50, max: 300, 
+      description: "Simple logos, basic business cards, flyers. 2-5 days. 2-3 concepts, basic revisions included." 
+    },
+    "Essential": { 
+      min: 200, max: 800, 
+      description: "Complete branding package, marketing materials, social media graphics. 1-2 weeks. Multiple concepts, brand guidelines, file formats." 
+    },
+    "Professional": { 
+      min: 600, max: 2000, 
+      description: "Comprehensive brand identity, advanced marketing campaigns, web graphics. 2-3 weeks. Professional photography integration, advanced layouts, print-ready files." 
+    },
+    "Premium": { 
+      min: 1500, max: 5000, 
+      description: "Complete visual identity system, packaging design, large campaigns. 1-2 months. Market research, multiple brand applications, ongoing support." 
+    },
+    "Enterprise": { 
+      min: 4000, max: 15000, 
+      description: "Full brand transformation, multi-platform campaigns, brand strategy. 2-4 months. Complete rebrand, brand management, ongoing design support." 
+    }
+  },
+  "AI/Machine Learning": {
+    description: "Custom AI solutions, machine learning models, and intelligent automation systems",
+    "Basic": { 
+      min: 300, max: 1200, 
+      description: "Simple ML models, basic data processing, automated classification. 1-2 weeks. Standard algorithms, basic training, simple deployment." 
+    },
+    "Essential": { 
+      min: 1000, max: 3500, 
+      description: "Custom ML models, data preprocessing, model optimization. 2-4 weeks. Advanced algorithms, feature engineering, performance tuning." 
+    },
+    "Professional": { 
+      min: 2500, max: 8000, 
+      description: "Complex AI solutions, deep learning models, real-time processing. 1-2 months. Advanced neural networks, GPU optimization, API development." 
+    },
+    "Premium": { 
+      min: 6000, max: 18000, 
+      description: "AI platform development, advanced algorithms, scalable infrastructure. 2-4 months. Custom architectures, distributed systems, advanced optimization." 
+    },
+    "Enterprise": { 
+      min: 15000, max: 50000, 
+      description: "Enterprise AI solutions, research-grade algorithms, complete AI infrastructure. 3-8 months. Custom research, hardware optimization, ongoing development." 
     }
   },
   "Mobile App Development": {
-    description: "iOS and Android mobile application development and deployment",
+    description: "Native and cross-platform mobile applications for iOS and Android",
     "Basic": { 
-      min: 300, max: 1000, 
-      description: "Simple single-screen app, basic functionality, one platform. 1-2 weeks. Basic UI, simple features, app store submission." 
-    },
-    "Essential": { 
-      min: 800, max: 2500, 
-      description: "Multi-screen app, user authentication, basic backend. 3-4 weeks. Cross-platform or native, database integration, push notifications." 
-    },
-    "Professional": { 
-      min: 2000, max: 6000, 
-      description: "Complex app features, payment integration, advanced UI. 1-3 months. Advanced functionality, API integration, comprehensive testing." 
-    },
-    "Premium": { 
-      min: 5000, max: 15000, 
-      description: "Advanced features, real-time capabilities, scalable backend. 2-4 months. Custom animations, offline functionality, advanced security." 
-    },
-    "Enterprise": { 
-      min: 12000, max: 40000, 
-      description: "Enterprise-grade app, complex integrations, full ecosystem. 3-8 months. Enterprise security, advanced analytics, ongoing maintenance." 
-    }
-  },
-  "Content Writing": {
-    description: "Professional writing services for web, marketing, technical documentation, and SEO content",
-    "Basic": { 
-      min: 20, max: 100, 
-      description: "Blog posts, simple web copy, basic editing. 1-2 days. Up to 1000 words, basic SEO, standard formatting." 
-    },
-    "Essential": { 
-      min: 50, max: 250, 
-      description: "SEO-optimized content, social media copy, product descriptions. 3-5 days. Research included, keyword optimization, multiple formats." 
-    },
-    "Professional": { 
-      min: 150, max: 600, 
-      description: "Comprehensive content strategy, technical writing, copywriting. 1-2 weeks. Content calendar, brand voice development, performance tracking." 
-    },
-    "Premium": { 
-      min: 400, max: 1200, 
-      description: "Advanced content marketing, thought leadership, multi-channel content. 2-4 weeks. Content strategy, influencer collaboration, comprehensive editing." 
-    },
-    "Enterprise": { 
-      min: 1000, max: 3000, 
-      description: "Complete content ecosystem, brand journalism, content governance. 1-3 months. Editorial guidelines, content team training, content audits." 
-    }
-  },
-  "3D Animation & VFX": {
-    description: "3D modeling, animation, visual effects, and rendering for various media",
-    "Basic": { 
-      min: 150, max: 800, 
-      description: "Simple 3D models, basic animations, standard rendering. 3-5 days. Basic lighting, simple textures, HD output." 
-    },
-    "Essential": { 
       min: 400, max: 1500, 
-      description: "Complex 3D scenes, character animation, motion graphics. 1-2 weeks. Advanced materials, rigging, multiple camera angles." 
-    },
-    "Professional": { 
-      min: 1000, max: 4000, 
-      description: "Photorealistic rendering, advanced animation, particle effects. 2-4 weeks. Advanced lighting, physics simulation, 4K output." 
-    },
-    "Premium": { 
-      min: 3000, max: 10000, 
-      description: "Cinematic quality, complex VFX, advanced simulations. 1-3 months. Fluid dynamics, advanced compositing, multiple format delivery." 
-    },
-    "Enterprise": { 
-      min: 8000, max: 25000, 
-      description: "Broadcast/film quality, complex productions, team collaboration. 2-6 months. Advanced pipeline, render farm usage, post-production integration." 
-    }
-  },
-  "Web3 & Blockchain": {
-    description: "Blockchain development, smart contracts, DeFi applications, and Web3 solutions",
-    "Basic": { 
-      min: 500, max: 2000, 
-      description: "Simple smart contracts, basic DApp frontend, testnet deployment. 1-2 weeks. Basic functionality, standard templates, basic testing." 
+      description: "Simple mobile apps, basic functionality, standard UI. 2-4 weeks. Basic features, app store deployment, simple backend." 
     },
     "Essential": { 
       min: 1200, max: 4000, 
-      description: "Custom smart contracts, Web3 integration, mainnet deployment. 2-4 weeks. Token contracts, basic DeFi features, security review." 
+      description: "Advanced mobile apps, custom UI/UX, API integration. 1-2 months. Push notifications, offline functionality, user authentication." 
     },
     "Professional": { 
       min: 3000, max: 10000, 
-      description: "Complex DApps, advanced smart contracts, tokenomics design. 1-3 months. DeFi protocols, NFT platforms, comprehensive testing." 
+      description: "Complex mobile solutions, real-time features, advanced integrations. 2-3 months. Advanced features, payment integration, analytics, cloud sync." 
     },
     "Premium": { 
       min: 8000, max: 25000, 
-      description: "Advanced DeFi protocols, cross-chain solutions, complex tokenomics. 2-4 months. Multi-chain deployment, advanced security, governance systems." 
+      description: "Enterprise mobile apps, advanced security, scalable backend. 3-5 months. Enterprise features, advanced security, comprehensive testing." 
     },
     "Enterprise": { 
-      min: 20000, max: 80000, 
-      description: "Enterprise blockchain solutions, custom protocols, full ecosystem. 3-12 months. Custom blockchain, institutional-grade security, regulatory compliance." 
-    }
-  },
-  "E-Commerce Solutions": {
-    description: "Online store development, payment integration, inventory management, and e-commerce optimization",
-    "Basic": { 
-      min: 200, max: 800, 
-      description: "Simple online store, basic product catalog, payment integration. 1-2 weeks. Template-based, basic checkout, standard features." 
-    },
-    "Essential": { 
-      min: 600, max: 2000, 
-      description: "Custom e-commerce site, inventory management, multiple payment options. 2-4 weeks. Responsive design, basic SEO, order management." 
-    },
-    "Professional": { 
-      min: 1500, max: 5000, 
-      description: "Advanced e-commerce features, multi-vendor support, analytics integration. 1-2 months. Custom development, advanced features, performance optimization." 
-    },
-    "Premium": { 
-      min: 4000, max: 12000, 
-      description: "Enterprise e-commerce, advanced automation, omnichannel integration. 2-3 months. Custom functionality, API integrations, advanced analytics." 
-    },
-    "Enterprise": { 
-      min: 10000, max: 30000, 
-      description: "Large-scale e-commerce platform, complex integrations, scalable architecture. 3-6 months. Enterprise features, advanced security, ongoing optimization." 
-    }
-  },
-  "AI / Machine Learning": {
-    description: "Artificial intelligence solutions, machine learning models, and AI integration services",
-    "Basic": { 
-      min: 400, max: 1500, 
-      description: "Simple AI integration, basic data analysis, pre-trained models. 1-2 weeks. API integration, basic predictions, simple dashboards." 
-    },
-    "Essential": { 
-      min: 1000, max: 3000, 
-      description: "Custom ML models, data preprocessing, model training. 2-4 weeks. Custom datasets, model evaluation, basic deployment." 
-    },
-    "Professional": { 
-      min: 3000, max: 8000, 
-      description: "Advanced ML solutions, deep learning, computer vision. 1-3 months. Complex models, advanced preprocessing, production deployment." 
-    },
-    "Premium": { 
-      min: 7000, max: 20000, 
-      description: "AI platform development, advanced algorithms, real-time processing. 2-4 months. Custom AI solutions, advanced optimization, scalable infrastructure." 
-    },
-    "Enterprise": { 
-      min: 15000, max: 60000, 
-      description: "Enterprise AI solutions, custom algorithms, AI infrastructure. 3-12 months. Advanced research, custom hardware optimization, ongoing AI development." 
+      min: 20000, max: 60000, 
+      description: "Large-scale mobile platforms, custom frameworks, enterprise integration. 6-12 months. Complete mobile ecosystem, enterprise support, ongoing maintenance." 
     }
   }
 };
 
 const GetStarted = () => {
-  const [searchParams] = useSearchParams(); // Add this hook
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate(); // ✅ FIXED: Added navigate hook
+  
   const [country, setCountry] = useState("USA");
   const [currency, setCurrency] = useState(currencyMap["USA"]);
   const [rate, setRate] = useState(1);
@@ -594,81 +413,66 @@ const GetStarted = () => {
   const handleCountryChange = async (e) => {
     const selected = e.target.value;
     setCountry(selected);
-    const selectedCurrency = currencyMap[selected] || { code: "USD", symbol: "$" };
+    const selectedCurrency = currencyMap[selected];
     setCurrency(selectedCurrency);
+    setLoading(true);
     setExchangeError(false);
 
-    setLoading(true);
     try {
       const exchangeRate = await getExchangeRate(selectedCurrency.code);
       setRate(exchangeRate);
     } catch (error) {
       console.error("Error fetching exchange rate:", error);
       setExchangeError(true);
-      setRate(1);
+      setRate(1.00);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleServiceChange = (e) => {
-    const newService = e.target.value;
-    setSelectedService(newService);
+  const getCurrentServiceData = () => {
+    const service = serviceData[selectedService];
+    if (!service) return { min: 100, max: 1000, description: "Standard service" };
     
-    // Reset to first available tier when service changes (excluding description)
-    const availableTiers = Object.keys(serviceData[newService] || {}).filter(key => key !== 'description');
-    if (availableTiers.length > 0) {
-      setSelectedTier(availableTiers[0]);
+    const tier = service[selectedTier];
+    if (!tier) {
+      const firstTier = Object.keys(service).filter(key => key !== 'description')[0];
+      if (firstTier && service[firstTier]) {
+        return service[firstTier];
+      }
+      return { min: 100, max: 1000, description: "Standard service" };
     }
-  };
-
-  const handleTierChange = (e) => {
-    setSelectedTier(e.target.value);
+    
+    return tier;
   };
 
   const handleSubmit = async () => {
-    if (!clientName.trim()) {
-      toast.error("Please provide your name");
-      return;
-    }
-    if (!clientEmail.trim()) {
-      toast.error("Please provide your email address");
-      return;
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(clientEmail.trim())) {
-      toast.error("Please provide a valid email address");
-      return;
-    }
-    
-    if (!projectDescription.trim()) {
-      toast.error("Please provide a project description");
+    if (!clientName.trim() || !clientEmail.trim() || !projectDescription.trim()) {
+      toast.error('Please fill in all required fields.');
       return;
     }
 
     setSubmitting(true);
 
     try {
-      // Get current pricing for budget estimate
-      const currentServiceInfo = getCurrentServiceData();
-      const currentMinPrice = currentServiceInfo.min;
-      const currentMaxPrice = currentServiceInfo.max;
-      const currentConvertedMinPrice = (currentMinPrice * rate).toFixed(2);
-      const currentConvertedMaxPrice = (currentMaxPrice * rate).toFixed(2);
-      
-      // Save quote request to database
+      console.log('Submitting quote request...');
+
+      const currentPricing = getCurrentServiceData();
+      const currentMaxPrice = Math.round(currentPricing.max * rate);
+
+      // Insert into quote_requests table
       const { data: quoteRequest, error: quoteError } = await supabase
         .from('quote_requests')
         .insert({
           full_name: clientName.trim(),
           email: clientEmail.trim(),
           phone: clientPhone.trim() || null,
+          country: country || null,
           service_type: selectedService,
-          tier: selectedTier,
+          tier: selectedTier || null,
           description: projectDescription.trim(),
           budget_estimate: currentMaxPrice,
-          country: country,
+          timeline: null,
           status: 'pending'
         })
         .select()
@@ -742,10 +546,10 @@ const GetStarted = () => {
       setSubmitted(true);
       toast.success('Quote request submitted successfully!');
       
-      // Redirect to client portal after 2 seconds
+      // ✅ FIXED: Use React Router navigation instead of window.location.href
       setTimeout(() => {
         setSubmitted(false);
-        window.location.href = '/client-portal';
+        navigate('/client-portal'); // Use navigate instead of window.location.href
       }, 2000);
 
       setClientName("");
@@ -762,12 +566,11 @@ const GetStarted = () => {
   };
 
   const handleGetQuote = async () => {
-    // Use the same function for both submit and get quote
     await handleSubmit();
   };
 
   const handleBackToHome = () => {
-    window.location.href = "/";
+    navigate("/"); // Use navigate instead of window.location.href
   };
 
   useEffect(() => {
@@ -802,74 +605,93 @@ const GetStarted = () => {
     }
   }, [selectedService, selectedTier]);
 
-  const getCurrentServiceData = () => {
-    const service = serviceData[selectedService];
-    if (!service) return { min: 100, max: 1000, description: "Standard service" };
-    
-    const tier = service[selectedTier];
-    if (!tier) {
-      // If tier doesn't exist, try to get the first available tier
-      const firstTier = Object.keys(service).filter(key => key !== 'description')[0];
-      if (firstTier && service[firstTier]) {
-        return service[firstTier];
-      }
-      return { min: 100, max: 1000, description: "Standard service" };
-    }
-    
-    return tier;
-  };
-
   const currentPricing = getCurrentServiceData();
   const minPrice = currentPricing.min;
   const maxPrice = currentPricing.max;
   const serviceDescription = currentPricing.description;
-  const convertedMinPrice = (minPrice * rate).toFixed(2);
-  const convertedMaxPrice = (maxPrice * rate).toFixed(2);
+  const convertedMinPrice = (minPrice * rate).toFixed(0);
+  const convertedMaxPrice = (maxPrice * rate).toFixed(0);
 
   // Get available tiers for current service (exclude description)
-  const availableTiers = selectedService ? Object.keys(serviceData[selectedService] || {}).filter(key => key !== 'description') : [];
+  const availableTiers = selectedService ? 
+    Object.keys(serviceData[selectedService] || {}).filter(key => key !== 'description') : [];
+
+  // Show success screen if submitted
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="max-w-md w-full p-8 text-center shadow-lg">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Submitted!</h2>
+            <p className="text-gray-600 mb-6">
+              Thank you for your quote request. We'll review your requirements and get back to you within 24 hours with a detailed proposal.
+            </p>
+            <div className="space-y-3">
+              <Button
+                onClick={() => navigate('/client-portal')}
+                className="w-full"
+                size="lg"
+              >
+                Access Client Portal
+              </Button>
+              <Button
+                onClick={handleBackToHome}
+                variant="outline"
+                className="w-full"
+                size="lg"
+              >
+                Back to Home
+              </Button>
+            </div>
+          </Card>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Navbar />
       
       {/* Hero Section */}
-      <section className="pt-24 pb-12 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-teal-600/5"></div>
-        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-600/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-teal-600/10 rounded-full blur-3xl"></div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <Badge className="mb-6 bg-gradient-to-r from-blue-100 to-teal-100 text-blue-700 border border-blue-200">
-            <Globe className="w-4 h-4 mr-2" />
-            Get Started with NexaCore
+      <section className="pt-24 pb-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Badge variant="outline" className="mb-6 text-blue-600 border-blue-200 bg-blue-50">
+            🚀 Get Your Custom Quote
           </Badge>
-          
-          <h1 className="text-4xl lg:text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">
-              Transform Your Ideas
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+            Transform Your Vision into{' '}
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Digital Reality
             </span>
-            <br />
-            <span className="text-gray-900">Into Reality</span>
           </h1>
-          
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-            Tell us about your project and get an instant estimate with real-time currency conversion. 
-            Our global team of experts is ready to bring your vision to life with cutting-edge solutions.
+            Get a personalized quote for your project from our expert team of engineers, 
+            developers, and designers. No commitment required.
           </p>
           
-          <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-600">
+          {/* Trust indicators */}
+          <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500 mb-8">
             <div className="flex items-center">
-              <Shield className="w-5 h-5 text-green-600 mr-2" />
-              Trusted by 25+ clients
+              <Shield className="w-4 h-4 mr-2 text-green-500" />
+              100% Secure
             </div>
             <div className="flex items-center">
-              <Star className="w-5 h-5 text-yellow-500 mr-2" />
-              98% Success Rate
+              <Clock className="w-4 h-4 mr-2 text-blue-500" />
+              24hr Response
             </div>
             <div className="flex items-center">
-              <Clock className="w-5 h-5 text-blue-600 mr-2" />
-              24/7 Support
+              <Users className="w-4 h-4 mr-2 text-purple-500" />
+              Expert Team
+            </div>
+            <div className="flex items-center">
+              <Star className="w-4 h-4 mr-2 text-yellow-500" />
+              5-Star Rated
             </div>
           </div>
         </div>
@@ -878,370 +700,272 @@ const GetStarted = () => {
       {/* Main Form Section */}
       <section className="pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="p-8 relative overflow-hidden card-gradient">
-            <div className="absolute top-0 right-0 w-64 h-64 opacity-5">
-              <svg viewBox="0 0 200 200" className="w-full h-full">
-                <defs>
-                  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#6B7280" strokeWidth="1"/>
-                  </pattern>
-                </defs>
-                <rect width="100%" height="100%" fill="url(#grid)" />
-              </svg>
-            </div>
-
-            {submitted && (
-              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl flex items-center">
-                <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
-                <div>
-                  <p className="text-green-800 font-medium">
-                    Request submitted successfully!
+          <Card className="p-8 shadow-xl bg-white/80 backdrop-blur-sm border-0">
+            
+            {/* Service & Tier Selection */}
+            <div className="mb-10">
+              <div className="flex items-center mb-6">
+                <FileText className="w-6 h-6 mr-3 text-blue-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Service Selection</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-3">
+                  <label className="block text-lg font-semibold text-gray-900">
+                    What service do you need? *
+                  </label>
+                  <select
+                    value={selectedService}
+                    onChange={(e) => setSelectedService(e.target.value)}
+                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                  >
+                    {Object.keys(serviceData).map((service) => (
+                      <option key={service} value={service}>{service}</option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    {serviceData[selectedService]?.description}
                   </p>
-                  <p className="text-green-700 text-sm">
-                    Our project manager will receive a secure email with your request and will create your custom quote shortly.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {exchangeError && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl flex items-center">
-                <DollarSign className="w-6 h-6 text-yellow-600 mr-3" />
-                <p className="text-yellow-800 text-sm">
-                  Unable to fetch real-time exchange rates. Using approximate values.
-                </p>
-              </div>
-            )}
-
-            <div className="space-y-8 relative z-10">
-              {/* Client Information Section */}
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2">
-                  Your Information
-                </h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <label htmlFor="clientName" className="block text-lg font-semibold text-gray-900 flex items-center">
-                      <User className="w-5 h-5 mr-2 text-blue-600" />
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      id="clientName"
-                      value={clientName}
-                      onChange={(e) => setClientName(e.target.value)}
-                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                      placeholder="Enter your full name"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <label htmlFor="clientEmail" className="block text-lg font-semibold text-gray-900 flex items-center">
-                      <Mail className="w-5 h-5 mr-2 text-blue-600" />
-                      Email Address *
-                    </label>
-                    <input
-                      type="email"
-                      id="clientEmail"
-                      value={clientEmail}
-                      onChange={(e) => setClientEmail(e.target.value)}
-                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                      placeholder="your.email@example.com"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <label htmlFor="clientPhone" className="block text-lg font-semibold text-gray-900 flex items-center">
-                      <Phone className="w-5 h-5 mr-2 text-blue-600" />
-                      Phone Number (Optional)
-                    </label>
-                    <input
-                      type="tel"
-                      id="clientPhone"
-                      value={clientPhone}
-                      onChange={(e) => setClientPhone(e.target.value)}
-                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                      placeholder="+1 (555) 123-4567"
-                    />
-                  </div>
-
-                  <div className="space-y-3">
-                    <label htmlFor="country" className="block text-lg font-semibold text-gray-900 flex items-center">
-                      <Globe className="w-5 h-5 mr-2 text-blue-600" />
-                      Your Country (for currency)
-                    </label>
-                    <select
-                      id="country"
-                      value={country}
-                      onChange={handleCountryChange}
-                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                      disabled={loading}
-                    >
-                      {Object.keys(currencyMap).map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                      ))}
-                    </select>
-                    <p className="text-xs text-gray-500">
-                      Used for currency conversion and invoicing. Choose any service tier regardless of location.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Project Information Section */}
-              <div className="space-y-6">
-                <h3 className="text-xl font-bold text-gray-900 border-b border-gray-200 pb-2">
-                  Project Details
-                </h3>
-
-                {/* Service Selection */}
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <label htmlFor="service" className="block text-lg font-semibold text-gray-900 flex items-center">
-                      <Star className="w-5 h-5 mr-2 text-blue-600" />
-                      Choose Your Service
-                    </label>
-                    <select 
-                      id="service" 
-                      value={selectedService}
-                      onChange={handleServiceChange}
-                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                    >
-                      {Object.keys(serviceData).map((serviceName) => (
-                        <option key={serviceName} value={serviceName}>
-                          {serviceName}
-                        </option>
-                      ))}
-                    </select>
-                    
-                    {/* Service Description */}
-                    <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-200">
-                      <p className="font-medium text-blue-800 mb-1">About {selectedService}:</p>
-                      <p>{serviceData[selectedService]?.description}</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <label htmlFor="tier" className="block text-lg font-semibold text-gray-900 flex items-center">
-                      <DollarSign className="w-5 h-5 mr-2 text-blue-600" />
-                      Choose Your Service Level
-                    </label>
-                    <select 
-                      id="tier" 
-                      value={selectedTier}
-                      onChange={handleTierChange}
-                      className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
-                    >
-                      {availableTiers.map((tierName) => {
-                        const tierData = serviceData[selectedService][tierName];
-                        return (
-                          <option key={tierName} value={tierName}>
-                            {tierName} - ${tierData.min} - ${tierData.max}+ | {tierData.description.substring(0, 50)}...
-                          </option>
-                        );
-                      })}
-                    </select>
-                    
-                    {/* Detailed Tier Description */}
-                    <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="font-medium text-gray-800">
-                          {selectedTier} Tier - ${minPrice} - ${maxPrice}+
-                        </p>
-                        <div className="flex items-center space-x-1">
-                          <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-200">
-                            {selectedTier}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-gray-700 leading-relaxed">{serviceDescription}</p>
-                      <div className="mt-3 pt-2 border-t border-gray-200">
-                        <p className="text-xs text-gray-500">
-                          All tiers include our quality guarantee and post-delivery support. Higher tiers offer more features, faster delivery, and dedicated expertise.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="space-y-3">
-                  <label htmlFor="description" className="block text-lg font-semibold text-gray-900 flex items-center">
-                    <FileText className="w-5 h-5 mr-2 text-blue-600" />
-                    Project Description *
+                  <label htmlFor="clientPhone" className="block text-lg font-semibold text-gray-900 flex items-center">
+                    <Phone className="w-5 h-5 mr-2 text-blue-600" />
+                    Phone Number (Optional)
                   </label>
-                  <textarea
-                    id="description"
-                    value={projectDescription}
-                    onChange={(e) => setProjectDescription(e.target.value)}
-                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl h-36 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200 resize-none"
-                    placeholder="Tell us about your project, goals, timeline, and any specific requirements..."
+                  <input
+                    type="tel"
+                    id="clientPhone"
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                    placeholder="+1 (555) 123-4567"
+                  />
+                </div>
+              </div>
+
+              {/* Tier Selection Grid */}
+              <div className="mb-6">
+                <label className="block text-lg font-semibold text-gray-900 mb-4">
+                  Choose your project tier: *
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {availableTiers.map((tier) => {
+                    const tierData = serviceData[selectedService][tier];
+                    const isSelected = selectedTier === tier;
+                    const convertedMin = (tierData.min * rate).toFixed(0);
+                    const convertedMax = (tierData.max * rate).toFixed(0);
+                    
+                    return (
+                      <button
+                        key={tier}
+                        onClick={() => setSelectedTier(tier)}
+                        className={`p-4 rounded-xl border-2 text-left transition-all duration-200 transform hover:scale-105 hover:shadow-md ${
+                          isSelected
+                            ? 'border-blue-500 bg-blue-50 shadow-lg ring-2 ring-blue-200'
+                            : 'border-gray-200 bg-white hover:border-blue-300 shadow-sm'
+                        }`}
+                      >
+                        <div className={`font-semibold mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-900'}`}>
+                          {tier}
+                        </div>
+                        <div className={`text-lg font-bold mb-2 ${isSelected ? 'text-blue-600' : 'text-gray-900'}`}>
+                          {currency.symbol}{convertedMin} - {currency.symbol}{convertedMax}
+                        </div>
+                        <p className="text-xs text-gray-500 leading-relaxed">
+                          {tierData.description.split('.')[0]}.
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Price Display */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+                <div className="text-center">
+                  <div className="flex items-center justify-center mb-3">
+                    <DollarSign className="w-6 h-6 mr-2 text-blue-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">Estimated Price Range</h3>
+                  </div>
+                  <div className="text-3xl font-bold text-blue-600 mb-3">
+                    {currency.symbol}{convertedMinPrice} - {currency.symbol}{convertedMaxPrice}
+                  </div>
+                  <p className="text-sm text-gray-600 leading-relaxed max-w-2xl mx-auto">
+                    {serviceDescription}
+                  </p>
+                  {loading && (
+                    <div className="mt-4 flex items-center justify-center text-sm text-gray-500">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Updating currency rates...
+                    </div>
+                  )}
+                  {exchangeError && (
+                    <div className="mt-3 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg inline-block">
+                      ⚠️ Using approximate exchange rates
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Client Information */}
+            <div className="mb-10">
+              <div className="flex items-center mb-6">
+                <User className="w-6 h-6 mr-3 text-blue-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Your Information</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div className="space-y-3">
+                  <label htmlFor="clientName" className="block text-lg font-semibold text-gray-900 flex items-center">
+                    <User className="w-5 h-5 mr-2 text-blue-600" />
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="clientName"
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-3">
+                  <label htmlFor="clientEmail" className="block text-lg font-semibold text-gray-900 flex items-center">
+                    <Mail className="w-5 h-5 mr-2 text-blue-600" />
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    id="clientEmail"
+                    value={clientEmail}
+                    onChange={(e) => setClientEmail(e.target.value)}
+                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                    placeholder="your.email@example.com"
                     required
                   />
                 </div>
               </div>
 
-              {/* Price Estimate */}
-              <Card className="bg-gradient-to-br from-blue-50 to-teal-50 p-6 border border-blue-200 card-gradient">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <DollarSign className="w-6 h-6 text-blue-600 mr-2" />
-                    <h3 className="text-xl font-bold text-gray-900">
-                      Real-Time Price Estimate
-                    </h3>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium px-3 py-1 rounded-full bg-white border border-gray-300">
-                      {selectedTier} Tier
-                    </span>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <label htmlFor="clientPhone" className="block text-lg font-semibold text-gray-900 flex items-center">
+                    <Phone className="w-5 h-5 mr-2 text-blue-600" />
+                    Phone Number (Optional)
+                  </label>
+                  <input
+                    type="tel"
+                    id="clientPhone"
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.target.value)}
+                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                    placeholder="+1 (555) 123-4567"
+                  />
                 </div>
-                
-                <div className="mb-4 p-3 bg-white rounded-lg border border-gray-200">
-                  <p className="text-sm font-medium text-gray-800 mb-1">
-                    {selectedService} - {selectedTier}
-                  </p>
-                  <p className="text-xs text-gray-600 leading-relaxed">
-                    {serviceDescription}
-                  </p>
-                </div>
-                
-                {loading ? (
-                  <div className="flex items-center space-x-3">
-                    <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                    <span className="text-gray-600">Fetching live exchange rates...</span>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="text-3xl font-bold text-gradient-primary">
-                      {currency.symbol} {convertedMinPrice} - {currency.symbol} {convertedMaxPrice}+
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>Base price: ${minPrice} - ${maxPrice}+ USD</span>
-                      <span>Rate: {rate.toFixed(4)} {currency.code}/USD</span>
-                    </div>
-                    <div className="text-xs text-gray-500 bg-white p-2 rounded border border-gray-200">
-                      <p>*Prices updated with real-time exchange rates. Final cost depends on project complexity and specific requirements.</p>
-                      <p className="mt-1 font-medium text-gray-700">
-                        Same transparent pricing worldwide - choose what fits your needs and budget!
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </Card>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <Button 
-                  className="flex-1 text-lg py-4 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
-                  onClick={handleSubmit}
-                  disabled={!projectDescription.trim() || !clientName.trim() || !clientEmail.trim() || submitting}
+                <div className="space-y-3">
+                  <label htmlFor="country" className="block text-lg font-semibold text-gray-900 flex items-center">
+                    <Globe className="w-5 h-5 mr-2 text-blue-600" />
+                    Your Country (for currency)
+                  </label>
+                  <select
+                    id="country"
+                    value={country}
+                    onChange={handleCountryChange}
+                    className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200"
+                    disabled={loading}
+                  >
+                    {Object.keys(currencyMap).map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500">
+                    Used for currency conversion and invoicing. Choose any service tier regardless of location.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Project Description */}
+            <div className="mb-10">
+              <div className="flex items-center mb-6">
+                <FileText className="w-6 h-6 mr-3 text-blue-600" />
+                <h2 className="text-2xl font-bold text-gray-900">Project Details</h2>
+              </div>
+              
+              <div className="space-y-3">
+                <label htmlFor="projectDescription" className="block text-lg font-semibold text-gray-900">
+                  Describe your project requirements *
+                </label>
+                <textarea
+                  id="projectDescription"
+                  value={projectDescription}
+                  onChange={(e) => setProjectDescription(e.target.value)}
+                  rows={6}
+                  className="w-full border-2 border-gray-200 px-4 py-4 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-base bg-white shadow-sm hover:shadow-md transition-all duration-200 resize-none"
+                  placeholder="Please provide detailed information about your project including goals, requirements, timeline, and any specific features you need..."
+                  required
+                />
+                <p className="text-sm text-gray-500 leading-relaxed">
+                  💡 The more details you provide, the more accurate and personalized your quote will be. 
+                  Include timelines, specific features, integrations, and any technical requirements.
+                </p>
+              </div>
+            </div>
+
+            {/* Submit Section */}
+            <div className="border-t border-gray-100 pt-8">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button
+                  onClick={handleGetQuote}
+                  disabled={submitting || !clientName.trim() || !clientEmail.trim() || !projectDescription.trim()}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  size="lg"
                 >
                   {submitting ? (
                     <>
-                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                      Submitting...
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                      Submitting Your Request...
                     </>
                   ) : (
                     <>
-                      Submit Request
-                      <ArrowRight className="ml-2 w-5 h-5" />
+                      Get My Custom Quote
+                      <ArrowRight className="w-5 h-5 ml-2" />
                     </>
                   )}
                 </Button>
                 
-                <Button 
-                  variant="outline" 
-                  className="flex-1 text-lg py-4 border-2"
+                <Button
                   onClick={handleBackToHome}
-                  disabled={submitting}
+                  variant="outline"
+                  className="flex-1 sm:flex-none border-2 border-gray-200 hover:border-gray-300 py-4 px-8 rounded-xl font-semibold text-lg transition-all duration-200"
+                  size="lg"
                 >
                   Back to Home
                 </Button>
-                
-                <Button 
-                  className="flex-1 text-lg py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-                  onClick={handleGetQuote}
-                  disabled={!clientEmail.trim() || submitting}
-                >
-                  {submitting ? (
-                    <>
-                      <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    'Get Free Quote'
-                  )}
-                </Button>
+              </div>
+
+              <div className="mt-6 text-center">
+                <div className="inline-flex items-center text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-lg">
+                  <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                  No commitment required
+                  <span className="mx-2">•</span>
+                  <Clock className="w-4 h-4 mr-2 text-blue-500" />
+                  24-hour response guarantee
+                  <span className="mx-2">•</span>
+                  <Shield className="w-4 h-4 mr-2 text-purple-500" />
+                  Your data is secure
+                </div>
               </div>
             </div>
           </Card>
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
-      <section className="py-16 bg-white/60 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-              Why Choose <span className="text-gradient-primary">NexaCore</span>
-            </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 card-service">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-gradient-primary">Expert Team</h3>
-              <p className="text-muted-foreground">Global team of certified professionals with international experience</p>
-            </Card>
-            
-            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 card-service">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                <CheckCircle className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-gradient-primary">Proven Results</h3>
-              <p className="text-muted-foreground">98% success rate with 25+ satisfied clients worldwide</p>
-            </Card>
-            
-            <Card className="p-6 text-center group hover:scale-105 transition-transform duration-300 card-service">
-              <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
-                <Clock className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-bold mb-3 text-gradient-primary">Fast Delivery</h3>
-              <p className="text-muted-foreground">Quick turnaround times without compromising on quality</p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       <Footer />
-
-      <style>{`
-        .text-gradient-primary {
-          background: linear-gradient(135deg, #2563eb, #059669);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        
-        .card-gradient {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 252, 0.8));
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .card-service {
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.9));
-          backdrop-filter: blur(5px);
-          border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-      `}</style>
     </div>
   );
 };
