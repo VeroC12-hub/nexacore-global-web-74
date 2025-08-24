@@ -1,4 +1,4 @@
-// api/quotes/[id]/pdf.ts - ENHANCED PDF GENERATION WITH REDUCED LOGO SIZE
+// api/quotes/[id]/pdf.ts - ENHANCED PDF GENERATION WITH REDUCED LOGO SIZE & DATE FIX
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
@@ -23,7 +23,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Extract quote ID from URL path or query params
     const quoteId = req.query.id || req.query.quoteId;
-    
+
     if (!quoteId || typeof quoteId !== 'string') {
       return res.status(400).json({ 
         error: 'Quote ID is required',
@@ -72,6 +72,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
+function formatDate(dateString: string): string {
+  if (!dateString) return 'TBD';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'TBD';
+  return date.toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+}
+
 function generateComprehensivePDF(quote: any) {
   const clientName = quote.quote_requests?.full_name || 'Valued Client';
   const clientEmail = quote.quote_requests?.email || '';
@@ -81,30 +93,14 @@ function generateComprehensivePDF(quote: any) {
   const serviceType = quote.quote_requests?.service_type || quote.service_type;
   const projectDescription = quote.quote_requests?.description || '';
 
-  // Format dates
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    } catch {
-      return 'Invalid Date';
-    }
-  };
-
+  // Format dates with robust fallback
   const createdDate = formatDate(quote.created_at);
   const expiresDate = formatDate(quote.expires_at);
-  
-  // FIX THE SYNTAX ERROR: Complete the ternary operator
+
   const deliverables = Array.isArray(quote.deliverables) ? quote.deliverables : [];
-  
   const totalPrice = (quote.price || 0).toLocaleString();
   const currency = quote.currency || '$';
 
-  // Enhanced quote sections
   const projectPhases = [
     "🔍 Discovery & Requirements Analysis",
     "📋 Project Planning & Architecture Design", 
@@ -146,7 +142,6 @@ function generateComprehensivePDF(quote: any) {
           padding: 0;
           box-sizing: border-box;
         }
-        
         body {
           font-family: 'Arial', 'Helvetica', sans-serif;
           line-height: 1.6;
@@ -154,7 +149,6 @@ function generateComprehensivePDF(quote: any) {
           background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
           min-height: 100vh;
         }
-        
         .pdf-container {
           max-width: 210mm;
           margin: 0 auto;
@@ -162,15 +156,13 @@ function generateComprehensivePDF(quote: any) {
           box-shadow: 0 0 30px rgba(0,0,0,0.1);
           position: relative;
         }
-
         /* REDUCED LOGO SIZE */
         .company-logo-img {
-          width: 90px; /* Reduce this to 60px or 70px for even smaller logo */
+          width: 90px; /* Reduce further to 60px if needed */
           height: auto;
           display: block;
           margin-bottom: 6px;
         }
-        
         /* Header Section */
         .header {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -179,7 +171,6 @@ function generateComprehensivePDF(quote: any) {
           position: relative;
           overflow: hidden;
         }
-        
         .header::before {
           content: '';
           position: absolute;
@@ -190,20 +181,17 @@ function generateComprehensivePDF(quote: any) {
           background: rgba(255,255,255,0.1);
           transform: rotate(45deg);
         }
-        
         .company-logo {
           font-size: 28px;
           font-weight: 900;
           letter-spacing: -1px;
           margin-bottom: 5px;
         }
-        
         .company-tagline {
           font-size: 14px;
           opacity: 0.9;
           font-weight: 300;
         }
-        
         .quote-title {
           font-size: 36px;
           font-weight: 800;
@@ -211,14 +199,12 @@ function generateComprehensivePDF(quote: any) {
           margin: 30px 0 20px 0;
           text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-        
         .quote-subtitle {
           text-align: center;
           font-size: 16px;
           opacity: 0.9;
           font-weight: 300;
         }
-        
         /* Client Info Section */
         .client-section {
           display: flex;
@@ -227,11 +213,9 @@ function generateComprehensivePDF(quote: any) {
           background: #f8f9fa;
           border-bottom: 3px solid #e9ecef;
         }
-        
         .client-info, .quote-info {
           flex: 1;
         }
-        
         .section-title {
           font-size: 18px;
           font-weight: 700;
@@ -240,31 +224,26 @@ function generateComprehensivePDF(quote: any) {
           text-transform: uppercase;
           letter-spacing: 1px;
         }
-        
         .client-name {
           font-size: 24px;
           font-weight: 800;
           color: #2c3e50;
           margin-bottom: 8px;
         }
-        
         .client-details {
           color: #6c757d;
           line-height: 1.8;
         }
-        
         .quote-number {
           font-size: 24px;
           font-weight: 800;
           color: #667eea;
           margin-bottom: 8px;
         }
-        
         .quote-dates {
           color: #6c757d;
           line-height: 1.8;
         }
-        
         /* Price Section */
         .price-section {
           background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
@@ -273,21 +252,18 @@ function generateComprehensivePDF(quote: any) {
           text-align: center;
           margin: 0;
         }
-        
         .total-price {
           font-size: 48px;
           font-weight: 900;
           margin-bottom: 10px;
           text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-        
         .price-label {
           font-size: 18px;
           font-weight: 600;
           margin-bottom: 15px;
           opacity: 0.95;
         }
-        
         .validity-info {
           background: rgba(255,255,255,0.2);
           padding: 12px 24px;
@@ -295,17 +271,14 @@ function generateComprehensivePDF(quote: any) {
           display: inline-block;
           font-weight: 500;
         }
-        
         /* Content Sections */
         .content-section {
           padding: 30px 40px;
           border-bottom: 1px solid #e9ecef;
         }
-        
         .content-section:last-child {
           border-bottom: none;
         }
-        
         .content-title {
           font-size: 20px;
           font-weight: 700;
@@ -315,29 +288,24 @@ function generateComprehensivePDF(quote: any) {
           border-bottom: 2px solid #667eea;
           display: inline-block;
         }
-        
         .content-text {
           color: #495057;
           line-height: 1.8;
           margin-bottom: 15px;
         }
-        
         .list-style {
           list-style: none;
           padding: 0;
         }
-        
         .list-style li {
           padding: 8px 0;
           border-bottom: 1px solid #f8f9fa;
           color: #495057;
           font-weight: 500;
         }
-        
         .list-style li:last-child {
           border-bottom: none;
         }
-        
         /* Phase Timeline */
         .phase-timeline {
           background: #f8f9fa;
@@ -345,18 +313,15 @@ function generateComprehensivePDF(quote: any) {
           border-radius: 10px;
           margin: 20px 0;
         }
-        
         .phase-item {
           display: flex;
           align-items: center;
           padding: 12px 0;
           border-bottom: 1px solid #dee2e6;
         }
-        
         .phase-item:last-child {
           border-bottom: none;
         }
-        
         .phase-number {
           background: #667eea;
           color: white;
@@ -370,7 +335,6 @@ function generateComprehensivePDF(quote: any) {
           margin-right: 15px;
           font-size: 14px;
         }
-        
         /* Footer */
         .footer {
           background: #2c3e50;
@@ -378,56 +342,46 @@ function generateComprehensivePDF(quote: any) {
           padding: 40px;
           text-align: center;
         }
-        
         .footer h3 {
           font-size: 24px;
           margin-bottom: 15px;
           color: #ecf0f1;
         }
-        
         .footer p {
           margin-bottom: 8px;
           opacity: 0.9;
         }
-        
         .contact-info {
           background: rgba(255,255,255,0.1);
           padding: 20px;
           border-radius: 10px;
           margin: 20px 0;
         }
-        
         /* Print Styles */
         @media print {
           body {
             background: white !important;
           }
-          
           .pdf-container {
             box-shadow: none;
             max-width: none;
           }
-          
           .header, .price-section {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
         }
-        
         /* Responsive */
         @media (max-width: 768px) {
           .client-section {
             flex-direction: column;
           }
-          
           .client-info, .quote-info {
             margin-bottom: 20px;
           }
-          
           .header, .content-section {
             padding: 20px;
           }
-          
           .total-price {
             font-size: 36px;
           }
@@ -446,11 +400,9 @@ function generateComprehensivePDF(quote: any) {
             <div class="company-logo-text" style="display: none;">NexaCore Innovations</div>
           </div>
           <div class="company-tagline">Building Tomorrow's Technology Today</div>
-          
           <h1 class="quote-title">PROJECT QUOTE</h1>
           <div class="quote-subtitle">Professional Technology Solutions</div>
         </div>
-
         <!-- Client & Quote Info -->
         <div class="client-section">
           <div class="client-info">
@@ -463,7 +415,6 @@ function generateComprehensivePDF(quote: any) {
               ${clientCountry ? `<div><strong>Location:</strong> ${clientCountry}</div>` : ''}
             </div>
           </div>
-          
           <div class="quote-info">
             <div class="section-title">Quote Details</div>
             <div class="quote-number">Quote #${quote.id}</div>
@@ -474,14 +425,12 @@ function generateComprehensivePDF(quote: any) {
             </div>
           </div>
         </div>
-
         <!-- Total Price -->
         <div class="price-section">
           <div class="total-price">${currency}${totalPrice}</div>
           <div class="price-label">Total Project Investment</div>
           <div class="validity-info">Valid until ${expiresDate}</div>
         </div>
-
         <!-- Project Overview -->
         <div class="content-section">
           <h2 class="content-title">📋 Project Overview</h2>
@@ -493,7 +442,6 @@ function generateComprehensivePDF(quote: any) {
             ${projectDescription || 'Custom requirements as discussed with our team.'}
           </p>
         </div>
-
         <!-- Project Scope -->
         <div class="content-section">
           <h2 class="content-title">🎯 Detailed Project Scope</h2>
@@ -501,14 +449,12 @@ function generateComprehensivePDF(quote: any) {
             ${quote.scope || 'Comprehensive solution tailored to your specific requirements. Our team will work closely with you to ensure all objectives are met with the highest quality standards.'}
           </p>
         </div>
-
         <!-- Project Timeline -->
         <div class="content-section">
           <h2 class="content-title">⏱️ Project Timeline</h2>
           <p class="content-text">
             <strong>Estimated Duration:</strong> ${quote.timeline || 'To be determined based on project complexity'}
           </p>
-          
           <div class="phase-timeline">
             <h3 style="margin-bottom: 20px; color: #2c3e50;">Project Phases:</h3>
             ${projectPhases.map((phase, index) => `
@@ -519,7 +465,6 @@ function generateComprehensivePDF(quote: any) {
             `).join('')}
           </div>
         </div>
-
         <!-- Deliverables -->
         ${deliverables.length > 0 ? `
         <div class="content-section">
@@ -531,7 +476,6 @@ function generateComprehensivePDF(quote: any) {
           </ul>
         </div>
         ` : ''}
-
         <!-- What's Included -->
         <div class="content-section">
           <h2 class="content-title">✨ What's Included in This Quote</h2>
@@ -539,7 +483,6 @@ function generateComprehensivePDF(quote: any) {
             ${whatIncludes.map(item => `<li>${item}</li>`).join('')}
           </ul>
         </div>
-
         <!-- Payment Schedule -->
         <div class="content-section">
           <h2 class="content-title">💳 Payment Schedule</h2>
@@ -553,7 +496,6 @@ function generateComprehensivePDF(quote: any) {
             <strong>Payment Methods:</strong> Wire transfer, ACH, major credit cards, or PayPal. International clients: Wire transfer or PayPal preferred.
           </p>
         </div>
-
         <!-- Terms & Conditions -->
         <div class="content-section">
           <h2 class="content-title">📄 Terms & Conditions</h2>
@@ -590,7 +532,6 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
    - Client responsible for data backups`}
           </div>
         </div>
-
         <!-- Call to Action -->
         <div class="content-section" style="background: #f8f9fa; text-align: center;">
           <h2 class="content-title">🚀 Ready to Get Started?</h2>
@@ -612,34 +553,28 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
             </div>
           </div>
         </div>
-
         <!-- Footer -->
         <div class="footer">
           <h3>🤝 Let's Build Something Amazing Together</h3>
-          
           <div class="contact-info">
             <p><strong>📧 Email:</strong> projects@nexacore-innovations.com</p>
             <p><strong>🌐 Website:</strong> nexacore-innovations.com</p>
             <p><strong>📞 Questions:</strong> Available for consultation calls</p>
             <p><strong>⏰ Response Time:</strong> Within 24 hours</p>
           </div>
-          
           <p style="margin-top: 30px; font-size: 14px; opacity: 0.8;">
             © ${new Date().getFullYear()} NexaCore Innovations. All rights reserved.
           </p>
-          
           <p style="font-size: 12px; margin-top: 10px; opacity: 0.7;">
             This quote was generated on ${new Date().toLocaleString()} and contains confidential information.
           </p>
         </div>
       </div>
-
       <script>
         // PDF functionality
         window.onload = function() {
           document.title = 'Quote-${quote.id}-${clientName}-NexaCore';
         };
-        
         // Keyboard shortcuts
         document.addEventListener('keydown', function(e) {
           if (e.ctrlKey && e.key === 'p') {
@@ -650,12 +585,10 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
             window.close();
           }
         });
-        
         // Auto-download functionality (optional)
         function downloadPDF() {
           window.print();
         }
-        
         // Add download button after page loads
         setTimeout(() => {
           const downloadBtn = document.createElement('button');
