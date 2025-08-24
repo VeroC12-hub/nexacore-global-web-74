@@ -194,8 +194,8 @@ function generateComprehensivePDF(quote: any) {
         }
         
         .company-logo {
-          font-size: 28px;
-          font-weight: 900;
+          font-size: 12px;
+          font-weight: 90;
           letter-spacing: -1px;
           margin-bottom: 5px;
         }
