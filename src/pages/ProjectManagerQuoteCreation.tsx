@@ -17,7 +17,6 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-// ADD THIS IMPORT
 import { getQuotePDFUrl } from '@/utils/urlHelpers';
 
 interface QuoteRequest {
@@ -54,7 +53,7 @@ const ProjectManagerQuoteCreation: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [quoteRequest, setQuoteRequest] = useState<QuoteRequest | null>(null);
-  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null); // ADD THIS LINE
+  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
   
   const [quoteData, setQuoteData] = useState<QuoteData>({
     scope: '',
@@ -74,6 +73,43 @@ const ProjectManagerQuoteCreation: React.FC = () => {
     
     loadQuoteRequest();
   }, [user, location.search]);
+
+  // FIXED: Proper date validation and calculation
+  const calculateExpirationDate = (daysFromNow: number): Date => {
+    const date = new Date();
+    date.setDate(date.getDate() + daysFromNow);
+    
+    // Ensure we have a valid future date
+    if (isNaN(date.getTime()) || date <= new Date()) {
+      console.warn('Invalid expiration date calculated, using default 14 days');
+      const defaultDate = new Date();
+      defaultDate.setDate(defaultDate.getDate() + 14);
+      return defaultDate;
+    }
+    
+    return date;
+  };
+
+  // FIXED: Safe date parsing with fallback
+  const safeDateCalculation = (expiresAt: string | null): number => {
+    if (!expiresAt) return 14;
+    
+    try {
+      const expireDate = new Date(expiresAt);
+      
+      // Check if date is valid and not in the past
+      if (isNaN(expireDate.getTime()) || expireDate <= new Date()) {
+        console.warn('Invalid expires_at date:', expiresAt);
+        return 14;
+      }
+      
+      const daysRemaining = Math.ceil((expireDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+      return Math.max(1, daysRemaining);
+    } catch (error) {
+      console.error('Error parsing expires_at:', error);
+      return 14;
+    }
+  };
 
   const loadQuoteRequest = async () => {
     try {
@@ -111,16 +147,25 @@ const ProjectManagerQuoteCreation: React.FC = () => {
 
       if (existingQuote) {
         setSavedQuoteId(existingQuote.id);
+        
+        // FIXED: Safe date calculation with proper validation
+        const expirationDays = safeDateCalculation(existingQuote.expires_at);
+        
+        console.log('Loading existing quote:', {
+          id: existingQuote.id,
+          expires_at: existingQuote.expires_at,
+          calculated_days: expirationDays
+        });
+        
         // Pre-populate with existing quote data
         setQuoteData({
           scope: existingQuote.scope || '',
           price: existingQuote.price || 0,
           currency: existingQuote.currency || 'USD',
           timeline: existingQuote.timeline || '',
-          deliverables: existingQuote.deliverables || [''],
+          deliverables: Array.isArray(existingQuote.deliverables) ? existingQuote.deliverables : [''],
           terms: existingQuote.terms || quoteData.terms,
-          expires_in_days: existingQuote.expires_at ? 
-            Math.max(1, Math.ceil((new Date(existingQuote.expires_at).getTime() - Date.now()) / (24 * 60 * 60 * 1000))) : 14
+          expires_in_days: expirationDays
         });
       } else {
         // Pre-populate quote data based on request
@@ -137,6 +182,37 @@ const ProjectManagerQuoteCreation: React.FC = () => {
       navigate('/admin');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // NEW: Delete old/expired quotes function
+  const deleteOldQuotes = async () => {
+    if (!confirm('Are you sure you want to delete all expired quotes? This action cannot be undone.')) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      // Delete quotes that are expired or have invalid dates
+      const { error } = await supabase
+        .from('quotes')
+        .delete()
+        .or(`expires_at.is.null,expires_at.lt.${new Date().toISOString()}`);
+
+      if (error) throw error;
+
+      toast.success('Old and expired quotes have been deleted');
+      
+      // Refresh the page to show updated data
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (error) {
+      console.error('Error deleting old quotes:', error);
+      toast.error('Failed to delete old quotes');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -168,11 +244,14 @@ const ProjectManagerQuoteCreation: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // FIXED: Proper expires_at calculation
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + quoteData.expires_in_days);
+      // FIXED: Use proper date calculation with validation
+      const expiresAt = calculateExpirationDate(quoteData.expires_in_days);
       
-      console.log('Saving quote with expires_at:', expiresAt.toISOString());
+      console.log('Saving quote with validated expires_at:', {
+        expires_in_days: quoteData.expires_in_days,
+        calculated_date: expiresAt.toISOString(),
+        timestamp: expiresAt.getTime()
+      });
 
       const quotePayload = {
         quote_request_id: quoteRequest.id,
@@ -186,14 +265,13 @@ const ProjectManagerQuoteCreation: React.FC = () => {
         terms: quoteData.terms,
         status: 'draft',
         created_by: user.id,
-        expires_at: expiresAt.toISOString(), // FIXED: Proper date setting
+        expires_at: expiresAt.toISOString(),
         updated_at: new Date().toISOString()
       };
 
       let data, error;
 
       if (savedQuoteId) {
-        // Update existing quote
         const result = await supabase
           .from('quotes')
           .update(quotePayload)
@@ -203,7 +281,6 @@ const ProjectManagerQuoteCreation: React.FC = () => {
         data = result.data;
         error = result.error;
       } else {
-        // Create new quote
         const result = await supabase
           .from('quotes')
           .insert(quotePayload)
@@ -238,16 +315,10 @@ const ProjectManagerQuoteCreation: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // FIXED: Proper expires_at calculation with validation
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + quoteData.expires_in_days);
+      // FIXED: Use proper date calculation with validation
+      const expiresAt = calculateExpirationDate(quoteData.expires_in_days);
       
-      // Ensure the date is valid
-      if (isNaN(expiresAt.getTime())) {
-        throw new Error('Invalid expiration date calculation');
-      }
-      
-      console.log('Creating quote with proper expires_at:', {
+      console.log('Creating quote with validated expires_at:', {
         expires_in_days: quoteData.expires_in_days,
         calculated_date: expiresAt.toISOString(),
         timestamp: expiresAt.getTime()
@@ -265,14 +336,13 @@ const ProjectManagerQuoteCreation: React.FC = () => {
         terms: quoteData.terms,
         status: 'sent',
         created_by: user.id,
-        expires_at: expiresAt.toISOString(), // FIXED: Proper date with validation
+        expires_at: expiresAt.toISOString(),
         sent_at: new Date().toISOString()
       };
 
       let quote, quoteError;
 
       if (savedQuoteId) {
-        // Update existing quote and change status to sent
         const result = await supabase
           .from('quotes')
           .update(quotePayload)
@@ -282,7 +352,6 @@ const ProjectManagerQuoteCreation: React.FC = () => {
         quote = result.data;
         quoteError = result.error;
       } else {
-        // Create new quote
         const result = await supabase
           .from('quotes')
           .insert(quotePayload)
@@ -311,7 +380,7 @@ const ProjectManagerQuoteCreation: React.FC = () => {
             scope: quoteData.scope,
             deliverables: quoteData.deliverables.filter(d => d.trim() !== ''),
             terms: quoteData.terms,
-            expires_at: expiresAt.toISOString() // FIXED: Send proper expiration date
+            expires_at: expiresAt.toISOString()
           }
         }
       });
@@ -323,16 +392,13 @@ const ProjectManagerQuoteCreation: React.FC = () => {
         toast.success('Quote sent to client successfully!');
       }
 
-      // Update quote request status
       await supabase
         .from('quote_requests')
         .update({ status: 'quoted' })
         .eq('id', quoteRequest.id);
 
-      // Update local state
       setSavedQuoteId(quote.id);
 
-      // Redirect to admin dashboard
       setTimeout(() => {
         navigate('/admin');
       }, 2000);
@@ -345,12 +411,10 @@ const ProjectManagerQuoteCreation: React.FC = () => {
     }
   };
 
-  // UPDATED: Fix the preview function
   const previewQuote = async () => {
     if (!quoteRequest) return;
 
     try {
-      // First save as draft to get a quote ID if we don't have one
       if (!savedQuoteId) {
         const savedQuote = await saveDraft();
         if (!savedQuote) {
@@ -359,11 +423,9 @@ const ProjectManagerQuoteCreation: React.FC = () => {
         }
       }
 
-      // Use the PDF URL helper to get the correct URL
       const pdfUrl = getQuotePDFUrl(savedQuoteId!);
       console.log('Opening PDF preview:', pdfUrl);
       
-      // Open PDF in new window
       window.open(pdfUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
       
       toast.success('PDF preview opened in new window');
@@ -416,6 +478,17 @@ const ProjectManagerQuoteCreation: React.FC = () => {
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Dashboard
+              </Button>
+              
+              {/* NEW: Delete Old Quotes Button */}
+              <Button 
+                variant="destructive" 
+                onClick={deleteOldQuotes}
+                disabled={submitting}
+                className="ml-4"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clean Up Old Quotes
               </Button>
             </div>
             
@@ -590,21 +663,24 @@ const ProjectManagerQuoteCreation: React.FC = () => {
                 />
               </div>
 
-              {/* Expiration */}
+              {/* Expiration - FIXED with better validation */}
               <div>
                 <Label htmlFor="expires_in_days">Quote Valid For (Days)</Label>
                 <Input
                   id="expires_in_days"
                   type="number"
                   value={quoteData.expires_in_days}
-                  onChange={(e) => setQuoteData(prev => ({ ...prev, expires_in_days: Number(e.target.value) }))}
+                  onChange={(e) => {
+                    const days = Math.max(1, Math.min(90, Number(e.target.value) || 14));
+                    setQuoteData(prev => ({ ...prev, expires_in_days: days }));
+                  }}
                   placeholder="14"
                   className="mt-1"
                   min="1"
                   max="90"
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Quote will expire on: {new Date(Date.now() + (quoteData.expires_in_days * 24 * 60 * 60 * 1000)).toLocaleDateString()}
+                  Quote will expire on: {calculateExpirationDate(quoteData.expires_in_days).toLocaleDateString()}
                 </p>
               </div>
 
