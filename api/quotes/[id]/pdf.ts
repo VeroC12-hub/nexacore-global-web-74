@@ -1,4 +1,5 @@
-// api/quotes/[id]/pdf.ts - ENHANCED PDF GENERATION WITH REDUCED LOGO SIZE & DATE FIX
+// api/quotes/[id]/pdf.ts - ENHANCED PDF GENERATION WITH LOGO SIZE FIX & EXPIRY DATE CALCULATION
+
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
@@ -72,16 +73,46 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
+// Format a date string into "Weekday, Month Day, Year"
 function formatDate(dateString: string): string {
-  if (!dateString) return 'TBD';
+  if (!dateString) return '';
   const date = new Date(dateString);
-  if (isNaN(date.getTime())) return 'TBD';
+  if (isNaN(date.getTime())) return '';
   return date.toLocaleDateString('en-US', { 
     weekday: 'long', 
     year: 'numeric', 
     month: 'long', 
     day: 'numeric' 
   });
+}
+
+// Parse timeline string and return estimated days as integer
+function parseTimeline(timeline: string): number {
+  if (!timeline) return 0;
+  timeline = timeline.toLowerCase();
+  let days = 0;
+  const daysMatch = timeline.match(/(\d+)\s*day/);
+  if (daysMatch) days = parseInt(daysMatch[1], 10);
+  const weeksMatch = timeline.match(/(\d+)\s*week/);
+  if (weeksMatch) days = parseInt(weeksMatch[1], 10) * 7;
+  const monthsMatch = timeline.match(/(\d+)\s*month/);
+  if (monthsMatch) days = parseInt(monthsMatch[1], 10) * 30;
+  return days;
+}
+
+// Calculate the "Valid Until" date
+function getExpiresDate(quote: any): string {
+  if (quote.expires_at && formatDate(quote.expires_at)) {
+    return formatDate(quote.expires_at);
+  }
+  const created = quote.created_at;
+  const daysToAdd = parseTimeline(quote.timeline);
+  if (created && daysToAdd > 0) {
+    const createdDate = new Date(created);
+    createdDate.setDate(createdDate.getDate() + daysToAdd);
+    return formatDate(createdDate.toISOString());
+  }
+  return 'TBD';
 }
 
 function generateComprehensivePDF(quote: any) {
@@ -93,9 +124,9 @@ function generateComprehensivePDF(quote: any) {
   const serviceType = quote.quote_requests?.service_type || quote.service_type;
   const projectDescription = quote.quote_requests?.description || '';
 
-  // Format dates with robust fallback
-  const createdDate = formatDate(quote.created_at);
-  const expiresDate = formatDate(quote.expires_at);
+  // Format dates
+  const createdDate = formatDate(quote.created_at) || 'TBD';
+  const expiresDate = getExpiresDate(quote);
 
   const deliverables = Array.isArray(quote.deliverables) ? quote.deliverables : [];
   const totalPrice = (quote.price || 0).toLocaleString();
