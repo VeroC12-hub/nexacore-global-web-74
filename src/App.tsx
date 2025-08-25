@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import BookConsultation from "./pages/BookConsultation";
 import AdminDashboard from "./pages/AdminDashboard";
 import Auth from "./pages/Auth";
+import AuthConfirm from "./pages/AuthConfirm"; // NEW IMPORT FOR EMAIL CONFIRMATION
 import ClientPortal from "./pages/ClientPortal";
 import Dashboard from "./pages/Dashboard";
 import QuoteReview from "./pages/QuoteReview";
@@ -56,6 +57,7 @@ const App = () => {
               
               {/* AUTH ROUTES */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/confirm" element={<AuthConfirm />} /> {/* NEW ROUTE FOR EMAIL CONFIRMATION */}
               
               {/* CLIENT ROUTES */}
               <Route path="/dashboard" element={<Dashboard />} />
