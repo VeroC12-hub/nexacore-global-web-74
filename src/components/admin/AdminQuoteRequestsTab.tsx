@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,10 @@ import {
   AlertTriangle,
   Trash2,
   Filter,
-  X
+  X,
+  Edit,
+  Plus,
+  Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -55,12 +59,14 @@ interface Quote {
 }
 
 const AdminQuoteRequestsTab = () => {
+  const navigate = useNavigate();
   const [quoteRequests, setQuoteRequests] = useState<QuoteRequest[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [cleaningUp, setCleaningUp] = useState(false);
   const [deletingSelected, setDeletingSelected] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<QuoteRequest | null>(null);
+  const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
   const [showProblematicOnly, setShowProblematicOnly] = useState(false);
   
@@ -71,7 +77,20 @@ const AdminQuoteRequestsTab = () => {
     currency: 'USD',
     timeline: '',
     deliverables: '',
-    terms: ''
+    terms: '',
+    expires_in_days: 14
+  });
+
+  // Edit quote form state
+  const [editForm, setEditForm] = useState({
+    scope: '',
+    price: '',
+    currency: 'USD',
+    timeline: '',
+    deliverables: '',
+    terms: '',
+    expires_in_days: 14,
+    status: 'draft'
   });
 
   useEffect(() => {
@@ -126,13 +145,9 @@ const AdminQuoteRequestsTab = () => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
     
-    // No expiration date
     if (!quote.expires_at) return true;
-    
-    // Invalid date (including 1970)
     if (isDateInvalid(quote.expires_at)) return true;
     
-    // Expired
     try {
       const expireDate = new Date(quote.expires_at);
       if (expireDate < now) return true;
@@ -140,13 +155,11 @@ const AdminQuoteRequestsTab = () => {
       return true;
     }
     
-    // Old draft
     if (quote.status === 'draft') {
       const createdDate = new Date(quote.created_at);
       if (createdDate < thirtyDaysAgo) return true;
     }
     
-    // Orphaned (no request)
     if (!quote.quote_request_id) return true;
     
     return false;
@@ -157,7 +170,7 @@ const AdminQuoteRequestsTab = () => {
     return quotes.filter(isQuoteProblematic);
   };
 
-  // Handle checkbox selection
+  // Handle checkbox selection for ANY quote
   const handleQuoteSelection = (quoteId: string, checked: boolean) => {
     const newSelected = new Set(selectedQuoteIds);
     if (checked) {
@@ -166,6 +179,13 @@ const AdminQuoteRequestsTab = () => {
       newSelected.delete(quoteId);
     }
     setSelectedQuoteIds(newSelected);
+  };
+
+  // Select all quotes (not just problematic)
+  const selectAllQuotes = () => {
+    const allQuoteIds = quotes.map(q => q.id);
+    setSelectedQuoteIds(new Set(allQuoteIds));
+    toast.success(`Selected all ${allQuoteIds.length} quotes`);
   };
 
   // Select all problematic quotes
@@ -181,7 +201,76 @@ const AdminQuoteRequestsTab = () => {
     toast.success('Selection cleared');
   };
 
-  // Delete selected quotes
+  // Open quote editor
+  const openQuoteEditor = (quote: Quote) => {
+    setEditingQuote(quote);
+    
+    // Calculate days until expiration
+    let daysUntilExpiry = 14;
+    if (quote.expires_at && !isDateInvalid(quote.expires_at)) {
+      try {
+        const expireDate = new Date(quote.expires_at);
+        const now = new Date();
+        daysUntilExpiry = Math.max(1, Math.ceil((expireDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)));
+      } catch {
+        daysUntilExpiry = 14;
+      }
+    }
+
+    setEditForm({
+      scope: quote.scope || '',
+      price: quote.price.toString(),
+      currency: quote.currency || 'USD',
+      timeline: quote.timeline || '',
+      deliverables: Array.isArray(quote.deliverables) 
+        ? quote.deliverables.join('\n') 
+        : quote.deliverables || '',
+      terms: quote.terms || '',
+      expires_in_days: daysUntilExpiry,
+      status: quote.status || 'draft'
+    });
+  };
+
+  // Update quote
+  const updateQuote = async () => {
+    if (!editingQuote) return;
+
+    try {
+      const deliverables = editForm.deliverables.split('\n').filter(d => d.trim());
+      
+      // Calculate new expiration date
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + editForm.expires_in_days);
+
+      const updateData = {
+        scope: editForm.scope,
+        price: parseFloat(editForm.price),
+        currency: editForm.currency,
+        timeline: editForm.timeline,
+        deliverables: deliverables,
+        terms: editForm.terms,
+        expires_at: expiresAt.toISOString(),
+        status: editForm.status,
+        updated_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('quotes')
+        .update(updateData)
+        .eq('id', editingQuote.id);
+
+      if (error) throw error;
+
+      toast.success('Quote updated successfully');
+      setEditingQuote(null);
+      await fetchQuotes();
+    } catch (error) {
+      console.error('Error updating quote:', error);
+      toast.error('Failed to update quote');
+    }
+  };
+
+  // Delete selected quotes (ANY quotes, not just problematic)
   const deleteSelectedQuotes = async () => {
     if (selectedQuoteIds.size === 0) {
       toast.error('Please select quotes to delete');
@@ -192,45 +281,43 @@ const AdminQuoteRequestsTab = () => {
     const selectedQuotes = quotes.filter(q => selectedArray.includes(q.id));
     
     // Show detailed confirmation
-    let problematicBreakdown = {
+    let breakdown = {
       expired: 0,
       invalid_dates: 0,
       null_dates: 0,
       old_drafts: 0,
       orphaned: 0,
-      other: 0
+      active: 0,
+      approved: 0,
+      sent: 0
     };
 
     selectedQuotes.forEach(quote => {
+      // Count by status
+      if (quote.status === 'approved') breakdown.approved++;
+      else if (quote.status === 'sent') breakdown.sent++;
+      else if (quote.status === 'draft') breakdown.old_drafts++;
+
+      // Count by problems
       if (!quote.expires_at) {
-        problematicBreakdown.null_dates++;
+        breakdown.null_dates++;
       } else if (isDateInvalid(quote.expires_at)) {
-        problematicBreakdown.invalid_dates++;
+        breakdown.invalid_dates++;
       } else {
         try {
           const expireDate = new Date(quote.expires_at);
           if (expireDate < new Date()) {
-            problematicBreakdown.expired++;
+            breakdown.expired++;
+          } else {
+            breakdown.active++;
           }
         } catch {
-          problematicBreakdown.invalid_dates++;
-        }
-      }
-      
-      if (quote.status === 'draft') {
-        const thirtyDaysAgo = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
-        const createdDate = new Date(quote.created_at);
-        if (createdDate < thirtyDaysAgo) {
-          problematicBreakdown.old_drafts++;
+          breakdown.invalid_dates++;
         }
       }
       
       if (!quote.quote_request_id) {
-        problematicBreakdown.orphaned++;
-      }
-      
-      if (!isQuoteProblematic(quote)) {
-        problematicBreakdown.other++;
+        breakdown.orphaned++;
       }
     });
 
@@ -238,13 +325,20 @@ const AdminQuoteRequestsTab = () => {
 
 You are about to delete ${selectedQuoteIds.size} quotes:
 
-BREAKDOWN:
-• ${problematicBreakdown.expired} expired quotes
-• ${problematicBreakdown.invalid_dates} with invalid dates
-• ${problematicBreakdown.null_dates} with no expiration date
-• ${problematicBreakdown.old_drafts} old draft quotes
-• ${problematicBreakdown.orphaned} orphaned quotes
-• ${problematicBreakdown.other} other quotes
+BY STATUS:
+• ${breakdown.approved} approved quotes
+• ${breakdown.sent} sent quotes  
+• ${breakdown.old_drafts} draft quotes
+
+BY CONDITION:
+• ${breakdown.active} active/valid quotes
+• ${breakdown.expired} expired quotes
+• ${breakdown.invalid_dates} with invalid dates
+• ${breakdown.null_dates} with no expiration date
+• ${breakdown.orphaned} orphaned quotes
+
+⚠️ THIS WILL AFFECT CLIENT ACCESS ⚠️
+Clients will lose access to these quotes in their portal.
 
 THIS ACTION CANNOT BE UNDONE
 
@@ -266,17 +360,11 @@ Continue with deletion?`;
       toast.success(
         `Successfully deleted ${count || selectedArray.length} selected quotes!
 
-BREAKDOWN:
-• ${problematicBreakdown.expired} expired
-• ${problematicBreakdown.invalid_dates} invalid dates  
-• ${problematicBreakdown.null_dates} no dates
-• ${problematicBreakdown.old_drafts} old drafts
-• ${problematicBreakdown.orphaned} orphaned
-• ${problematicBreakdown.other} other`,
+BY STATUS: ${breakdown.approved} approved, ${breakdown.sent} sent, ${breakdown.old_drafts} drafts
+BY CONDITION: ${breakdown.active} active, ${breakdown.expired} expired, ${breakdown.invalid_dates} invalid dates`,
         { duration: 8000 }
       );
       
-      // Clear selections and refresh data
       setSelectedQuoteIds(new Set());
       await fetchQuoteRequests();
       await fetchQuotes();
@@ -321,7 +409,6 @@ Continue with bulk cleanup?`;
 
       if (error) throw error;
 
-      // Update remaining quotes with valid dates
       const { error: updateError } = await supabase
         .from('quotes')
         .update({
@@ -380,7 +467,7 @@ Database is now optimized!`,
       const { data: userData } = await supabase.auth.getUser();
       
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 14);
+      expiresAt.setDate(expiresAt.getDate() + quoteForm.expires_in_days);
       
       const { data: quote, error } = await supabase
         .from('quotes')
@@ -422,7 +509,8 @@ Database is now optimized!`,
         currency: 'USD',
         timeline: '',
         deliverables: '',
-        terms: ''
+        terms: '',
+        expires_in_days: 14
       });
       
       await fetchQuotes();
@@ -457,7 +545,7 @@ Database is now optimized!`,
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h2 className="text-2xl font-bold">Quote Requests</h2>
+            <h2 className="text-2xl font-bold">Quote Requests & Management</h2>
             <div className="text-sm text-muted-foreground">
               {quoteRequests.length} total requests • {quotes.length} quotes created
               {problematicQuotes.length > 0 && (
@@ -515,10 +603,20 @@ Database is now optimized!`,
           </div>
         </div>
         
-        {/* Selection controls */}
-        {problematicQuotes.length > 0 && (
+        {/* Enhanced selection controls */}
+        {quotes.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 p-4 bg-gray-50 rounded-lg border">
-            <span className="text-sm font-medium">Selective Deletion:</span>
+            <span className="text-sm font-medium">Quote Selection:</span>
+            
+            <Button
+              onClick={selectAllQuotes}
+              variant="outline"
+              size="sm"
+              disabled={cleaningUp || deletingSelected}
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Select All Quotes ({quotes.length})
+            </Button>
             
             <Button
               onClick={selectAllProblematic}
@@ -526,8 +624,8 @@ Database is now optimized!`,
               size="sm"
               disabled={cleaningUp || deletingSelected}
             >
-              <CheckCircle className="w-4 h-4 mr-2" />
-              Select All Problematic ({problematicQuotes.length})
+              <AlertTriangle className="w-4 h-4 mr-2" />
+              Select Problematic ({problematicQuotes.length})
             </Button>
             
             {hasSelections && (
@@ -567,6 +665,122 @@ Database is now optimized!`,
         )}
       </div>
 
+      {/* Edit Quote Dialog */}
+      <Dialog open={editingQuote !== null} onOpenChange={(open) => !open && setEditingQuote(null)}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Quote</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit_price">Price</Label>
+                <Input
+                  id="edit_price"
+                  type="number"
+                  placeholder="Enter price"
+                  value={editForm.price}
+                  onChange={(e) => setEditForm({...editForm, price: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_currency">Currency</Label>
+                <Select value={editForm.currency} onValueChange={(value) => setEditForm({...editForm, currency: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">USD</SelectItem>
+                    <SelectItem value="EUR">EUR</SelectItem>
+                    <SelectItem value="GBP">GBP</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit_timeline">Timeline</Label>
+                <Input
+                  id="edit_timeline"
+                  placeholder="e.g., 6-8 weeks"
+                  value={editForm.timeline}
+                  onChange={(e) => setEditForm({...editForm, timeline: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit_expires">Expires In (Days)</Label>
+                <Input
+                  id="edit_expires"
+                  type="number"
+                  min="1"
+                  max="90"
+                  value={editForm.expires_in_days}
+                  onChange={(e) => setEditForm({...editForm, expires_in_days: parseInt(e.target.value) || 14})}
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="edit_status">Status</Label>
+              <Select value={editForm.status} onValueChange={(value) => setEditForm({...editForm, status: value})}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="sent">Sent</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="declined">Declined</SelectItem>
+                  <SelectItem value="revision_requested">Revision Requested</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="edit_scope">Project Scope</Label>
+              <Textarea
+                id="edit_scope"
+                placeholder="Detailed project scope and requirements..."
+                value={editForm.scope}
+                onChange={(e) => setEditForm({...editForm, scope: e.target.value})}
+                className="min-h-[100px]"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit_deliverables">Deliverables (one per line)</Label>
+              <Textarea
+                id="edit_deliverables"
+                placeholder="List deliverables, one per line..."
+                value={editForm.deliverables}
+                onChange={(e) => setEditForm({...editForm, deliverables: e.target.value})}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="edit_terms">Terms & Conditions</Label>
+              <Textarea
+                id="edit_terms"
+                placeholder="Payment terms, conditions, etc..."
+                value={editForm.terms}
+                onChange={(e) => setEditForm({...editForm, terms: e.target.value})}
+              />
+            </div>
+
+            <div className="flex gap-2 pt-4">
+              <Button onClick={updateQuote} className="flex-1">
+                <Save className="w-4 h-4 mr-2" />
+                Save Changes
+              </Button>
+              <Button variant="outline" onClick={() => setEditingQuote(null)} className="flex-1">
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Quote Requests Grid */}
       <div className="grid gap-4">
         {quoteRequests.map((request) => {
@@ -582,7 +796,7 @@ Database is now optimized!`,
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
-                    {/* Selection checkbox for quotes */}
+                    {/* Selection checkbox for ALL quotes (not just problematic) */}
                     {relatedQuote && (
                       <Checkbox
                         checked={selectedQuoteIds.has(relatedQuote.id)}
@@ -750,14 +964,27 @@ Database is now optimized!`,
                                 </div>
                               </div>
 
-                              <div>
-                                <Label htmlFor="timeline">Timeline</Label>
-                                <Input
-                                  id="timeline"
-                                  placeholder="e.g., 6-8 weeks"
-                                  value={quoteForm.timeline}
-                                  onChange={(e) => setQuoteForm({...quoteForm, timeline: e.target.value})}
-                                />
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                  <Label htmlFor="timeline">Timeline</Label>
+                                  <Input
+                                    id="timeline"
+                                    placeholder="e.g., 6-8 weeks"
+                                    value={quoteForm.timeline}
+                                    onChange={(e) => setQuoteForm({...quoteForm, timeline: e.target.value})}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="expires_days">Expires In (Days)</Label>
+                                  <Input
+                                    id="expires_days"
+                                    type="number"
+                                    min="1"
+                                    max="90"
+                                    value={quoteForm.expires_in_days}
+                                    onChange={(e) => setQuoteForm({...quoteForm, expires_in_days: parseInt(e.target.value) || 14})}
+                                  />
+                                </div>
                               </div>
 
                               <div>
@@ -781,6 +1008,7 @@ Database is now optimized!`,
                               </div>
 
                               <Button onClick={() => createQuote(request)} className="w-full">
+                                <Plus className="w-4 h-4 mr-2" />
                                 Create Quote
                               </Button>
                             </div>
@@ -789,6 +1017,18 @@ Database is now optimized!`,
                       </div>
                     </DialogContent>
                   </Dialog>
+
+                  {/* Edit Quote Button */}
+                  {relatedQuote && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openQuoteEditor(relatedQuote)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Quote
+                    </Button>
+                  )}
 
                   {request.status === 'pending' && (
                     <Button
