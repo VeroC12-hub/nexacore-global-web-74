@@ -1,4 +1,4 @@
-// api/quotes/[id]/pdf.ts - MODERN NEXACORE AESTHETIC DESIGN
+// api/quotes/[id]/pdf.ts - TABLE-BASED PROFESSIONAL FORMAT
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ error: 'Quote not found' });
     }
 
-    const pdfHtml = generateModernPDF(quote);
+    const pdfHtml = generateTableBasedPDF(quote);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Content-Disposition', `inline; filename="Quote-${quoteId}-NexaCore.html"`);
@@ -72,24 +72,10 @@ function formatDate(dateString: string): string {
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return '';
   return date.toLocaleDateString('en-US', { 
-    weekday: 'long', 
     year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+    month: '2-digit', 
+    day: '2-digit' 
   });
-}
-
-function parseTimeline(timeline: string): number {
-  if (!timeline) return 0;
-  timeline = timeline.toLowerCase();
-  let days = 0;
-  const daysMatch = timeline.match(/(\d+)\s*day/);
-  if (daysMatch) days = parseInt(daysMatch[1], 10);
-  const weeksMatch = timeline.match(/(\d+)\s*week/);
-  if (weeksMatch) days = parseInt(weeksMatch[1], 10) * 7;
-  const monthsMatch = timeline.match(/(\d+)\s*month/);
-  if (monthsMatch) days = parseInt(monthsMatch[1], 10) * 30;
-  return days;
 }
 
 function getExpiresDate(quote: any): string {
@@ -97,16 +83,15 @@ function getExpiresDate(quote: any): string {
     return formatDate(quote.expires_at);
   }
   const created = quote.created_at;
-  const daysToAdd = parseTimeline(quote.timeline);
-  if (created && daysToAdd > 0) {
+  if (created) {
     const createdDate = new Date(created);
-    createdDate.setDate(createdDate.getDate() + daysToAdd);
+    createdDate.setDate(createdDate.getDate() + 30); // Default 30 days
     return formatDate(createdDate.toISOString());
   }
-  return 'TBD';
+  return new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 
-function generateModernPDF(quote: any) {
+function generateTableBasedPDF(quote: any) {
   const clientName = quote.quote_requests?.full_name || 'Valued Client';
   const clientEmail = quote.quote_requests?.email || '';
   const clientCompany = quote.quote_requests?.company || '';
@@ -115,39 +100,48 @@ function generateModernPDF(quote: any) {
   const serviceType = quote.quote_requests?.service_type || quote.service_type;
   const projectDescription = quote.quote_requests?.description || '';
 
-  const createdDate = formatDate(quote.created_at) || 'TBD';
+  const createdDate = formatDate(quote.created_at) || new Date().toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const expiresDate = getExpiresDate(quote);
   const deliverables = Array.isArray(quote.deliverables) ? quote.deliverables : [];
-  const totalPrice = (quote.price || 0).toLocaleString();
+  const totalPrice = (quote.price || 0);
   const currency = quote.currency || '$';
 
-  const projectPhases = [
-    "Discovery & Requirements Analysis",
-    "Project Planning & Architecture Design", 
-    "Development & Implementation",
-    "Testing & Quality Assurance",
-    "Deployment & Launch Support",
-    "Documentation & Knowledge Transfer",
-    "Post-Launch Support (30 days included)"
+  // Break down the quote into service components for the table
+  const serviceBreakdown = [
+    {
+      task: 'Discovery & Requirements Analysis',
+      hours: Math.round(totalPrice * 0.15 / 100),
+      rate: 100,
+      cost: Math.round(totalPrice * 0.15)
+    },
+    {
+      task: 'Project Planning & Architecture Design',
+      hours: Math.round(totalPrice * 0.15 / 100),
+      rate: 100,
+      cost: Math.round(totalPrice * 0.15)
+    },
+    {
+      task: 'Development & Implementation',
+      hours: Math.round(totalPrice * 0.40 / 100),
+      rate: 100,
+      cost: Math.round(totalPrice * 0.40)
+    },
+    {
+      task: 'Testing & Quality Assurance',
+      hours: Math.round(totalPrice * 0.15 / 100),
+      rate: 100,
+      cost: Math.round(totalPrice * 0.15)
+    },
+    {
+      task: 'Deployment & Documentation',
+      hours: Math.round(totalPrice * 0.15 / 100),
+      rate: 100,
+      cost: Math.round(totalPrice * 0.15)
+    }
   ];
 
-  const paymentSchedule = [
-    "25% - Project Initiation (Upon contract signing)",
-    "25% - Milestone 1 Completion (Requirements & Design approved)",
-    "25% - Milestone 2 Completion (Development 75% complete)",
-    "25% - Final Delivery (Testing complete, project deployed)"
-  ];
-
-  const whatIncludes = [
-    "Complete project scope as outlined",
-    "All deliverables listed in this quote",
-    "Regular progress updates and communication",
-    "Quality assurance and testing",
-    "Documentation and user guides",
-    "30 days post-launch support",
-    "Source code and intellectual property transfer",
-    "Training sessions (if applicable)"
-  ];
+  const subtotal = serviceBreakdown.reduce((sum, item) => sum + item.cost, 0);
+  const grandTotal = totalPrice;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -156,593 +150,574 @@ function generateModernPDF(quote: any) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quote #${quote.id} - ${clientName} - NexaCore Innovations</title>
   <style>
-    /* Modern NexaCore Design System */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     
-    :root {
-      --primary: #3b82f6;
-      --primary-600: #2563eb;
-      --primary-700: #1d4ed8;
-      --success: #10b981;
-      --success-600: #059669;
-      --purple-500: #8b5cf6;
-      --purple-600: #7c3aed;
-      --teal-500: #14b8a6;
-      --teal-600: #0d9488;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-300: #d1d5db;
-      --gray-400: #9ca3af;
-      --gray-600: #4b5563;
-      --gray-700: #374151;
-      --gray-800: #1f2937;
-      --gray-900: #111827;
-    }
-    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
-      color: var(--gray-800);
-      background: linear-gradient(135deg, var(--gray-50) 0%, #ffffff 100%);
-      min-height: 100vh;
+      line-height: 1.4;
+      color: #333;
+      background: #f8f9fa;
+      padding: 20px;
     }
     
-    .pdf-container {
-      max-width: 210mm;
+    .quote-container {
+      max-width: 21cm;
       margin: 0 auto;
       background: white;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-      border-radius: 24px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      border-radius: 8px;
       overflow: hidden;
-      position: relative;
     }
     
-    /* Modern Gradient Header */
+    /* Header with logo and gradient */
     .header {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--purple-600) 50%, var(--teal-600) 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 100%);
       color: white;
-      padding: 48px 40px;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .header::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -20%;
-      width: 200px;
-      height: 400px;
-      background: rgba(255,255,255,0.1);
-      transform: rotate(15deg);
-      border-radius: 20px;
-    }
-    
-    .header::after {
-      content: '';
-      position: absolute;
-      bottom: -30%;
-      left: -10%;
-      width: 150px;
-      height: 300px;
-      background: rgba(255,255,255,0.05);
-      transform: rotate(-15deg);
-      border-radius: 20px;
-    }
-    
-    .company-branding {
-      position: relative;
-      z-index: 10;
+      padding: 30px 40px;
       text-align: center;
     }
     
-    .company-logo {
-      font-size: 32px;
-      font-weight: 900;
-      letter-spacing: -1px;
-      margin-bottom: 8px;
-      background: linear-gradient(45deg, #ffffff, #f1f5f9);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .company-tagline {
-      font-size: 16px;
-      opacity: 0.9;
-      font-weight: 300;
-      margin-bottom: 32px;
-    }
-    
-    .quote-title {
-      font-size: 42px;
-      font-weight: 800;
-      margin-bottom: 12px;
-      text-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    }
-    
-    .quote-subtitle {
-      font-size: 18px;
-      opacity: 0.95;
-      font-weight: 400;
-    }
-    
-    /* Modern Card-based Client Section */
-    .client-section {
-      padding: 48px 40px;
-      background: var(--gray-50);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 32px;
-    }
-    
-    .info-card {
-      background: white;
-      padding: 32px;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-      border: 1px solid var(--gray-200);
-    }
-    
-    .section-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--gray-600);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 20px;
-    }
-    
-    .client-name {
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--gray-900);
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, var(--primary), var(--purple-600));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .client-details {
-      color: var(--gray-600);
-      line-height: 1.8;
-      font-size: 15px;
-    }
-    
-    .quote-number {
-      font-size: 28px;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--teal-500), var(--success));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 16px;
-    }
-    
-    .quote-dates {
-      color: var(--gray-600);
-      line-height: 1.8;
-      font-size: 15px;
-    }
-    
-    /* Modern Price Section */
-    .price-section {
-      background: linear-gradient(135deg, var(--success) 0%, var(--teal-600) 100%);
-      color: white;
-      padding: 56px 40px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .price-section::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 300px;
-      height: 300px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-    }
-    
-    .total-price {
-      font-size: 56px;
-      font-weight: 900;
-      margin-bottom: 16px;
-      text-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      position: relative;
-      z-index: 10;
-    }
-    
-    .price-label {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 24px;
-      opacity: 0.95;
-      position: relative;
-      z-index: 10;
-    }
-    
-    .validity-info {
-      background: rgba(255,255,255,0.2);
-      padding: 16px 32px;
-      border-radius: 50px;
-      display: inline-block;
-      font-weight: 500;
-      backdrop-filter: blur(10px);
-      position: relative;
-      z-index: 10;
-    }
-    
-    /* Modern Content Sections */
-    .content-section {
-      padding: 48px 40px;
-      border-bottom: 1px solid var(--gray-200);
-    }
-    
-    .content-section:last-child {
-      border-bottom: none;
-    }
-    
-    .content-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--gray-900);
-      margin-bottom: 24px;
-      position: relative;
-      padding-bottom: 12px;
-    }
-    
-    .content-title::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 60px;
-      height: 4px;
-      background: linear-gradient(135deg, var(--primary), var(--purple-600));
-      border-radius: 2px;
-    }
-    
-    .content-text {
-      color: var(--gray-700);
-      line-height: 1.8;
-      margin-bottom: 20px;
-      font-size: 16px;
-    }
-    
-    .modern-list {
-      list-style: none;
-      padding: 0;
-      display: grid;
-      gap: 16px;
-    }
-    
-    .modern-list li {
-      background: var(--gray-50);
-      padding: 20px;
-      border-radius: 12px;
-      border-left: 4px solid var(--primary);
-      color: var(--gray-700);
-      font-weight: 500;
-      transition: all 0.3s ease;
-    }
-    
-    .modern-list li:hover {
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    /* Modern Phase Timeline */
-    .phase-timeline {
-      background: white;
-      padding: 32px;
-      border-radius: 20px;
-      margin: 32px 0;
-      border: 1px solid var(--gray-200);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    
-    .phase-item {
-      display: flex;
-      align-items: center;
-      padding: 20px 0;
-      border-bottom: 1px solid var(--gray-200);
-    }
-    
-    .phase-item:last-child {
-      border-bottom: none;
-    }
-    
-    .phase-number {
-      background: linear-gradient(135deg, var(--primary), var(--purple-600));
-      color: white;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
+    .logo-section {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 700;
-      margin-right: 20px;
-      font-size: 16px;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      margin-bottom: 20px;
     }
     
-    /* Modern Footer */
-    .footer {
-      background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
-      color: white;
-      padding: 56px 40px;
-      position: relative;
-      overflow: hidden;
+    .company-logo {
+      width: 50px;
+      height: 50px;
+      margin-right: 15px;
     }
     
-    .footer::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--primary), var(--purple-600), var(--teal-600), transparent);
-    }
-    
-    .footer h3 {
+    .company-name {
       font-size: 28px;
-      margin-bottom: 24px;
-      text-align: center;
-      background: linear-gradient(45deg, #ffffff, var(--gray-300));
+      font-weight: 700;
+      background: linear-gradient(45deg, #ffffff, #e0f2fe);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
     
-    .contact-grid {
+    .quote-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    
+    /* Company Information Section */
+    .info-section {
+      padding: 30px 40px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #3b82f6;
+      margin-bottom: 15px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid #3b82f6;
+      display: inline-block;
+    }
+    
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    .info-table td {
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      vertical-align: top;
+    }
+    
+    .info-label {
+      background: #f3f4f6;
+      font-weight: 600;
+      color: #3b82f6;
+      min-width: 150px;
+    }
+    
+    .info-value {
+      background: white;
+    }
+    
+    /* Quote Details Bar */
+    .quote-details {
+      background: #f8f9fa;
+      padding: 20px 40px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .quote-details-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    .quote-details-table td {
+      padding: 10px 15px;
+      border: 1px solid #d1d5db;
+      text-align: center;
+      font-weight: 600;
+    }
+    
+    .quote-details-table .header-cell {
+      background: #3b82f6;
+      color: white;
+    }
+    
+    /* Service Breakdown Table */
+    .breakdown-section {
+      padding: 30px 40px;
+    }
+    
+    .service-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    
+    .breakdown-table th {
+      background: linear-gradient(135deg, #3b82f6, #14b8a6);
+      color: white;
+      padding: 12px 15px;
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid #2563eb;
+    }
+    
+    .breakdown-table td {
+      padding: 12px 15px;
+      border: 1px solid #d1d5db;
+      text-align: center;
+    }
+    
+    .breakdown-table tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    
+    .breakdown-table tbody tr:hover {
+      background: #f3f4f6;
+    }
+    
+    .task-cell {
+      text-align: left !important;
+      font-weight: 500;
+    }
+    
+    .total-row {
+      background: #e5e7eb !important;
+      font-weight: 600;
+    }
+    
+    .grand-total-row {
+      background: linear-gradient(135deg, #3b82f6, #14b8a6) !important;
+      color: white !important;
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    /* Payment Terms */
+    .payment-section {
+      padding: 30px 40px;
+      background: #f8f9fa;
+      border-top: 1px solid #e5e7eb;
+    }
+    
+    .payment-terms {
+      background: white;
+      padding: 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .payment-terms h3 {
+      color: #3b82f6;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    
+    .payment-terms ul {
+      list-style: disc;
+      padding-left: 20px;
+    }
+    
+    .payment-terms li {
+      margin-bottom: 8px;
+      color: #4b5563;
+    }
+    
+    /* Terms and Conditions */
+    .terms-section {
+      background: white;
+      padding: 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .terms-section h3 {
+      color: #3b82f6;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    
+    .terms-section ol {
+      padding-left: 20px;
+    }
+    
+    .terms-section li {
+      margin-bottom: 10px;
+      color: #4b5563;
+      line-height: 1.6;
+    }
+    
+    /* Signature Section */
+    .signature-section {
+      background: white;
+      padding: 20px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+    }
+    
+    .signature-section h3 {
+      color: #3b82f6;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    
+    .signature-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    
+    .signature-table td {
+      padding: 10px 12px;
+      border: 1px solid #d1d5db;
+      vertical-align: middle;
+    }
+    
+    .signature-label {
+      background: #f3f4f6;
+      font-weight: 600;
+      color: #3b82f6;
+      width: 200px;
+    }
+    
+    .signature-field {
+      background: white;
+      min-height: 40px;
+    }
+    
+    /* Footer */
+    .footer {
+      background: linear-gradient(135deg, #1f2937, #374151);
+      color: white;
+      padding: 30px 40px;
+      text-align: center;
+    }
+    
+    .contact-info {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 24px;
-      margin: 32px 0;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
     }
     
     .contact-item {
+      padding: 15px;
       background: rgba(255,255,255,0.1);
-      padding: 24px;
-      border-radius: 16px;
-      text-align: center;
+      border-radius: 8px;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.1);
     }
     
-    .highlight-box {
-      background: linear-gradient(135deg, var(--primary)/10, var(--purple-600)/10);
-      border: 1px solid var(--primary)/20;
-      border-radius: 16px;
-      padding: 24px;
-      margin: 24px 0;
-      color: var(--gray-700);
+    .contact-item strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #60a5fa;
     }
     
     /* Print Styles */
     @media print {
-      body { background: white !important; }
-      .pdf-container { 
-        box-shadow: none; 
-        max-width: none;
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      .quote-container {
+        box-shadow: none;
         border-radius: 0;
       }
-      .header, .price-section, .footer { 
+      
+      .header, .footer, .grand-total-row {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
     }
     
-    /* Responsive */
     @media (max-width: 768px) {
-      .client-section { 
-        grid-template-columns: 1fr;
-        padding: 32px 24px;
+      .info-section {
+        padding: 20px;
       }
-      .header, .content-section { 
-        padding: 32px 24px; 
+      
+      .breakdown-section {
+        padding: 20px;
       }
-      .total-price { 
-        font-size: 42px; 
+      
+      .breakdown-table {
+        font-size: 12px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="pdf-container">
-    <!-- Modern Header -->
+  <div class="quote-container">
+    <!-- Header -->
     <div class="header">
-      <div class="company-branding">
-        <div class="company-logo">NexaCore Innovations</div>
-        <div class="company-tagline">Engineering Global Innovation with Excellence</div>
-        <h1 class="quote-title">PROJECT QUOTE</h1>
-        <div class="quote-subtitle">Professional Technology Solutions</div>
+      <div class="logo-section">
+        <img src="https://www.nexacore-innovations.com/nexacore-logo.png" 
+             alt="NexaCore Innovations Logo" 
+             class="company-logo"
+             onerror="this.style.display='none'">
+        <div class="company-name">NexaCore Innovations</div>
       </div>
+      <div class="quote-title">Project Quote - ${serviceType}</div>
     </div>
 
-    <!-- Modern Client Info Cards -->
-    <div class="client-section">
-      <div class="info-card">
-        <div class="section-title">Prepared For</div>
-        <div class="client-name">${clientName}</div>
-        <div class="client-details">
-          <div><strong>Email:</strong> ${clientEmail}</div>
-          ${clientCompany ? `<div><strong>Company:</strong> ${clientCompany}</div>` : ''}
-          ${clientPhone ? `<div><strong>Phone:</strong> ${clientPhone}</div>` : ''}
-          ${clientCountry ? `<div><strong>Location:</strong> ${clientCountry}</div>` : ''}
-        </div>
-      </div>
+    <!-- Company Information -->
+    <div class="info-section">
+      <div class="section-title">Company's Information:</div>
+      <table class="info-table">
+        <tr>
+          <td class="info-label">Company Logo:</td>
+          <td class="info-value">
+            <img src="https://www.nexacore-innovations.com/nexacore-logo.png" 
+                 alt="NexaCore Logo" style="height: 30px;" 
+                 onerror="this.style.display='none'">
+          </td>
+          <td class="info-label">Company's Address:</td>
+          <td class="info-value">Accra, Ghana</td>
+        </tr>
+        <tr>
+          <td class="info-label">Company's Name:</td>
+          <td class="info-value">NexaCore Innovations</td>
+          <td class="info-label">Company's Email Address:</td>
+          <td class="info-value">projects@nexacore-innovations.com</td>
+        </tr>
+        <tr>
+          <td class="info-label">Company's Phone Number:</td>
+          <td class="info-value">+233 209 628 907</td>
+          <td class="info-label">Website:</td>
+          <td class="info-value">www.nexacore-innovations.com</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Client Information -->
+    <div class="info-section">
+      <div class="section-title">Client's Information:</div>
+      <table class="info-table">
+        <tr>
+          <td class="info-label">Client's Name:</td>
+          <td class="info-value">${clientName}</td>
+          <td class="info-label">Client's Phone Number:</td>
+          <td class="info-value">${clientPhone}</td>
+        </tr>
+        <tr>
+          <td class="info-label">Client's Company:</td>
+          <td class="info-value">${clientCompany}</td>
+          <td class="info-label">Client's Email Address:</td>
+          <td class="info-value">${clientEmail}</td>
+        </tr>
+        <tr>
+          <td class="info-label">Client's Address:</td>
+          <td class="info-value">${clientCountry}</td>
+          <td class="info-label">Service Type:</td>
+          <td class="info-value">${serviceType}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Quote Details -->
+    <div class="quote-details">
+      <table class="quote-details-table">
+        <tr>
+          <td class="header-cell">Quote Number</td>
+          <td class="header-cell">Date</td>
+          <td class="header-cell">Valid Until</td>
+        </tr>
+        <tr>
+          <td>#${quote.id}</td>
+          <td>${createdDate}</td>
+          <td>${expiresDate}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Service Breakdown -->
+    <div class="breakdown-section">
+      <div class="service-title">${serviceType} Quote</div>
       
-      <div class="info-card">
-        <div class="section-title">Quote Details</div>
-        <div class="quote-number">Quote #${quote.id}</div>
-        <div class="quote-dates">
-          <div><strong>Created:</strong> ${createdDate}</div>
-          <div><strong>Valid Until:</strong> ${expiresDate}</div>
-          <div><strong>Service:</strong> ${serviceType}</div>
-        </div>
+      <table class="breakdown-table">
+        <thead>
+          <tr>
+            <th>Task Description</th>
+            <th>Estimated Hours</th>
+            <th>Hourly Rate</th>
+            <th>Total Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${serviceBreakdown.map(item => `
+            <tr>
+              <td class="task-cell">${item.task}</td>
+              <td>${item.hours}</td>
+              <td>${currency}${item.rate}</td>
+              <td>${currency}${item.cost.toLocaleString()}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row">
+            <td class="task-cell"><strong>Subtotal</strong></td>
+            <td><strong>${serviceBreakdown.reduce((sum, item) => sum + item.hours, 0)}</strong></td>
+            <td></td>
+            <td><strong>${currency}${subtotal.toLocaleString()}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      ${deliverables.length > 0 ? `
+      <h4 style="margin: 20px 0 10px 0; color: #3b82f6;">Additional Services</h4>
+      <table class="breakdown-table">
+        <thead>
+          <tr>
+            <th>Item Description</th>
+            <th>Quantity</th>
+            <th>Unit Cost</th>
+            <th>Total Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${deliverables.slice(0, 3).map((deliverable, index) => `
+            <tr>
+              <td class="task-cell">${deliverable}</td>
+              <td>1</td>
+              <td>${currency}${Math.round((grandTotal - subtotal) / Math.min(deliverables.length, 3))}</td>
+              <td>${currency}${Math.round((grandTotal - subtotal) / Math.min(deliverables.length, 3))}</td>
+            </tr>
+          `).join('')}
+          <tr class="total-row">
+            <td class="task-cell"><strong>Additional Total</strong></td>
+            <td></td>
+            <td></td>
+            <td><strong>${currency}${(grandTotal - subtotal).toLocaleString()}</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      ` : ''}
+
+      <table class="breakdown-table">
+        <tr class="grand-total-row">
+          <td class="task-cell"><strong>Grand Total:</strong></td>
+          <td></td>
+          <td></td>
+          <td><strong>${currency}${grandTotal.toLocaleString()}</strong></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Payment Terms and Conditions -->
+    <div class="payment-section">
+      <div class="payment-terms">
+        <h3>Payment Terms</h3>
+        <p style="margin-bottom: 15px; color: #4b5563;">
+          A <strong>25% deposit (${currency}${Math.round(grandTotal * 0.25).toLocaleString()})</strong> is required to commence work. The remaining balance will be invoiced as follows:
+        </p>
+        <ul>
+          <li><strong>25% (${currency}${Math.round(grandTotal * 0.25).toLocaleString()})</strong> due upon completion of requirements and design phase.</li>
+          <li><strong>25% (${currency}${Math.round(grandTotal * 0.25).toLocaleString()})</strong> due upon development milestone completion.</li>
+          <li><strong>25% (${currency}${Math.round(grandTotal * 0.25).toLocaleString()})</strong> due upon project completion and final delivery.</li>
+        </ul>
+      </div>
+
+      <div class="terms-section">
+        <h3>Terms and Conditions</h3>
+        <ol>
+          <li>Any additional costs or fees, such as software licenses or third-party services, will be invoiced separately and are not included in the project estimate.</li>
+          <li>The client is responsible for providing all necessary assets, including images, logos, and content, in a timely manner. Delays in providing these may result in adjustments to the project timeline and costs.</li>
+          <li>All intellectual property rights for the developed solution will be transferred to the client upon full payment of the project.</li>
+          <li>The client agrees to provide feedback and approvals in a timely manner. Delays in communication may result in adjustments to the project timeline and costs.</li>
+          <li>This quote is valid for 30 days from the date above. Project scope changes may affect the final cost.</li>
+        </ol>
+      </div>
+
+      <div class="signature-section">
+        <h3>Project Acceptance</h3>
+        <p style="color: #4b5563; margin-bottom: 15px;">
+          By signing below, the client acknowledges that they have read, understood, and agree to the terms and conditions outlined in this ${serviceType} Quote.
+        </p>
+        
+        <table class="signature-table">
+          <tr>
+            <td class="signature-label">Client's Signature:</td>
+            <td class="signature-field"></td>
+            <td class="signature-label">Date:</td>
+            <td class="signature-field" style="width: 120px;"></td>
+          </tr>
+          <tr>
+            <td class="signature-label">Company's Name:</td>
+            <td class="signature-field">NexaCore Innovations</td>
+            <td class="signature-label"></td>
+            <td class="signature-field"></td>
+          </tr>
+          <tr>
+            <td class="signature-label">Representative's Signature:</td>
+            <td class="signature-field"></td>
+            <td class="signature-label">Date:</td>
+            <td class="signature-field" style="width: 120px;"></td>
+          </tr>
+        </table>
       </div>
     </div>
 
-    <!-- Modern Price Section -->
-    <div class="price-section">
-      <div class="total-price">${currency}${totalPrice}</div>
-      <div class="price-label">Total Project Investment</div>
-      <div class="validity-info">Valid until ${expiresDate}</div>
-    </div>
-
-    <!-- Project Overview -->
-    <div class="content-section">
-      <h2 class="content-title">Project Overview</h2>
-      <p class="content-text">
-        <strong>Service Type:</strong> ${serviceType}
-      </p>
-      <p class="content-text">
-        <strong>Client Requirements:</strong><br>
-        ${projectDescription || 'Custom requirements as discussed with our team.'}
-      </p>
-    </div>
-
-    <!-- Project Scope -->
-    <div class="content-section">
-      <h2 class="content-title">Detailed Project Scope</h2>
-      <p class="content-text">
-        ${quote.scope || 'Comprehensive solution tailored to your specific requirements. Our team will work closely with you to ensure all objectives are met with the highest quality standards.'}
-      </p>
-    </div>
-
-    <!-- Project Timeline -->
-    <div class="content-section">
-      <h2 class="content-title">Project Timeline</h2>
-      <p class="content-text">
-        <strong>Estimated Duration:</strong> ${quote.timeline || 'To be determined based on project complexity'}
-      </p>
-      
-      <div class="phase-timeline">
-        <h3 style="margin-bottom: 24px; color: var(--gray-900); font-size: 20px;">Project Phases:</h3>
-        ${projectPhases.map((phase, index) => `
-          <div class="phase-item">
-            <div class="phase-number">${index + 1}</div>
-            <div style="font-weight: 500; color: var(--gray-700);">${phase}</div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-
-    <!-- Deliverables -->
-    ${deliverables.length > 0 ? `
-    <div class="content-section">
-      <h2 class="content-title">Project Deliverables</h2>
-      <ul class="modern-list">
-        ${deliverables.map((deliverable: string) => 
-          `<li>${deliverable}</li>`
-        ).join('')}
-      </ul>
-    </div>
-    ` : ''}
-
-    <!-- What's Included -->
-    <div class="content-section">
-      <h2 class="content-title">What's Included in This Quote</h2>
-      <ul class="modern-list">
-        ${whatIncludes.map(item => `<li>${item}</li>`).join('')}
-      </ul>
-    </div>
-
-    <!-- Payment Schedule -->
-    <div class="content-section">
-      <h2 class="content-title">Payment Schedule</h2>
-      <p class="content-text">
-        Professional milestone-based payment structure:
-      </p>
-      <ul class="modern-list">
-        ${paymentSchedule.map(payment => `<li>${payment}</li>`).join('')}
-      </ul>
-      <div class="highlight-box">
-        <strong>Payment Methods:</strong> Wire transfer, ACH, major credit cards, or PayPal. International clients: Wire transfer or PayPal preferred.
-      </div>
-    </div>
-
-    <!-- Terms & Conditions -->
-    <div class="content-section">
-      <h2 class="content-title">Terms & Conditions</h2>
-      <div class="content-text" style="white-space: pre-wrap; line-height: 1.8;">
-${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date above.
-
-2. PAYMENT TERMS: 
-   - Net 30 days from invoice date
-   - Late payments subject to 1.5% monthly interest charge
-   - Services may be suspended for accounts 30+ days overdue
-
-3. SCOPE CHANGES: 
-   - Additional work outside the defined scope will be quoted separately
-   - Change requests must be approved in writing
-   - May affect timeline and total project cost
-
-4. INTELLECTUAL PROPERTY:
-   - Client owns all custom work upon final payment
-   - NexaCore retains rights to general methodologies and frameworks
-   - Third-party licenses remain with respective owners
-
-5. WARRANTY & SUPPORT:
-   - 30-day bug fix period included
-   - Extended support available under separate agreement
-   - No warranty on third-party components
-
-6. CONFIDENTIALITY:
-   - All client information treated as confidential
-   - Non-disclosure agreement available upon request
-
-7. LIMITATION OF LIABILITY:
-   - Liability limited to project value
-   - No consequential damages
-   - Client responsible for data backups`}
-      </div>
-    </div>
-
-    <!-- Modern Footer -->
+    <!-- Footer -->
     <div class="footer">
-      <h3>Let's Build Something Amazing Together</h3>
-      
-      <div class="contact-grid">
+      <div class="contact-info">
         <div class="contact-item">
-          <strong>Email</strong><br>
+          <strong>Email</strong>
           projects@nexacore-innovations.com
         </div>
         <div class="contact-item">
-          <strong>Website</strong><br>
-          nexacore-innovations.com
+          <strong>Website</strong>
+          www.nexacore-innovations.com
         </div>
         <div class="contact-item">
-          <strong>Questions</strong><br>
-          Available for consultation calls
+          <strong>Phone</strong>
+          +233 209 628 907
         </div>
         <div class="contact-item">
-          <strong>Response Time</strong><br>
-          Within 24 hours
+          <strong>Location</strong>
+          Accra, Ghana
         </div>
       </div>
-      
-      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1);">
-        <p style="font-size: 14px; opacity: 0.8; margin-bottom: 8px;">
-          © ${new Date().getFullYear()} NexaCore Innovations. All rights reserved.
-        </p>
-        <p style="font-size: 12px; opacity: 0.6;">
-          This quote was generated on ${new Date().toLocaleString()} and contains confidential information.
-        </p>
-      </div>
+      <p style="font-size: 14px; opacity: 0.8; margin-top: 20px;">
+        © ${new Date().getFullYear()} NexaCore Innovations. All rights reserved. | Generated on ${new Date().toLocaleString()}
+      </p>
     </div>
   </div>
 
@@ -750,31 +725,27 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
     window.onload = function() {
       document.title = 'Quote-${quote.id}-${clientName}-NexaCore';
       
-      // Add floating download button
+      // Add print button
       setTimeout(() => {
-        const downloadBtn = document.createElement('button');
-        downloadBtn.innerHTML = '📄 Download PDF';
-        downloadBtn.style.cssText = \`
+        const printBtn = document.createElement('button');
+        printBtn.innerHTML = 'Print/Download PDF';
+        printBtn.style.cssText = \`
           position: fixed;
-          top: 24px;
-          right: 24px;
-          background: linear-gradient(135deg, var(--primary), var(--purple-600));
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #3b82f6, #14b8a6);
           color: white;
           border: none;
-          padding: 16px 24px;
-          border-radius: 50px;
+          padding: 12px 24px;
+          border-radius: 25px;
           cursor: pointer;
           font-weight: 600;
           z-index: 1000;
-          box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-          backdrop-filter: blur(10px);
+          box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
           font-size: 14px;
-          transition: all 0.3s ease;
         \`;
-        downloadBtn.onmouseover = () => downloadBtn.style.transform = 'translateY(-2px)';
-        downloadBtn.onmouseout = () => downloadBtn.style.transform = 'translateY(0)';
-        downloadBtn.onclick = () => window.print();
-        document.body.appendChild(downloadBtn);
+        printBtn.onclick = () => window.print();
+        document.body.appendChild(printBtn);
       }, 1000);
     };
     
@@ -782,9 +753,6 @@ ${quote.terms || `1. ACCEPTANCE: This quote is valid for 30 days from the date a
       if (e.ctrlKey && e.key === 'p') {
         e.preventDefault();
         window.print();
-      }
-      if (e.key === 'Escape') {
-        window.close();
       }
     });
   </script>
