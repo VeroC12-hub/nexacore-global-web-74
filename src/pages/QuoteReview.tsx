@@ -1,4 +1,4 @@
-// src/pages/QuoteReview.tsx - ENHANCED WITH COMPREHENSIVE CONTENT & PDF DOWNLOAD
+// src/pages/QuoteReview.tsx - FIXED DATE VALIDATION & DISPLAY
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
@@ -39,7 +39,7 @@ interface Quote {
   terms: string;
   status: string;
   created_at: string;
-  expires_at: string;
+  expires_at: string | null;
   sent_at?: string;
   approved_at?: string;
   declined_at?: string;
@@ -59,6 +59,74 @@ interface QuoteRequest {
   tier?: string;
   budget_estimate?: number;
 }
+
+// FIXED: Comprehensive date validation and formatting
+const validateAndFormatDate = (dateString: string | null | undefined): { 
+  isValid: boolean; 
+  formatted: string; 
+  date: Date | null;
+  isExpired: boolean;
+} => {
+  if (!dateString) {
+    return {
+      isValid: false,
+      formatted: 'No expiration set',
+      date: null,
+      isExpired: false
+    };
+  }
+
+  try {
+    const date = new Date(dateString);
+    
+    // Check for invalid dates (including 1970 epoch)
+    const timestamp = date.getTime();
+    const isValidDate = !isNaN(timestamp) && timestamp > 0 && date.getFullYear() > 1990;
+    
+    if (!isValidDate) {
+      console.warn('Invalid date detected:', dateString, 'Timestamp:', timestamp);
+      return {
+        isValid: false,
+        formatted: 'Invalid date',
+        date: null,
+        isExpired: false
+      };
+    }
+
+    const now = new Date();
+    const isExpired = date < now;
+    
+    const formatted = date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    return {
+      isValid: true,
+      formatted,
+      date,
+      isExpired
+    };
+  } catch (error) {
+    console.error('Date parsing error:', error, 'Input:', dateString);
+    return {
+      isValid: false,
+      formatted: 'Date format error',
+      date: null,
+      isExpired: false
+    };
+  }
+};
+
+// FIXED: Safe date formatting for display
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'Not set';
+  
+  const result = validateAndFormatDate(dateString);
+  return result.formatted;
+};
 
 const QuoteReview = () => {
   const { id } = useParams();
@@ -107,9 +175,13 @@ const QuoteReview = () => {
         return;
       }
 
-      // Check if quote is expired
-      if (quoteData.expires_at && new Date(quoteData.expires_at) < new Date()) {
+      // FIXED: Validate expiration date before checking
+      const expirationResult = validateAndFormatDate(quoteData.expires_at);
+      if (expirationResult.isExpired && expirationResult.isValid) {
         toast.warning('This quote has expired');
+      } else if (!expirationResult.isValid) {
+        console.warn('Quote has invalid expiration date:', quoteData.expires_at);
+        toast.info('Quote expiration date needs to be updated');
       }
 
       setQuote(quoteData);
@@ -241,15 +313,6 @@ const QuoteReview = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'bg-green-100 text-green-800 border-green-200';
@@ -297,8 +360,10 @@ const QuoteReview = () => {
     );
   }
 
-  const isExpired = quote.expires_at && new Date(quote.expires_at) < new Date();
-  const canRespond = quote.status === 'sent' && !isExpired;
+  // FIXED: Use proper date validation for expiration check
+  const expirationResult = validateAndFormatDate(quote.expires_at);
+  const isExpired = expirationResult.isExpired && expirationResult.isValid;
+  const canRespond = quote.status === 'sent' && !isExpired && expirationResult.isValid;
   const totalPrice = quote.price?.toLocaleString() || '0';
 
   return (
@@ -333,9 +398,17 @@ const QuoteReview = () => {
                 {quote.status.replace('_', ' ').toUpperCase()}
               </Badge>
               
+              {/* FIXED: Only show expired badge for valid dates that are actually expired */}
               {isExpired && (
                 <Badge className="bg-red-100 text-red-800 border-red-200">
                   EXPIRED
+                </Badge>
+              )}
+              
+              {/* NEW: Show invalid date badge */}
+              {!expirationResult.isValid && quote.expires_at && (
+                <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                  DATE ISSUE
                 </Badge>
               )}
             </div>
@@ -504,13 +577,23 @@ const QuoteReview = () => {
                   Service: {quote.service_type || quoteRequest?.service_type}
                 </div>
 
-                {quote.expires_at && (
-                  <div className="text-sm">
-                    <span className={isExpired ? 'text-red-600 font-medium' : 'text-gray-600'}>
-                      {isExpired ? 'Expired on' : 'Valid until'}: {formatDate(quote.expires_at)}
-                    </span>
-                  </div>
-                )}
+                {/* FIXED: Proper expiration date display */}
+                <div className="text-sm">
+                  <span className={
+                    isExpired 
+                      ? 'text-red-600 font-medium' 
+                      : !expirationResult.isValid 
+                      ? 'text-orange-600 font-medium'
+                      : 'text-gray-600'
+                  }>
+                    {isExpired 
+                      ? `Expired on: ${expirationResult.formatted}`
+                      : !expirationResult.isValid
+                      ? 'Expiration: Invalid date'
+                      : `Valid until: ${expirationResult.formatted}`
+                    }
+                  </span>
+                </div>
               </Card>
 
               {/* Quote Timeline */}
@@ -647,7 +730,12 @@ const QuoteReview = () => {
                   <div className="text-center">
                     <AlertTriangle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-gray-600 text-sm">
-                      {isExpired ? 'This quote has expired' : 'Quote response already submitted'}
+                      {isExpired 
+                        ? 'This quote has expired' 
+                        : !expirationResult.isValid
+                        ? 'Quote has invalid expiration date - please contact support'
+                        : 'Quote response already submitted'
+                      }
                     </p>
                   </div>
                 </Card>
