@@ -1,4 +1,4 @@
-// src/pages/AdminDashboard.tsx - PROFESSIONAL ADMIN DASHBOARD WITH REAL DATA
+// src/pages/AdminDashboard.tsx - ENHANCED VERSION WITH FULLY CLICKABLE BUTTONS
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -94,7 +94,7 @@ import {
   Save
 } from 'lucide-react';
 
-// Import all existing admin components
+// Import existing admin components
 import { AdminProjectsTab } from '@/components/admin/AdminProjectsTab';
 import { AdminInvoicesTab } from '@/components/admin/AdminInvoicesTab';
 import { AdminServiceRequestsTab } from '@/components/admin/AdminServiceRequestsTab';
@@ -136,7 +136,7 @@ interface DashboardStats {
   profitMargin: number;
   monthlyGrowth: number;
   
-  // System Metrics (can be enhanced with real monitoring)
+  // System Metrics
   systemUptime: number;
   responseTime: number;
   storageUsage: number;
@@ -163,6 +163,15 @@ interface Alert {
   message: string;
   timestamp: string;
   read: boolean;
+}
+
+interface QuickAction {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  action: () => void;
+  color: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -293,7 +302,7 @@ const AdminDashboard: React.FC = () => {
       const monthlyGrowth = previousMonthRevenue > 0 ? 
         ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 : 0;
 
-      // Calculate retention rate (simplified - clients with multiple projects)
+      // Calculate retention rate
       const clientProjects = projects.reduce((acc, project) => {
         acc[project.client_id] = (acc[project.client_id] || 0) + 1;
         return acc;
@@ -304,7 +313,7 @@ const AdminDashboard: React.FC = () => {
       // Calculate team utilization based on active projects vs team size
       const teamUtilization = teamMembers > 0 ? Math.min((activeProjects / teamMembers) * 100, 100) : 0;
 
-      // Estimate customer satisfaction (can be enhanced with real survey data)
+      // Estimate customer satisfaction
       const customerSatisfaction = completedProjects > 0 ? 
         Math.min(4.2 + (clientRetentionRate / 100), 5.0) : 4.0;
 
@@ -332,7 +341,7 @@ const AdminDashboard: React.FC = () => {
         profitMargin: totalRevenue > 0 ? Math.round((totalRevenue * 0.35) / totalRevenue * 100) : 0,
         monthlyGrowth: Math.round(monthlyGrowth * 10) / 10,
         
-        // System metrics (can be enhanced with real monitoring)
+        // System metrics
         systemUptime: 99.9,
         responseTime: 150,
         storageUsage: Math.min(Math.round((projects.length + invoices.length + messages.length) / 100), 100),
@@ -482,7 +491,7 @@ const AdminDashboard: React.FC = () => {
         });
       }
 
-      // Check for low storage (if file system is implemented)
+      // Check for low storage
       if (stats.storageUsage > 80) {
         alerts.push({
           id: 'storage-warning',
@@ -511,6 +520,137 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // ENHANCED BUTTON HANDLERS
+  const handleStatCardClick = (cardType: string) => {
+    console.log(`Admin stat card clicked: ${cardType}`);
+    switch (cardType) {
+      case 'revenue':
+        setActiveTab('business');
+        break;
+      case 'projects':
+        setActiveTab('projects');
+        break;
+      case 'users':
+        setActiveTab('users');
+        break;
+      case 'satisfaction':
+        setActiveTab('analytics');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleQuickAction = (actionId: string) => {
+    console.log(`Quick action: ${actionId}`);
+    switch (actionId) {
+      case 'create-invoice':
+        setIsCreateInvoiceOpen(true);
+        break;
+      case 'new-project':
+        setActiveTab('projects');
+        toast.info('Project creation functionality available in Projects tab');
+        break;
+      case 'manage-users':
+        setActiveTab('users');
+        break;
+      case 'view-reports':
+        setActiveTab('analytics');
+        break;
+      case 'view-website':
+        window.open('https://nexacore-innovations.com', '_blank');
+        break;
+      case 'refresh-data':
+        loadDashboardStats();
+        break;
+      case 'export-reports':
+        setActiveTab('analytics');
+        toast.info('Report export functionality available in Analytics tab');
+        break;
+      case 'database-console':
+        window.open('https://supabase.com/dashboard', '_blank');
+        break;
+      case 'check-notifications':
+        loadNotifications();
+        setShowNotifications(true);
+        break;
+      default:
+        toast.info(`Action "${actionId}" functionality coming soon`);
+        break;
+    }
+  };
+
+  const handleTabChange = (tabValue: string) => {
+    console.log(`Admin tab changed to: ${tabValue}`);
+    setActiveTab(tabValue);
+    
+    // Load specific data when tabs are accessed
+    switch (tabValue) {
+      case 'overview':
+        loadDashboardStats();
+        break;
+      case 'analytics':
+        loadDashboardStats();
+        break;
+      case 'business':
+        loadDashboardStats();
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleNotificationClick = (notificationId: string) => {
+    console.log(`Notification clicked: ${notificationId}`);
+    const updatedNotifications = notifications.map(notif => 
+      notif.id === notificationId ? { ...notif, read: true } : notif
+    );
+    setNotifications(updatedNotifications);
+    
+    // Handle specific notifications
+    switch (notificationId) {
+      case 'overdue-invoices':
+        setActiveTab('invoices');
+        break;
+      case 'pending-requests':
+        setActiveTab('requests');
+        break;
+      case 'storage-warning':
+        setActiveTab('system');
+        break;
+      default:
+        break;
+    }
+    setShowNotifications(false);
+  };
+
+  const handleActivityClick = (activityId: string, type: string) => {
+    console.log(`Activity clicked: ${activityId}, type: ${type}`);
+    const id = activityId.split('-')[1];
+    
+    switch (type) {
+      case 'project':
+        setActiveTab('projects');
+        toast.info(`Project details for ID: ${id}`);
+        break;
+      case 'invoice':
+        setActiveTab('invoices');
+        toast.info(`Invoice details for ID: ${id}`);
+        break;
+      case 'user':
+        setActiveTab('users');
+        toast.info(`User details for ID: ${id}`);
+        break;
+      case 'service_request':
+        setActiveTab('requests');
+        toast.info(`Service request details for ID: ${id}`);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // UTILITY FUNCTIONS
   const getDateRange = (range: string) => {
     const now = new Date();
     switch (range) {
@@ -548,8 +688,10 @@ const AdminDashboard: React.FC = () => {
     try {
       await signOut();
       navigate('/');
+      toast.success('Signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
     }
   };
 
@@ -594,6 +736,85 @@ const AdminDashboard: React.FC = () => {
       default: return <Bell className="w-5 h-5" />;
     }
   };
+
+  // Define Quick Actions
+  const quickActions: QuickAction[] = [
+    {
+      id: 'create-invoice',
+      title: 'Create Invoice',
+      description: 'Generate a new invoice for a client',
+      icon: <Plus className="w-4 h-4" />,
+      action: () => handleQuickAction('create-invoice'),
+      color: 'text-primary hover:bg-primary/5'
+    },
+    {
+      id: 'new-project',
+      title: 'New Project',
+      description: 'Start a new project',
+      icon: <FolderOpen className="w-4 h-4" />,
+      action: () => handleQuickAction('new-project'),
+      color: 'text-blue-500 hover:bg-blue-500/5'
+    },
+    {
+      id: 'manage-users',
+      title: 'Manage Users',
+      description: 'User administration panel',
+      icon: <Users className="w-4 h-4" />,
+      action: () => handleQuickAction('manage-users'),
+      color: 'text-green-500 hover:bg-green-500/5'
+    },
+    {
+      id: 'view-reports',
+      title: 'View Reports',
+      description: 'Analytics and reporting',
+      icon: <BarChart3 className="w-4 h-4" />,
+      action: () => handleQuickAction('view-reports'),
+      color: 'text-purple-500 hover:bg-purple-500/5'
+    },
+    {
+      id: 'view-website',
+      title: 'View Website',
+      description: 'Open live website',
+      icon: <Globe className="w-4 h-4" />,
+      action: () => handleQuickAction('view-website'),
+      color: 'text-orange-500 hover:bg-orange-500/5'
+    }
+  ];
+
+  const systemActions: QuickAction[] = [
+    {
+      id: 'refresh-data',
+      title: 'Refresh Data',
+      description: 'Reload dashboard statistics',
+      icon: <RefreshCw className="w-4 h-4" />,
+      action: () => handleQuickAction('refresh-data'),
+      color: 'text-blue-500 hover:bg-blue-500/5'
+    },
+    {
+      id: 'export-reports',
+      title: 'Export Reports',
+      description: 'Download analytics data',
+      icon: <Download className="w-4 h-4" />,
+      action: () => handleQuickAction('export-reports'),
+      color: 'text-green-500 hover:bg-green-500/5'
+    },
+    {
+      id: 'database-console',
+      title: 'Database Console',
+      description: 'Access Supabase dashboard',
+      icon: <Database className="w-4 h-4" />,
+      action: () => handleQuickAction('database-console'),
+      color: 'text-purple-500 hover:bg-purple-500/5'
+    },
+    {
+      id: 'check-notifications',
+      title: 'Check Notifications',
+      description: 'Review system alerts',
+      icon: <Bell className="w-4 h-4" />,
+      action: () => handleQuickAction('check-notifications'),
+      color: 'text-orange-500 hover:bg-orange-500/5'
+    }
+  ];
 
   // Refresh data when date range changes
   useEffect(() => {
@@ -653,7 +874,7 @@ const AdminDashboard: React.FC = () => {
                 <option value="1y">Last year</option>
               </select>
               
-              {/* Real Notifications */}
+              {/* Enhanced Notifications */}
               <div className="relative">
                 <Button 
                   variant="outline" 
@@ -667,7 +888,7 @@ const AdminDashboard: React.FC = () => {
                   )}
                 </Button>
                 
-                {/* Notifications Dropdown */}
+                {/* Enhanced Notifications Dropdown */}
                 {showNotifications && (
                   <div className="absolute right-0 top-12 w-80 bg-background border border-border rounded-lg shadow-lg z-50">
                     <div className="p-4 border-b border-border">
@@ -680,9 +901,10 @@ const AdminDashboard: React.FC = () => {
                       {notifications.length > 0 ? notifications.map((notification) => (
                         <div 
                           key={notification.id}
-                          className={`p-4 border-b border-border hover:bg-muted/50 cursor-pointer ${
+                          className={`p-4 border-b border-border hover:bg-muted/50 cursor-pointer transition-colors ${
                             !notification.read ? 'bg-blue-50/50' : ''
                           }`}
+                          onClick={() => handleNotificationClick(notification.id)}
                         >
                           <div className="flex items-start gap-3">
                             {getAlertIcon(notification.type)}
@@ -703,7 +925,11 @@ const AdminDashboard: React.FC = () => {
                 )}
               </div>
               
-              <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => navigate('/')}
+              >
                 <Home className="w-4 h-4 mr-2" />
                 Home
               </Button>
@@ -723,9 +949,12 @@ const AdminDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Real Data Stats Cards */}
+          {/* Enhanced Clickable Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="p-6 hover:shadow-lg transition-all border-l-4 border-l-primary group">
+            <Card 
+              className="p-6 hover:shadow-lg transition-all border-l-4 border-l-primary cursor-pointer transform hover:scale-105"
+              onClick={() => handleStatCardClick('revenue')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
@@ -748,7 +977,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-6 hover:shadow-lg transition-all border-l-4 border-l-blue-500 group">
+            <Card 
+              className="p-6 hover:shadow-lg transition-all border-l-4 border-l-blue-500 cursor-pointer transform hover:scale-105"
+              onClick={() => handleStatCardClick('projects')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
@@ -764,7 +996,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-6 hover:shadow-lg transition-all border-l-4 border-l-green-500 group">
+            <Card 
+              className="p-6 hover:shadow-lg transition-all border-l-4 border-l-green-500 cursor-pointer transform hover:scale-105"
+              onClick={() => handleStatCardClick('satisfaction')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Client Satisfaction</p>
@@ -780,7 +1015,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-6 hover:shadow-lg transition-all border-l-4 border-l-yellow-500 group">
+            <Card 
+              className="p-6 hover:shadow-lg transition-all border-l-4 border-l-yellow-500 cursor-pointer transform hover:scale-105"
+              onClick={() => handleStatCardClick('users')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Users</p>
@@ -797,9 +1035,12 @@ const AdminDashboard: React.FC = () => {
             </Card>
           </div>
 
-          {/* Real Business Intelligence Cards */}
+          {/* Enhanced Business Intelligence Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="p-4 hover:shadow-md transition-shadow">
+            <Card 
+              className="p-4 hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105"
+              onClick={() => handleTabChange('business')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Avg Project Value</p>
@@ -809,7 +1050,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-4 hover:shadow-md transition-shadow">
+            <Card 
+              className="p-4 hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105"
+              onClick={() => handleTabChange('analytics')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Conversion Rate</p>
@@ -819,7 +1063,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-4 hover:shadow-md transition-shadow">
+            <Card 
+              className="p-4 hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105"
+              onClick={() => handleTabChange('team')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Team Utilization</p>
@@ -829,7 +1076,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-4 hover:shadow-md transition-shadow">
+            <Card 
+              className="p-4 hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105"
+              onClick={() => handleTabChange('business')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Monthly Growth</p>
@@ -840,8 +1090,8 @@ const AdminDashboard: React.FC = () => {
             </Card>
           </div>
 
-          {/* Main Content Tabs with All Professional Features */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          {/* Enhanced Tabs with Better Navigation */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
             <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -857,10 +1107,10 @@ const AdminDashboard: React.FC = () => {
               <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
 
-            {/* Enhanced Overview Tab with Real Data */}
+            {/* Enhanced Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Real Activity Chart Placeholder */}
+                {/* Enhanced Revenue Overview */}
                 <Card className="lg:col-span-2 p-6">
                   <CardHeader className="p-0 mb-6">
                     <div className="flex items-center justify-between">
@@ -868,7 +1118,11 @@ const AdminDashboard: React.FC = () => {
                         <CardTitle className="text-xl">Revenue Overview</CardTitle>
                         <CardDescription>Revenue: ${stats.totalRevenue.toLocaleString()} | Growth: {stats.monthlyGrowth.toFixed(1)}%</CardDescription>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => setActiveTab('analytics')}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleTabChange('analytics')}
+                      >
                         <BarChart3 className="w-4 h-4 mr-2" />
                         View Analytics
                       </Button>
@@ -876,85 +1130,70 @@ const AdminDashboard: React.FC = () => {
                   </CardHeader>
                   <CardContent className="p-0">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <div 
+                        className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleTabChange('business')}
+                      >
                         <p className="text-lg font-bold text-green-600">${stats.monthlyRecurringRevenue.toLocaleString()}</p>
                         <p className="text-xs text-muted-foreground">This Month</p>
                       </div>
-                      <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <div 
+                        className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleTabChange('projects')}
+                      >
                         <p className="text-lg font-bold text-blue-600">{stats.completedProjects}</p>
                         <p className="text-xs text-muted-foreground">Completed</p>
                       </div>
-                      <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <div 
+                        className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleTabChange('projects')}
+                      >
                         <p className="text-lg font-bold text-purple-600">{stats.activeProjects}</p>
                         <p className="text-xs text-muted-foreground">Active</p>
                       </div>
-                      <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <div 
+                        className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleTabChange('requests')}
+                      >
                         <p className="text-lg font-bold text-orange-600">{stats.pendingRequests}</p>
                         <p className="text-xs text-muted-foreground">Pending</p>
                       </div>
                     </div>
-                    <div className="h-48 bg-muted/20 rounded-lg flex items-center justify-center">
+                    <div 
+                      className="h-48 bg-muted/20 rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/30 transition-colors"
+                      onClick={() => handleTabChange('analytics')}
+                    >
                       <div className="text-center">
                         <LineChart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">Chart visualization available in Analytics tab</p>
+                        <p className="text-muted-foreground">Click to view detailed analytics</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
 
-                {/* Quick Actions & System Status */}
+                {/* Enhanced Quick Actions */}
                 <div className="space-y-6">
-                  {/* Quick Actions */}
                   <Card className="p-6">
                     <CardHeader className="p-0 mb-4">
                       <CardTitle className="text-lg">Quick Actions</CardTitle>
                       <CardDescription>Common admin tasks</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0 space-y-3">
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start hover:bg-primary/5"
-                        onClick={handleCreateInvoice}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Create Invoice
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start hover:bg-blue-500/5"
-                        onClick={() => setActiveTab('projects')}
-                      >
-                        <FolderOpen className="w-4 h-4 mr-2" />
-                        New Project
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start hover:bg-green-500/5"
-                        onClick={() => setActiveTab('users')}
-                      >
-                        <Users className="w-4 h-4 mr-2" />
-                        Manage Users
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start hover:bg-purple-500/5"
-                        onClick={() => setActiveTab('analytics')}
-                      >
-                        <BarChart3 className="w-4 h-4 mr-2" />
-                        View Reports
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full justify-start hover:bg-orange-500/5"
-                        onClick={() => window.open('https://nexacore-innovations.com', '_blank')}
-                      >
-                        <Globe className="w-4 h-4 mr-2" />
-                        View Website
-                      </Button>
+                      {quickActions.map((action) => (
+                        <Button 
+                          key={action.id}
+                          variant="outline" 
+                          className={`w-full justify-start ${action.color} transition-all duration-200 transform hover:scale-105`}
+                          onClick={action.action}
+                        >
+                          {action.icon}
+                          <span className="ml-2">{action.title}</span>
+                        </Button>
+                      ))}
                     </CardContent>
                   </Card>
 
-                  {/* Real System Status */}
+                  {/* Enhanced System Status */}
                   <Card className="p-6">
                     <CardHeader className="p-0 mb-4">
                       <CardTitle className="text-lg">System Status</CardTitle>
@@ -999,7 +1238,7 @@ const AdminDashboard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Real Recent Activity */}
+              {/* Enhanced Recent Activity */}
               <Card className="p-6">
                 <CardHeader className="p-0 mb-4">
                   <div className="flex items-center justify-between">
@@ -1016,7 +1255,11 @@ const AdminDashboard: React.FC = () => {
                 <CardContent className="p-0">
                   <div className="space-y-4">
                     {recentActivity.length > 0 ? recentActivity.map((activity) => (
-                      <div key={activity.id} className="flex items-center p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div 
+                        key={activity.id} 
+                        className="flex items-center p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => handleActivityClick(activity.id, activity.type)}
+                      >
                         <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-4 ${getActivityColor(activity.status)}`}>
                           {getActivityIcon(activity.type)}
                         </div>
@@ -1041,6 +1284,7 @@ const AdminDashboard: React.FC = () => {
                             )}
                           </div>
                         </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
                       </div>
                     )) : (
                       <div className="text-center py-8 text-muted-foreground">
@@ -1053,10 +1297,10 @@ const AdminDashboard: React.FC = () => {
               </Card>
             </TabsContent>
 
-            {/* Business Intelligence Tab with Real Data */}
+            {/* Enhanced Business Intelligence Tab */}
             <TabsContent value="business" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Real Business Metrics */}
+                {/* Enhanced Business Metrics */}
                 <Card className="p-6">
                   <CardHeader className="p-0 mb-6">
                     <CardTitle>Business Metrics</CardTitle>
@@ -1064,7 +1308,10 @@ const AdminDashboard: React.FC = () => {
                   </CardHeader>
                   <CardContent className="p-0 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-muted/30 rounded-lg">
+                      <div 
+                        className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleTabChange('analytics')}
+                      >
                         <p className="text-2xl font-bold text-green-600">${stats.monthlyRecurringRevenue.toLocaleString()}</p>
                         <p className="text-sm text-muted-foreground">Monthly Revenue</p>
                       </div>
@@ -1082,7 +1329,7 @@ const AdminDashboard: React.FC = () => {
                       </div>
                     </div>
                     
-                    {/* Real Progress Indicators */}
+                    {/* Enhanced Progress Indicators */}
                     <div className="space-y-4">
                       <div>
                         <div className="flex justify-between text-sm mb-2">
@@ -1103,7 +1350,7 @@ const AdminDashboard: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* System Performance with Real Data */}
+                {/* Enhanced System Performance */}
                 <Card className="p-6">
                   <CardHeader className="p-0 mb-6">
                     <CardTitle>System Performance</CardTitle>
@@ -1111,7 +1358,10 @@ const AdminDashboard: React.FC = () => {
                   </CardHeader>
                   <CardContent className="p-0 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 border border-border rounded-lg">
+                      <div 
+                        className="text-center p-4 border border-border rounded-lg cursor-pointer hover:shadow-md transition-all transform hover:scale-105"
+                        onClick={() => handleTabChange('system')}
+                      >
                         <Monitor className="w-8 h-8 text-blue-500 mx-auto mb-2" />
                         <p className="text-lg font-bold">{stats.systemUptime}%</p>
                         <p className="text-sm text-muted-foreground">Uptime</p>
@@ -1137,10 +1387,10 @@ const AdminDashboard: React.FC = () => {
               </div>
             </TabsContent>
 
-            {/* System Administration Tab */}
+            {/* Enhanced System Administration Tab */}
             <TabsContent value="system" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Database Statistics */}
+                {/* Enhanced Database Statistics */}
                 <Card className="p-6">
                   <CardHeader className="p-0 mb-6">
                     <CardTitle>Database Statistics</CardTitle>
@@ -1148,19 +1398,31 @@ const AdminDashboard: React.FC = () => {
                   </CardHeader>
                   <CardContent className="p-0 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
+                      <div 
+                        className="text-center p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+                        onClick={() => handleTabChange('users')}
+                      >
                         <p className="text-lg font-bold text-blue-600">{stats.totalUsers}</p>
                         <p className="text-xs text-muted-foreground">Users</p>
                       </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
+                      <div 
+                        className="text-center p-3 bg-green-50 rounded-lg cursor-pointer hover:bg-green-100 transition-colors"
+                        onClick={() => handleTabChange('projects')}
+                      >
                         <p className="text-lg font-bold text-green-600">{stats.totalProjects}</p>
                         <p className="text-xs text-muted-foreground">Projects</p>
                       </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-lg">
+                      <div 
+                        className="text-center p-3 bg-purple-50 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors"
+                        onClick={() => handleTabChange('invoices')}
+                      >
                         <p className="text-lg font-bold text-purple-600">{stats.totalInvoices}</p>
                         <p className="text-xs text-muted-foreground">Invoices</p>
                       </div>
-                      <div className="text-center p-3 bg-orange-50 rounded-lg">
+                      <div 
+                        className="text-center p-3 bg-orange-50 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors"
+                        onClick={() => handleTabChange('requests')}
+                      >
                         <p className="text-lg font-bold text-orange-600">{stats.pendingRequests}</p>
                         <p className="text-xs text-muted-foreground">Requests</p>
                       </div>
@@ -1168,39 +1430,30 @@ const AdminDashboard: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* System Controls */}
+                {/* Enhanced System Controls */}
                 <Card className="p-6">
                   <CardHeader className="p-0 mb-6">
                     <CardTitle>System Controls</CardTitle>
                     <CardDescription>Administrative actions</CardDescription>
                   </CardHeader>
                   <CardContent className="p-0 space-y-3">
-                    <Button variant="outline" className="w-full justify-start" onClick={loadDashboardStats}>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Refresh Data
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('analytics')}>
-                      <Download className="w-4 h-4 mr-2" />
-                      Export Reports
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" onClick={() => window.open('https://supabase.com/dashboard', '_blank')}>
-                      <Database className="w-4 h-4 mr-2" />
-                      Database Console
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" onClick={() => window.open('https://nexacore-innovations.com', '_blank')}>
-                      <Globe className="w-4 h-4 mr-2" />
-                      View Live Site
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start" onClick={loadNotifications}>
-                      <Bell className="w-4 h-4 mr-2" />
-                      Check Notifications
-                    </Button>
+                    {systemActions.map((action) => (
+                      <Button 
+                        key={action.id}
+                        variant="outline" 
+                        className={`w-full justify-start ${action.color} transition-all duration-200 transform hover:scale-105`}
+                        onClick={action.action}
+                      >
+                        {action.icon}
+                        <span className="ml-2">{action.title}</span>
+                      </Button>
+                    ))}
                   </CardContent>
                 </Card>
               </div>
             </TabsContent>
 
-            {/* All Existing Tabs with Your Components */}
+            {/* All Existing Tabs with Enhanced Components */}
             <TabsContent value="analytics" className="mt-6">
               <AdminAnalytics />
             </TabsContent>
@@ -1240,7 +1493,7 @@ const AdminDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Create Invoice Modal */}
+      {/* Enhanced Create Invoice Modal */}
       <CreateInvoiceModal
         isOpen={isCreateInvoiceOpen}
         onClose={() => setIsCreateInvoiceOpen(false)}
