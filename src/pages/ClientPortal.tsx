@@ -1,4 +1,4 @@
-// src/pages/ClientPortal.tsx - PRODUCTION-READY CLIENT PORTAL WITH QUOTE MANAGEMENT
+// src/pages/ClientPortal.tsx - ENHANCED VERSION WITH FULLY CLICKABLE BUTTONS
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
@@ -129,7 +129,6 @@ interface ServiceRequest {
   updated_at: string;
 }
 
-// NEW: Quote and Quote Request interfaces
 interface Quote {
   id: string;
   client_email: string;
@@ -175,7 +174,6 @@ interface ClientStats {
   projectSuccessRate: number;
   paymentHistory: number;
   clientSince: string;
-  // NEW: Quote-related stats
   totalQuotes: number;
   pendingQuotes: number;
   approvedQuotes: number;
@@ -202,16 +200,14 @@ const ClientPortal: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
-  // Existing Data States
+  // Data States
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [profile, setProfile] = useState<any>(null);
-  
-  // NEW: Quote-related states
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [quoteRequests, setQuoteRequests] = useState<QuoteRequest[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   
   const [stats, setStats] = useState<ClientStats>({
     totalProjects: 0,
@@ -226,14 +222,13 @@ const ClientPortal: React.FC = () => {
     projectSuccessRate: 0,
     paymentHistory: 0,
     clientSince: '',
-    // NEW: Quote stats
     totalQuotes: 0,
     pendingQuotes: 0,
     approvedQuotes: 0,
     totalQuoteRequests: 0
   });
 
-  // Support/Contact Form
+  // Contact Form States
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactForm, setContactForm] = useState({
     subject: '',
@@ -269,8 +264,8 @@ const ClientPortal: React.FC = () => {
         loadProjects(),
         loadInvoices(),
         loadServiceRequests(),
-        loadQuotes(), // NEW
-        loadQuoteRequests(), // NEW
+        loadQuotes(),
+        loadQuoteRequests(),
         loadRecentActivity()
       ]);
 
@@ -333,7 +328,6 @@ const ClientPortal: React.FC = () => {
     }
   };
 
-  // NEW: Load quotes
   const loadQuotes = async () => {
     try {
       const { data, error } = await supabase
@@ -351,7 +345,6 @@ const ClientPortal: React.FC = () => {
     }
   };
 
-  // NEW: Load quote requests
   const loadQuoteRequests = async () => {
     try {
       const { data, error } = await supabase
@@ -397,7 +390,7 @@ const ClientPortal: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(3);
 
-      // NEW: Get recent quotes
+      // Get recent quotes
       const { data: recentQuotes } = await supabase
         .from('quotes')
         .select('id, service_type, price, status, created_at')
@@ -405,7 +398,7 @@ const ClientPortal: React.FC = () => {
         .order('created_at', { ascending: false })
         .limit(3);
 
-      // NEW: Get recent quote requests
+      // Get recent quote requests
       const { data: recentQuoteReqs } = await supabase
         .from('quote_requests')
         .select('id, service_type, status, created_at')
@@ -453,7 +446,7 @@ const ClientPortal: React.FC = () => {
         });
       });
 
-      // NEW: Add quote activities
+      // Add quote activities
       recentQuotes?.forEach(quote => {
         activities.push({
           id: `quote-${quote.id}`,
@@ -467,7 +460,7 @@ const ClientPortal: React.FC = () => {
         });
       });
 
-      // NEW: Add quote request activities
+      // Add quote request activities
       recentQuoteReqs?.forEach(request => {
         activities.push({
           id: `quote-request-${request.id}`,
@@ -489,7 +482,7 @@ const ClientPortal: React.FC = () => {
     }
   };
 
-  // Calculate real stats after data loads
+  // Calculate stats after data loads
   useEffect(() => {
     if (projects.length > 0 || invoices.length > 0 || serviceRequests.length > 0 || quotes.length > 0 || quoteRequests.length > 0) {
       calculateClientStats();
@@ -497,37 +490,37 @@ const ClientPortal: React.FC = () => {
   }, [projects, invoices, serviceRequests, quotes, quoteRequests, profile]);
 
   const calculateClientStats = () => {
-    // Existing project statistics
+    // Project statistics
     const totalProjects = projects.length;
     const activeProjects = projects.filter(p => p.status === 'in_progress').length;
     const completedProjects = projects.filter(p => p.status === 'completed').length;
     
-    // Existing invoice statistics
+    // Invoice statistics
     const totalInvoiced = invoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
     const totalPaid = invoices.filter(i => i.status === 'paid').reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
     const pendingPayments = invoices.filter(i => i.status === 'sent').length;
     
-    // Existing overdue invoices
+    // Overdue invoices
     const now = new Date();
     const overdueInvoices = invoices.filter(i => 
       i.status === 'sent' && new Date(i.due_date) < now
     ).length;
     
-    // Existing service requests
+    // Service requests
     const serviceRequestsCount = serviceRequests.length;
     
-    // NEW: Quote statistics
+    // Quote statistics
     const totalQuotes = quotes.length;
     const pendingQuotes = quotes.filter(q => q.status === 'sent').length;
     const approvedQuotes = quotes.filter(q => q.status === 'approved').length;
     const totalQuoteRequests = quoteRequests.length;
     
-    // Existing calculated metrics
+    // Calculated metrics
     const avgProjectValue = totalProjects > 0 ? totalInvoiced / totalProjects : 0;
     const projectSuccessRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 0;
     const paymentHistory = invoices.length > 0 ? (invoices.filter(i => i.status === 'paid').length / invoices.length) * 100 : 0;
     
-    // Existing client since date
+    // Client since date
     const clientSince = profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : '';
 
     setStats({
@@ -543,7 +536,6 @@ const ClientPortal: React.FC = () => {
       projectSuccessRate,
       paymentHistory,
       clientSince,
-      // NEW: Quote stats
       totalQuotes,
       pendingQuotes,
       approvedQuotes,
@@ -551,19 +543,95 @@ const ClientPortal: React.FC = () => {
     });
   };
 
+  // ENHANCED BUTTON HANDLERS
+  const handleStatCardClick = (cardType: string) => {
+    console.log(`Stat card clicked: ${cardType}`);
+    switch (cardType) {
+      case 'projects':
+        setActiveTab('projects');
+        break;
+      case 'quotes':
+        setActiveTab('quotes');
+        break;
+      case 'invoices':
+        setActiveTab('invoices');
+        break;
+      case 'success':
+        setActiveTab('projects');
+        setFilterStatus('completed');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleQuickAction = (action: string) => {
+    console.log(`Quick action: ${action}`);
+    switch (action) {
+      case 'new-request':
+        navigate('/get-started');
+        break;
+      case 'contact-support':
+        setShowContactForm(true);
+        break;
+      case 'view-projects':
+        setActiveTab('projects');
+        break;
+      case 'view-invoices':
+        setActiveTab('invoices');
+        break;
+      case 'view-quotes':
+        setActiveTab('quotes');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleProjectClick = (projectId: string) => {
+    console.log(`Project clicked: ${projectId}`);
+    // Navigate to project details page (implement when route exists)
+    toast.info(`Project details for ID: ${projectId}`);
+  };
+
+  const handleQuoteClick = (quoteId: string) => {
+    console.log(`Quote clicked: ${quoteId}`);
+    // Navigate to quote details page (implement when route exists)
+    navigate(`/quote/${quoteId}`);
+  };
+
+  const handleInvoiceClick = (invoiceId: string) => {
+    console.log(`Invoice clicked: ${invoiceId}`);
+    // Navigate to invoice details page (implement when route exists)
+    toast.info(`Invoice details for ID: ${invoiceId}`);
+  };
+
+  const handleServiceRequestClick = (requestId: string) => {
+    console.log(`Service request clicked: ${requestId}`);
+    // Navigate to service request details page (implement when route exists)
+    toast.info(`Service request details for ID: ${requestId}`);
+  };
+
   const refreshData = async () => {
     setRefreshing(true);
-    await loadClientData();
-    setRefreshing(false);
-    toast.success('Data refreshed successfully');
+    try {
+      await loadClientData();
+      toast.success('Data refreshed successfully');
+    } catch (error) {
+      toast.error('Failed to refresh data');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleSignOut = async () => {
     try {
       await signOut();
       navigate('/');
+      toast.success('Signed out successfully');
     } catch (error) {
       console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
     }
   };
 
@@ -574,8 +642,6 @@ const ClientPortal: React.FC = () => {
     }
 
     try {
-      // In a real implementation, you would submit this to your support system
-      // For now, we'll create a service request
       const { error } = await supabase
         .from('service_requests')
         .insert({
@@ -593,13 +659,22 @@ const ClientPortal: React.FC = () => {
       toast.success('Support request submitted successfully');
       setShowContactForm(false);
       setContactForm({ subject: '', message: '', priority: 'medium' });
-      loadServiceRequests(); // Refresh service requests
+      loadServiceRequests();
     } catch (error) {
       console.error('Error submitting contact form:', error);
       toast.error('Failed to submit support request');
     }
   };
 
+  const handleTabChange = (tabValue: string) => {
+    console.log(`Tab changed to: ${tabValue}`);
+    setActiveTab(tabValue);
+    // Reset filters when changing tabs
+    setSearchTerm('');
+    setFilterStatus('all');
+  };
+
+  // UTILITY FUNCTIONS
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'completed': 
@@ -636,8 +711,8 @@ const ClientPortal: React.FC = () => {
       case 'invoice': return <FileText className="w-4 h-4" />;
       case 'service_request': return <MessageSquare className="w-4 h-4" />;
       case 'message': return <Mail className="w-4 h-4" />;
-      case 'quote': return <Quote className="w-4 h-4" />; // NEW
-      case 'quote_request': return <FileText className="w-4 h-4" />; // NEW
+      case 'quote': return <Quote className="w-4 h-4" />;
+      case 'quote_request': return <FileText className="w-4 h-4" />;
       default: return <Activity className="w-4 h-4" />;
     }
   };
@@ -676,7 +751,6 @@ const ClientPortal: React.FC = () => {
     return matchesSearch && matchesFilter;
   });
 
-  // NEW: Filter functions for quotes
   const filteredQuotes = quotes.filter(quote => {
     const matchesSearch = quote.service_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          quote.scope.toLowerCase().includes(searchTerm.toLowerCase());
@@ -732,11 +806,19 @@ const ClientPortal: React.FC = () => {
                 <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowContactForm(true)}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleQuickAction('contact-support')}
+              >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Contact Support
               </Button>
-              <Button variant="outline" size="sm" onClick={() => navigate('/get-started')}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => handleQuickAction('new-request')}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 New Request
               </Button>
@@ -747,9 +829,12 @@ const ClientPortal: React.FC = () => {
             </div>
           </div>
 
-          {/* Updated Stats Cards - Now includes quotes */}
+          {/* Enhanced Clickable Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="p-6 hover:shadow-lg transition-shadow border-l-4 border-l-primary">
+            <Card 
+              className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary cursor-pointer transform hover:scale-105"
+              onClick={() => handleStatCardClick('projects')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Projects</p>
@@ -765,8 +850,10 @@ const ClientPortal: React.FC = () => {
               </div>
             </Card>
 
-            {/* NEW: Quotes Card */}
-            <Card className="p-6 hover:shadow-lg transition-shadow border-l-4 border-l-purple-500">
+            <Card 
+              className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-purple-500 cursor-pointer transform hover:scale-105"
+              onClick={() => handleStatCardClick('quotes')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Quotes</p>
@@ -782,7 +869,10 @@ const ClientPortal: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-6 hover:shadow-lg transition-shadow border-l-4 border-l-green-500">
+            <Card 
+              className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500 cursor-pointer transform hover:scale-105"
+              onClick={() => handleStatCardClick('invoices')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Invoiced</p>
@@ -798,7 +888,10 @@ const ClientPortal: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-6 hover:shadow-lg transition-shadow border-l-4 border-l-blue-500">
+            <Card 
+              className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 cursor-pointer transform hover:scale-105"
+              onClick={() => handleStatCardClick('success')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
@@ -815,9 +908,12 @@ const ClientPortal: React.FC = () => {
             </Card>
           </div>
 
-          {/* Additional Metrics */}
+          {/* Additional Clickable Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="p-4">
+            <Card 
+              className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+              onClick={() => setActiveTab('requests')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Quote Requests</p>
@@ -847,7 +943,10 @@ const ClientPortal: React.FC = () => {
               </div>
             </Card>
 
-            <Card className="p-4">
+            <Card 
+              className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+              onClick={() => setActiveTab('requests')}
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Service Requests</p>
@@ -858,8 +957,8 @@ const ClientPortal: React.FC = () => {
             </Card>
           </div>
 
-          {/* Main Content Tabs - UPDATED to include quotes */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          {/* Enhanced Tabs with Better Navigation */}
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
             <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="quotes">Quotes ({stats.totalQuotes})</TabsTrigger>
@@ -869,14 +968,18 @@ const ClientPortal: React.FC = () => {
               <TabsTrigger value="profile">Profile</TabsTrigger>
             </TabsList>
 
-            {/* Overview Tab - UPDATED to show quotes */}
+            {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Recent Quotes - NEW */}
+                {/* Recent Quotes */}
                 <Card className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Recent Quotes</h3>
-                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('quotes')}>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleTabChange('quotes')}
+                    >
                       View All <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
@@ -886,7 +989,11 @@ const ClientPortal: React.FC = () => {
                       const needsResponse = quote.status === 'sent' && !isExpired;
                       
                       return (
-                        <div key={quote.id} className="p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div 
+                          key={quote.id} 
+                          className="p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                          onClick={() => handleQuoteClick(quote.id)}
+                        >
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-medium">{quote.service_type}</h4>
                             <div className="flex items-center space-x-2">
@@ -908,7 +1015,10 @@ const ClientPortal: React.FC = () => {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => navigate(`/quote/${quote.id}`)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuoteClick(quote.id);
+                              }}
                             >
                               <Eye className="w-3 h-3 mr-1" />
                               View
@@ -921,7 +1031,12 @@ const ClientPortal: React.FC = () => {
                       <div className="text-center py-8 text-muted-foreground">
                         <Quote className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>No quotes yet</p>
-                        <Button variant="outline" size="sm" className="mt-2" onClick={() => navigate('/get-started')}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-2" 
+                          onClick={() => handleQuickAction('new-request')}
+                        >
                           Request Your First Quote
                         </Button>
                       </div>
@@ -933,13 +1048,21 @@ const ClientPortal: React.FC = () => {
                 <Card className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Recent Projects</h3>
-                    <Button variant="ghost" size="sm" onClick={() => setActiveTab('projects')}>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleTabChange('projects')}
+                    >
                       View All <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
                   <div className="space-y-4">
                     {projects.slice(0, 3).map((project) => (
-                      <div key={project.id} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div 
+                        key={project.id} 
+                        className="flex items-center justify-between p-4 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => handleProjectClick(project.id)}
+                      >
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-medium">{project.title}</h4>
@@ -961,7 +1084,12 @@ const ClientPortal: React.FC = () => {
                       <div className="text-center py-8 text-muted-foreground">
                         <FolderOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
                         <p>No projects yet</p>
-                        <Button variant="outline" size="sm" className="mt-2" onClick={() => navigate('/get-started')}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="mt-2" 
+                          onClick={() => handleQuickAction('new-request')}
+                        >
                           Start Your First Project
                         </Button>
                       </div>
@@ -969,7 +1097,7 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </Card>
 
-                {/* Recent Activity */}
+                {/* Recent Activity with Enhanced Interactions */}
                 <Card className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Recent Activity</h3>
@@ -979,7 +1107,30 @@ const ClientPortal: React.FC = () => {
                   </div>
                   <div className="space-y-4">
                     {recentActivity.slice(0, 6).map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3">
+                      <div 
+                        key={activity.id} 
+                        className="flex items-start gap-3 cursor-pointer hover:bg-muted/30 p-2 rounded-lg transition-colors"
+                        onClick={() => {
+                          // Handle activity click based on type
+                          const id = activity.id.split('-')[1];
+                          switch (activity.type) {
+                            case 'project':
+                              handleProjectClick(id);
+                              break;
+                            case 'quote':
+                              handleQuoteClick(id);
+                              break;
+                            case 'invoice':
+                              handleInvoiceClick(id);
+                              break;
+                            case 'service_request':
+                              handleServiceRequestClick(id);
+                              break;
+                            default:
+                              break;
+                          }
+                        }}
+                      >
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getActivityColor(activity.status)}`}>
                           {getActivityIcon(activity.type)}
                         </div>
@@ -1005,11 +1156,14 @@ const ClientPortal: React.FC = () => {
                 </Card>
               </div>
 
-              {/* Quick Stats & Insights */}
+              {/* Enhanced Quick Stats */}
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-4">Business Insights</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div className="text-center p-4 bg-muted/30 rounded-lg">
+                  <div 
+                    className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleStatCardClick('success')}
+                  >
                     <TrendingUp className="w-8 h-8 text-green-500 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-green-600">{stats.projectSuccessRate.toFixed(0)}%</p>
                     <p className="text-sm text-muted-foreground">Project Success Rate</p>
@@ -1024,7 +1178,10 @@ const ClientPortal: React.FC = () => {
                     <p className="text-2xl font-bold text-purple-600">{stats.paymentHistory.toFixed(0)}%</p>
                     <p className="text-sm text-muted-foreground">Payment Success Rate</p>
                   </div>
-                  <div className="text-center p-4 bg-muted/30 rounded-lg">
+                  <div 
+                    className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => handleTabChange('quotes')}
+                  >
                     <Quote className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
                     <p className="text-2xl font-bold text-indigo-600">{stats.approvedQuotes}</p>
                     <p className="text-sm text-muted-foreground">Approved Quotes</p>
@@ -1033,7 +1190,7 @@ const ClientPortal: React.FC = () => {
               </Card>
             </TabsContent>
 
-            {/* NEW: Quotes Tab */}
+            {/* Quotes Tab with Enhanced Functionality */}
             <TabsContent value="quotes" className="space-y-6">
               {/* Search and Filter */}
               <div className="flex flex-col md:flex-row gap-4">
@@ -1060,7 +1217,10 @@ const ClientPortal: React.FC = () => {
 
               {/* Quote Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <Card className="p-4">
+                <Card 
+                  className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                  onClick={() => setFilterStatus('sent')}
+                >
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mr-3">
                       <Clock className="w-5 h-5 text-blue-500" />
@@ -1072,7 +1232,10 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </Card>
                 
-                <Card className="p-4">
+                <Card 
+                  className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                  onClick={() => setFilterStatus('approved')}
+                >
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center mr-3">
                       <CheckCircle className="w-5 h-5 text-green-500" />
@@ -1084,7 +1247,10 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </Card>
                 
-                <Card className="p-4">
+                <Card 
+                  className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                  onClick={() => setFilterStatus('all')}
+                >
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center mr-3">
                       <FileText className="w-5 h-5 text-purple-500" />
@@ -1096,7 +1262,10 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </Card>
                 
-                <Card className="p-4">
+                <Card 
+                  className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                  onClick={() => handleTabChange('requests')}
+                >
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center mr-3">
                       <Send className="w-5 h-5 text-indigo-500" />
@@ -1109,12 +1278,12 @@ const ClientPortal: React.FC = () => {
                 </Card>
               </div>
 
-              {/* Quotes List */}
+              {/* Enhanced Quotes List */}
               <Card>
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-semibold">Your Quotes</h3>
-                    <Button onClick={() => navigate('/get-started')}>
+                    <Button onClick={() => handleQuickAction('new-request')}>
                       <Plus className="w-4 h-4 mr-2" />
                       Request New Quote
                     </Button>
@@ -1127,7 +1296,7 @@ const ClientPortal: React.FC = () => {
                         {searchTerm || filterStatus !== 'all' ? 'No quotes match your filters' : 'No quotes yet'}
                       </h4>
                       <p className="text-muted-foreground mb-6">Get started by requesting your first quote</p>
-                      <Button onClick={() => navigate('/get-started')}>
+                      <Button onClick={() => handleQuickAction('new-request')}>
                         Request Quote
                       </Button>
                     </div>
@@ -1138,7 +1307,11 @@ const ClientPortal: React.FC = () => {
                         const needsResponse = quote.status === 'sent' && !isExpired;
                         
                         return (
-                          <div key={quote.id} className="border border-border rounded-lg p-6 hover:shadow-md transition-shadow">
+                          <div 
+                            key={quote.id} 
+                            className="border border-border rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer"
+                            onClick={() => handleQuoteClick(quote.id)}
+                          >
                             <div className="flex items-center justify-between mb-4">
                               <div>
                                 <h4 className="text-lg font-semibold">{quote.service_type}</h4>
@@ -1205,7 +1378,10 @@ const ClientPortal: React.FC = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => navigate(`/quote/${quote.id}`)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleQuoteClick(quote.id);
+                                  }}
                                 >
                                   <Eye className="w-4 h-4 mr-1" />
                                   View Details
@@ -1214,7 +1390,10 @@ const ClientPortal: React.FC = () => {
                                 {needsResponse && (
                                   <Button
                                     size="sm"
-                                    onClick={() => navigate(`/quote/${quote.id}`)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleQuoteClick(quote.id);
+                                    }}
                                     className="bg-orange-600 hover:bg-orange-700"
                                   >
                                     <MessageSquare className="w-4 h-4 mr-1" />
@@ -1232,7 +1411,7 @@ const ClientPortal: React.FC = () => {
               </Card>
             </TabsContent>
 
-            {/* Projects Tab - UNCHANGED */}
+            {/* Enhanced Projects Tab */}
             <TabsContent value="projects" className="space-y-6">
               {/* Search and Filter */}
               <div className="flex flex-col md:flex-row gap-4">
@@ -1257,10 +1436,14 @@ const ClientPortal: React.FC = () => {
                 </select>
               </div>
 
-              {/* Projects Grid */}
+              {/* Enhanced Projects Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProjects.map((project) => (
-                  <Card key={project.id} className="p-6 hover:shadow-lg transition-shadow">
+                  <Card 
+                    key={project.id} 
+                    className="p-6 hover:shadow-lg transition-shadow cursor-pointer transform hover:scale-105"
+                    onClick={() => handleProjectClick(project.id)}
+                  >
                     <div className="flex items-center justify-between mb-4">
                       <Badge className={getStatusColor(project.status)}>
                         {project.status.replace('_', ' ')}
@@ -1303,6 +1486,31 @@ const ClientPortal: React.FC = () => {
                         </div>
                       )}
                     </div>
+
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleProjectClick(project.id);
+                        }}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        View Details
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast.info('Project edit functionality coming soon');
+                        }}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
                   </Card>
                 ))}
                 
@@ -1312,7 +1520,7 @@ const ClientPortal: React.FC = () => {
                     <p className="text-muted-foreground mb-4">
                       {searchTerm || filterStatus !== 'all' ? 'No projects match your filters' : 'No projects yet'}
                     </p>
-                    <Button onClick={() => navigate('/get-started')}>
+                    <Button onClick={() => handleQuickAction('new-request')}>
                       <Plus className="w-4 h-4 mr-2" />
                       Start a New Project
                     </Button>
@@ -1321,10 +1529,13 @@ const ClientPortal: React.FC = () => {
               </div>
             </TabsContent>
 
-            {/* Invoices Tab - UNCHANGED */}
+            {/* Enhanced Invoices Tab */}
             <TabsContent value="invoices" className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <Card className="p-4">
+                <Card 
+                  className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                  onClick={() => setFilterStatus('paid')}
+                >
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-green-500/10 rounded-lg flex items-center justify-center mr-3">
                       <CheckCircle className="w-5 h-5 text-green-500" />
@@ -1338,7 +1549,10 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </Card>
                 
-                <Card className="p-4">
+                <Card 
+                  className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                  onClick={() => setFilterStatus('sent')}
+                >
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center mr-3">
                       <Clock className="w-5 h-5 text-blue-500" />
@@ -1350,7 +1564,10 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </Card>
                 
-                <Card className="p-4">
+                <Card 
+                  className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
+                  onClick={() => setFilterStatus('overdue')}
+                >
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-red-500/10 rounded-lg flex items-center justify-center mr-3">
                       <AlertTriangle className="w-5 h-5 text-red-500" />
@@ -1368,7 +1585,11 @@ const ClientPortal: React.FC = () => {
                   <h3 className="text-lg font-semibold mb-4">All Invoices</h3>
                   <div className="space-y-4">
                     {invoices.map((invoice) => (
-                      <div key={invoice.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                      <div 
+                        key={invoice.id} 
+                        className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
+                        onClick={() => handleInvoiceClick(invoice.id)}
+                      >
                         <div className="flex-1">
                           <div className="flex items-center gap-4 mb-2">
                             <h4 className="font-medium">{invoice.invoice_number}</h4>
@@ -1392,9 +1613,28 @@ const ClientPortal: React.FC = () => {
                             </p>
                           )}
                         </div>
-                        <Button variant="ghost" size="sm" className="ml-4">
-                          <Eye className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInvoiceClick(invoice.id);
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toast.info('Download functionality coming soon');
+                            }}
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                     
@@ -1409,11 +1649,11 @@ const ClientPortal: React.FC = () => {
               </Card>
             </TabsContent>
 
-            {/* Service Requests Tab - UNCHANGED */}
+            {/* Enhanced Service Requests Tab */}
             <TabsContent value="requests" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Service Requests</h3>
-                <Button onClick={() => navigate('/get-started')}>
+                <Button onClick={() => handleQuickAction('new-request')}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Request
                 </Button>
@@ -1421,7 +1661,11 @@ const ClientPortal: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {serviceRequests.map((request) => (
-                  <Card key={request.id} className="p-6">
+                  <Card 
+                    key={request.id} 
+                    className="p-6 cursor-pointer hover:shadow-lg transition-shadow transform hover:scale-105"
+                    onClick={() => handleServiceRequestClick(request.id)}
+                  >
                     <div className="flex items-center justify-between mb-4">
                       <Badge className={getStatusColor(request.status)}>
                         {request.status}
@@ -1454,6 +1698,31 @@ const ClientPortal: React.FC = () => {
                         <span>{new Date(request.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
+
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleServiceRequestClick(request.id);
+                        }}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        View Details
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toast.info('Edit functionality coming soon');
+                        }}
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                    </div>
                   </Card>
                 ))}
                 
@@ -1461,7 +1730,7 @@ const ClientPortal: React.FC = () => {
                   <div className="col-span-full text-center py-12">
                     <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground mb-4">No service requests yet</p>
-                    <Button onClick={() => navigate('/get-started')}>
+                    <Button onClick={() => handleQuickAction('new-request')}>
                       <Plus className="w-4 h-4 mr-2" />
                       Submit Your First Request
                     </Button>
@@ -1470,7 +1739,7 @@ const ClientPortal: React.FC = () => {
               </div>
             </TabsContent>
 
-            {/* Profile Tab - UNCHANGED */}
+            {/* Enhanced Profile Tab */}
             <TabsContent value="profile" className="space-y-6">
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-6">Profile Information</h3>
@@ -1538,10 +1807,20 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="mt-6">
-                  <p className="text-sm text-muted-foreground">
-                    To update your profile information, please contact our support team or use the contact form.
-                  </p>
+                <div className="mt-6 flex gap-4">
+                  <Button 
+                    variant="outline"
+                    onClick={() => handleQuickAction('contact-support')}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Contact Support to Update
+                  </Button>
+                  <Button 
+                    onClick={() => window.open('https://nexacore-innovations.com', '_blank')}
+                  >
+                    <Globe className="w-4 h-4 mr-2" />
+                    Visit Our Website
+                  </Button>
                 </div>
               </Card>
             </TabsContent>
@@ -1549,7 +1828,7 @@ const ClientPortal: React.FC = () => {
         </div>
       </div>
 
-      {/* Contact Support Modal - UNCHANGED */}
+      {/* Enhanced Contact Support Modal */}
       {showContactForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <Card className="w-full max-w-md">
@@ -1557,7 +1836,7 @@ const ClientPortal: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Contact Support</h3>
                 <Button variant="ghost" size="sm" onClick={() => setShowContactForm(false)}>
-                  ×
+                  <XCircle className="w-4 h-4" />
                 </Button>
               </div>
               
