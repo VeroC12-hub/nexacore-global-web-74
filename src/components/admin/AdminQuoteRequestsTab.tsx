@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
@@ -14,7 +15,10 @@ import {
   CheckCircle, 
   Database, 
   RefreshCw, 
-  AlertTriangle 
+  AlertTriangle,
+  Trash2,
+  Filter,
+  X
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -55,7 +59,10 @@ const AdminQuoteRequestsTab = () => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [cleaningUp, setCleaningUp] = useState(false);
+  const [deletingSelected, setDeletingSelected] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<QuoteRequest | null>(null);
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
+  const [showProblematicOnly, setShowProblematicOnly] = useState(false);
   
   // Create quote form state
   const [quoteForm, setQuoteForm] = useState({
@@ -103,20 +110,201 @@ const AdminQuoteRequestsTab = () => {
     }
   };
 
-  // NEW: Database cleanup function
-  const performDatabaseCleanup = async () => {
-    const confirmMessage = `DATABASE CLEANUP TOOL
+  // Helper function to detect invalid dates
+  const isDateInvalid = (dateString: string | null | undefined) => {
+    if (!dateString) return true;
+    try {
+      const date = new Date(dateString);
+      return isNaN(date.getTime()) || date.getFullYear() < 2000;
+    } catch {
+      return true;
+    }
+  };
 
-This will permanently delete problematic quotes:
-• Expired quotes (past their expiration date)
-• Invalid expiration dates (including 1970 dates)
-• Quotes with no expiration date
-• Old draft quotes (30+ days old)
-• Orphaned quotes (no linked request)
+  // Helper function to check if quote is problematic
+  const isQuoteProblematic = (quote: Quote) => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    // No expiration date
+    if (!quote.expires_at) return true;
+    
+    // Invalid date (including 1970)
+    if (isDateInvalid(quote.expires_at)) return true;
+    
+    // Expired
+    try {
+      const expireDate = new Date(quote.expires_at);
+      if (expireDate < now) return true;
+    } catch {
+      return true;
+    }
+    
+    // Old draft
+    if (quote.status === 'draft') {
+      const createdDate = new Date(quote.created_at);
+      if (createdDate < thirtyDaysAgo) return true;
+    }
+    
+    // Orphaned (no request)
+    if (!quote.quote_request_id) return true;
+    
+    return false;
+  };
+
+  // Get problematic quotes
+  const getProblematicQuotes = () => {
+    return quotes.filter(isQuoteProblematic);
+  };
+
+  // Handle checkbox selection
+  const handleQuoteSelection = (quoteId: string, checked: boolean) => {
+    const newSelected = new Set(selectedQuoteIds);
+    if (checked) {
+      newSelected.add(quoteId);
+    } else {
+      newSelected.delete(quoteId);
+    }
+    setSelectedQuoteIds(newSelected);
+  };
+
+  // Select all problematic quotes
+  const selectAllProblematic = () => {
+    const problematicIds = getProblematicQuotes().map(q => q.id);
+    setSelectedQuoteIds(new Set(problematicIds));
+    toast.success(`Selected ${problematicIds.length} problematic quotes`);
+  };
+
+  // Clear all selections
+  const clearSelection = () => {
+    setSelectedQuoteIds(new Set());
+    toast.success('Selection cleared');
+  };
+
+  // Delete selected quotes
+  const deleteSelectedQuotes = async () => {
+    if (selectedQuoteIds.size === 0) {
+      toast.error('Please select quotes to delete');
+      return;
+    }
+
+    const selectedArray = Array.from(selectedQuoteIds);
+    const selectedQuotes = quotes.filter(q => selectedArray.includes(q.id));
+    
+    // Show detailed confirmation
+    let problematicBreakdown = {
+      expired: 0,
+      invalid_dates: 0,
+      null_dates: 0,
+      old_drafts: 0,
+      orphaned: 0,
+      other: 0
+    };
+
+    selectedQuotes.forEach(quote => {
+      if (!quote.expires_at) {
+        problematicBreakdown.null_dates++;
+      } else if (isDateInvalid(quote.expires_at)) {
+        problematicBreakdown.invalid_dates++;
+      } else {
+        try {
+          const expireDate = new Date(quote.expires_at);
+          if (expireDate < new Date()) {
+            problematicBreakdown.expired++;
+          }
+        } catch {
+          problematicBreakdown.invalid_dates++;
+        }
+      }
+      
+      if (quote.status === 'draft') {
+        const thirtyDaysAgo = new Date(Date.now() - (30 * 24 * 60 * 60 * 1000));
+        const createdDate = new Date(quote.created_at);
+        if (createdDate < thirtyDaysAgo) {
+          problematicBreakdown.old_drafts++;
+        }
+      }
+      
+      if (!quote.quote_request_id) {
+        problematicBreakdown.orphaned++;
+      }
+      
+      if (!isQuoteProblematic(quote)) {
+        problematicBreakdown.other++;
+      }
+    });
+
+    const confirmMessage = `DELETE SELECTED QUOTES
+
+You are about to delete ${selectedQuoteIds.size} quotes:
+
+BREAKDOWN:
+• ${problematicBreakdown.expired} expired quotes
+• ${problematicBreakdown.invalid_dates} with invalid dates
+• ${problematicBreakdown.null_dates} with no expiration date
+• ${problematicBreakdown.old_drafts} old draft quotes
+• ${problematicBreakdown.orphaned} orphaned quotes
+• ${problematicBreakdown.other} other quotes
 
 THIS ACTION CANNOT BE UNDONE
 
-Continue with cleanup?`;
+Continue with deletion?`;
+
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    setDeletingSelected(true);
+    try {
+      const { error, count } = await supabase
+        .from('quotes')
+        .delete()
+        .in('id', selectedArray);
+
+      if (error) throw error;
+
+      toast.success(
+        `Successfully deleted ${count || selectedArray.length} selected quotes!
+
+BREAKDOWN:
+• ${problematicBreakdown.expired} expired
+• ${problematicBreakdown.invalid_dates} invalid dates  
+• ${problematicBreakdown.null_dates} no dates
+• ${problematicBreakdown.old_drafts} old drafts
+• ${problematicBreakdown.orphaned} orphaned
+• ${problematicBreakdown.other} other`,
+        { duration: 8000 }
+      );
+      
+      // Clear selections and refresh data
+      setSelectedQuoteIds(new Set());
+      await fetchQuoteRequests();
+      await fetchQuotes();
+      
+    } catch (error) {
+      console.error('Error deleting selected quotes:', error);
+      toast.error(`Failed to delete selected quotes: ${error.message}`);
+    } finally {
+      setDeletingSelected(false);
+    }
+  };
+
+  // Bulk database cleanup (existing functionality)
+  const performDatabaseCleanup = async () => {
+    const problematicQuotes = getProblematicQuotes();
+    
+    if (problematicQuotes.length === 0) {
+      toast.success('Database is clean! No problematic quotes found.');
+      return;
+    }
+
+    const confirmMessage = `BULK DATABASE CLEANUP
+
+This will delete ALL ${problematicQuotes.length} problematic quotes automatically.
+
+For more control, use "Select & Delete" to choose specific quotes.
+
+Continue with bulk cleanup?`;
 
     if (!confirm(confirmMessage)) {
       return;
@@ -124,123 +312,16 @@ Continue with cleanup?`;
 
     setCleaningUp(true);
     try {
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+      const problematicIds = problematicQuotes.map(q => q.id);
       
-      console.log('Starting database cleanup...', {
-        current_time: now.toISOString(),
-        thirty_days_ago: thirtyDaysAgo.toISOString()
-      });
-
-      // Get detailed analysis of what will be deleted
-      const { data: quotesToAnalyze } = await supabase
-        .from('quotes')
-        .select('id, expires_at, status, created_at, quote_request_id');
-
-      let expiredCount = 0;
-      let invalidDateCount = 0;
-      let nullDateCount = 0;
-      let oldDraftCount = 0;
-      let orphanedCount = 0;
-
-      const problematicIds: string[] = [];
-
-      quotesToAnalyze?.forEach(quote => {
-        let isProblematic = false;
-
-        // Check expiration issues
-        if (!quote.expires_at) {
-          nullDateCount++;
-          isProblematic = true;
-        } else {
-          try {
-            const expireDate = new Date(quote.expires_at);
-            const timestamp = expireDate.getTime();
-            
-            // Invalid dates (including 1970 epoch)
-            if (isNaN(timestamp) || timestamp <= 0 || expireDate.getFullYear() < 2000) {
-              invalidDateCount++;
-              isProblematic = true;
-            }
-            // Expired quotes
-            else if (expireDate < now) {
-              expiredCount++;
-              isProblematic = true;
-            }
-          } catch {
-            invalidDateCount++;
-            isProblematic = true;
-          }
-        }
-        
-        // Check for old drafts
-        if (quote.status === 'draft') {
-          const createdDate = new Date(quote.created_at);
-          if (createdDate < thirtyDaysAgo) {
-            oldDraftCount++;
-            isProblematic = true;
-          }
-        }
-
-        // Check for orphaned quotes
-        if (!quote.quote_request_id) {
-          orphanedCount++;
-          isProblematic = true;
-        }
-
-        if (isProblematic) {
-          problematicIds.push(quote.id);
-        }
-      });
-
-      const totalProblematic = problematicIds.length;
-      
-      console.log('Cleanup analysis:', {
-        total_quotes: quotesToAnalyze?.length || 0,
-        total_problematic: totalProblematic,
-        breakdown: {
-          expired: expiredCount,
-          invalid_dates: invalidDateCount,
-          null_dates: nullDateCount,
-          old_drafts: oldDraftCount,
-          orphaned: orphanedCount
-        }
-      });
-
-      if (totalProblematic === 0) {
-        toast.success('Database is clean! No problematic quotes found.');
-        return;
-      }
-
-      // Show detailed confirmation
-      const detailedConfirm = confirm(
-        `Found ${totalProblematic} problematic quotes to delete:
-
-BREAKDOWN:
-• ${expiredCount} expired quotes
-• ${invalidDateCount} with invalid dates
-• ${nullDateCount} with no expiration date  
-• ${oldDraftCount} old draft quotes
-• ${orphanedCount} orphaned quotes
-
-Proceed with deletion?`
-      );
-
-      if (!detailedConfirm) {
-        return;
-      }
-
-      // Perform the cleanup
-      const { error: deleteError, count } = await supabase
+      const { error, count } = await supabase
         .from('quotes')
         .delete()
         .in('id', problematicIds);
 
-      if (deleteError) {
-        throw deleteError;
-      }
+      if (error) throw error;
 
-      // Update remaining quotes with invalid dates
+      // Update remaining quotes with valid dates
       const { error: updateError } = await supabase
         .from('quotes')
         .update({
@@ -252,43 +333,25 @@ Proceed with deletion?`
         console.warn('Some invalid dates could not be updated:', updateError);
       }
 
-      // Success notification
       toast.success(
-        `Database cleanup completed successfully!
-
-RESULTS:
-• Deleted: ${count || totalProblematic} problematic quotes
-• Breakdown: ${expiredCount} expired, ${invalidDateCount} invalid dates, ${nullDateCount} no dates, ${oldDraftCount} old drafts, ${orphanedCount} orphaned
-• Remaining quotes updated with valid expiration dates
+        `Bulk cleanup completed! Deleted ${count || problematicIds.length} problematic quotes.
 
 Database is now optimized!`,
         { duration: 8000 }
       );
       
-      // Refresh the data
       await fetchQuoteRequests();
       await fetchQuotes();
       
     } catch (error) {
       console.error('Database cleanup failed:', error);
-      toast.error(`Database cleanup failed: ${error.message}`);
+      toast.error(`Bulk cleanup failed: ${error.message}`);
     } finally {
       setCleaningUp(false);
     }
   };
 
-  // NEW: Helper function to detect invalid dates
-  const isDateInvalid = (dateString: string | null | undefined) => {
-    if (!dateString) return true;
-    try {
-      const date = new Date(dateString);
-      return isNaN(date.getTime()) || date.getFullYear() < 2000;
-    } catch {
-      return true;
-    }
-  };
-
-  // NEW: Get quote for a specific request
+  // Get quote for a specific request
   const getQuoteForRequest = (requestId: string) => {
     return quotes.find(quote => quote.quote_request_id === requestId);
   };
@@ -316,9 +379,8 @@ Database is now optimized!`,
       
       const { data: userData } = await supabase.auth.getUser();
       
-      // NEW: Add proper expiration date
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 14); // 14 days from now
+      expiresAt.setDate(expiresAt.getDate() + 14);
       
       const { data: quote, error } = await supabase
         .from('quotes')
@@ -335,7 +397,7 @@ Database is now optimized!`,
           created_by: userData.user?.id,
           status: 'sent',
           sent_at: new Date().toISOString(),
-          expires_at: expiresAt.toISOString() // NEW: Proper expiration date
+          expires_at: expiresAt.toISOString()
         })
         .select()
         .single();
@@ -352,10 +414,8 @@ Database is now optimized!`,
 
       if (error) throw error;
 
-      // Update request status
       await updateRequestStatus(request.id, 'quoted');
       
-      // Reset form
       setQuoteForm({
         scope: '',
         price: '',
@@ -388,52 +448,123 @@ Database is now optimized!`,
     return <div className="p-6">Loading quote requests...</div>;
   }
 
+  const problematicQuotes = getProblematicQuotes();
+  const hasSelections = selectedQuoteIds.size > 0;
+
   return (
     <div className="space-y-6">
-      {/* NEW: Enhanced header with cleanup button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold">Quote Requests</h2>
-          <div className="text-sm text-muted-foreground">
-            {quoteRequests.length} total requests • {quotes.length} quotes created
-            {quotes.filter(q => isDateInvalid(q.expires_at)).length > 0 && (
-              <span className="text-red-600 font-medium">
-                • {quotes.filter(q => isDateInvalid(q.expires_at)).length} quotes with invalid dates
-              </span>
-            )}
+      {/* Enhanced header with multiple actions */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Quote Requests</h2>
+            <div className="text-sm text-muted-foreground">
+              {quoteRequests.length} total requests • {quotes.length} quotes created
+              {problematicQuotes.length > 0 && (
+                <span className="text-red-600 font-medium">
+                  • {problematicQuotes.length} problematic quotes
+                </span>
+              )}
+              {hasSelections && (
+                <span className="text-blue-600 font-medium">
+                  • {selectedQuoteIds.size} selected
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* Main action buttons */}
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowProblematicOnly(!showProblematicOnly)}
+              variant="outline"
+              className={`flex items-center gap-2 ${showProblematicOnly ? 'bg-red-50 border-red-200' : ''}`}
+            >
+              <Filter className="w-4 h-4" />
+              {showProblematicOnly ? 'Show All' : 'Show Problematic'}
+            </Button>
+            
+            <Button
+              variant="destructive"
+              onClick={performDatabaseCleanup}
+              disabled={cleaningUp || deletingSelected}
+              className="flex items-center gap-2"
+            >
+              {cleaningUp ? (
+                <>
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  Bulk Cleanup...
+                </>
+              ) : (
+                <>
+                  <Database className="w-4 h-4" />
+                  Bulk Cleanup ({problematicQuotes.length})
+                </>
+              )}
+            </Button>
+            
+            <Button
+              onClick={() => { fetchQuoteRequests(); fetchQuotes(); }}
+              variant="outline"
+              disabled={cleaningUp || deletingSelected}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </Button>
           </div>
         </div>
         
-        {/* NEW: Database cleanup button */}
-        <div className="flex gap-2">
-          <Button
-            variant="destructive"
-            onClick={performDatabaseCleanup}
-            disabled={cleaningUp}
-            className="flex items-center gap-2"
-          >
-            {cleaningUp ? (
+        {/* Selection controls */}
+        {problematicQuotes.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 p-4 bg-gray-50 rounded-lg border">
+            <span className="text-sm font-medium">Selective Deletion:</span>
+            
+            <Button
+              onClick={selectAllProblematic}
+              variant="outline"
+              size="sm"
+              disabled={cleaningUp || deletingSelected}
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Select All Problematic ({problematicQuotes.length})
+            </Button>
+            
+            {hasSelections && (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Cleaning Database...
-              </>
-            ) : (
-              <>
-                <Database className="w-4 h-4" />
-                Database Cleanup
+                <Button
+                  onClick={clearSelection}
+                  variant="outline"
+                  size="sm"
+                  disabled={cleaningUp || deletingSelected}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Clear Selection
+                </Button>
+                
+                <Button
+                  onClick={deleteSelectedQuotes}
+                  variant="destructive"
+                  size="sm"
+                  disabled={cleaningUp || deletingSelected}
+                  className="ml-2"
+                >
+                  {deletingSelected ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Selected ({selectedQuoteIds.size})
+                    </>
+                  )}
+                </Button>
               </>
             )}
-          </Button>
-          
-          <Button
-            onClick={() => { fetchQuoteRequests(); fetchQuotes(); }}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Refresh
-          </Button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Quote Requests Grid */}
@@ -441,26 +572,41 @@ Database is now optimized!`,
         {quoteRequests.map((request) => {
           const relatedQuote = getQuoteForRequest(request.id);
           
+          // Filter logic
+          if (showProblematicOnly && (!relatedQuote || !isQuoteProblematic(relatedQuote))) {
+            return null;
+          }
+          
           return (
             <Card key={request.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg">{request.full_name}</CardTitle>
+                  <div className="flex items-center gap-3">
+                    {/* Selection checkbox for quotes */}
+                    {relatedQuote && (
+                      <Checkbox
+                        checked={selectedQuoteIds.has(relatedQuote.id)}
+                        onCheckedChange={(checked) => handleQuoteSelection(relatedQuote.id, !!checked)}
+                        disabled={cleaningUp || deletingSelected}
+                      />
+                    )}
+                    <CardTitle className="text-lg">{request.full_name}</CardTitle>
+                  </div>
+                  
                   <div className="flex items-center gap-2">
                     <Badge className={getStatusColor(request.status)}>
                       {request.status}
                     </Badge>
                     
-                    {/* NEW: Show quote status and date issues */}
                     {relatedQuote && (
                       <>
                         <Badge className="bg-blue-100 text-blue-800">
                           Quote: {relatedQuote.status}
                         </Badge>
-                        {isDateInvalid(relatedQuote.expires_at) && (
+                        {isQuoteProblematic(relatedQuote) && (
                           <Badge className="bg-red-100 text-red-800">
                             <AlertTriangle className="w-3 h-3 mr-1" />
-                            Bad Date
+                            Problematic
                           </Badge>
                         )}
                       </>
@@ -488,9 +634,9 @@ Database is now optimized!`,
                   </div>
                 </div>
                 
-                {/* NEW: Show quote information if exists */}
+                {/* Quote information with problem indicators */}
                 {relatedQuote && (
-                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                  <div className={`p-3 rounded-lg border ${isQuoteProblematic(relatedQuote) ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'}`}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                       <div><span className="font-medium">Quote Price:</span> {relatedQuote.currency}{relatedQuote.price.toLocaleString()}</div>
                       <div><span className="font-medium">Timeline:</span> {relatedQuote.timeline}</div>
@@ -529,7 +675,6 @@ Database is now optimized!`,
                         <DialogTitle>Quote Request Details</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-6">
-                        {/* Request Details */}
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
                             <Label>Full Name</Label>
@@ -564,7 +709,6 @@ Database is now optimized!`,
                           </div>
                         </div>
 
-                        {/* Create Quote Form */}
                         {request.status === 'pending' && (
                           <div className="border-t pt-6">
                             <h3 className="text-lg font-semibold mb-4">Create Quote</h3>
