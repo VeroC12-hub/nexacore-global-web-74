@@ -1,7 +1,7 @@
-// Enhanced QuoteReview.tsx with improved error handling and debugging
+// Enhanced QuoteReview.tsx with improved error handling and automatic project creation
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,12 +24,14 @@ import {
   Eye,
   ArrowLeft,
   RefreshCw,
-  Info
+  Info,
+  ExternalLink
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { projectCreationService } from '@/services/projectCreationService';
 
 interface Quote {
   id: string;
@@ -48,6 +50,7 @@ interface Quote {
   service_type?: string;
   quote_request_id?: string;
   client_email?: string;
+  created_by?: string;
 }
 
 interface QuoteRequest {
@@ -139,6 +142,11 @@ const QuoteReview = () => {
   const [action, setAction] = useState<'approved' | 'revision_requested' | 'declined' | null>(null);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>('');
+  const [projectInfo, setProjectInfo] = useState<{
+    created: boolean;
+    projectId?: string;
+    project?: any;
+  }>({ created: false });
 
   useEffect(() => {
     loadQuoteData();
@@ -155,7 +163,7 @@ const QuoteReview = () => {
     setDebugInfo(`Loading quote ID: ${id}`);
 
     try {
-      console.log('🔍 Loading quote data for ID:', id);
+      console.log('Loading quote data for ID:', id);
       
       // Load quote data with enhanced error handling
       const { data: quoteData, error: quoteError } = await supabase
@@ -165,7 +173,7 @@ const QuoteReview = () => {
         .single();
 
       if (quoteError) {
-        console.error('❌ Quote fetch error:', quoteError);
+        console.error('Quote fetch error:', quoteError);
         setDebugInfo(`Database error: ${quoteError.message} (Code: ${quoteError.code})`);
         
         if (quoteError.code === 'PGRST116') {
@@ -177,14 +185,14 @@ const QuoteReview = () => {
       }
 
       if (!quoteData) {
-        console.error('❌ No quote data returned');
+        console.error('No quote data returned');
         setDebugInfo('Error: Quote data is null');
         toast.error('Quote not found');
         navigate('/');
         return;
       }
 
-      console.log('✅ Quote loaded successfully:', {
+      console.log('Quote loaded successfully:', {
         id: quoteData.id,
         status: quoteData.status,
         client_email: quoteData.client_email,
@@ -206,7 +214,7 @@ const QuoteReview = () => {
 
       // Load related quote request
       if (quoteData.quote_request_id) {
-        console.log('🔍 Loading quote request:', quoteData.quote_request_id);
+        console.log('Loading quote request:', quoteData.quote_request_id);
         
         const { data: requestData, error: requestError } = await supabase
           .from('quote_requests')
@@ -215,17 +223,17 @@ const QuoteReview = () => {
           .single();
 
         if (!requestError && requestData) {
-          console.log('✅ Quote request loaded');
+          console.log('Quote request loaded');
           setQuoteRequest(requestData);
           setDebugInfo(prev => `${prev} | Request loaded for: ${requestData.full_name}`);
         } else {
-          console.warn('⚠️ Could not load quote request:', requestError);
+          console.warn('Could not load quote request:', requestError);
           setDebugInfo(prev => `${prev} | Warning: Could not load quote request`);
         }
       }
 
     } catch (error) {
-      console.error('❌ Error loading quote:', error);
+      console.error('Error loading quote:', error);
       setDebugInfo(`Fatal error: ${error.message}`);
       toast.error('Failed to load quote - check your connection');
       navigate('/');
@@ -251,7 +259,7 @@ const QuoteReview = () => {
       return;
     }
 
-    console.log('🚀 Starting quote response submission...', {
+    console.log('Starting quote response submission...', {
       quote_id: id,
       action,
       has_message: !!message.trim(),
@@ -263,25 +271,9 @@ const QuoteReview = () => {
     setDebugInfo(`Submitting ${action} response...`);
 
     try {
-      // Check current user/session
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error('❌ User auth error:', userError);
-        setDebugInfo(`Auth error: ${userError.message}`);
-        toast.error('Authentication failed - please refresh the page');
-        return;
-      }
-
-      console.log('👤 User check:', {
-        user_id: user?.id,
-        email: user?.email,
-        is_authenticated: !!user
-      });
-
+      // Update quote status in database
       const updateData: any = {
         status: action
-        // Removed client_message and updated_at since columns don't exist
       };
 
       if (action === 'approved') {
@@ -290,7 +282,7 @@ const QuoteReview = () => {
         updateData.declined_at = new Date().toISOString();
       }
 
-      console.log('📝 Updating quote with data:', updateData);
+      console.log('Updating quote with data:', updateData);
       setDebugInfo(`Updating database with ${action} status...`);
 
       // Perform the database update
@@ -302,10 +294,9 @@ const QuoteReview = () => {
         .single();
 
       if (updateError) {
-        console.error('❌ Database update error:', updateError);
+        console.error('Database update error:', updateError);
         setDebugInfo(`Update failed: ${updateError.message} (Code: ${updateError.code})`);
         
-        // Specific error handling
         if (updateError.code === 'PGRST301') {
           toast.error('Permission denied - you may not be authorized to update this quote');
         } else if (updateError.code === 'PGRST116') {
@@ -316,27 +307,72 @@ const QuoteReview = () => {
         return;
       }
 
-      console.log('✅ Quote updated successfully:', updatedData);
+      console.log('Quote updated successfully:', updatedData);
       setDebugInfo('Database updated successfully!');
 
-      // Email notifications disabled - quote approval works without them
-      console.log('📧 Email notifications disabled - quote approved successfully');
-      setDebugInfo('Quote approved successfully - email notifications disabled');
+      // Auto-create project when quote is approved
+      if (action === 'approved') {
+        console.log('Quote approved - Creating project automatically...');
+        setDebugInfo('Creating project from approved quote...');
 
-      // Success feedback
-      toast.success(
-        action === 'approved' 
-          ? '✅ Quote approved successfully!' 
-          : action === 'declined' 
-          ? '✅ Quote declined successfully' 
-          : '✅ Revision request sent successfully!'
-      );
+        try {
+          const projectResult = await projectCreationService.createProjectFromQuote(quote);
+          
+          if (projectResult.success) {
+            console.log('Project created successfully:', projectResult.projectId);
+            setDebugInfo(`Project created successfully! Project ID: ${projectResult.projectId}`);
+            
+            // Show success message with project info
+            toast.success(
+              `Quote approved and project created! Project ID: ${projectResult.projectId}`,
+              { duration: 6000 }
+            );
+            
+            // Store project info for display
+            setProjectInfo({
+              created: true,
+              projectId: projectResult.projectId,
+              project: projectResult.project
+            });
+
+          } else {
+            console.error('Failed to create project:', projectResult.error);
+            setDebugInfo(`Project creation failed: ${projectResult.error}`);
+            
+            // Still show success for quote approval, but warn about project
+            toast.success('Quote approved successfully!');
+            toast.warning(
+              `Project creation failed: ${projectResult.error}. Please create manually.`,
+              { duration: 8000 }
+            );
+          }
+        } catch (projectError: any) {
+          console.error('Unexpected error creating project:', projectError);
+          setDebugInfo(`Unexpected project creation error: ${projectError.message}`);
+          
+          // Still show success for quote approval
+          toast.success('Quote approved successfully!');
+          toast.error(
+            `Failed to create project automatically. Please create manually in admin panel.`,
+            { duration: 8000 }
+          );
+        }
+      }
+
+      // Success feedback based on action
+      if (action === 'approved' && !projectInfo?.created) {
+        toast.success('Quote approved successfully!');
+      } else if (action === 'declined') {
+        toast.success('Quote declined successfully');
+      } else if (action === 'revision_requested') {
+        toast.success('Revision request sent successfully!');
+      }
 
       // Refresh quote data
       await loadQuoteData();
 
-    } catch (error) {
-      console.error('❌ Unexpected error during submission:', error);
+    } catch (error: any) {
+      console.error('Unexpected error during quote response:', error);
       setDebugInfo(`Unexpected error: ${error.message}`);
       toast.error(`Submission failed: ${error.message}`);
     } finally {
@@ -394,6 +430,54 @@ const QuoteReview = () => {
       case 'sent': return <FileText className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
     }
+  };
+
+  // Project Created Success Component
+  const ProjectCreatedSuccess = () => {
+    if (!projectInfo.created || !projectInfo.project) return null;
+
+    return (
+      <Card className="mb-6 border-green-200 bg-green-50">
+        <div className="p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <CheckCircle className="w-6 h-6 text-green-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-green-900 mb-2">
+                Project Created Successfully!
+              </h3>
+              <div className="space-y-2 text-sm text-green-700">
+                <p><strong>Project ID:</strong> {projectInfo.projectId}</p>
+                <p><strong>Project Title:</strong> {projectInfo.project.title}</p>
+                <p><strong>Status:</strong> Planning Phase</p>
+                <p><strong>Budget:</strong> {projectInfo.project.currency} {projectInfo.project.budget?.toLocaleString()}</p>
+              </div>
+              
+              <div className="mt-4 p-4 bg-white rounded-lg border border-green-200">
+                <h4 className="font-medium text-green-900 mb-2">What Happens Next:</h4>
+                <ul className="text-sm text-green-700 space-y-1">
+                  <li>• Our project manager will contact you within 24 hours</li>
+                  <li>• You'll receive access to the client portal for progress tracking</li>
+                  <li>• Initial project tasks have been automatically created</li>
+                  <li>• A kickoff meeting will be scheduled</li>
+                </ul>
+              </div>
+              
+              <div className="mt-4">
+                <Link 
+                  to="/client-portal" 
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  View Project in Client Portal
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
   };
 
   if (loading) {
@@ -524,7 +608,10 @@ const QuoteReview = () => {
             </div>
           </div>
 
-          {/* Quote Content - Your existing content structure */}
+          {/* Project Creation Success Display */}
+          <ProjectCreatedSuccess />
+
+          {/* Quote Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* Main Quote Details */}
