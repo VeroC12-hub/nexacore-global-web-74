@@ -191,7 +191,7 @@ const Footer = () => {
                 className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-red-600">
                 <Youtube className="w-4 h-4" />
               </a>
-              <a href="https://x.com/nexacore" target="_blank" rel="noopener noreferrer"
+              <a href="https://x.com/nexacoreinno?s=21&t=r5P_NA_hBu9tDjZkiMMBQQ" target="_blank" rel="noopener noreferrer"
                 className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-white text-sm transition-all duration-300 ease-in-out transform hover:scale-110 hover:shadow-md hover:bg-black">
                 X
               </a>
