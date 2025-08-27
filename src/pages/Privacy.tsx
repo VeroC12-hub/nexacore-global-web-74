@@ -909,8 +909,9 @@ const Privacy = () => {
                 </h3>
                 <p className="text-sm">
                   NexaCore Innovations<br />
-                  [Insert Physical Address]<br />
-                  [City, Country, Postal Code]
+                  5 Osos Street<br />
+                  GN-0432-9346, Ningo Prampram<br />
+                  Greater Accra Region, Ghana<br />
                 </p>
               </div>
             </div>
