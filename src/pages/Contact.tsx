@@ -823,7 +823,7 @@ const Contact = () => {
     youtube: {
       name: 'YouTube',
       icon: Youtube,
-      url: 'https://youtube.com/@nexacore',
+      url: 'https://www.youtube.com/@NexaCoreInnovations',
       description: 'Tutorials and project demonstrations',
       color: 'from-red-500 to-red-600'
     }
