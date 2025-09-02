@@ -140,20 +140,17 @@ class ProjectCreationService {
   private async createProject(quote: Quote, quoteRequest: QuoteRequest, clientUserId: string) {
     const projectData = {
       title: `${quote.service_type} Project - ${quoteRequest.full_name}`,
-      description: quote.scope,
+      description: quote.scope || `${quote.service_type} project based on approved quote`,
       client_id: clientUserId,
       project_manager_id: quote.created_by,
+      service_type: quote.service_type,
       status: 'planning',
       priority: 'medium',
       budget: quote.price,
-      currency: quote.currency,
       estimated_hours: this.estimateHoursFromTimeline(quote.timeline),
       start_date: new Date().toISOString().split('T')[0],
-      target_completion: this.calculateTargetDate(quote.timeline),
-      service_category: quote.service_type,
-      project_type: this.getProjectTypeFromService(quote.service_type),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      end_date: this.calculateTargetDate(quote.timeline),
+      deadline: this.calculateTargetDate(quote.timeline)
     };
 
     const { data: project, error } = await supabase
