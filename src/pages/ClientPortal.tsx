@@ -1596,6 +1596,14 @@ const ClientPortal: React.FC = () => {
                     key={invoice.id}
                     invoice={invoice}
                     onPaymentSuccess={loadInvoices}
+                    onViewDetails={(invoiceId) => {
+                      toast.info(`Viewing invoice details: ${invoiceId.substring(0, 8)}...`);
+                      // TODO: Navigate to invoice details page or open modal
+                    }}
+                    onDownload={(invoiceId) => {
+                      toast.info('PDF download feature coming soon!');
+                      // TODO: Generate and download PDF invoice
+                    }}
                     className="w-full"
                   />
                 ))}

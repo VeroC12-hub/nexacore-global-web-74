@@ -64,6 +64,9 @@ class ProjectCreationService {
       // Create initial project tasks
       await this.createInitialProjectTasks(project.id, quote);
 
+      // Create initial deposit invoice (50% of project cost)
+      await this.createInitialInvoice(project.id, quote, clientUserId);
+
       // Create welcome message
       await this.createWelcomeMessage(project.id, quote);
 
@@ -193,6 +196,57 @@ class ProjectCreationService {
       console.error('Failed to create initial tasks:', error);
     } else {
       console.log(`Created ${taskData.length} initial tasks for project ${projectId}`);
+    }
+  }
+
+  private async createInitialInvoice(projectId: string, quote: Quote, clientUserId: string) {
+    try {
+      const depositAmount = quote.price * 0.5; // 50% deposit
+      const invoiceNumber = `INV-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+      
+      const invoiceData = {
+        client_id: clientUserId,
+        project_id: projectId,
+        invoice_number: invoiceNumber,
+        title: `Project Deposit - ${quote.service_type}`,
+        description: `Initial 50% deposit for ${quote.service_type} project. Payment required to begin project work.`,
+        amount: depositAmount,
+        tax_amount: 0,
+        total_amount: depositAmount,
+        currency: quote.currency,
+        status: 'sent',
+        due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Due in 7 days
+        created_at: new Date().toISOString()
+      };
+
+      const { data: invoice, error } = await supabase
+        .from('invoices')
+        .insert([invoiceData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Failed to create initial invoice:', error);
+        return;
+      }
+
+      console.log(`Created initial deposit invoice: ${invoice.invoice_number} for $${depositAmount}`);
+      
+      // Send notification about the invoice
+      const invoiceMessage = {
+        project_id: projectId,
+        sender_id: quote.created_by,
+        message: `Invoice ${invoice.invoice_number} has been generated for your project deposit ($${depositAmount}). Please check your client portal to make payment to begin project work.`,
+        message_type: 'general',
+        is_internal: false,
+        created_at: new Date().toISOString()
+      };
+
+      await supabase.from('project_messages').insert([invoiceMessage]);
+      
+      return invoice;
+    } catch (error) {
+      console.error('Error creating initial invoice:', error);
     }
   }
 

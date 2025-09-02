@@ -16,6 +16,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { PaymentModal } from './PaymentModal';
+import { toast } from 'sonner';
 
 interface Invoice {
   id: string;
@@ -37,10 +38,18 @@ interface Invoice {
 interface InvoicePaymentCardProps {
   invoice: Invoice;
   onPaymentSuccess: () => void;
+  onViewDetails?: (invoiceId: string) => void;
+  onDownload?: (invoiceId: string) => void;
   className?: string;
 }
 
-export function InvoicePaymentCard({ invoice, onPaymentSuccess, className = '' }: InvoicePaymentCardProps) {
+export function InvoicePaymentCard({ 
+  invoice, 
+  onPaymentSuccess, 
+  onViewDetails, 
+  onDownload, 
+  className = '' 
+}: InvoicePaymentCardProps) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {
@@ -212,12 +221,22 @@ export function InvoicePaymentCard({ invoice, onPaymentSuccess, className = '' }
               </Button>
             )}
             
-            <Button variant="outline" size="lg" className="flex items-center justify-center gap-2">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="flex items-center justify-center gap-2"
+              onClick={() => onViewDetails ? onViewDetails(invoice.id) : toast.info(`Viewing details for ${invoice.invoice_number}`)}
+            >
               <Eye className="w-4 h-4" />
               View Details
             </Button>
             
-            <Button variant="outline" size="lg" className="flex items-center justify-center gap-2">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="flex items-center justify-center gap-2"
+              onClick={() => onDownload ? onDownload(invoice.id) : toast.info(`Downloading ${invoice.invoice_number} - Feature coming soon!`)}
+            >
               <Download className="w-4 h-4" />
               Download
             </Button>
