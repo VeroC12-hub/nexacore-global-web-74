@@ -103,6 +103,7 @@ import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab';
 import { AdminTeamTab } from '@/components/admin/AdminTeamTab';
 import { AdminFileRepositoryTab } from '@/components/admin/AdminFileRepositoryTab';
 import { AdminMessagingTab } from '@/components/admin/AdminMessagingTab';
+import { AdminWorkflowTab } from '@/components/admin/AdminWorkflowTab';
 import AdminQuoteRequestsTab from '@/components/admin/AdminQuoteRequestsTab';
 import AdminAnalytics from '@/components/analytics/AdminAnalytics';
 import { CreateInvoiceModal } from '@/components/admin/CreateInvoiceModal';
@@ -1092,7 +1093,7 @@ const AdminDashboard: React.FC = () => {
 
           {/* Enhanced Tabs with Better Navigation */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:grid-cols-12">
+            <TabsList className="grid w-full grid-cols-6 lg:grid-cols-13">
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="business">Business</TabsTrigger>
@@ -1104,6 +1105,7 @@ const AdminDashboard: React.FC = () => {
               <TabsTrigger value="team">Team</TabsTrigger>
               <TabsTrigger value="files">Files</TabsTrigger>
               <TabsTrigger value="messages">Messages</TabsTrigger>
+              <TabsTrigger value="workflows">Workflows</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
             </TabsList>
 
@@ -1488,6 +1490,10 @@ const AdminDashboard: React.FC = () => {
 
             <TabsContent value="messages" className="mt-6">
               <AdminMessagingTab onStatsUpdate={loadDashboardStats} />
+            </TabsContent>
+
+            <TabsContent value="workflows" className="mt-6">
+              <AdminWorkflowTab />
             </TabsContent>
           </Tabs>
         </div>
