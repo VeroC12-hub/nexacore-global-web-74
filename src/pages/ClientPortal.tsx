@@ -76,6 +76,7 @@ import {
   Quote,
   XCircle
 } from 'lucide-react';
+import { InvoicePaymentCard } from '@/components/payments/InvoicePaymentCard';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -1580,73 +1581,37 @@ const ClientPortal: React.FC = () => {
                 </Card>
               </div>
 
-              <Card>
-                <div className="p-6">
-                  <h3 className="text-lg font-semibold mb-4">All Invoices</h3>
-                  <div className="space-y-4">
-                    {invoices.map((invoice) => (
-                      <div 
-                        key={invoice.id} 
-                        className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
-                        onClick={() => handleInvoiceClick(invoice.id)}
-                      >
-                        <div className="flex-1">
-                          <div className="flex items-center gap-4 mb-2">
-                            <h4 className="font-medium">{invoice.invoice_number}</h4>
-                            <Badge className={getStatusColor(invoice.status)}>
-                              {invoice.status}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{invoice.title || invoice.description}</p>
-                          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                            <span>Due: {new Date(invoice.due_date).toLocaleDateString()}</span>
-                            {invoice.paid_date && (
-                              <span>Paid: {new Date(invoice.paid_date).toLocaleDateString()}</span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-lg">${invoice.amount.toLocaleString()}</p>
-                          {invoice.tax_amount > 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              +${invoice.tax_amount.toLocaleString()} tax
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInvoiceClick(invoice.id);
-                            }}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toast.info('Download functionality coming soon');
-                            }}
-                          >
-                            <Download className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    
-                    {invoices.length === 0 && (
-                      <div className="text-center py-12">
-                        <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">No invoices yet</p>
-                      </div>
-                    )}
+              {/* Mobile-Friendly Invoice Cards with Payment Integration */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Your Invoices</h3>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Tap to pay instantly</span>
                   </div>
                 </div>
-              </Card>
+
+                {invoices.map((invoice) => (
+                  <InvoicePaymentCard
+                    key={invoice.id}
+                    invoice={invoice}
+                    onPaymentSuccess={loadInvoices}
+                    className="w-full"
+                  />
+                ))}
+                
+                {invoices.length === 0 && (
+                  <Card className="p-8">
+                    <div className="text-center">
+                      <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No invoices yet</h3>
+                      <p className="text-muted-foreground">
+                        Invoices will appear here when your projects are ready for payment
+                      </p>
+                    </div>
+                  </Card>
+                )}
+              </div>
             </TabsContent>
 
             {/* Enhanced Service Requests Tab */}
