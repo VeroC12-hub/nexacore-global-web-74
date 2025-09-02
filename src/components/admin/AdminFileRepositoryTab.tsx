@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { FileUploadModal } from './FileUploadModal';
 
 interface ProjectFile {
   id: string;
@@ -48,6 +49,7 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [projectFilter, setProjectFilter] = useState('all');
   const [projects, setProjects] = useState<any[]>([]);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -165,7 +167,7 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-2xl font-bold">File Repository</CardTitle>
-        <Button>
+        <Button onClick={() => setIsUploadModalOpen(true)}>
           <Upload className="h-4 w-4 mr-2" />
           Upload Files
         </Button>
@@ -295,7 +297,7 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
               }
             </p>
             {(!searchTerm && categoryFilter === 'all' && projectFilter === 'all') && (
-              <Button>
+              <Button onClick={() => setIsUploadModalOpen(true)}>
                 <Upload className="h-4 w-4 mr-2" />
                 Upload First File
               </Button>
@@ -337,6 +339,17 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
           </Card>
         </div>
       </CardContent>
+      
+      {/* File Upload Modal */}
+      <FileUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onSuccess={() => {
+          loadFiles();
+          onStatsUpdate();
+        }}
+        projects={projects}
+      />
     </Card>
   );
 }

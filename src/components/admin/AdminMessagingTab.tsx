@@ -26,6 +26,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { ComposeMessageModal } from './ComposeMessageModal';
 
 interface ProjectMessage {
   id: string;
@@ -57,13 +58,16 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [projectFilter, setProjectFilter] = useState('all');
   const [projects, setProjects] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<ProjectMessage | null>(null);
   const [replyText, setReplyText] = useState('');
   const [isReplyModalOpen, setIsReplyModalOpen] = useState(false);
+  const [isComposeModalOpen, setIsComposeModalOpen] = useState(false);
 
   useEffect(() => {
     loadMessages();
     loadProjects();
+    loadClients();
   }, []);
 
   const loadMessages = async () => {
@@ -90,13 +94,28 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, title')
+        .select('id, title, client_id')
         .order('title');
 
       if (error) throw error;
       setProjects(data || []);
     } catch (error) {
       console.error('Error loading projects:', error);
+    }
+  };
+
+  const loadClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, email')
+        .eq('role', 'client')
+        .order('full_name');
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Error loading clients:', error);
     }
   };
 
@@ -181,7 +200,7 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-2xl font-bold">Messaging & CRM</CardTitle>
-        <Button>
+        <Button onClick={() => setIsComposeModalOpen(true)}>
           <MessageSquare className="h-4 w-4 mr-2" />
           Compose Message
         </Button>
@@ -393,6 +412,18 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Compose Message Modal */}
+        <ComposeMessageModal
+          isOpen={isComposeModalOpen}
+          onClose={() => setIsComposeModalOpen(false)}
+          onSuccess={() => {
+            loadMessages();
+            onStatsUpdate();
+          }}
+          projects={projects.map(p => ({ ...p, client_id: p.client_id || '' }))}
+          clients={clients}
+        />
       </CardContent>
     </Card>
   );
