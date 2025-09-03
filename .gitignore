@@ -19,6 +19,9 @@ dist-ssr
 .env.*
 *.env
 
+# Scripts with sensitive data
+scripts/
+
 # Local configs
 *.local
 
@@ -32,3 +35,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
