@@ -256,97 +256,127 @@ export const ModernClientPortal: React.FC = () => {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover:shadow-md transition-shadow">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500 cursor-pointer transform hover:scale-105 bg-gradient-to-br from-white to-green-50/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Active Projects</p>
-                <p className="text-2xl font-bold text-green-600">{stats.activeProjects}</p>
-                <p className="text-sm text-gray-500">In progress</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
+                <p className="text-3xl font-bold text-green-600">{stats.activeProjects}</p>
+                <div className="flex items-center mt-2 text-sm">
+                  <Activity className="w-4 h-4 text-green-500 mr-1" />
+                  <span className="text-green-600">In progress</span>
+                </div>
               </div>
-              <Activity className="h-8 w-8 text-green-500" />
+              <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Activity className="w-6 h-6 text-green-500" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-blue-500 cursor-pointer transform hover:scale-105 bg-gradient-to-br from-white to-blue-50/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.completedProjects}</p>
-                <p className="text-sm text-gray-500">Projects done</p>
+                <p className="text-sm font-medium text-muted-foreground">Completed</p>
+                <p className="text-3xl font-bold text-blue-600">{stats.completedProjects}</p>
+                <div className="flex items-center mt-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-blue-500 mr-1" />
+                  <span className="text-blue-600">Projects done</span>
+                </div>
               </div>
-              <CheckCircle className="h-8 w-8 text-blue-500" />
+              <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CheckCircle className="w-6 h-6 text-blue-500" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-orange-500 cursor-pointer transform hover:scale-105 bg-gradient-to-br from-white to-orange-50/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending Invoices</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.pendingInvoices}</p>
-                <p className="text-sm text-gray-500">Awaiting payment</p>
+                <p className="text-sm font-medium text-muted-foreground">Pending Invoices</p>
+                <p className="text-3xl font-bold text-orange-600">{stats.pendingInvoices}</p>
+                <div className="flex items-center mt-2 text-sm">
+                  <Clock className="w-4 h-4 text-orange-500 mr-1" />
+                  <span className="text-orange-600">Awaiting payment</span>
+                </div>
               </div>
-              <CreditCard className="h-8 w-8 text-orange-500" />
+              <div className="w-12 h-12 bg-orange-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <CreditCard className="w-6 h-6 text-orange-500" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="hover:shadow-md transition-shadow">
+        <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-purple-500 cursor-pointer transform hover:scale-105 bg-gradient-to-br from-white to-purple-50/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Messages</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.unreadMessages}</p>
-                <p className="text-sm text-gray-500">Team updates</p>
+                <p className="text-sm font-medium text-muted-foreground">Messages</p>
+                <p className="text-3xl font-bold text-purple-600">{stats.unreadMessages}</p>
+                <div className="flex items-center mt-2 text-sm">
+                  <Bell className="w-4 h-4 text-purple-500 mr-1" />
+                  <span className="text-purple-600">Team updates</span>
+                </div>
               </div>
-              <MessageSquare className="h-8 w-8 text-purple-500" />
+              <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                <MessageSquare className="w-6 h-6 text-purple-500" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Quick Actions */}
-      <Card>
+      <Card className="bg-gradient-to-r from-white to-blue-50/20 border border-border/30">
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
-          <CardDescription>Common tasks you can perform</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-primary" />
+            Quick Actions
+          </CardTitle>
+          <CardDescription>Get things done quickly with one click</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {quickActions.map((action) => (
-              <Button
+              <Card
                 key={action.id}
+                className="cursor-pointer group hover:shadow-lg transition-all duration-300 transform hover:scale-105 border-0 bg-gradient-to-br from-white to-primary/5"
                 onClick={action.action}
-                className={`${action.color} text-white p-4 h-auto flex flex-col items-center space-y-2 hover:scale-105 transition-transform`}
               >
-                {action.icon}
-                <div className="text-center">
-                  <p className="font-medium">{action.title}</p>
-                  <p className="text-xs opacity-90">{action.description}</p>
-                </div>
-              </Button>
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-primary/10 to-purple-500/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <div className="text-primary">
+                      {action.icon}
+                    </div>
+                  </div>
+                  <h3 className="font-semibold text-foreground mb-2">{action.title}</h3>
+                  <p className="text-sm text-muted-foreground">{action.description}</p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </CardContent>
       </Card>
 
       {/* Recent Projects */}
-      <Card>
+      <Card className="bg-gradient-to-r from-white to-purple-50/20 border border-border/30">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Recent Projects</CardTitle>
-              <CardDescription>Your latest project updates</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <FolderOpen className="w-5 h-5 text-primary" />
+                Recent Projects
+              </CardTitle>
+              <CardDescription>Your latest project updates and progress</CardDescription>
             </div>
             <Button 
               variant="outline" 
               onClick={() => setActiveView('projects')}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 border-primary/20 hover:bg-primary/5"
             >
               <span>View All</span>
               <ArrowRight className="h-4 w-4" />
@@ -356,7 +386,7 @@ export const ModernClientPortal: React.FC = () => {
         <CardContent>
           <div className="space-y-4">
             {projects.slice(0, 3).map((project) => (
-              <div key={project.id} className={`border-l-4 ${getPriorityColor(project.priority)} bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition-colors`}>
+              <div key={project.id} className={`border-l-4 ${getPriorityColor(project.priority)} bg-gradient-to-r from-background/50 to-primary/5 p-4 rounded-lg hover:shadow-md hover:scale-[1.02] transition-all duration-200 border border-border/20`}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-gray-900">{project.title}</h3>
                   <Badge className={getStatusColor(project.status)}>
@@ -483,25 +513,26 @@ export const ModernClientPortal: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <Navbar />
       <div className="flex pt-20">
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-screen">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-800">Client Portal</h2>
-            <p className="text-sm text-gray-600">NexaCore Innovations</p>
+        <div className="w-64 bg-white/95 backdrop-blur-md shadow-xl border-r border-border/50 min-h-screen">
+          <div className="p-6 border-b border-border/20">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Client Portal</h2>
+            <p className="text-sm text-muted-foreground">NexaCore Innovations</p>
+            <div className="mt-2 text-xs text-muted-foreground">Welcome, {user?.email?.split('@')[0]}</div>
           </div>
           
           {/* Search */}
-          <div className="px-6 mb-6">
+          <div className="px-6 mb-6 mt-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder="Search projects, files..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 bg-background/50 border-border/30 focus:border-primary/50 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -513,10 +544,10 @@ export const ModernClientPortal: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => setActiveView(item.id as any)}
-                  className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-colors ${
+                  className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 transform hover:scale-[1.02] ${
                     activeView === item.id
-                      ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-gradient-to-r from-primary/10 to-purple-500/10 text-primary border border-primary/20 shadow-md'
+                      : 'text-muted-foreground hover:bg-gradient-to-r hover:from-primary/5 hover:to-purple-500/5 hover:text-foreground hover:shadow-sm'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -539,7 +570,10 @@ export const ModernClientPortal: React.FC = () => {
           <div className="p-6">
             {loading ? (
               <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary"></div>
+                  <div className="mt-4 text-center text-muted-foreground">Loading your portal...</div>
+                </div>
               </div>
             ) : (
               renderActiveView()

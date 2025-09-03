@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to NexaCore Innovations</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .logo {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .tagline {
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 16px;
+        }
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 32px;
+            transition: transform 0.2s;
+        }
+        .welcome-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #f3e8ff 100%);
+            border: 1px solid #e0e7ff;
+            border-radius: 8px;
+            padding: 24px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        .features {
+            margin: 32px 0;
+        }
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            padding: 12px;
+            background-color: #f8fafc;
+            border-radius: 6px;
+        }
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        .footer {
+            background-color: #f1f5f9;
+            padding: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: #64748b;
+        }
+        .footer-links {
+            margin-top: 16px;
+        }
+        .footer-links a {
+            color: #3b82f6;
+            text-decoration: none;
+            margin: 0 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">NexaCore Innovations</div>
+            <div class="tagline">Transforming Ideas into Digital Excellence</div>
+        </div>
+        
+        <div class="content">
+            <h1 class="title">Welcome to NexaCore! 🎉</h1>
+            
+            <p class="message">
+                Thank you for joining NexaCore Innovations! We're excited to have you as part of our community 
+                of innovators and creators. To get started, please confirm your email address by clicking the button below.
+            </p>
+            
+            <div class="welcome-card">
+                <h3 style="color: #1e293b; margin-bottom: 12px;">🚀 You're Almost Ready!</h3>
+                <p style="color: #64748b; margin: 0;">
+                    Confirm your email to unlock full access to our platform and start your digital transformation journey.
+                </p>
+            </div>
+            
+            <a href="{{ .ConfirmationURL }}" class="button">Confirm My Email</a>
+            
+            <div class="features">
+                <h3 style="color: #1e293b; margin-bottom: 16px;">What's Next?</h3>
+                
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <div>
+                        <strong>Client Dashboard:</strong> Track your projects and view real-time progress
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">💬</div>
+                    <div>
+                        <strong>Direct Communication:</strong> Message our team and get instant updates
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">📋</div>
+                    <div>
+                        <strong>Service Requests:</strong> Submit new project requests with ease
+                    </div>
+                </div>
+                
+                <div class="feature">
+                    <div class="feature-icon">💳</div>
+                    <div>
+                        <strong>Secure Payments:</strong> Handle invoices and payments seamlessly
+                    </div>
+                </div>
+            </div>
+            
+            <p style="font-size: 14px; color: #64748b; margin-top: 32px;">
+                If the button above doesn't work, copy and paste this link into your browser:<br>
+                <a href="{{ .ConfirmationURL }}" style="color: #3b82f6; word-break: break-all;">{{ .ConfirmationURL }}</a>
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>Welcome to the NexaCore family!</p>
+            <div class="footer-links">
+                <a href="https://nexacore-innovations.com">Visit Website</a>
+                <a href="https://nexacore-innovations.com/services">Our Services</a>
+                <a href="https://nexacore-innovations.com/contact">Contact Support</a>
+            </div>
+            <p style="margin-top: 16px; font-size: 12px; color: #94a3b8;">
+                © 2024 NexaCore Innovations. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
