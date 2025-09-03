@@ -1,11 +1,10 @@
 // src/pages/ClientPortal.tsx - ENHANCED VERSION WITH FULLY CLICKABLE BUTTONS
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { 
@@ -775,202 +774,272 @@ const ClientPortal: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <Navbar />
       
-      <div className="pt-20 pb-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Enhanced Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                Welcome back, {profile?.full_name || user?.email?.split('@')[0]}
-              </h1>
-              <p className="text-muted-foreground">
-                Manage your projects and track your progress with NexaCore Innovations
+      <div className="flex pt-20">
+        {/* Elegant Premium Sidebar */}
+        <div className="w-72 bg-gradient-to-b from-white via-blue-50/30 to-purple-50/20 backdrop-blur-xl shadow-2xl border-r border-gradient-to-b from-blue-200/20 to-purple-200/20 min-h-screen flex flex-col overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full -translate-y-16 translate-x-16 blur-xl"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/10 to-pink-400/10 rounded-full translate-y-12 -translate-x-12 blur-xl"></div>
+          
+          {/* Header Section */}
+          <div className="relative p-8 border-b border-gradient-to-r from-transparent via-border/20 to-transparent">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">Client Portal</h2>
+                <p className="text-sm text-muted-foreground font-medium">Premium Access</p>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100/50">
+              <p className="text-xs font-medium text-gray-700">Welcome back,</p>
+              <p className="text-sm font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent capitalize">
+                {profile?.full_name || user?.email?.split('@')[0]}
               </p>
-              <div className="flex items-center mt-2 text-sm text-muted-foreground">
-                <User className="w-4 h-4 mr-1" />
-                Client since {stats.clientSince}
-                <span className="mx-2">•</span>
-                <Clock className="w-4 h-4 mr-1" />
-                Last updated: {new Date().toLocaleTimeString()}
+              <div className="flex items-center mt-2 text-xs text-muted-foreground">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                Online Now
               </div>
             </div>
-            <div className="flex gap-2 mt-4 md:mt-0">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={refreshData}
-                disabled={refreshing}
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-                {refreshing ? 'Refreshing...' : 'Refresh'}
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => handleQuickAction('contact-support')}
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Contact Support
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => handleQuickAction('new-request')}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Request
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
+          </div>
+          
+          {/* Premium Search */}
+          <div className="px-8 mt-6 mb-8">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-primary/70 group-hover:text-primary transition-colors" />
+                <Input
+                  placeholder="Search everything..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-12 bg-white/70 backdrop-blur-sm border-0 focus:ring-2 focus:ring-primary/20 rounded-xl h-12 shadow-sm group-hover:shadow-md transition-all"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Enhanced Clickable Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card 
-              className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary cursor-pointer transform hover:scale-105"
-              onClick={() => handleStatCardClick('projects')}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Projects</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.totalProjects}</p>
-                  <div className="flex items-center mt-2 text-sm">
-                    <Activity className="w-4 h-4 text-blue-500 mr-1" />
-                    <span className="text-blue-500">{stats.activeProjects} active</span>
+          {/* Premium Navigation - Flex Grow */}
+          <nav className="px-6 flex-1 overflow-y-auto">
+            <div className="space-y-3">
+              {[
+                { id: 'overview', label: 'Overview', icon: <BarChart3 className="w-5 h-5" />, count: null },
+                { id: 'quotes', label: 'Quotes', icon: <Quote className="w-5 h-5" />, count: stats.totalQuotes },
+                { id: 'projects', label: 'Projects', icon: <FolderOpen className="w-5 h-5" />, count: stats.activeProjects },
+                { id: 'invoices', label: 'Invoices', icon: <CreditCard className="w-5 h-5" />, count: stats.pendingPayments },
+                { id: 'requests', label: 'Requests', icon: <MessageSquare className="w-5 h-5" />, count: serviceRequests.length },
+                { id: 'profile', label: 'Profile', icon: <Settings className="w-5 h-5" />, count: null },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleTabChange(item.id)}
+                  className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
+                      : 'text-gray-700 hover:bg-white/80 hover:text-gray-900 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-2 rounded-lg ${
+                      activeTab === item.id
+                        ? 'bg-white/20'
+                        : 'bg-blue-100/50'
+                    }`}>
+                      {React.cloneElement(item.icon as React.ReactElement, {
+                        className: `w-5 h-5 ${activeTab === item.id ? 'text-white' : 'text-blue-600'}`
+                      })}
+                    </div>
+                    <span className="font-medium">{item.label}</span>
                   </div>
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <FolderOpen className="w-6 h-6 text-primary" />
-                </div>
-              </div>
-            </Card>
+                  {item.count !== null && item.count > 0 && (
+                    <Badge 
+                      variant="secondary"
+                      className={`text-xs ${
+                        activeTab === item.id 
+                          ? 'bg-white/20 text-white border-white/20' 
+                          : 'bg-blue-100 text-blue-700'
+                      }`}
+                    >
+                      {item.count}
+                    </Badge>
+                  )}
+                </button>
+              ))}
+            </div>
+          </nav>
 
-            <Card 
-              className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-purple-500 cursor-pointer transform hover:scale-105"
-              onClick={() => handleStatCardClick('quotes')}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Quotes</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.totalQuotes}</p>
-                  <div className="flex items-center mt-2 text-sm">
-                    <Clock className="w-4 h-4 text-purple-500 mr-1" />
-                    <span className="text-purple-500">{stats.pendingQuotes} pending</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                  <Quote className="w-6 h-6 text-purple-500" />
+          {/* Premium Status Panel - Fixed at Bottom */}
+          <div className="px-6 pb-8 mt-auto">
+            <div className="bg-gradient-to-r from-white/60 to-blue-50/60 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-gray-700">Account Status</p>
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                  <span className="text-xs font-bold text-green-700">Premium</span>
                 </div>
               </div>
-            </Card>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600">Active Projects</span>
+                  <span className="font-bold text-primary">{stats.activeProjects}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600">Total Spent</span>
+                  <span className="font-bold text-green-600">${stats.totalInvoiced.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-            <Card 
-              className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500 cursor-pointer transform hover:scale-105"
-              onClick={() => handleStatCardClick('invoices')}
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30">
+          <div className="p-8">
+            <div className="max-w-7xl mx-auto">
+          {/* Action Bar */}
+          <div className="flex justify-end gap-2 mb-6">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={refreshData}
+              disabled={refreshing}
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Invoiced</p>
-                  <p className="text-3xl font-bold text-foreground">${stats.totalInvoiced.toLocaleString()}</p>
-                  <div className="flex items-center mt-2 text-sm">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
-                    <span className="text-green-500">${stats.totalPaid.toLocaleString()} paid</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-green-500" />
-                </div>
-              </div>
-            </Card>
-
-            <Card 
-              className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-blue-500 cursor-pointer transform hover:scale-105"
-              onClick={() => handleStatCardClick('success')}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Success Rate</p>
-                  <p className="text-3xl font-bold text-foreground">{stats.projectSuccessRate.toFixed(0)}%</p>
-                  <div className="flex items-center mt-2 text-sm">
-                    <Award className="w-4 h-4 text-blue-500 mr-1" />
-                    <span className="text-blue-500">{stats.completedProjects} completed</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                  <Target className="w-6 h-6 text-blue-500" />
-                </div>
-              </div>
-            </Card>
+              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
 
-          {/* Additional Clickable Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card 
-              className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
-              onClick={() => setActiveTab('requests')}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Quote Requests</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.totalQuoteRequests}</p>
-                </div>
-                <FileText className="w-8 h-8 text-indigo-500" />
+          {/* Content based on active tab */}
+          <div className="animate-fade-in">
+            {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Welcome Section - Admin Style */}
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
+                <h1 className="text-2xl font-bold mb-2">Welcome back, {profile?.full_name || user?.email?.split('@')[0]}!</h1>
+                <p className="opacity-90">Track your projects and manage your account with ease.</p>
               </div>
-            </Card>
 
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Avg Project Value</p>
-                  <p className="text-2xl font-bold text-foreground">${stats.avgProjectValue.toLocaleString()}</p>
-                </div>
-                <Calculator className="w-8 h-8 text-purple-500" />
+              {/* Stats Overview - Admin Style */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Active Projects</p>
+                        <p className="text-2xl font-bold">{stats.activeProjects}</p>
+                        <p className="text-sm text-gray-500">In progress</p>
+                      </div>
+                      <FolderOpen className="h-8 w-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Quotes</p>
+                        <p className="text-2xl font-bold">{stats.totalQuotes}</p>
+                        <p className="text-sm text-gray-500">Received</p>
+                      </div>
+                      <Quote className="h-8 w-8 text-purple-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Spent</p>
+                        <p className="text-2xl font-bold">${stats.totalInvoiced.toLocaleString()}</p>
+                        <div className="flex items-center mt-1">
+                          <CheckCircle className="h-4 w-4 text-green-500 mr-1" />
+                          <span className="text-sm text-green-600">${stats.totalPaid.toLocaleString()} paid</span>
+                        </div>
+                      </div>
+                      <DollarSign className="h-8 w-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                        <p className="text-2xl font-bold">{stats.projectSuccessRate.toFixed(0)}%</p>
+                        <p className="text-sm text-gray-500">{stats.completedProjects} completed</p>
+                      </div>
+                      <Target className="h-8 w-8 text-orange-500" />
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </Card>
 
-            <Card className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Payment History</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.paymentHistory.toFixed(0)}%</p>
-                </div>
-                <CreditCard className="w-8 h-8 text-blue-500" />
-              </div>
-            </Card>
+              {/* Quick Actions - Admin Style */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                  <CardDescription>Common tasks you can perform</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <Button
+                      onClick={() => handleQuickAction('new-request')}
+                      className="bg-blue-500 hover:bg-blue-600 text-white p-4 h-auto flex flex-col items-center space-y-2"
+                    >
+                      <Plus className="h-5 w-5" />
+                      <div className="text-center">
+                        <p className="font-medium">New Request</p>
+                        <p className="text-xs opacity-90">Request new services</p>
+                      </div>
+                    </Button>
+                    
+                    <Button
+                      onClick={() => handleQuickAction('view-projects')}
+                      className="bg-purple-500 hover:bg-purple-600 text-white p-4 h-auto flex flex-col items-center space-y-2"
+                    >
+                      <FolderOpen className="h-5 w-5" />
+                      <div className="text-center">
+                        <p className="font-medium">View Projects</p>
+                        <p className="text-xs opacity-90">Check project progress</p>
+                      </div>
+                    </Button>
+                    
+                    <Button
+                      onClick={() => handleQuickAction('view-quotes')}
+                      className="bg-green-500 hover:bg-green-600 text-white p-4 h-auto flex flex-col items-center space-y-2"
+                    >
+                      <Quote className="h-5 w-5" />
+                      <div className="text-center">
+                        <p className="font-medium">View Quotes</p>
+                        <p className="text-xs opacity-90">Review quotes</p>
+                      </div>
+                    </Button>
+                    
+                    <Button
+                      onClick={() => handleQuickAction('contact-support')}
+                      className="bg-orange-500 hover:bg-orange-600 text-white p-4 h-auto flex flex-col items-center space-y-2"
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                      <div className="text-center">
+                        <p className="font-medium">Contact Support</p>
+                        <p className="text-xs opacity-90">Get help</p>
+                      </div>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card 
-              className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
-              onClick={() => setActiveTab('requests')}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Service Requests</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.serviceRequests}</p>
-                </div>
-                <MessageSquare className="w-8 h-8 text-orange-500" />
-              </div>
-            </Card>
-          </div>
-
-          {/* Enhanced Tabs with Better Navigation */}
-          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="quotes">Quotes ({stats.totalQuotes})</TabsTrigger>
-              <TabsTrigger value="projects">Projects</TabsTrigger>
-              <TabsTrigger value="invoices">Invoices</TabsTrigger>
-              <TabsTrigger value="requests">Requests</TabsTrigger>
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-            </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Recent Quotes */}
                 <Card className="p-6">
@@ -1098,101 +1167,152 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </Card>
 
-                {/* Recent Activity with Enhanced Interactions */}
-                <Card className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">Recent Activity</h3>
-                    <Button variant="ghost" size="sm" onClick={refreshData}>
-                      <RefreshCw className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  <div className="space-y-4">
-                    {recentActivity.slice(0, 6).map((activity) => (
-                      <div 
-                        key={activity.id} 
-                        className="flex items-start gap-3 cursor-pointer hover:bg-muted/30 p-2 rounded-lg transition-colors"
-                        onClick={() => {
-                          // Handle activity click based on type
-                          const id = activity.id.split('-')[1];
-                          switch (activity.type) {
-                            case 'project':
-                              handleProjectClick(id);
-                              break;
-                            case 'quote':
-                              handleQuoteClick(id);
-                              break;
-                            case 'invoice':
-                              handleInvoiceClick(id);
-                              break;
-                            case 'service_request':
-                              handleServiceRequestClick(id);
-                              break;
-                            default:
-                              break;
-                          }
-                        }}
-                      >
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getActivityColor(activity.status)}`}>
+                {/* Recent Activity - Admin Style */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>Latest updates from your projects</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {recentActivity.slice(0, 6).map((activity) => (
+                        <div 
+                          key={activity.id} 
+                          className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => {
+                            // Handle activity click based on type
+                            const id = activity.id.split('-')[1];
+                            switch (activity.type) {
+                              case 'project':
+                                handleProjectClick(id);
+                                break;
+                              case 'quote':
+                                handleQuoteClick(id);
+                                break;
+                              case 'invoice':
+                                handleInvoiceClick(id);
+                                break;
+                              case 'service_request':
+                                handleServiceRequestClick(id);
+                                break;
+                              default:
+                                break;
+                            }
+                          }}
+                        >
                           {getActivityIcon(activity.type)}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{activity.title}</p>
-                          <p className="text-xs text-muted-foreground">{activity.description}</p>
-                          <div className="flex items-center justify-between mt-1">
-                            <span className="text-xs text-muted-foreground">{activity.timestamp}</span>
-                            {activity.amount && (
-                              <span className="text-xs font-medium">${activity.amount.toLocaleString()}</span>
-                            )}
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{activity.title}</p>
+                            <p className="text-xs text-gray-500">{activity.timestamp}</p>
                           </div>
+                          <ArrowRight className="h-4 w-4 text-gray-400" />
                         </div>
-                      </div>
-                    ))}
-                    {recentActivity.length === 0 && (
-                      <div className="text-center py-4 text-muted-foreground">
-                        <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No recent activity</p>
-                      </div>
-                    )}
-                  </div>
+                      ))}
+                      {recentActivity.length === 0 && (
+                        <div className="text-center py-4 text-gray-500">
+                          <Activity className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No recent activity</p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
                 </Card>
               </div>
 
-              {/* Enhanced Quick Stats */}
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Business Insights</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <div 
-                    className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => handleStatCardClick('success')}
-                  >
-                    <TrendingUp className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-green-600">{stats.projectSuccessRate.toFixed(0)}%</p>
-                    <p className="text-sm text-muted-foreground">Project Success Rate</p>
+              {/* Business Insights - Admin Style */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Business Insights</CardTitle>
+                  <CardDescription>Your performance metrics and analytics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div 
+                      className="text-center p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleStatCardClick('success')}
+                    >
+                      <TrendingUp className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-green-600">{stats.projectSuccessRate.toFixed(0)}%</p>
+                      <p className="text-sm text-gray-600">Project Success Rate</p>
+                    </div>
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <DollarSign className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-blue-600">${stats.avgProjectValue.toLocaleString()}</p>
+                      <p className="text-sm text-gray-600">Average Project Value</p>
+                    </div>
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <CheckCircle className="w-8 h-8 text-purple-500 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-purple-600">{stats.paymentHistory.toFixed(0)}%</p>
+                      <p className="text-sm text-gray-600">Payment Success Rate</p>
+                    </div>
+                    <div 
+                      className="text-center p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() => handleTabChange('quotes')}
+                    >
+                      <Quote className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
+                      <p className="text-2xl font-bold text-indigo-600">{stats.approvedQuotes}</p>
+                      <p className="text-sm text-gray-600">Approved Quotes</p>
+                    </div>
                   </div>
-                  <div className="text-center p-4 bg-muted/30 rounded-lg">
-                    <DollarSign className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-blue-600">${stats.avgProjectValue.toLocaleString()}</p>
-                    <p className="text-sm text-muted-foreground">Average Project Value</p>
-                  </div>
-                  <div className="text-center p-4 bg-muted/30 rounded-lg">
-                    <CheckCircle className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-purple-600">{stats.paymentHistory.toFixed(0)}%</p>
-                    <p className="text-sm text-muted-foreground">Payment Success Rate</p>
-                  </div>
-                  <div 
-                    className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                    onClick={() => handleTabChange('quotes')}
-                  >
-                    <Quote className="w-8 h-8 text-indigo-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-indigo-600">{stats.approvedQuotes}</p>
-                    <p className="text-sm text-muted-foreground">Approved Quotes</p>
-                  </div>
-                </div>
+                </CardContent>
               </Card>
-            </TabsContent>
 
-            {/* Quotes Tab with Enhanced Functionality */}
-            <TabsContent value="quotes" className="space-y-6">
+              {/* Additional Metrics - Admin Style */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleTabChange('requests')}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Quote Requests</p>
+                        <p className="text-2xl font-bold">{stats.totalQuoteRequests}</p>
+                      </div>
+                      <FileText className="w-8 h-8 text-indigo-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Client Since</p>
+                        <p className="text-lg font-bold">{stats.clientSince}</p>
+                      </div>
+                      <User className="w-8 h-8 text-gray-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Total Projects</p>
+                        <p className="text-2xl font-bold">{stats.totalProjects}</p>
+                      </div>
+                      <FolderOpen className="w-8 h-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleTabChange('requests')}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Service Requests</p>
+                        <p className="text-2xl font-bold">{stats.serviceRequests}</p>
+                      </div>
+                      <MessageSquare className="w-8 h-8 text-orange-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+            </div>
+            )}
+
+            {activeTab === 'quotes' && (
+            <div className="space-y-6">
               {/* Search and Filter */}
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
@@ -1410,10 +1530,11 @@ const ClientPortal: React.FC = () => {
                   )}
                 </div>
               </Card>
-            </TabsContent>
+            </div>
+            )}
 
-            {/* Enhanced Projects Tab */}
-            <TabsContent value="projects" className="space-y-6">
+            {activeTab === 'projects' && (
+            <div className="space-y-6">
               {/* Search and Filter */}
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
@@ -1528,10 +1649,11 @@ const ClientPortal: React.FC = () => {
                   </div>
                 )}
               </div>
-            </TabsContent>
+            </div>
+            )}
 
-            {/* Enhanced Invoices Tab */}
-            <TabsContent value="invoices" className="space-y-6">
+            {activeTab === 'invoices' && (
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card 
                   className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
@@ -1620,10 +1742,11 @@ const ClientPortal: React.FC = () => {
                   </Card>
                 )}
               </div>
-            </TabsContent>
+            </div>
+            )}
 
-            {/* Enhanced Service Requests Tab */}
-            <TabsContent value="requests" className="space-y-6">
+            {activeTab === 'requests' && (
+            <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold">Service Requests</h3>
                 <Button onClick={() => handleQuickAction('new-request')}>
@@ -1710,10 +1833,11 @@ const ClientPortal: React.FC = () => {
                   </div>
                 )}
               </div>
-            </TabsContent>
+            </div>
+            )}
 
-            {/* Enhanced Profile Tab */}
-            <TabsContent value="profile" className="space-y-6">
+            {activeTab === 'profile' && (
+            <div className="space-y-6">
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-6">Profile Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1796,8 +1920,11 @@ const ClientPortal: React.FC = () => {
                   </Button>
                 </div>
               </Card>
-            </TabsContent>
-          </Tabs>
+            </div>
+            )}
+          </div>
+            </div>
+          </div>
         </div>
       </div>
 
