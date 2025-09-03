@@ -138,6 +138,41 @@ const Navbar = () => {
                 {item.name}
               </Link>
             ))}
+            
+            {/* Mobile Auth Buttons */}
+            <div className="border-t border-border pt-4 mt-4 space-y-2">
+              {user ? (
+                <>
+                  <Link
+                    to={role === 'admin' ? '/admin' : '/client-portal'}
+                    className="block text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      handleSignOut();
+                      setIsOpen(false);
+                    }}
+                    className="flex items-center gap-2 w-full justify-center"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <Link
+                  to="/auth"
+                  className="block text-sm font-medium text-center text-white bg-secondary px-4 py-2 rounded-md hover:bg-secondary/80 transition-all"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Sign In
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       )}
