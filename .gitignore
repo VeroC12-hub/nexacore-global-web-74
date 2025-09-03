@@ -22,6 +22,10 @@ dist-ssr
 # Scripts with sensitive data
 scripts/
 
+# Supabase temporary files
+supabase/.temp/
+supabase/.branches/
+
 # Local configs
 *.local
 
