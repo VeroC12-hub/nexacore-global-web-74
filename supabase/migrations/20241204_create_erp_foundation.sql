@@ -15,6 +15,28 @@ CREATE TABLE IF NOT EXISTS tenants (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create projects table for project management
+CREATE TABLE IF NOT EXISTS projects (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  client_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  manager_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  status TEXT DEFAULT 'planning' CHECK (status IN ('planning', 'active', 'in_progress', 'on_hold', 'completed', 'cancelled')),
+  priority TEXT DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+  budget DECIMAL(12,2),
+  start_date DATE,
+  end_date DATE,
+  expected_end_date DATE,
+  progress INTEGER DEFAULT 0 CHECK (progress >= 0 AND progress <= 100),
+  tags TEXT[] DEFAULT '{}',
+  metadata JSONB DEFAULT '{}',
+  is_billable BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create user_roles table for enhanced role management
 CREATE TABLE IF NOT EXISTS user_roles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -125,6 +147,10 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_tenants_domain ON tenants(domain);
+CREATE INDEX IF NOT EXISTS idx_projects_tenant ON projects(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_projects_client ON projects(client_id);
+CREATE INDEX IF NOT EXISTS idx_projects_manager ON projects(manager_id);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
 CREATE INDEX IF NOT EXISTS idx_user_roles_tenant_user ON user_roles(tenant_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_user_roles_role ON user_roles(role);
 CREATE INDEX IF NOT EXISTS idx_tasks_tenant_project ON tasks(tenant_id, project_id);
@@ -151,6 +177,7 @@ VALUES (
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE time_entries ENABLE ROW LEVEL SECURITY;
@@ -167,6 +194,16 @@ CREATE POLICY tenant_admin_access ON tenants
       WHERE ur.user_id = auth.uid() 
       AND ur.tenant_id = tenants.id 
       AND ur.role = 'admin'
+    )
+  );
+
+-- Projects: Users can see projects in their tenant
+CREATE POLICY projects_tenant_access ON projects
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM user_roles ur 
+      WHERE ur.user_id = auth.uid() 
+      AND ur.tenant_id = projects.tenant_id
     )
   );
 
@@ -274,6 +311,7 @@ END;
 $$ language 'plpgsql';
 
 CREATE TRIGGER update_tenants_updated_at BEFORE UPDATE ON tenants FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_roles_updated_at BEFORE UPDATE ON user_roles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_time_entries_updated_at BEFORE UPDATE ON time_entries FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -282,6 +320,7 @@ CREATE TRIGGER update_project_files_updated_at BEFORE UPDATE ON project_files FO
 
 -- Grant necessary permissions
 GRANT SELECT ON tenants TO authenticated;
+GRANT ALL ON projects TO authenticated;
 GRANT ALL ON user_roles TO authenticated;
 GRANT ALL ON tasks TO authenticated;
 GRANT ALL ON time_entries TO authenticated;
