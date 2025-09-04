@@ -516,67 +516,140 @@ export const ModernClientPortal: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <Navbar />
       <div className="flex pt-20">
-        {/* Sidebar */}
-        <div className="w-64 bg-white/95 backdrop-blur-md shadow-xl border-r border-border/50 min-h-screen">
-          <div className="p-6 border-b border-border/20">
-            <h2 className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Client Portal</h2>
-            <p className="text-sm text-muted-foreground">NexaCore Innovations</p>
-            <div className="mt-2 text-xs text-muted-foreground">Welcome, {user?.email?.split('@')[0]}</div>
+        {/* Elegant Sidebar */}
+        <div className="w-72 bg-gradient-to-b from-white via-blue-50/30 to-purple-50/20 backdrop-blur-xl shadow-2xl border-r border-gradient-to-b from-blue-200/20 to-purple-200/20 min-h-screen relative overflow-hidden">
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full -translate-y-16 translate-x-16 blur-xl"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/10 to-pink-400/10 rounded-full translate-y-12 -translate-x-12 blur-xl"></div>
+          
+          {/* Header Section */}
+          <div className="relative p-8 border-b border-gradient-to-r from-transparent via-border/20 to-transparent">
+            <div className="flex items-center space-x-4 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <User className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">Client Portal</h2>
+                <p className="text-sm text-muted-foreground font-medium">Premium Access</p>
+              </div>
+            </div>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100/50">
+              <p className="text-xs font-medium text-gray-700">Welcome back,</p>
+              <p className="text-sm font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent capitalize">
+                {user?.email?.split('@')[0]}
+              </p>
+              <div className="flex items-center mt-2 text-xs text-muted-foreground">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                Online Now
+              </div>
+            </div>
           </div>
           
-          {/* Search */}
-          <div className="px-6 mb-6 mt-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search projects, files..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-background/50 border-border/30 focus:border-primary/50 focus:ring-primary/20"
-              />
+          {/* Premium Search */}
+          <div className="px-8 mt-6 mb-8">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-primary/70 group-hover:text-primary transition-colors" />
+                <Input
+                  placeholder="Search everything..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 bg-white/70 backdrop-blur-sm border-0 focus:ring-2 focus:ring-primary/20 rounded-xl h-12 shadow-sm group-hover:shadow-md transition-all"
+                />
+              </div>
             </div>
           </div>
 
-          {/* Navigation */}
-          <nav className="px-4">
-            <div className="space-y-1">
-              {navigationItems.map((item) => (
+          {/* Premium Navigation */}
+          <nav className="px-6">
+            <div className="space-y-2">
+              {navigationItems.map((item, index) => (
                 <button
                   key={item.id}
                   onClick={() => setActiveView(item.id as any)}
-                  className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 transform hover:scale-[1.02] ${
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className={`w-full flex items-center justify-between px-5 py-4 text-left rounded-xl transition-all duration-300 transform hover:scale-[1.02] hover:-translate-y-0.5 group animate-fade-in-up ${
                     activeView === item.id
-                      ? 'bg-gradient-to-r from-primary/10 to-purple-500/10 text-primary border border-primary/20 shadow-md'
-                      : 'text-muted-foreground hover:bg-gradient-to-r hover:from-primary/5 hover:to-purple-500/5 hover:text-foreground hover:shadow-sm'
+                      ? 'bg-gradient-to-r from-primary via-blue-500 to-purple-500 text-white shadow-lg shadow-primary/25 border border-white/20'
+                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-white/60 hover:via-blue-50/60 hover:to-purple-50/60 hover:text-gray-900 hover:shadow-md backdrop-blur-sm border border-transparent hover:border-white/40'
                   }`}
                 >
-                  <div className="flex items-center space-x-3">
-                    {item.icon}
-                    <span className="font-medium">{item.label}</span>
+                  <div className="flex items-center space-x-4">
+                    <div className={`p-2 rounded-lg transition-all duration-300 ${
+                      activeView === item.id
+                        ? 'bg-white/20 shadow-inner'
+                        : 'bg-gradient-to-br from-blue-100/50 to-purple-100/50 group-hover:from-blue-100 group-hover:to-purple-100'
+                    }`}>
+                      {React.cloneElement(item.icon as React.ReactElement, {
+                        className: `w-5 h-5 ${activeView === item.id ? 'text-white' : 'text-primary'}`
+                      })}
+                    </div>
+                    <span className="font-semibold">{item.label}</span>
                   </div>
-                  {item.count !== null && item.count > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {item.count}
-                    </Badge>
-                  )}
+                  <div className="flex items-center space-x-2">
+                    {item.count !== null && item.count > 0 && (
+                      <Badge 
+                        variant={activeView === item.id ? "secondary" : "default"} 
+                        className={`text-xs font-bold ${
+                          activeView === item.id 
+                            ? 'bg-white/20 text-white border-white/20' 
+                            : 'bg-gradient-to-r from-primary to-purple-500 text-white shadow-sm'
+                        }`}
+                      >
+                        {item.count}
+                      </Badge>
+                    )}
+                    {activeView === item.id && (
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
           </nav>
+
+          {/* Premium Status Panel */}
+          <div className="absolute bottom-8 left-6 right-6">
+            <div className="bg-gradient-to-r from-white/60 to-blue-50/60 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-gray-700">Account Status</p>
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                  <span className="text-xs font-bold text-green-700">Premium</span>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600">Active Projects</span>
+                  <span className="font-bold text-primary">{stats.activeProjects}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-gray-600">Total Spent</span>
+                  <span className="font-bold text-green-600">${stats.totalSpent.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-6">
+        <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30">
+          <div className="p-8">
             {loading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="relative">
-                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary"></div>
-                  <div className="mt-4 text-center text-muted-foreground">Loading your portal...</div>
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary/20 border-t-primary shadow-lg"></div>
+                  <div className="mt-6 text-center">
+                    <div className="text-lg font-semibold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">Loading your portal...</div>
+                    <div className="text-sm text-muted-foreground mt-2">Please wait while we prepare your dashboard</div>
+                  </div>
                 </div>
               </div>
             ) : (
-              renderActiveView()
+              <div className="animate-fade-in">
+                {renderActiveView()}
+              </div>
             )}
           </div>
         </div>

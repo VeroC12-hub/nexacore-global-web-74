@@ -7,9 +7,19 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    hmr: {
+      overlay: true
+    },
+    watch: {
+      usePolling: true,
+      interval: 1000
+    }
   },
   plugins: [
-    react()
+    react({
+      // Enable Fast Refresh
+      fastRefresh: true
+    })
   ],
   resolve: {
     alias: {

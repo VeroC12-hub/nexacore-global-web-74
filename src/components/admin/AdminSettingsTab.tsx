@@ -8,8 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Shield, AlertTriangle } from 'lucide-react';
 import { AddPaymentMethodModal } from './AddPaymentMethodModal';
+import { SecurePaymentConfig } from './SecurePaymentConfig';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { toast } from 'sonner';
 
 interface PaymentMethod {
@@ -33,6 +35,7 @@ interface AdminSettings {
 }
 
 export function AdminSettingsTab() {
+  const { permissions, loading: permissionsLoading } = useRolePermissions();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [settings, setSettings] = useState<AdminSettings>({
     company_name: '',
@@ -47,9 +50,14 @@ export function AdminSettingsTab() {
   const [isAddPaymentModalOpen, setIsAddPaymentModalOpen] = useState(false);
 
   useEffect(() => {
-    loadSettings();
-    loadPaymentMethods();
-  }, []);
+    if (!permissionsLoading) {
+      loadSettings();
+      // Only load payment methods if user has admin access
+      if (permissions.canAccessPaymentConfig) {
+        loadPaymentMethods();
+      }
+    }
+  }, [permissions, permissionsLoading]);
 
   const loadSettings = async () => {
     try {
@@ -256,77 +264,97 @@ export function AdminSettingsTab() {
         </CardContent>
       </Card>
 
-      {/* Payment Methods */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>Manage available payment methods for clients</CardDescription>
+      {/* Payment Methods - Admin Only */}
+      {permissions.canAccessPaymentConfig && (
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-orange-500" />
+                  Payment Methods
+                </CardTitle>
+                <CardDescription>Manage available payment methods for clients</CardDescription>
+              </div>
+              <Button onClick={() => setIsAddPaymentModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Payment Method
+              </Button>
             </div>
-            <Button onClick={() => setIsAddPaymentModalOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Payment Method
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {paymentMethods.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No payment methods configured. Add your first payment method to get started.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Configuration</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paymentMethods.map((method) => (
-                  <TableRow key={method.id}>
-                    <TableCell className="font-medium">{method.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {method.type.toUpperCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={method.is_active ? 'bg-green-500' : 'bg-gray-500'}>
-                        {method.is_active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-muted-foreground">
-                        {method.api_key ? 'API Key configured' : 'Not configured'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Switch
-                          checked={method.is_active}
-                          onCheckedChange={(checked) => togglePaymentMethod(method.id, checked)}
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => deletePaymentMethod(method.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          </CardHeader>
+          <CardContent>
+            {paymentMethods.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                No payment methods configured. Add your first payment method to get started.
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Configuration</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {paymentMethods.map((method) => (
+                    <TableRow key={method.id}>
+                      <TableCell className="font-medium">{method.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {method.type.toUpperCase()}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={method.is_active ? 'bg-green-500' : 'bg-gray-500'}>
+                          {method.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-muted-foreground">
+                          {method.api_key ? 'API Key configured' : 'Not configured'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Switch
+                            checked={method.is_active}
+                            onCheckedChange={(checked) => togglePaymentMethod(method.id, checked)}
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deletePaymentMethod(method.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Access Denied Notice for Payment Methods */}
+      {!permissions.canAccessPaymentConfig && !permissionsLoading && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800">
+              <AlertTriangle className="h-5 w-5" />
+              Payment Configuration Access Restricted
+            </CardTitle>
+            <CardDescription className="text-amber-700">
+              Payment method configuration is restricted to admin users only for security purposes.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      )}
 
       <AddPaymentMethodModal
         isOpen={isAddPaymentModalOpen}

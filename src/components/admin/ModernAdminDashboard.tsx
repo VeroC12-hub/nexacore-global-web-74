@@ -26,6 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -65,6 +66,7 @@ interface QuickAction {
 
 export const ModernAdminDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { permissions, loading: permissionsLoading } = useRolePermissions();
   const navigate = useNavigate();
   const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'projects' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings'>('overview');
   const [stats, setStats] = useState<DashboardStats>({
@@ -121,14 +123,16 @@ export const ModernAdminDashboard: React.FC = () => {
     }
   };
 
-  const quickActions: QuickAction[] = [
+  // Base quick actions with permission requirements
+  const allQuickActions: (QuickAction & { requiresPermission?: string | null })[] = [
     {
       id: 'new-project',
       title: 'New Project',
       description: 'Create a new client project',
       icon: <Plus className="h-5 w-5" />,
       action: () => setActiveView('projects'),
-      color: 'bg-blue-500 hover:bg-blue-600'
+      color: 'bg-blue-500 hover:bg-blue-600',
+      requiresPermission: null
     },
     {
       id: 'new-invoice',
@@ -136,7 +140,8 @@ export const ModernAdminDashboard: React.FC = () => {
       description: 'Generate client invoice',
       icon: <CreditCard className="h-5 w-5" />,
       action: () => setActiveView('invoices'),
-      color: 'bg-green-500 hover:bg-green-600'
+      color: 'bg-green-500 hover:bg-green-600',
+      requiresPermission: 'canManageInvoices'
     },
     {
       id: 'new-workflow',
@@ -144,7 +149,8 @@ export const ModernAdminDashboard: React.FC = () => {
       description: 'Start automated process',
       icon: <Workflow className="h-5 w-5" />,
       action: () => setActiveView('workflows'),
-      color: 'bg-purple-500 hover:bg-purple-600'
+      color: 'bg-purple-500 hover:bg-purple-600',
+      requiresPermission: 'canManageWorkflows'
     },
     {
       id: 'send-message',
@@ -152,7 +158,8 @@ export const ModernAdminDashboard: React.FC = () => {
       description: 'Contact clients or team',
       icon: <MessageSquare className="h-5 w-5" />,
       action: () => setActiveView('messages'),
-      color: 'bg-orange-500 hover:bg-orange-600'
+      color: 'bg-orange-500 hover:bg-orange-600',
+      requiresPermission: null
     },
     {
       id: 'analytics',
@@ -160,7 +167,8 @@ export const ModernAdminDashboard: React.FC = () => {
       description: 'View performance metrics',
       icon: <BarChart3 className="h-5 w-5" />,
       action: () => setActiveView('analytics'),
-      color: 'bg-indigo-500 hover:bg-indigo-600'
+      color: 'bg-indigo-500 hover:bg-indigo-600',
+      requiresPermission: 'canViewReports'
     },
     {
       id: 'quotes',
@@ -168,41 +176,68 @@ export const ModernAdminDashboard: React.FC = () => {
       description: 'Review and create quotes',
       icon: <FileText className="h-5 w-5" />,
       action: () => setActiveView('quotes'),
-      color: 'bg-teal-500 hover:bg-teal-600'
+      color: 'bg-teal-500 hover:bg-teal-600',
+      requiresPermission: null
     }
   ];
 
-  const navigationItems = [
-    { id: 'overview', label: 'Overview', icon: <BarChart3 className="h-5 w-5" />, count: null },
-    { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="h-5 w-5" />, count: null },
-    { id: 'business', label: 'Business', icon: <DollarSign className="h-5 w-5" />, count: null },
-    { id: 'quotes', label: 'Quotes', icon: <FileText className="h-5 w-5" />, count: stats.pendingRequests },
-    { id: 'projects', label: 'Projects', icon: <FolderOpen className="h-5 w-5" />, count: stats.totalProjects },
-    { id: 'invoices', label: 'Invoices', icon: <CreditCard className="h-5 w-5" />, count: stats.totalInvoices },
-    { id: 'requests', label: 'Requests', icon: <MessageSquare className="h-5 w-5" />, count: stats.pendingRequests },
-    { id: 'users', label: 'Users', icon: <Users className="h-5 w-5" />, count: stats.totalUsers },
-    { id: 'team', label: 'Team', icon: <Users className="h-5 w-5" />, count: null },
-    { id: 'files', label: 'Files', icon: <FolderOpen className="h-5 w-5" />, count: null },
-    { id: 'messages', label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, count: stats.unreadMessages },
-    { id: 'workflows', label: 'Workflows', icon: <Workflow className="h-5 w-5" />, count: stats.activeWorkflows },
-    { id: 'settings', label: 'Settings', icon: <Settings className="h-5 w-5" />, count: null },
+  // Filter quick actions based on user permissions
+  const quickActions = allQuickActions.filter(action => {
+    if (!action.requiresPermission) return true;
+    return permissions[action.requiresPermission as keyof typeof permissions];
+  });
+
+  // Base navigation items with permission requirements
+  const allNavigationItems = [
+    { id: 'overview', label: 'Overview', icon: <BarChart3 className="h-5 w-5" />, count: null, requiresPermission: null },
+    { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="h-5 w-5" />, count: null, requiresPermission: 'canViewReports' },
+    { id: 'business', label: 'Business', icon: <DollarSign className="h-5 w-5" />, count: null, requiresPermission: 'canViewFinancials' },
+    { id: 'quotes', label: 'Quotes', icon: <FileText className="h-5 w-5" />, count: stats.pendingRequests, requiresPermission: null },
+    { id: 'projects', label: 'Projects', icon: <FolderOpen className="h-5 w-5" />, count: stats.totalProjects, requiresPermission: null },
+    { id: 'invoices', label: 'Invoices', icon: <CreditCard className="h-5 w-5" />, count: stats.totalInvoices, requiresPermission: 'canManageInvoices' },
+    { id: 'requests', label: 'Requests', icon: <MessageSquare className="h-5 w-5" />, count: stats.pendingRequests, requiresPermission: null },
+    { id: 'users', label: 'Users', icon: <Users className="h-5 w-5" />, count: stats.totalUsers, requiresPermission: 'canManageUsers' },
+    { id: 'team', label: 'Team', icon: <Users className="h-5 w-5" />, count: null, requiresPermission: null },
+    { id: 'files', label: 'Files', icon: <FolderOpen className="h-5 w-5" />, count: null, requiresPermission: null },
+    { id: 'messages', label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, count: stats.unreadMessages, requiresPermission: null },
+    { id: 'workflows', label: 'Workflows', icon: <Workflow className="h-5 w-5" />, count: stats.activeWorkflows, requiresPermission: 'canManageWorkflows' },
+    { id: 'settings', label: 'Settings', icon: <Settings className="h-5 w-5" />, count: null, requiresPermission: 'canAccessSystemSettings' },
   ];
 
+  // Filter navigation items based on user permissions
+  const navigationItems = allNavigationItems.filter(item => {
+    if (!item.requiresPermission) return true;
+    return permissions[item.requiresPermission as keyof typeof permissions];
+  });
+
   const renderActiveView = () => {
+    // Check permissions before rendering views
     switch (activeView) {
       case 'analytics':
+        if (!permissions.canViewReports) {
+          return renderAccessDenied('Business Analytics');
+        }
         return <AdminAnalytics />;
       case 'business':
+        if (!permissions.canViewFinancials) {
+          return renderAccessDenied('Business Intelligence');
+        }
         return renderAnalytics(); // Business intelligence view
       case 'quotes':
         return <AdminQuoteRequestsTab />;
       case 'projects':
         return <AdminProjectsTab onStatsUpdate={loadDashboardStats} />;
       case 'invoices':
+        if (!permissions.canManageInvoices) {
+          return renderAccessDenied('Invoice Management');
+        }
         return <AdminInvoicesTab onStatsUpdate={loadDashboardStats} />;
       case 'requests':
         return <AdminServiceRequestsTab onStatsUpdate={loadDashboardStats} />;
       case 'users':
+        if (!permissions.canManageUsers) {
+          return renderAccessDenied('User Management');
+        }
         return <AdminUsersTab onStatsUpdate={loadDashboardStats} />;
       case 'team':
         return <AdminTeamTab onStatsUpdate={loadDashboardStats} />;
@@ -211,13 +246,41 @@ export const ModernAdminDashboard: React.FC = () => {
       case 'messages':
         return <AdminMessagingTab onStatsUpdate={loadDashboardStats} />;
       case 'workflows':
+        if (!permissions.canManageWorkflows) {
+          return renderAccessDenied('Workflow Management');
+        }
         return <AdminWorkflowTab />;
       case 'settings':
+        if (!permissions.canAccessSystemSettings) {
+          return renderAccessDenied('System Settings');
+        }
         return <AdminSettingsTab />;
       default:
         return renderOverview();
     }
   };
+
+  const renderAccessDenied = (featureName: string) => (
+    <div className="flex flex-col items-center justify-center h-96 space-y-4">
+      <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
+        <div className="flex justify-center mb-4">
+          <div className="bg-red-100 p-3 rounded-full">
+            <Settings className="h-8 w-8 text-red-600" />
+          </div>
+        </div>
+        <h2 className="text-xl font-semibold text-red-800 mb-2">Access Restricted</h2>
+        <p className="text-red-600 mb-4">
+          You don't have permission to access <strong>{featureName}</strong>.
+        </p>
+        <p className="text-sm text-red-500">
+          Contact your system administrator to request access to this feature.
+        </p>
+        <div className="mt-4 text-xs text-red-400">
+          Current Role: <span className="font-medium">{permissions.role || 'Unknown'}</span>
+        </div>
+      </div>
+    </div>
+  );
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -394,7 +457,7 @@ export const ModernAdminDashboard: React.FC = () => {
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
           <div className="p-6">
-            {loading ? (
+            {loading || permissionsLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
               </div>

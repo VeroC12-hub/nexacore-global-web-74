@@ -2,6 +2,8 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { EnhancedAuthProvider } from "./hooks/useEnhancedAuth";
+import { RoleBasedRedirect } from "./components/auth/RoleBasedRedirect";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -20,6 +22,7 @@ import ClientPortal from "./pages/ClientPortal";
 import Dashboard from "./pages/Dashboard";
 import QuoteReview from "./pages/QuoteReview";
 import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation"; // NEW IMPORT
+import StaffDashboardPage from "./pages/StaffDashboardPage"; // NEW IMPORT FOR STAFF DASHBOARD
 import AIAssistant from "./components/AIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
@@ -43,41 +46,48 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-              {/* PUBLIC ROUTES */}
-              <Route path="/" element={<Index />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/services" element={<Services />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/get-started" element={<GetStarted />} />
-              <Route path="/portfolio" element={<Portfolio />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/book-consultation" element={<BookConsultation />} />
-              
-              {/* AUTH ROUTES */}
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/confirm" element={<AuthConfirm />} /> {/* NEW ROUTE FOR EMAIL CONFIRMATION */}
-              <Route path="/auth/reset-password" element={<PasswordReset />} /> {/* NEW ROUTE FOR PASSWORD RESET */}
-              
-              {/* CLIENT ROUTES */}
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/client-portal" element={<ClientPortal />} />
-              <Route path="/quote/:id" element={<QuoteReview />} />
-              
-              {/* ADMIN/PM ROUTES */}
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/create-quote" element={<ProjectManagerQuoteCreation />} /> {/* NEW ROUTE */}
-              
-              {/* 404 FALLBACK */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <AIAssistant />
-            <CookieConsent />
-            <Toaster />
-            <Sonner />
-          </BrowserRouter>
+          <EnhancedAuthProvider>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+              <RoleBasedRedirect>
+                <Routes>
+                {/* PUBLIC ROUTES */}
+                <Route path="/" element={<Index />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/get-started" element={<GetStarted />} />
+                <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/book-consultation" element={<BookConsultation />} />
+                
+                {/* AUTH ROUTES */}
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/auth/confirm" element={<AuthConfirm />} /> {/* NEW ROUTE FOR EMAIL CONFIRMATION */}
+                <Route path="/auth/reset-password" element={<PasswordReset />} /> {/* NEW ROUTE FOR PASSWORD RESET */}
+                
+                {/* CLIENT ROUTES */}
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/client-portal" element={<ClientPortal />} />
+                <Route path="/quote/:id" element={<QuoteReview />} />
+                
+                {/* STAFF ROUTES */}
+                <Route path="/staff" element={<StaffDashboardPage />} /> {/* NEW STAFF DASHBOARD */}
+                
+                {/* ADMIN/PM ROUTES */}
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/create-quote" element={<ProjectManagerQuoteCreation />} /> {/* NEW ROUTE */}
+                
+                {/* 404 FALLBACK */}
+                <Route path="*" element={<NotFound />} />
+                </Routes>
+                <AIAssistant />
+                <CookieConsent />
+                <Toaster />
+                <Sonner />
+              </RoleBasedRedirect>
+            </BrowserRouter>
+          </EnhancedAuthProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
