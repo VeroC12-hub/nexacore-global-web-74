@@ -21,6 +21,8 @@ dist-ssr
 
 # Scripts with sensitive data
 scripts/
+*.cjs
+*.sql
 
 # Supabase temporary files
 supabase/.temp/
