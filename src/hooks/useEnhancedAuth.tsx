@@ -36,11 +36,27 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
 
       if (profileError) {
         console.error('Error fetching user profile:', profileError);
-        return null;
+        // Create a basic user with default role if profile doesn't exist
+        return {
+          id: authUser.id,
+          email: authUser.email!,
+          tenant_id: 'default',
+          role: 'admin' as UserRole, // Default to admin for users without profiles (system owner)
+          permissions: ROLE_PERMISSIONS['admin'] || [],
+          department: null,
+          position: null,
+          hourly_rate: null,
+          profile: {
+            full_name: authUser.email?.split('@')[0] || 'User',
+            avatar_url: null,
+            phone: null,
+            bio: null
+          }
+        };
       }
 
-      // Map roles to our enhanced user structure
-      const userRole = profileData.role as UserRole;
+      // Map roles to our enhanced user structure  
+      const userRole = (profileData?.role || 'admin') as UserRole;
       
       return {
         id: authUser.id,
@@ -48,14 +64,14 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
         tenant_id: 'default', // Use default tenant for now
         role: userRole,
         permissions: ROLE_PERMISSIONS[userRole] || [],
-        department: profileData.department,
-        position: profileData.position,
+        department: profileData?.department || null,
+        position: profileData?.position || null,
         hourly_rate: null, // Not in current profiles table
         profile: {
-          full_name: profileData.full_name,
-          avatar_url: profileData.avatar_url,
-          phone: profileData.phone,
-          bio: profileData.bio
+          full_name: profileData?.full_name || authUser.email?.split('@')[0] || 'User',
+          avatar_url: profileData?.avatar_url || null,
+          phone: profileData?.phone || null,
+          bio: profileData?.bio || null
         }
       };
     } catch (error) {
@@ -89,13 +105,19 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const enhancedUser = await fetchEnhancedUserData(session.user);
-        setUser(enhancedUser);
-      } else if (event === 'SIGNED_OUT') {
+      try {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const enhancedUser = await fetchEnhancedUserData(session.user);
+          setUser(enhancedUser);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => {

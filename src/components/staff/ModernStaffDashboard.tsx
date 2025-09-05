@@ -118,65 +118,75 @@ export const ModernStaffDashboard: React.FC = () => {
 
   const navigationItems = getNavigationItems();
 
-  // Load real data from database only
+  // Load real data from ERP database tables
   const loadDashboardData = async () => {
     if (!user) return;
     
     setDataLoading(true);
     try {
-      // Load real projects
+      // Load ERP projects
       const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
+        .from('erp_projects')
         .select(`*`)
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (!projectsError && projectsData) {
         setProjects(projectsData);
-        console.log('Projects loaded:', projectsData.length);
-      } else if (projectsError?.code === 'PGRST116' || projectsError?.message?.includes('relation "projects" does not exist')) {
-        console.log('Projects table does not exist yet. ERP tables need to be set up.');
+        console.log('ERP Projects loaded:', projectsData.length);
+      } else if (projectsError?.code === 'PGRST116' || projectsError?.message?.includes('relation "erp_projects" does not exist')) {
+        console.log('ERP projects table does not exist yet. Please run the ERP setup SQL.');
         setProjects([]);
       } else {
-        console.log('Projects query error:', projectsError);
+        console.log('ERP projects query error:', projectsError);
         setProjects([]);
       }
 
-      // Load real tasks
+      // Load ERP tasks
       const { data: tasksData, error: tasksError } = await supabase
-        .from('tasks')
-        .select('*')
+        .from('erp_tasks')
+        .select(`
+          *,
+          erp_project:erp_project_id (title, status)
+        `)
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (!tasksError && tasksData) {
         setTasks(tasksData);
-        console.log('Tasks loaded:', tasksData.length);
-      } else if (tasksError?.code === 'PGRST116' || tasksError?.message?.includes('relation "tasks" does not exist')) {
-        console.log('Tasks table does not exist yet. ERP tables need to be set up.');
+        console.log('ERP Tasks loaded:', tasksData.length);
+      } else if (tasksError?.code === 'PGRST116' || tasksError?.message?.includes('relation "erp_tasks" does not exist')) {
+        console.log('ERP tasks table does not exist yet. Please run the ERP setup SQL.');
         setTasks([]);
       } else {
-        console.log('Tasks query error:', tasksError);
+        console.log('ERP tasks query error:', tasksError);
         setTasks([]);
       }
 
-      // Load real time entries
+      // Load ERP time entries
       const { data: timeData, error: timeError } = await supabase
-        .from('time_entries')
-        .select('*')
+        .from('erp_time_entries')
+        .select(`
+          *,
+          erp_project:erp_project_id (title),
+          erp_task:erp_task_id (title)
+        `)
+        .order('date', { ascending: false })
         .limit(50);
 
       if (!timeError && timeData) {
         setTimeEntries(timeData);
-        console.log('Time entries loaded:', timeData.length);
-      } else if (timeError?.code === 'PGRST116' || timeError?.message?.includes('relation "time_entries" does not exist')) {
-        console.log('Time entries table does not exist yet. ERP tables need to be set up.');
+        console.log('ERP Time entries loaded:', timeData.length);
+      } else if (timeError?.code === 'PGRST116' || timeError?.message?.includes('relation "erp_time_entries" does not exist')) {
+        console.log('ERP time entries table does not exist yet. Please run the ERP setup SQL.');
         setTimeEntries([]);
       } else {
-        console.log('Time entries query error:', timeError);
+        console.log('ERP time entries query error:', timeError);
         setTimeEntries([]);
       }
 
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('Error loading ERP dashboard data:', error);
     } finally {
       setDataLoading(false);
     }

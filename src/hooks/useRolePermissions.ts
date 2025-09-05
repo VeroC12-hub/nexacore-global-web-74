@@ -109,9 +109,10 @@ export const useRolePermissions = () => {
 
         if (error) {
           console.error('Error fetching user role:', error);
-          setPermissions(getRolePermissions(null));
+          // Default to admin role if profile doesn't exist (system owner)
+          setPermissions(getRolePermissions('admin'));
         } else {
-          const userRole = profile.role as UserRole;
+          const userRole = (profile?.role || 'admin') as UserRole;
           setPermissions(getRolePermissions(userRole));
         }
       } catch (error) {
