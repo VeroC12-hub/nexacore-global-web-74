@@ -198,6 +198,7 @@ export function AdminERPTab() {
   const [selectedProject, setSelectedProject] = useState<ERPProject | null>(null);
   const [selectedTask, setSelectedTask] = useState<ERPTask | null>(null);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isProjectFormOpen, setIsProjectFormOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   
   // Export states
@@ -210,6 +211,22 @@ export function AdminERPTab() {
   const [isDrillDownOpen, setIsDrillDownOpen] = useState(false);
   const [drillDownData, setDrillDownData] = useState<any>(null);
   const [drillDownType, setDrillDownType] = useState<'department' | 'status' | 'performance'>('department');
+
+  // Project form states
+  const [projectFormData, setProjectFormData] = useState({
+    title: '',
+    description: '',
+    status: 'pending',
+    priority: 'medium',
+    progress: 0,
+    budget: 0,
+    actual_cost: 0,
+    start_date: '',
+    end_date: '',
+    project_type: 'development',
+    department: '',
+    is_active: true
+  });
 
   useEffect(() => {
     const initializeERPData = async () => {
@@ -438,6 +455,67 @@ export function AdminERPTab() {
     } catch (error) {
       console.error('Error updating project status:', error);
       toast.error('Failed to update project status');
+    }
+  };
+
+  const createProject = async () => {
+    try {
+      const { error } = await supabase
+        .from('erp_projects')
+        .insert([{
+          ...projectFormData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }]);
+
+      if (error) throw error;
+
+      await loadProjects();
+      await loadERPStats();
+      setIsProjectFormOpen(false);
+      setProjectFormData({
+        title: '',
+        description: '',
+        status: 'pending',
+        priority: 'medium',
+        progress: 0,
+        budget: 0,
+        actual_cost: 0,
+        start_date: '',
+        end_date: '',
+        project_type: 'development',
+        department: '',
+        is_active: true
+      });
+      toast.success('Project created successfully');
+    } catch (error) {
+      console.error('Error creating project:', error);
+      toast.error('Failed to create project');
+    }
+  };
+
+  const updateProject = async () => {
+    if (!selectedProject) return;
+    
+    try {
+      const { error } = await supabase
+        .from('erp_projects')
+        .update({
+          ...projectFormData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedProject.id);
+
+      if (error) throw error;
+
+      await loadProjects();
+      await loadERPStats();
+      setIsProjectFormOpen(false);
+      setSelectedProject(null);
+      toast.success('Project updated successfully');
+    } catch (error) {
+      console.error('Error updating project:', error);
+      toast.error('Failed to update project');
     }
   };
 
@@ -2086,9 +2164,21 @@ export function AdminERPTab() {
 
           {/* Projects Table */}
           <Card>
-            <CardHeader>
-              <CardTitle>ERP Projects ({filteredProjects.length})</CardTitle>
-              <CardDescription>Manage and monitor all internal projects</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <div>
+                <CardTitle>ERP Projects ({filteredProjects.length})</CardTitle>
+                <CardDescription>Manage and monitor all internal projects</CardDescription>
+              </div>
+              <Button 
+                onClick={() => {
+                  setSelectedProject(null);
+                  setIsProjectFormOpen(true);
+                }}
+                className="gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Add New Project
+              </Button>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
@@ -2177,7 +2267,28 @@ export function AdminERPTab() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedProject(project);
+                              setProjectFormData({
+                                title: project.title,
+                                description: project.description,
+                                status: project.status,
+                                priority: project.priority,
+                                progress: project.progress,
+                                budget: project.budget,
+                                actual_cost: project.actual_cost,
+                                start_date: project.start_date,
+                                end_date: project.end_date,
+                                project_type: project.project_type,
+                                department: project.department,
+                                is_active: project.is_active
+                              });
+                              setIsProjectFormOpen(true);
+                            }}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </div>
@@ -2486,6 +2597,178 @@ export function AdminERPTab() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsProjectModalOpen(false)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Project Form Modal */}
+      <Dialog open={isProjectFormOpen} onOpenChange={setIsProjectFormOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedProject ? 'Edit Project' : 'Create New Project'}</DialogTitle>
+            <DialogDescription>
+              {selectedProject ? 'Update the project details below.' : 'Fill in the project details to create a new project.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="project-title">Project Title *</Label>
+                <Input
+                  id="project-title"
+                  value={projectFormData.title}
+                  onChange={(e) => setProjectFormData({...projectFormData, title: e.target.value})}
+                  placeholder="Enter project title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="project-department">Department *</Label>
+                <Input
+                  id="project-department"
+                  value={projectFormData.department}
+                  onChange={(e) => setProjectFormData({...projectFormData, department: e.target.value})}
+                  placeholder="e.g., Development, Marketing"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="project-description">Description</Label>
+              <Textarea
+                id="project-description"
+                value={projectFormData.description}
+                onChange={(e) => setProjectFormData({...projectFormData, description: e.target.value})}
+                placeholder="Describe the project objectives and scope"
+                rows={3}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="project-status">Status</Label>
+                <Select value={projectFormData.status} onValueChange={(value) => setProjectFormData({...projectFormData, status: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="on_hold">On Hold</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="project-priority">Priority</Label>
+                <Select value={projectFormData.priority} onValueChange={(value) => setProjectFormData({...projectFormData, priority: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="project-type">Project Type</Label>
+                <Select value={projectFormData.project_type} onValueChange={(value) => setProjectFormData({...projectFormData, project_type: value})}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="development">Development</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                    <SelectItem value="research">Research</SelectItem>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                    <SelectItem value="support">Support</SelectItem>
+                    <SelectItem value="infrastructure">Infrastructure</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="project-start-date">Start Date</Label>
+                <Input
+                  id="project-start-date"
+                  type="date"
+                  value={projectFormData.start_date}
+                  onChange={(e) => setProjectFormData({...projectFormData, start_date: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="project-end-date">End Date</Label>
+                <Input
+                  id="project-end-date"
+                  type="date"
+                  value={projectFormData.end_date}
+                  onChange={(e) => setProjectFormData({...projectFormData, end_date: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="project-budget">Budget ($)</Label>
+                <Input
+                  id="project-budget"
+                  type="number"
+                  value={projectFormData.budget}
+                  onChange={(e) => setProjectFormData({...projectFormData, budget: parseInt(e.target.value) || 0})}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="project-actual-cost">Actual Cost ($)</Label>
+                <Input
+                  id="project-actual-cost"
+                  type="number"
+                  value={projectFormData.actual_cost}
+                  onChange={(e) => setProjectFormData({...projectFormData, actual_cost: parseInt(e.target.value) || 0})}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <Label htmlFor="project-progress">Progress (%)</Label>
+                <Input
+                  id="project-progress"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={projectFormData.progress}
+                  onChange={(e) => setProjectFormData({...projectFormData, progress: parseInt(e.target.value) || 0})}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="project-active"
+                checked={projectFormData.is_active}
+                onCheckedChange={(checked) => setProjectFormData({...projectFormData, is_active: checked})}
+              />
+              <Label htmlFor="project-active">Active Project</Label>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsProjectFormOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={selectedProject ? updateProject : createProject}
+              disabled={!projectFormData.title || !projectFormData.department}
+            >
+              {selectedProject ? 'Update Project' : 'Create Project'}
             </Button>
           </DialogFooter>
         </DialogContent>
