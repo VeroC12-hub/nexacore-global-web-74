@@ -142,13 +142,10 @@ export const ModernStaffDashboard: React.FC = () => {
         setProjects([]);
       }
 
-      // Load ERP tasks
+      // Load ERP tasks with basic query (foreign key relationships need proper setup)
       const { data: tasksData, error: tasksError } = await supabase
         .from('erp_tasks')
-        .select(`
-          *,
-          erp_project:erp_project_id (title, status)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -163,14 +160,10 @@ export const ModernStaffDashboard: React.FC = () => {
         setTasks([]);
       }
 
-      // Load ERP time entries
+      // Load ERP time entries with basic query (foreign key relationships need proper setup)
       const { data: timeData, error: timeError } = await supabase
         .from('erp_time_entries')
-        .select(`
-          *,
-          erp_project:erp_project_id (title),
-          erp_task:erp_task_id (title)
-        `)
+        .select('*')
         .order('date', { ascending: false })
         .limit(50);
 

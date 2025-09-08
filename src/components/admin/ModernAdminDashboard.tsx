@@ -44,6 +44,7 @@ import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab';
 import AdminQuoteRequestsTab from '@/components/admin/AdminQuoteRequestsTab';
 import AdminAnalytics from '@/components/analytics/AdminAnalytics';
 import { AdminERPTab } from '@/components/admin/AdminERPTab';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 interface DashboardStats {
   totalUsers: number;
@@ -242,7 +243,16 @@ export const ModernAdminDashboard: React.FC = () => {
       case 'settings':
         return <AdminSettingsTab />;
       case 'erp':
-        return <AdminERPTab />;
+        return (
+          <ErrorBoundary
+            onError={(error, errorInfo) => {
+              console.error('🚨 AdminERPTab Error:', error);
+              console.error('🚨 Component Stack:', errorInfo.componentStack);
+            }}
+          >
+            <AdminERPTab />
+          </ErrorBoundary>
+        );
       default:
         return renderOverview();
     }

@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react'; // Add this import for scroll to top
+import { useSEO } from '@/hooks/useSEO';
+import { generateImageSEO } from '@/utils/imageOptimization';
+import { initializeComprehensiveTracking, trackServiceInterest } from '@/utils/analyticsConfig';
 import heroImage from '@/assets/hero-main.jpg';
 import teamImage from '@/assets/team-collaboration.jpg';
 import abstractBg from '@/assets/abstract-tech.jpg';
@@ -27,9 +30,34 @@ import EnhancedHeroButtons from '@/components/EnhancedHeroButtons';
 const Index = () => {
   const navigate = useNavigate();
 
+  // SEO optimization for homepage
+  useSEO({ 
+    page: 'home',
+    customData: {
+      keywords: [
+        'engineering services Ghana',
+        'software development Africa',
+        'CAD design services',
+        '3D modeling company',
+        'AI machine learning development',
+        'blockchain development Ghana',
+        'web application development',
+        'mobile app development',
+        'graphic design services',
+        'data analytics consulting',
+        'tech innovation hub Ghana',
+        'global engineering solutions'
+      ]
+    },
+    enableTracking: true 
+  });
+
   // Auto-scroll to top when component mounts
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Initialize comprehensive analytics tracking
+    initializeComprehensiveTracking();
   }, []);
 
   // Function to handle service card click
@@ -42,11 +70,28 @@ const Index = () => {
       'Data & Digital Growth': 'Data Analysis'
     };
 
+    // Map to analytics categories
+    const analyticsMapping = {
+      'Engineering & Technical': 'CAD_DESIGN',
+      'Software & App Development': 'SOFTWARE_DEV', 
+      'Creative & Branding': 'GRAPHIC_DESIGN',
+      'Data & Digital Growth': 'DATA_ANALYTICS'
+    };
+
     const selectedService = serviceMapping[serviceTitle] || 'Software Engineering';
+    const analyticsCategory = analyticsMapping[serviceTitle] || 'SOFTWARE_DEV';
+    
+    // Track service interest for SEO analytics
+    trackServiceInterest(analyticsCategory, window.location.pathname, {
+      service_title: serviceTitle,
+      selected_service: selectedService,
+      click_source: 'homepage_service_card'
+    });
     
     // Debug logging to track service selection
     console.log('Index.tsx - Service clicked:', serviceTitle);
     console.log('Index.tsx - Mapped to service:', selectedService);
+    console.log('Index.tsx - Analytics category:', analyticsCategory);
     
     // Navigate to GetStarted with the selected service as a URL parameter
     navigate(`/get-started?service=${encodeURIComponent(selectedService)}`);

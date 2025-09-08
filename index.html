@@ -37,6 +37,23 @@
     <!-- Performance Optimization -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-M79SEPLBFQ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-M79SEPLBFQ', {
+        send_page_view: true,
+        enhanced_measurement: true,
+        custom_map: {
+          'custom_parameter_1': 'service_category',
+          'custom_parameter_2': 'client_industry',
+          'custom_parameter_3': 'page_type'
+        }
+      });
+    </script>
 
     <!-- 📧 EmailJS Script - REQUIRED FOR CONTACT FORM -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>

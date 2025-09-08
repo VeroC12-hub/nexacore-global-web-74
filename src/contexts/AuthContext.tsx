@@ -19,23 +19,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+    let subscription: any = null;
+    
+    try {
+      // Set up auth state listener FIRST
+      const authListener = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      );
+
+      if (authListener?.data?.subscription) {
+        subscription = authListener.data.subscription;
       }
-    );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      // THEN check for existing session with error handling
+      supabase.auth.getSession()
+        .then(({ data: { session } }) => {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.warn('AuthContext session error:', error);
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+        });
+    } catch (error) {
+      console.error('Error setting up auth context:', error);
       setLoading(false);
-    });
+    }
 
-    return () => subscription.unsubscribe();
+    return () => {
+      try {
+        if (subscription?.unsubscribe) {
+          subscription.unsubscribe();
+        }
+      } catch (error) {
+        console.warn('Error unsubscribing from auth context:', error);
+      }
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

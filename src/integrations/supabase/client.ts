@@ -12,6 +12,13 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     storage: localStorage,
     persistSession: true,
-    autoRefreshToken: true,
+    autoRefreshToken: false, // Disable auto refresh to prevent unwanted requests
+    detectSessionInUrl: false,
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'apikey': SUPABASE_PUBLISHABLE_KEY
+    }
   }
 });

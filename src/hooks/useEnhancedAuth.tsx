@@ -83,10 +83,17 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
   const refreshUser = async () => {
     setLoading(true);
     try {
-      const { data: { user: authUser } } = await supabase.auth.getUser();
+      // First check if we have a session to avoid unnecessary API calls
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (authUser) {
-        const enhancedUser = await fetchEnhancedUserData(authUser);
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        setUser(null);
+        return;
+      }
+
+      if (session?.user) {
+        const enhancedUser = await fetchEnhancedUserData(session.user);
         setUser(enhancedUser);
       } else {
         setUser(null);
@@ -103,25 +110,42 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
     // Get initial user
     refreshUser();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      try {
-        if (event === 'SIGNED_IN' && session?.user) {
-          const enhancedUser = await fetchEnhancedUserData(session.user);
-          setUser(enhancedUser);
-        } else if (event === 'SIGNED_OUT') {
+    // Listen for auth changes with error handling
+    let subscription: any = null;
+    
+    try {
+      const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
+        try {
+          if (event === 'SIGNED_IN' && session?.user) {
+            const enhancedUser = await fetchEnhancedUserData(session.user);
+            setUser(enhancedUser);
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
+          }
+        } catch (error) {
+          console.error('Error in auth state change:', error);
           setUser(null);
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        console.error('Error in auth state change:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
+      });
+
+      if (authListener?.data?.subscription) {
+        subscription = authListener.data.subscription;
       }
-    });
+    } catch (error) {
+      console.error('Error setting up auth listener:', error);
+      setLoading(false);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      try {
+        if (subscription?.unsubscribe) {
+          subscription.unsubscribe();
+        }
+      } catch (error) {
+        console.warn('Error unsubscribing from auth listener:', error);
+      }
     };
   }, []);
 
