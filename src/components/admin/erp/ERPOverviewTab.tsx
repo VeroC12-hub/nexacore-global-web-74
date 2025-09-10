@@ -15,6 +15,7 @@ import { SearchOperatorHelp } from './SearchOperatorHelp';
 import { SearchHistoryDropdown } from './SearchHistoryDropdown';
 import { SearchAnalyticsDashboard } from './SearchAnalyticsDashboard';
 import { VoiceSearchButtonMini } from './VoiceSearchButton';
+import { EnhancedSearchBar } from './EnhancedSearchBar';
 import { 
   TrendingUp,
   DollarSign,
@@ -485,58 +486,23 @@ export function ERPOverviewTab({
             <p className="text-blue-100">Here's what's happening with your business today</p>
           </div>
           <div className="flex items-center gap-3">
+            {/* Enhanced Search Bar */}
             <div className="relative" onClick={(e) => e.stopPropagation()}>
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search with operators: type:project status:active @john"
-                  value={searchTerm}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  onFocus={handleSearchFocus}
-                  onBlur={handleSearchBlur}
-                  className="pl-10 pr-20 w-96 bg-white/10 border-white/20 text-white placeholder:text-blue-200 focus:bg-white/20 transition-colors"
-                  autoComplete="off"
-                />
-                <div className="absolute right-2 top-2 flex items-center gap-1">
-                  {/* Voice Search Button */}
-                  <VoiceSearchButtonMini
-                    onTranscript={handleVoiceTranscript}
-                    onError={handleVoiceError}
-                    language="en-US"
-                    className="text-blue-200 hover:text-white hover:bg-white/10"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleShowHistory}
-                    className="h-6 w-6 p-0 text-blue-200 hover:text-white hover:bg-white/10"
-                    title="Search history"
-                  >
-                    <History className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleShowHelp}
-                    className="h-6 w-6 p-0 text-blue-200 hover:text-white hover:bg-white/10"
-                    title="Search help and operators"
-                  >
-                    <HelpCircle className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleShowAnalytics}
-                    className="h-6 w-6 p-0 text-blue-200 hover:text-white hover:bg-white/10"
-                    title="Search analytics"
-                  >
-                    <BarChart3 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </form>
+              <EnhancedSearchBar
+                value={searchTerm}
+                onChange={setSearchTerm}
+                onSubmit={(query) => {
+                  handleSearch(query);
+                  handleSearchSubmit(new Event('submit') as any);
+                }}
+                onFocus={handleSearchFocus}
+                onBlur={handleSearchBlur}
+                onVoiceTranscript={handleVoiceTranscript}
+                onVoiceError={handleVoiceError}
+                loading={searchLoading}
+                showSuggestions={searchInputFocused}
+                className="w-[500px]"
+              />
               
               {/* Search Results */}
               {(showSearchResults || searchLoading) && (
@@ -586,6 +552,42 @@ export function ERPOverviewTab({
                 </div>
               )}
             </div>
+            
+            {/* Search Action Buttons */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleShowHistory}
+                className="text-blue-200 hover:text-white hover:bg-white/10"
+                title="Search history"
+              >
+                <History className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleShowHelp}
+                className="text-blue-200 hover:text-white hover:bg-white/10"
+                title="Search help and operators"
+              >
+                <HelpCircle className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleShowAnalytics}
+                className="text-blue-200 hover:text-white hover:bg-white/10"
+                title="Search analytics"
+              >
+                <BarChart3 className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Notification Button */}
             <div className="relative">
               <Button 
                 variant="secondary" 

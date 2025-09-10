@@ -67,19 +67,38 @@ const Services = () => {
 
   // Function to handle service category click
   const handleServiceClick = (categoryTitle) => {
-    // Map category titles to specific services in GetStarted
+    // Map category titles to specific service pages
     const serviceMapping = {
-      'Engineering & Technical Services': 'CAD Engineering',
-      'Software & App Development': 'Software Engineering',
-      'Creative & Branding': 'Graphic Design',
-      'Data & Digital Growth': 'Data Analysis',
-      'Professional Services': 'Cybersecurity Solutions'
+      'Engineering & Technical Services': '/services/cad-design-engineering',
+      'Software & App Development': '/remote-development',
+      'Creative & Branding': '/get-started?service=Graphic Design',
+      'Data & Digital Growth': '/get-started?service=Data Analysis',
+      'Professional Services': '/get-started?service=Cybersecurity Solutions'
     };
 
-    const selectedService = serviceMapping[categoryTitle] || 'Software Engineering';
+    const targetPath = serviceMapping[categoryTitle] || '/get-started';
     
-    // Navigate to GetStarted with the selected service as a URL parameter
-    navigate(`/get-started?service=${encodeURIComponent(selectedService)}`);
+    // Navigate to specific service page or GetStarted
+    navigate(targetPath);
+  };
+
+  // Function to handle individual service item click
+  const handleServiceItemClick = (serviceName, event) => {
+    event.stopPropagation(); // Prevent category click
+    
+    const serviceMapping = {
+      'CAD/Design Engineering': '/services/cad-design-engineering',
+      'AI/ML Engineering': '/services/ai-machine-learning',
+      'Blockchain/Web3 Solutions': '/services/blockchain-web3',
+      'Custom Software Development': '/remote-development',
+      'Mobile App Development': '/get-started?service=Mobile App Development',
+      '3D Animation & VFX': '/get-started?service=3D Animation',
+      'E-Commerce Technology': '/get-started?service=E-Commerce Development',
+      'Cybersecurity Solutions': '/get-started?service=Cybersecurity Solutions'
+    };
+
+    const targetPath = serviceMapping[serviceName] || '/get-started';
+    navigate(targetPath);
   };
 
   const serviceCategories = [
@@ -212,10 +231,14 @@ const Services = () => {
                 <p className="text-lg text-muted-foreground">{category.description}</p>
                 <ul className="space-y-4">
                   {category.services.map((service, idx) => (
-                    <li key={idx} className="flex items-start space-x-3">
+                    <li 
+                      key={idx} 
+                      className="flex items-start space-x-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors"
+                      onClick={(e) => handleServiceItemClick(service.name, e)}
+                    >
                       <CheckCircle className="w-5 h-5 text-success mt-1 flex-shrink-0" />
                       <div>
-                        <h4 className="font-semibold text-foreground">{service.name}</h4>
+                        <h4 className="font-semibold text-foreground hover:text-primary transition-colors">{service.name}</h4>
                         <p className="text-sm text-muted-foreground">{service.description}</p>
                       </div>
                     </li>

@@ -12,6 +12,10 @@ import GetStarted from "./pages/GetStarted";
 import Portfolio from "./pages/Portfolio";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import RemoteDevelopment from "./pages/RemoteDevelopment";
+import AIMLServices from "./pages/services/AIMLServices";
+import CADServices from "./pages/services/CADServices";
+import BlockchainServices from "./pages/services/BlockchainServices";
 import NotFound from "./pages/NotFound";
 import BookConsultation from "./pages/BookConsultation";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -54,6 +58,10 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/services" element={<Services />} />
+                <Route path="/remote-development" element={<RemoteDevelopment />} />
+                <Route path="/services/ai-machine-learning" element={<AIMLServices />} />
+                <Route path="/services/cad-design-engineering" element={<CADServices />} />
+                <Route path="/services/blockchain-web3" element={<BlockchainServices />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/get-started" element={<GetStarted />} />
                 <Route path="/portfolio" element={<Portfolio />} />
