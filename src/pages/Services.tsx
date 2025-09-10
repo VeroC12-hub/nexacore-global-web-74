@@ -67,19 +67,19 @@ const Services = () => {
 
   // Function to handle service category click
   const handleServiceClick = (categoryTitle) => {
-    // Map category titles to specific service pages
+    // Map category titles to specific services in GetStarted
     const serviceMapping = {
-      'Engineering & Technical Services': '/services/cad-design-engineering',
-      'Software & App Development': '/remote-development',
-      'Creative & Branding': '/get-started?service=Graphic Design',
-      'Data & Digital Growth': '/get-started?service=Data Analysis',
-      'Professional Services': '/get-started?service=Cybersecurity Solutions'
+      'Engineering & Technical Services': 'CAD Engineering',
+      'Software & App Development': 'Software Engineering',
+      'Creative & Branding': 'Graphic Design',
+      'Data & Digital Growth': 'Data Analysis',
+      'Professional Services': 'Cybersecurity Solutions'
     };
 
-    const targetPath = serviceMapping[categoryTitle] || '/get-started';
+    const selectedService = serviceMapping[categoryTitle] || 'Software Engineering';
     
-    // Navigate to specific service page or GetStarted
-    navigate(targetPath);
+    // Navigate to GetStarted with the selected service as a URL parameter
+    navigate(`/get-started?service=${encodeURIComponent(selectedService)}`);
   };
 
   // Function to handle individual service item click
