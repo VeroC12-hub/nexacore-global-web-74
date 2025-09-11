@@ -16,6 +16,7 @@ import RemoteDevelopment from "./pages/RemoteDevelopment";
 import AIMLServices from "./pages/services/AIMLServices";
 import CADServices from "./pages/services/CADServices";
 import BlockchainServices from "./pages/services/BlockchainServices";
+import EngineeringTechnical from "./pages/services/EngineeringTechnical";
 import NotFound from "./pages/NotFound";
 import BookConsultation from "./pages/BookConsultation";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -58,6 +59,7 @@ const App = () => {
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/services" element={<Services />} />
+                <Route path="/services/engineering-technical" element={<EngineeringTechnical />} />
                 <Route path="/remote-development" element={<RemoteDevelopment />} />
                 <Route path="/services/ai-machine-learning" element={<AIMLServices />} />
                 <Route path="/services/cad-design-engineering" element={<CADServices />} />

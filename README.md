@@ -1,13 +1,20 @@
-# NexaCore Innovations - Full Stack Web Platform
+# NexaCore Innovations - Global Web Platform
 
-A comprehensive, modern web platform for **NexaCore Innovations**, featuring a complete client portal, admin dashboard, project management system, and business website. Built with React, TypeScript, and Supabase for global engineering and technology services.
+**Professional engineering and technology services company website with integrated ERP and portfolio management system.**
 
-## 🌟 Platform Overview
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Status](https://img.shields.io/badge/status-production-green.svg)
+![License](https://img.shields.io/badge/license-proprietary-red.svg)
 
-**NexaCore Innovations** is a full-featured business platform that combines:
-- **Public Website**: Professional business presence with service showcases
-- **Client Portal**: Secure project tracking and collaboration tools
-- **Admin Dashboard**: Complete business management and CRM system
+## 🌟 Overview
+
+NexaCore Innovations is a cutting-edge engineering and technology services company offering:
+
+- **CAD Design & Engineering** - Professional 2D/3D design and technical drawings
+- **Software Development** - Custom applications, web platforms, and mobile apps  
+- **AI/ML Solutions** - Machine learning models and data analytics
+- **Digital Services** - E-commerce, UI/UX design, and digital marketing
+- **Professional Consulting** - Business strategy and technical expertise
 - **Project Management**: End-to-end project lifecycle management
 - **Real-time Communication**: Integrated messaging and notification system
 
