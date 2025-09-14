@@ -381,7 +381,12 @@ export type Permission =
   | 'view_reports'
   | 'manage_settings'
   | 'view_financials'
-  | 'manage_clients';
+  | 'manage_clients'
+  | 'view_all_portfolio'
+  | 'edit_all_portfolio'
+  | 'edit_own_portfolio'
+  | 'approve_portfolio'
+  | 'delete_portfolio';
 
 // Role Permission Mapping
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
@@ -396,7 +401,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_reports',
     'manage_settings',
     'view_financials',
-    'manage_clients'
+    'manage_clients',
+    'view_all_portfolio',
+    'edit_all_portfolio',
+    'approve_portfolio',
+    'delete_portfolio'
   ],
   project_manager: [
     'view_all_projects',
@@ -405,7 +414,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'view_all_time_entries',
     'approve_time_entries',
     'view_reports',
-    'view_financials'
+    'view_financials',
+    'view_all_portfolio',
+    'edit_all_portfolio',
+    'approve_portfolio'
   ],
   operations_manager: [
     'view_all_projects',
@@ -415,13 +427,20 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'approve_time_entries',
     'manage_team',
     'view_reports',
-    'view_financials'
+    'view_financials',
+    'view_all_portfolio',
+    'edit_all_portfolio',
+    'approve_portfolio'
   ],
   developer: [
-    'view_all_projects'
+    'view_all_projects',
+    'view_all_portfolio',
+    'edit_own_portfolio'
   ],
   support: [
-    'view_all_projects'
+    'view_all_projects',
+    'view_all_portfolio',
+    'edit_own_portfolio'
   ],
   client: []
 };

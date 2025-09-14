@@ -15,6 +15,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { usePortfolioData, formatFileSize, getServiceIcon } from '@/hooks/usePortfolioData';
+import { PortfolioFilters } from './AdvancedPortfolioSearch';
 
 interface PortfolioDisplayProps {
   serviceId?: string;
@@ -22,6 +23,8 @@ interface PortfolioDisplayProps {
   showLoadingState?: boolean;
   showFeaturedOnly?: boolean;
   className?: string;
+  filters?: PortfolioFilters;
+  showAdvancedSearch?: boolean;
 }
 
 export default function PortfolioDisplay({ 
@@ -29,14 +32,96 @@ export default function PortfolioDisplay({
   maxProjects = 6, 
   showLoadingState = true,
   showFeaturedOnly = false,
-  className = "" 
+  className = "",
+  filters,
+  showAdvancedSearch = false
 }: PortfolioDisplayProps) {
   const { projects, loading, error, refetch } = usePortfolioData(serviceId, maxProjects);
 
-  // Filter featured projects if requested
-  const displayProjects = showFeaturedOnly 
-    ? projects.filter(p => p.is_featured)
-    : projects;
+  // Apply all filters
+  const applyFilters = (projectList: any[]) => {
+    let filtered = projectList;
+
+    // Featured only filter
+    if (showFeaturedOnly) {
+      filtered = filtered.filter(p => p.is_featured);
+    }
+
+    // Advanced filters
+    if (filters) {
+      // Search term filter
+      if (filters.searchTerm) {
+        const term = filters.searchTerm.toLowerCase();
+        filtered = filtered.filter(p => 
+          p.title?.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term) ||
+          p.short_description?.toLowerCase().includes(term) ||
+          p.client_name?.toLowerCase().includes(term)
+        );
+      }
+
+      // Service filter
+      if (filters.services.length > 0) {
+        filtered = filtered.filter(p => filters.services.includes(p.service_id));
+      }
+
+      // Tags filter
+      if (filters.tags.length > 0) {
+        filtered = filtered.filter(p => 
+          p.tags && p.tags.some((tag: string) => filters.tags.includes(tag))
+        );
+      }
+
+      // Date range filter
+      if (filters.dateRange !== 'all') {
+        const now = new Date();
+        const days = filters.dateRange === '30d' ? 30 : filters.dateRange === '90d' ? 90 : 365;
+        const cutoffDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+        filtered = filtered.filter(p => new Date(p.created_at) >= cutoffDate);
+      }
+
+      // Featured only filter from advanced search
+      if (filters.featuredOnly) {
+        filtered = filtered.filter(p => p.is_featured);
+      }
+
+      // Show client name filter
+      if (filters.showClientName) {
+        filtered = filtered.filter(p => p.show_client_name);
+      }
+
+      // File types filter
+      if (filters.fileTypes.length > 0) {
+        filtered = filtered.filter(p => {
+          if (!p.portfolio_files || p.portfolio_files.length === 0) return false;
+          return p.portfolio_files.some((file: any) => 
+            filters.fileTypes.includes(file.file_type?.toUpperCase())
+          );
+        });
+      }
+
+      // Sorting
+      filtered.sort((a, b) => {
+        const order = filters.sortOrder === 'asc' ? 1 : -1;
+        
+        switch (filters.sortBy) {
+          case 'title':
+            return order * (a.title || '').localeCompare(b.title || '');
+          case 'client':
+            return order * (a.client_name || '').localeCompare(b.client_name || '');
+          case 'featured':
+            return order * ((b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
+          case 'date':
+          default:
+            return order * (new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        }
+      });
+    }
+
+    return filtered;
+  };
+
+  const displayProjects = applyFilters(projects);
 
   if (loading && showLoadingState) {
     return (

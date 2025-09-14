@@ -88,6 +88,12 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       
       if (sessionError) {
         console.error('Session error:', sessionError);
+        // If refresh token is invalid, clear it and sign out
+        if (sessionError.message?.includes('Invalid Refresh Token') || 
+            sessionError.message?.includes('Refresh Token Not Found')) {
+          console.log('Clearing invalid refresh token...');
+          await supabase.auth.signOut();
+        }
         setUser(null);
         return;
       }
@@ -98,8 +104,14 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       } else {
         setUser(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error refreshing user:', error);
+      // If refresh token is invalid, clear it and sign out
+      if (error?.message?.includes('Invalid Refresh Token') || 
+          error?.message?.includes('Refresh Token Not Found')) {
+        console.log('Clearing invalid refresh token...');
+        await supabase.auth.signOut();
+      }
       setUser(null);
     } finally {
       setLoading(false);

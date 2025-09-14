@@ -100,41 +100,7 @@ export const ModernStaffDashboard: React.FC = () => {
     budget: '',
     deadline: ''
   });
-  // Sample project data for testing
-  const sampleProjects = [
-    {
-      id: 1,
-      title: 'E-commerce Website Redesign',
-      description: 'Complete overhaul of the existing e-commerce platform with modern UI/UX design',
-      status: 'in_progress',
-      progress: 65,
-      budget: '15000',
-      deadline: '2024-12-15',
-      client: { full_name: 'TechCorp Solutions' }
-    },
-    {
-      id: 2,
-      title: 'Mobile App Development',
-      description: 'Native iOS and Android app development for customer engagement',
-      status: 'planning',
-      progress: 25,
-      budget: '25000',
-      deadline: '2024-11-30',
-      client: { full_name: 'StartupXYZ' }
-    },
-    {
-      id: 3,
-      title: 'Database Migration',
-      description: 'Migration from legacy database to modern cloud infrastructure',
-      status: 'completed',
-      progress: 100,
-      budget: '8000',
-      deadline: '2024-10-01',
-      client: { full_name: 'Enterprise Ltd' }
-    }
-  ];
-  
-  const [projects, setProjects] = useState<any[]>(sampleProjects);
+  const [projects, setProjects] = useState<any[]>([]);
   const [portfolioProjects, setPortfolioProjects] = useState<any[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
@@ -399,20 +365,6 @@ export const ModernStaffDashboard: React.FC = () => {
   }, [user?.id, authLoading]);
 
   // ERP-style render functions
-  // Render function for active view
-  const renderActiveView = () => {
-    if (activeView === 'overview') return renderOverview();
-    if (activeView === 'projects') return renderProjects();
-    if (activeView === 'portfolio') return renderPortfolio();
-    if (activeView === 'tasks') return renderTasks();
-    if (activeView === 'timesheet') return renderTimesheet();
-    
-    // For other ERP modules, show coming soon
-    return renderComingSoon(
-      navigationItems.find(item => item.id === activeView)?.label || 'Module'
-    );
-  };
-
   const renderOverview = () => (
     <div className="space-y-6">
       {/* ERP Dashboard Header */}
@@ -534,21 +486,7 @@ export const ModernStaffDashboard: React.FC = () => {
               <FileText className="h-4 w-4 mr-2" />
               Help & Tutorials
             </Button>
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700"
-              onClick={() => {
-                setProjectEditForm({
-                  title: '',
-                  description: '',
-                  status: 'planning',
-                  progress: 0,
-                  budget: '',
-                  deadline: ''
-                });
-                setSelectedProjectForEdit(null);
-                setShowProjectEdit(true);
-              }}
-            >
+            <Button className="bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
               Create Project
             </Button>
@@ -789,7 +727,6 @@ export const ModernStaffDashboard: React.FC = () => {
             </table>
           </div>
         )}
-        </div>
       </div>
     </div>
   );
@@ -1131,6 +1068,40 @@ export const ModernStaffDashboard: React.FC = () => {
     </div>
   );
 
+  const renderActiveView = () => {
+    switch (activeView) {
+      case 'projects':
+        return renderProjects();
+      case 'portfolio':
+        return renderPortfolio();
+      case 'tasks':
+        return renderTasks();
+      case 'timesheet':
+        return renderTimesheet();
+      case 'crm':
+        return renderComingSoon('Customer Relationship Management');
+      case 'sales':
+        return renderComingSoon('Sales Management');
+      case 'inventory':
+        return renderComingSoon('Inventory Management');
+      case 'accounting':
+        return renderComingSoon('Accounting & Finance');
+      case 'hr':
+        return renderComingSoon('Human Resources');
+      case 'reporting':
+        return renderComingSoon('Advanced Reporting');
+      case 'workflow':
+        return renderComingSoon('Workflow Management');
+      case 'analytics':
+        return renderComingSoon('Business Intelligence');
+      case 'administration':
+        return renderComingSoon('System Administration');
+      case 'system':
+        return renderComingSoon('System Configuration');
+      default:
+        return renderOverview();
+    }
+  };
 
   if (authLoading) {
     return (

@@ -19,6 +19,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import PortfolioDisplay from '@/components/portfolio/PortfolioDisplay';
 
 const BlockchainServices = () => {
   const navigate = useNavigate();
@@ -319,6 +320,29 @@ const BlockchainServices = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Blockchain Portfolio Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+              Our <span className="text-gradient-primary">Blockchain & Web3</span> Projects
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Discover our portfolio of innovative blockchain solutions and Web3 applications.
+              From smart contracts to decentralized platforms, see how we've helped businesses embrace blockchain technology.
+            </p>
+          </div>
+
+          {/* Portfolio Display Component */}
+          <PortfolioDisplay 
+            serviceId="blockchain"
+            maxProjects={6}
+            showLoadingState={true}
+            className="mb-8"
+          />
         </div>
       </section>
 

@@ -21,7 +21,8 @@ import {
   Calendar,
   Clock,
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  Camera
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,6 +37,7 @@ import { AdminProjectsTab } from '@/components/admin/AdminProjectsTab';
 import { AdminInvoicesTab } from '@/components/admin/AdminInvoicesTab';
 import { AdminServiceRequestsTab } from '@/components/admin/AdminServiceRequestsTab';
 import { AdminUsersTab } from '@/components/admin/AdminUsersTab';
+import AdminPortfolioTab from '@/components/admin/AdminPortfolioTab';
 import { AdminTeamTab } from '@/components/admin/AdminTeamTab';
 import { AdminFileRepositoryTab } from '@/components/admin/AdminFileRepositoryTab';
 import { AdminMessagingTab } from '@/components/admin/AdminMessagingTab';
@@ -196,6 +198,7 @@ export const ModernAdminDashboard: React.FC = () => {
     { id: 'business', label: 'Business', icon: <DollarSign className="h-5 w-5" />, count: null, requiresPermission: 'canViewFinancials' },
     { id: 'quotes', label: 'Quotes', icon: <FileText className="h-5 w-5" />, count: stats.pendingRequests, requiresPermission: null },
     { id: 'projects', label: 'Projects', icon: <FolderOpen className="h-5 w-5" />, count: stats.totalProjects, requiresPermission: null },
+    { id: 'portfolio', label: 'Portfolio', icon: <Camera className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'invoices', label: 'Invoices', icon: <CreditCard className="h-5 w-5" />, count: stats.totalInvoices, requiresPermission: 'canManageInvoices' },
     { id: 'requests', label: 'Requests', icon: <MessageSquare className="h-5 w-5" />, count: stats.pendingRequests, requiresPermission: null },
     { id: 'users', label: 'Users', icon: <Users className="h-5 w-5" />, count: stats.totalUsers, requiresPermission: 'canManageUsers' },
@@ -226,6 +229,8 @@ export const ModernAdminDashboard: React.FC = () => {
         return <AdminQuoteRequestsTab />;
       case 'projects':
         return <AdminProjectsTab onStatsUpdate={loadDashboardStats} />;
+      case 'portfolio':
+        return <AdminPortfolioTab onStatsUpdate={loadDashboardStats} />;
       case 'invoices':
         return <AdminInvoicesTab onStatsUpdate={loadDashboardStats} />;
       case 'requests':

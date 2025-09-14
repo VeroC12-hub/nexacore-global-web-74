@@ -19,6 +19,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import PortfolioDisplay from '@/components/portfolio/PortfolioDisplay';
 
 const AIMLServices = () => {
   const navigate = useNavigate();
@@ -258,6 +259,29 @@ const AIMLServices = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* AI/ML Portfolio Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+              Our <span className="text-gradient-primary">AI & Machine Learning</span> Projects
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Explore our portfolio of successful AI and machine learning implementations across various industries.
+              From predictive analytics to computer vision, see how we've helped businesses harness the power of artificial intelligence.
+            </p>
+          </div>
+
+          {/* Portfolio Display Component */}
+          <PortfolioDisplay 
+            serviceId="ai-ml"
+            maxProjects={6}
+            showLoadingState={true}
+            className="mb-8"
+          />
         </div>
       </section>
 

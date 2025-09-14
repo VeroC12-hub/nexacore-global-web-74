@@ -19,6 +19,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import PortfolioDisplay from '@/components/portfolio/PortfolioDisplay';
 
 const CADServices = () => {
   const navigate = useNavigate();
@@ -315,6 +316,29 @@ const CADServices = () => {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* CAD Portfolio Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+              Our <span className="text-gradient-primary">CAD Design & Engineering</span> Projects
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Explore our comprehensive portfolio of professional CAD design projects.
+              From precision engineering to complex assemblies, see the quality and expertise we bring to every design challenge.
+            </p>
+          </div>
+
+          {/* Portfolio Display Component */}
+          <PortfolioDisplay 
+            serviceId="cad-design"
+            maxProjects={6}
+            showLoadingState={true}
+            className="mb-8"
+          />
         </div>
       </section>
 
