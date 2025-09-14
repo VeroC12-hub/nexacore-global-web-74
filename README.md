@@ -51,6 +51,18 @@ NexaCore Innovations is a cutting-edge engineering and technology services compa
 - **Analytics**: Business insights, project performance metrics, and financial tracking
 - **Content Management**: Dynamic website content and service management
 - **System Monitoring**: Platform health, user activity, and performance metrics
+- **Portfolio Management**: Advanced portfolio analytics, project approval workflows, and performance tracking
+
+### 📂 **Portfolio System** (Enterprise-Grade)
+- **Staff Portal**: Ultra-simple 4-step project submission wizard with built-in help and tutorials
+- **Advanced Search**: Multi-filter search by service, tags, date range, file types, and more
+- **Professional Display**: Service-specific portfolio showcases with responsive design
+- **Export Capabilities**: Export portfolios in PDF, PowerPoint, Excel, and web formats
+- **Analytics Dashboard**: Real-time portfolio performance metrics and engagement tracking
+- **Client Privacy**: Flexible client name display options and confidentiality settings
+- **File Management**: Drag-and-drop uploads with automatic categorization and optimization
+- **Performance Insights**: AI-powered recommendations for portfolio optimization
+- **Responsive Interface**: Mobile-optimized for submissions and viewing across all devices
 
 ### 💬 **Communication System**
 - **Multi-target Messaging**: Send messages to specific projects or direct to clients
@@ -154,22 +166,44 @@ nexacore-global-web-74/
 │   ├── components/            # Reusable UI components
 │   │   ├── ui/               # Base UI components (buttons, forms, etc.)
 │   │   ├── admin/            # Admin dashboard components
-│   │   │   ├── AdminDashboard.tsx
+│   │   │   ├── ModernAdminDashboard.tsx
+│   │   │   ├── AdminPortfolioTab.tsx
+│   │   │   ├── PortfolioAnalyticsDashboard.tsx
 │   │   │   ├── AdminProjectsTab.tsx
 │   │   │   ├── AdminUsersTab.tsx
 │   │   │   ├── AdminMessagingTab.tsx
 │   │   │   ├── AdminFileRepositoryTab.tsx
 │   │   │   ├── ComposeMessageModal.tsx
 │   │   │   └── FileUploadModal.tsx
+│   │   ├── portfolio/        # Portfolio system components
+│   │   │   ├── PortfolioDisplay.tsx
+│   │   │   ├── AdvancedPortfolioSearch.tsx
+│   │   │   ├── PortfolioExport.tsx
+│   │   │   ├── PortfolioPerformanceTracker.tsx
+│   │   │   └── DynamicPortfolioDisplay.tsx
+│   │   ├── staff/            # Staff dashboard components
+│   │   │   ├── ModernStaffDashboard.tsx
+│   │   │   ├── SimplePortfolioSubmission.tsx
+│   │   │   ├── PortfolioSubmissionModal.tsx
+│   │   │   ├── PortfolioHelp.tsx
+│   │   │   └── ProjectHelp.tsx
 │   │   ├── client/           # Client portal components
 │   │   ├── layout/           # Layout components (navigation, footer)
 │   │   └── common/           # Shared components
 │   ├── pages/                # Page components
-│   │   ├── HomePage.tsx
-│   │   ├── ServicesPage.tsx
-│   │   ├── AdminPage.tsx
-│   │   ├── ClientDashboard.tsx
-│   │   └── AuthPages.tsx
+│   │   ├── Index.tsx         # Homepage
+│   │   ├── Services.tsx      # Services overview
+│   │   ├── Portfolio.tsx     # Basic portfolio page
+│   │   ├── PortfolioPage.tsx # Advanced portfolio showcase
+│   │   ├── AdminDashboard.tsx
+│   │   ├── ClientPortal.tsx
+│   │   ├── StaffDashboardPage.tsx
+│   │   ├── services/         # Individual service pages
+│   │   │   ├── AIMLServices.tsx
+│   │   │   ├── CADServices.tsx
+│   │   │   ├── BlockchainServices.tsx
+│   │   │   └── EngineeringTechnical.tsx
+│   │   └── Auth.tsx
 │   ├── hooks/                # Custom React hooks
 │   ├── lib/                  # Utility functions and configurations
 │   ├── integrations/         # External service integrations
