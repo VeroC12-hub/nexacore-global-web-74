@@ -73,7 +73,7 @@ const Team = () => {
       id: 3,
       name: 'Manasseh Kabutey',
       role: 'Lead Software Developer',
-      image: '/placeholder.png', // Placeholder until photo is available
+      image: '/profile3.png',
       bio: 'Full-stack developer specializing in web and mobile applications. Expert in React, Next.js, Flutter, and modern web technologies. Manasseh builds scalable, user-friendly applications with a focus on performance and best practices.',
       expertise: ['Web Development', 'Mobile Development', 'React & Next.js', 'Flutter', 'UI/UX Design', 'Cloud Solutions'],
       social: {
