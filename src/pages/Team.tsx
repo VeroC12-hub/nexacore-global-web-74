@@ -47,7 +47,7 @@ const Team = () => {
         'Certified Industrial Designer - WorldSkills',
         'Expert in precision engineering',
         'Led complex project coordination',
-        'Founded NexaCore Innovations'
+        'Co-Founded NexaCore Innovations'
       ]
     },
     {
