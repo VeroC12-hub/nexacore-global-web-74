@@ -80,7 +80,7 @@ const Team = () => {
         linkedin: 'https://www.linkedin.com/in/manasseh-kabutey',
         github: 'https://github.com/Qharny',
         portfolio: 'https://manassehkabutey.vercel.app',
-        email: 'manassehkabutey@gmail.com'
+        email: 'kabuteymanasseh5@gmail.com'
       },
       achievements: [
         'Built 20+ production applications',
