@@ -26,6 +26,8 @@ import abstractBg from '@/assets/abstract-tech.jpg';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EnhancedHeroButtons from '@/components/EnhancedHeroButtons';
+import SEO from '@/components/SEO';
+import StructuredData from '@/components/StructuredData';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -157,6 +159,16 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* SEO Meta Tags */}
+      <SEO
+        title="NexaCore Innovations - Global Technology Solutions & Services"
+        description="Leading provider of CAD design, software development, AI/ML, blockchain, and digital solutions. We deliver world-class technical, creative, and digital services to clients worldwide."
+        keywords="CAD design Ghana, software development Africa, web development, mobile app development, AI ML services, blockchain solutions, 3D modeling, engineering services, graphic design, data analytics, Ghana tech company"
+        url="https://nexacore-innovations.com"
+      />
+      {/* Structured Data for Google */}
+      <StructuredData type="organization" />
+
       <Navbar />
       
       {/* Hero Section */}

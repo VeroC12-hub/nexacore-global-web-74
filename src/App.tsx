@@ -38,6 +38,7 @@ import CookieConsent from "./components/CookieConsent";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { HelmetProvider } from "react-helmet-async";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,12 +51,13 @@ const queryClient = new QueryClient({
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <EnhancedAuthProvider>
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <RoleBasedRedirect>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <EnhancedAuthProvider>
+              <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <RoleBasedRedirect>
                 <Routes>
                 {/* PUBLIC ROUTES */}
                 <Route path="/" element={<Index />} />
@@ -99,12 +101,13 @@ const App = () => {
                 <CookieConsent />
                 <Toaster />
                 <Sonner />
-              </RoleBasedRedirect>
-            </BrowserRouter>
-          </EnhancedAuthProvider>
-        </AuthProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+                </RoleBasedRedirect>
+              </BrowserRouter>
+            </EnhancedAuthProvider>
+          </AuthProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 };
 
