@@ -35,6 +35,7 @@ import Footer from '@/components/Footer';
 // Import existing admin components
 import { AdminProjectsTab } from '@/components/admin/AdminProjectsTab';
 import { AdminInvoicesTab } from '@/components/admin/AdminInvoicesTab';
+import EnhancedProjectManagement from '@/components/admin/EnhancedProjectManagement';
 import { AdminServiceRequestsTab } from '@/components/admin/AdminServiceRequestsTab';
 import { AdminUsersTab } from '@/components/admin/AdminUsersTab';
 import AdminPortfolioTab from '@/components/admin/AdminPortfolioTab';
@@ -228,7 +229,7 @@ export const ModernAdminDashboard: React.FC = () => {
       case 'quotes':
         return <AdminQuoteRequestsTab />;
       case 'projects':
-        return <AdminProjectsTab onStatsUpdate={loadDashboardStats} />;
+        return <EnhancedProjectManagement />;
       case 'portfolio':
         return <AdminPortfolioTab onStatsUpdate={loadDashboardStats} />;
       case 'invoices':

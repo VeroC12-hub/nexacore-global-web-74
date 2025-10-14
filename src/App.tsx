@@ -6,6 +6,7 @@ import { EnhancedAuthProvider } from "./hooks/useEnhancedAuth";
 import { RoleBasedRedirect } from "./components/auth/RoleBasedRedirect";
 import Index from "./pages/Index";
 import About from "./pages/About";
+import Team from "./pages/Team";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import GetStarted from "./pages/GetStarted";
@@ -59,6 +60,7 @@ const App = () => {
                 {/* PUBLIC ROUTES */}
                 <Route path="/" element={<Index />} />
                 <Route path="/about" element={<About />} />
+                <Route path="/team" element={<Team />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/services/engineering-technical" element={<EngineeringTechnical />} />
                 <Route path="/remote-development" element={<RemoteDevelopment />} />

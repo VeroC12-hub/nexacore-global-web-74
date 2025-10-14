@@ -28,50 +28,60 @@ const Footer = () => {
 
   // Service items with exact mapping to Services page sections
   const serviceItems = [
-    { 
-      name: 'CAD/Design Engineering', 
+    {
+      name: 'CAD/Design Engineering',
       path: '/services#engineering-technical',
       category: 'Engineering & Technical Services'
     },
-    { 
-      name: 'Software Development', 
+    {
+      name: 'Software Development',
       path: '/services#software-app-development',
       category: 'Software & App Development'
     },
-    { 
-      name: 'AI/ML Solutions', 
+    {
+      name: 'AI/ML Solutions',
       path: '/services#engineering-technical',
       category: 'Engineering & Technical Services'
     },
-    { 
-      name: 'Blockchain & Web3', 
+    {
+      name: 'Blockchain & Web3',
       path: '/services#engineering-technical',
       category: 'Engineering & Technical Services'
     },
-    { 
-      name: 'UI/UX Design', 
+    {
+      name: 'UI/UX Design',
       path: '/services#creative-branding',
       category: 'Creative & Branding'
     },
-    { 
-      name: 'Data Analytics', 
+    {
+      name: 'Data Analytics',
       path: '/services#data-digital-growth',
       category: 'Data & Digital Growth'
     }
   ];
 
+  // Function to handle company profile download
+  const handleProfileDownload = () => {
+    const link = document.createElement('a');
+    link.href = '/Nexacore_Profile.pdf';
+    link.download = 'NexaCore_Innovations_Company_Profile.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Function to handle service link clicks with smooth scrolling
   const handleServiceClick = (e: React.MouseEvent, path: string) => {
     e.preventDefault();
-    
+
     // Check if we're already on the services page
     if (window.location.pathname === '/services') {
       // We're already on services page, just scroll to section
       const sectionId = path.split('#')[1];
       const element = document.getElementById(sectionId);
       if (element) {
-        element.scrollIntoView({ 
-          behavior: 'smooth', 
+        element.scrollIntoView({
+          behavior: 'smooth',
           block: 'start',
           inline: 'nearest'
         });
@@ -96,7 +106,10 @@ const Footer = () => {
             <p className="text-muted text-sm leading-relaxed">
               Engineering Global Innovation with Excellence. We deliver technical, creative, and digital solutions worldwide.
             </p>
-            <Button className="bg-white text-foreground hover:bg-muted text-sm font-medium px-4 py-2">
+            <Button
+              onClick={handleProfileDownload}
+              className="bg-white text-foreground hover:bg-muted text-sm font-medium px-4 py-2"
+            >
               <Download className="w-4 h-4 mr-2" />
               Company Profile
             </Button>

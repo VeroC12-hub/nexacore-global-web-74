@@ -938,20 +938,20 @@ const PortfolioWithAdmin = () => {
     { name: 'Tools & Utilities', count: 0, icon: Code }
   ];
 
-  // Company projects with team member attributions
+  // Real company projects from Manasseh Kabutey's portfolio
   const [projects, setProjects] = useState([
     {
       id: 1,
-      title: 'NexaCore E-Commerce Platform',
+      title: 'Beads E-commerce Platform',
       category: 'Web Development',
-      client: 'Retail Solutions Ghana',
+      client: 'NexaCore Innovations',
       year: '2024',
       location: 'Ghana',
-      description: 'Comprehensive e-commerce solution with modern UI/UX, payment integration, and inventory management system.',
-      longDescription: 'A full-stack e-commerce platform designed for African markets, featuring mobile-first design, multiple payment gateway integration including mobile money, inventory management, analytics dashboard, and multi-language support. Built with scalability and performance in mind.',
-      technologies: ['Next.js', 'React', 'Node.js', 'MongoDB', 'Stripe', 'PayStack', 'Tailwind CSS'],
-      images: ['https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/ecommerce-1.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/ecommerce-2.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/ecommerce-3.jpg'],
-      thumbnail: 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/ecommerce-thumb.jpg',
+      description: 'Full-stack e-commerce solution for beads and jewelry with modern UI/UX and payment integration.',
+      longDescription: 'A comprehensive e-commerce platform built for selling beads and accessories. Features a modern shopping experience with product galleries, shopping cart, checkout flow, and integrated payment processing. Optimized for mobile and desktop users with responsive Tailwind CSS design.',
+      technologies: ['HTML', 'Tailwind CSS', 'JavaScript', 'Firebase'],
+      images: ['/beads.png', '/beads.png'],
+      thumbnail: '/beads.png',
       status: 'Completed',
       featured: true,
       metrics: {
@@ -960,31 +960,29 @@ const PortfolioWithAdmin = () => {
         shares: 45
       },
       links: {
-        live: 'https://example-ecommerce.com',
-        github: 'https://github.com/nexacore-innovations',
-        case: '/case-study/1'
+        live: 'https://beads-ecommerce.vercel.app',
+        github: 'https://github.com/manassehkabutey/beads-ecommerce',
+        case: ''
       },
-      awards: ['Best E-commerce Solution 2024'],
-      teamSize: 3,
-      duration: '4 months',
+      awards: [],
+      teamSize: 1,
+      duration: '2 months',
       teamMembers: [
-        { name: 'Manasseh Kabutey', role: 'Lead Developer', contribution: 'Full-stack development, architecture design' },
-        { name: 'Benjamin Agbesi', role: 'UI/UX Designer', contribution: 'User interface design, user experience optimization' },
-        { name: 'Ocloo Godwin', role: 'Quality Assurance', contribution: 'Testing, performance optimization' }
+        { name: 'Manasseh Kabutey', role: 'Full-stack Developer', contribution: 'Complete development, UI/UX design, Firebase integration' }
       ]
     },
     {
       id: 2,
-      title: 'Smart City IoT Dashboard',
-      category: 'Data Analytics',
-      client: 'Municipal Authority',
+      title: 'Dine Food E-commerce Platform',
+      category: 'Web Development',
+      client: 'NexaCore Innovations',
       year: '2024',
       location: 'Ghana',
-      description: 'Real-time data visualization dashboard for smart city infrastructure monitoring and management.',
-      longDescription: 'An advanced IoT dashboard solution for monitoring city infrastructure including traffic flow, air quality, waste management, and energy consumption. Features real-time data processing, predictive analytics, and automated alert systems.',
-      technologies: ['React', 'D3.js', 'Python', 'FastAPI', 'PostgreSQL', 'Docker', 'AWS'],
-      images: ['https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/dashboard-1.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/dashboard-2.jpg'],
-      thumbnail: 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/dashboard-thumb.jpg',
+      description: 'Modern food delivery e-commerce platform with intuitive ordering system.',
+      longDescription: 'A beautifully designed food e-commerce platform featuring menu browsing, cart management, and order placement. Built with modern web technologies focusing on user experience and mobile responsiveness.',
+      technologies: ['HTML', 'CSS', 'Tailwind CSS', 'JavaScript'],
+      images: ['/dine.png', '/dine.png'],
+      thumbnail: '/dine.png',
       status: 'Completed',
       featured: true,
       metrics: {
@@ -993,47 +991,232 @@ const PortfolioWithAdmin = () => {
         shares: 32
       },
       links: {
-        live: 'https://smart-city-dashboard.com',
-        case: '/case-study/2'
+        live: 'https://dine-food.vercel.app',
+        github: 'https://github.com/manassehkabutey/dine-food',
+        case: ''
       },
-      awards: ['Innovation Award 2024'],
-      teamSize: 4,
-      duration: '6 months',
+      awards: [],
+      teamSize: 1,
+      duration: '1.5 months',
       teamMembers: [
-        { name: 'Ocloo Godwin', role: 'Project Manager', contribution: 'Project coordination, stakeholder management' },
-        { name: 'Data Analytics Team', role: 'Data Scientists', contribution: 'Algorithm development, data modeling' },
-        { name: 'Manasseh Kabutey', role: 'Frontend Developer', contribution: 'Dashboard interface, data visualization' }
+        { name: 'Manasseh Kabutey', role: 'Frontend Developer', contribution: 'UI/UX design, responsive development' }
       ]
     },
     {
       id: 3,
-      title: 'AgriTech Mobile Solution',
-      category: 'Mobile Apps',
-      client: 'Ghana Agricultural Development',
+      title: 'Personal Portfolio Website',
+      category: 'Web Development',
+      client: 'Personal Project',
       year: '2024',
       location: 'Ghana',
-      description: 'Mobile application connecting farmers with markets, weather data, and agricultural best practices.',
-      longDescription: 'A comprehensive mobile solution for agricultural development in Ghana, providing farmers with market prices, weather forecasts, crop management advice, and direct market access. Features offline functionality and multi-language support.',
-      technologies: ['Flutter', 'Dart', 'Firebase', 'Google Maps API', 'Weather API', 'Node.js'],
-      images: ['https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/agritech-1.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/agritech-2.jpg', 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/agritech-3.jpg'],
-      thumbnail: 'https://raw.githubusercontent.com/VeroC12-hub/nexacore-global-web-74/main/public/images/portfolio/agritech-thumb.jpg',
-      status: 'In Progress',
+      description: 'Personal portfolio showcasing skills and projects with modern design.',
+      longDescription: 'A professional portfolio website built with Next.js and TypeScript, showcasing development projects, skills, and experience. Features smooth animations, dark mode support, and optimized performance using Shadcn/UI components.',
+      technologies: ['Next.js', 'TypeScript', 'Tailwind CSS', 'Shadcn/UI'],
+      images: ['/portfolio.png', '/portfolio.png'],
+      thumbnail: '/portfolio.png',
+      status: 'Completed',
+      featured: true,
+      metrics: {
+        views: '3.2K',
+        likes: 124,
+        shares: 56
+      },
+      links: {
+        live: 'https://manassehkabutey.vercel.app',
+        github: 'https://github.com/manassehkabutey/portfolio',
+        case: ''
+      },
+      awards: [],
+      teamSize: 1,
+      duration: '2 months',
+      teamMembers: [
+        { name: 'Manasseh Kabutey', role: 'Full-stack Developer', contribution: 'Complete development with Next.js and TypeScript' }
+      ]
+    },
+    {
+      id: 4,
+      title: 'TSK Shipping Company Portfolio',
+      category: 'Web Development',
+      client: 'TSK Shipping',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Companies portfolio showcasing their service and products in shipping industry.',
+      longDescription: 'A professional business portfolio website for a shipping company, highlighting their services, fleet information, and global shipping capabilities. Built with responsive design and optimized for SEO.',
+      technologies: ['HTML', 'CSS', 'Tailwind CSS', 'JavaScript'],
+      images: ['/tsk.png', '/tsk.png'],
+      thumbnail: '/tsk.png',
+      status: 'Completed',
       featured: false,
       metrics: {
-        views: '1.2K',
+        views: '1.5K',
         likes: 67,
+        shares: 23
+      },
+      links: {
+        live: 'https://tsk-shipping.vercel.app',
+        github: 'https://github.com/manassehkabutey/tsk-shipping',
+        case: ''
+      },
+      awards: [],
+      teamSize: 1,
+      duration: '1 month',
+      teamMembers: [
+        { name: 'Manasseh Kabutey', role: 'Web Developer', contribution: 'Complete website design and development' }
+      ]
+    },
+    {
+      id: 5,
+      title: 'SparkNest Software Company Portfolio',
+      category: 'Web Development',
+      client: 'SparkNest',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Software company portfolio showcasing their services and products.',
+      longDescription: 'A modern company website for a software development firm, featuring service offerings, portfolio showcase, and contact information. Designed to attract potential clients and showcase technical expertise.',
+      technologies: ['HTML', 'CSS', 'Tailwind CSS', 'JavaScript'],
+      images: ['/sparknest.png', '/sparknest.png'],
+      thumbnail: '/sparknest.png',
+      status: 'Completed',
+      featured: false,
+      metrics: {
+        views: '1.3K',
+        likes: 54,
         shares: 18
       },
       links: {
-        github: 'https://github.com/nexacore-innovations/agritech-app'
+        live: 'https://sparknest.vercel.app',
+        github: 'https://github.com/manassehkabutey/sparknest',
+        case: ''
       },
       awards: [],
-      teamSize: 3,
-      duration: '5 months',
+      teamSize: 1,
+      duration: '1 month',
       teamMembers: [
-        { name: 'Manasseh Kabutey', role: 'Mobile Developer', contribution: 'Flutter app development, API integration' },
-        { name: 'Benjamin Agbesi', role: 'UI/UX Designer', contribution: 'Mobile interface design, user research' },
-        { name: 'Agricultural Consultants', role: 'Domain Experts', contribution: 'Agricultural content, best practices' }
+        { name: 'Manasseh Kabutey', role: 'Frontend Developer', contribution: 'UI/UX design and implementation' }
+      ]
+    },
+    {
+      id: 6,
+      title: 'FacePassX - Face Recognition Attendance System',
+      category: 'Mobile Apps',
+      client: 'Educational Institution',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Flutter-based mobile application that uses facial recognition technology to automate student attendance tracking.',
+      longDescription: 'An innovative attendance management system leveraging facial recognition AI to automate student check-ins. Built with Flutter for cross-platform compatibility, integrated with Supabase for real-time data management and custom API endpoints for facial recognition processing.',
+      technologies: ['Flutter', 'Supabase', 'Custom API', 'Face Recognition AI'],
+      images: ['/1.png', '/2.png'],
+      thumbnail: '/1.png',
+      status: 'Completed',
+      featured: true,
+      metrics: {
+        views: '2.8K',
+        likes: 198,
+        shares: 67
+      },
+      links: {
+        live: 'https://facepassx.vercel.app',
+        github: 'https://github.com/manassehkabutey/facepassx',
+        case: ''
+      },
+      awards: [],
+      teamSize: 1,
+      duration: '3 months',
+      teamMembers: [
+        { name: 'Manasseh Kabutey', role: 'Mobile Developer', contribution: 'Flutter app development, AI integration, Backend setup' }
+      ]
+    },
+    {
+      id: 7,
+      title: 'Phone Tracking App',
+      category: 'Mobile Apps',
+      client: 'Security Solutions',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Mobile app for tracking location of missing phones with real-time GPS.',
+      longDescription: 'A security-focused mobile application that helps users track lost or stolen phones in real-time. Built with Flutter and Firebase, featuring GPS tracking, location history, and remote device management using GetX state management.',
+      technologies: ['Flutter', 'Firebase', 'GetX', 'Google Maps API'],
+      images: ['/tracker1.jpg', '/tracker1.jpg'],
+      thumbnail: '/tracker1.jpg',
+      status: 'Completed',
+      featured: false,
+      metrics: {
+        views: '1.9K',
+        likes: 89,
+        shares: 34
+      },
+      links: {
+        live: '',
+        github: 'https://github.com/manassehkabutey/phone-tracker',
+        case: ''
+      },
+      awards: [],
+      teamSize: 1,
+      duration: '2 months',
+      teamMembers: [
+        { name: 'Manasseh Kabutey', role: 'Mobile Developer', contribution: 'Flutter development, Firebase integration, GPS tracking' }
+      ]
+    },
+    {
+      id: 8,
+      title: 'EduAtlas - University Finder',
+      category: 'Mobile Apps',
+      client: 'Educational Services',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Platform that shows University and Colleges by typing country name.',
+      longDescription: 'A mobile application that helps students discover universities and colleges worldwide. Users can search by country name to find comprehensive information about educational institutions, including programs, admission requirements, and contact details.',
+      technologies: ['Flutter', 'Dart', 'RESTful API'],
+      images: ['/edu.jpg', '/edu.jpg'],
+      thumbnail: '/edu.jpg',
+      status: 'Completed',
+      featured: false,
+      metrics: {
+        views: '1.4K',
+        likes: 76,
+        shares: 28
+      },
+      links: {
+        live: '',
+        github: 'https://github.com/manassehkabutey/eduatlas',
+        case: ''
+      },
+      awards: [],
+      teamSize: 1,
+      duration: '1.5 months',
+      teamMembers: [
+        { name: 'Manasseh Kabutey', role: 'Mobile Developer', contribution: 'Flutter app development, API integration' }
+      ]
+    },
+    {
+      id: 9,
+      title: 'AaeroGuard - IoT Smoke Detector',
+      category: 'Mobile Apps',
+      client: 'Smart Home Solutions',
+      year: '2024',
+      location: 'Ghana',
+      description: 'Sophisticated IoT smoke detector application for smart home safety.',
+      longDescription: 'An advanced IoT-based smoke detection system with mobile app interface. Features real-time alerts, sensor monitoring, and automated emergency responses. Built with Flutter and Firebase for seamless cloud integration and instant notifications.',
+      technologies: ['Flutter', 'Firebase', 'IoT Integration', 'Cloud Messaging'],
+      images: ['/home.png', '/home.png'],
+      thumbnail: '/home.png',
+      status: 'Completed',
+      featured: false,
+      metrics: {
+        views: '1.6K',
+        likes: 92,
+        shares: 41
+      },
+      links: {
+        live: '',
+        github: '',
+        case: ''
+      },
+      awards: [],
+      teamSize: 1,
+      duration: '2.5 months',
+      teamMembers: [
+        { name: 'Manasseh Kabutey', role: 'IoT Developer', contribution: 'Flutter app, Firebase integration, IoT sensor integration' }
       ]
     }
   ]);
