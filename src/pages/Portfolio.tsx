@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SEO from '@/components/SEO';
+import StructuredData from '@/components/StructuredData';
 import { Globe } from 'lucide-react';
 import { 
   Filter, 
@@ -1292,6 +1294,13 @@ const PortfolioWithAdmin = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Portfolio - Our Best Work & Projects | NexaCore Innovations"
+        description="Explore NexaCore Innovations' portfolio of successful international projects including web development, mobile apps, CAD engineering, and data analytics. See our work for clients worldwide with cutting-edge technologies."
+        keywords="nexacore portfolio, international engineering projects, global web development portfolio, mobile app development showcase, worldwide CAD design projects, international tech projects, offshore development portfolio, Flutter apps international, React projects global, successful international projects, remote team portfolio, global software solutions"
+        url="https://nexacore-innovations.com/portfolio"
+      />
+      <StructuredData type="organization" />
       <Navbar />
       
       {/* Hero Header */}

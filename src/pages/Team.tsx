@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SEO from '@/components/SEO';
+import StructuredData from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
 
@@ -114,6 +116,13 @@ const Team = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Our Team - Meet the Experts at NexaCore Innovations"
+        description="Meet the international team behind NexaCore Innovations. Godwin Ocloo, Benjamin Agbesi, and Manasseh Kabutey bring global expertise in CAD design, business development, and software development to deliver exceptional solutions worldwide."
+        keywords="nexacore team, godwin ocloo, benjamin agbesi, manasseh kabutey, international engineering team, global software development team, remote project management experts, worldskills certified, international tech experts, global development team, remote engineering professionals, offshore team members"
+        url="https://nexacore-innovations.com/team"
+      />
+      <StructuredData type="organization" />
       <Navbar />
 
       {/* Hero Section */}

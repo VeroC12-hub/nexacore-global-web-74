@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Cog, 
-  Smartphone, 
-  Palette, 
+import {
+  Cog,
+  Smartphone,
+  Palette,
   BarChart3,
   ArrowRight,
   CheckCircle,
@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SEO from '@/components/SEO';
+import StructuredData from '@/components/StructuredData';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
@@ -193,6 +195,13 @@ const Services = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Professional Services - Engineering, Software, Design & More"
+        description="Global technical services including CAD design, software development, AI/ML, blockchain, creative design, data analytics, and professional consulting. Serving clients worldwide with remote and on-site solutions."
+        keywords="engineering services worldwide, international software development, global CAD design services, remote mobile app development, AI ML solutions international, blockchain development, offshore software development, remote UI UX design, data analytics consulting, digital marketing agency, professional consulting services, remote tech team, global engineering company, international tech services"
+        url="https://nexacore-innovations.com/services"
+      />
+      <StructuredData type="service" />
       <Navbar />
 
       {/* Hero Section */}

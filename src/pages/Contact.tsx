@@ -64,6 +64,8 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SEO from '@/components/SEO';
+import StructuredData from '@/components/StructuredData';
 
 // ===== SMART SOCIAL MEDIA MODAL =====
 const SmartSocialModal = ({ platform, isOpen, onClose, onConfirm }) => {
@@ -972,6 +974,13 @@ Thank you! 😊`;
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Contact Us - Get in Touch with NexaCore Innovations"
+        description="Contact NexaCore Innovations for professional engineering, software development, and technical services worldwide. Free consultations, remote team available globally. Phone: +233 20 962 8907 | Email: info@nexacore-innovations.com"
+        keywords="contact nexacore, free consultation international, global tech company contact, remote project inquiry, worldwide engineering services, international software development quote, technical support worldwide, WhatsApp business international, contact remote team, global consultation booking, offshore development contact"
+        url="https://nexacore-innovations.com/contact"
+      />
+      <StructuredData type="organization" />
       <Navbar />
 
       {/* Hero Section */}

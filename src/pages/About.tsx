@@ -1,10 +1,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  Globe, 
-  Award, 
-  Users, 
+import {
+  Globe,
+  Award,
+  Users,
   Target,
   ArrowRight,
   Heart,
@@ -14,6 +14,8 @@ import {
 import teamImage from '@/assets/team-collaboration.jpg';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import SEO from '@/components/SEO';
+import StructuredData from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
 
@@ -54,6 +56,13 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="About Us - Global Engineering & Technology Solutions Company"
+        description="NexaCore Innovations - An international team of engineers, developers, and designers delivering world-class technical, creative, and digital solutions to clients worldwide. Serving USA, UK, Europe, Africa, and Asia."
+        keywords="about nexacore, international engineering company, global technology solutions, remote software development team, worldwide tech services, engineering excellence, innovation hub, Lean Six Sigma certified, international tech consultancy, offshore development team, global innovation company, multi-disciplinary tech team"
+        url="https://nexacore-innovations.com/about"
+      />
+      <StructuredData type="organization" />
       <Navbar />
 
       {/* Hero Section */}
