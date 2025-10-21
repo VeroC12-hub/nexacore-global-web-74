@@ -60,8 +60,8 @@ const Team = () => {
       bio: 'With a strong background in business development and organizational management, Benjamin leads initiatives that drive operational excellence and sustainable growth. He plays an active role in strategic planning, strengthening client relationships, and ensuring every NexaCore project delivers meaningful value.',
       expertise: ['Business Development', 'Organizational Management', 'Strategic Planning', 'Client Relations', 'Operations Excellence', 'Team Building'],
       social: {
-        linkedin: 'https://www.linkedin.com/in/benjamin-agbesi',
-        email: 'benjamin@nexacore-innovations.com',
+        linkedin: 'http://linkedin.com/in/benjamin-agbesi-tpe-ghie-44849417b',
+        email: 'benjamin.agbesi@nexacore-innovations.com',
         portfolio: 'https://www.nexacore-innovations.com'
       },
       achievements: [
