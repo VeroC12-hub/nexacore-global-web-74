@@ -198,20 +198,20 @@ What projects are you working on? We'd love to hear from you! 👇
 
 ## 📱 Social Media Bios
 
-### Twitter/X (160 chars)
+### Twitter/X (160 chars) - UPDATED WITH UNIVERSITY PARTNERSHIPS
 ```
-Global engineering & software solutions 🚀 | CAD Design | Mobile Apps | Web Development | AI/ML 🤖 | Based in Ghana 🇬🇭 | Serving clients worldwide 🌍
+Global engineering & software solutions 🚀 | CAD Design | Mobile Apps | AI/ML 🤖 | University Partnerships 🎓 | Based in Ghana 🇬🇭 | Serving worldwide 🌍
 ```
 
-### Instagram (150 chars)
+### Instagram (150 chars) - UPDATED WITH UNIVERSITY PARTNERSHIPS
 ```
 Engineering & Software Solutions 🚀
 📍 Accra, Ghana | 🌍 Global Clients
-💻 Web | 📱 Mobile | 🎨 CAD Design
+💻 Web | 📱 Mobile | 📐 CAD | 🎓 Uni Partnerships
 ✨ Turning ideas into reality
 ```
 
-### Facebook (255 chars)
+### Facebook (255 chars) - UPDATED WITH UNIVERSITY PARTNERSHIPS
 ```
 NexaCore Innovations - Professional engineering and software development company
 
@@ -221,6 +221,7 @@ Services:
 📐 CAD Design & Engineering
 🤖 AI/ML Solutions
 🎨 UI/UX Design
+🎓 University Partnerships
 
 Based in Accra, Ghana 🇬🇭
 Serving clients worldwide 🌍
@@ -232,6 +233,197 @@ Free consultation available!
 ```
 Professional engineering and software development company. Building innovative solutions with React, Flutter, TypeScript, and modern tech stacks. 🚀
 ```
+
+---
+
+## 📱 Day 2 Social Media Posts (WITH UNIVERSITY PARTNERSHIPS)
+
+### Twitter Thread (4 Tweets)
+
+**Tweet 1:**
+```
+🚀 Introducing NexaCore Innovations!
+
+We're a global engineering & software development company delivering world-class technical solutions.
+
+💻 Services: Software Dev | Mobile Apps | CAD Design | AI/ML | Blockchain
+🌍 Based in Ghana, serving clients worldwide
+🎓 University partnership programs
+
+Thread 👇
+```
+
+**Tweet 2:**
+```
+✨ What sets us apart:
+
+✓ 50+ Successfully Delivered Projects
+✓ WorldSkills-Certified Team
+✓ 98% Client Satisfaction
+✓ Clients in Africa, North America, Europe, Asia
+✓ Agile Methodology
+✓ Free Consultations
+
+We turn ideas into reality 💡➡️🚀
+```
+
+**Tweet 3:**
+```
+🎓 University Partnerships:
+
+We're partnering with universities to:
+• Train the next generation of engineers
+• Provide industry-relevant certifications
+• Offer internship placements
+• Bridge academic-industry gap
+
+Building Africa's tech future together!
+```
+
+**Tweet 4:**
+```
+🤝 Let's connect!
+
+Whether you need:
+• Custom software development
+• Mobile app (iOS/Android)
+• CAD/Engineering design
+• AI/ML solutions
+• University training programs
+
+Visit: nexacore-innovations.com
+📧 info@nexacore-innovations.com
+📱 +233 20 962 8907
+
+Free consultation available!
+```
+
+---
+
+### Instagram Caption (Carousel Post)
+
+```
+🚀 Welcome to NexaCore Innovations!
+
+We're a global engineering & software development company committed to delivering world-class technical solutions.
+
+💡 What We Do:
+• Custom Software Development
+• Mobile App Development (iOS & Android)
+• CAD Design & Engineering
+• AI/ML Solutions
+• University Partnership Programs
+
+🌍 Global Reach:
+Based in Accra, Ghana 🇬🇭
+Serving clients across Africa, North America, Europe & Asia
+
+✨ Why Choose Us:
+✓ 50+ Successfully Delivered Projects
+✓ WorldSkills-Certified Engineers
+✓ 98% Client Satisfaction Rate
+✓ Agile Development Process
+
+📸 Swipe to see our recent projects:
+1️⃣ Face Recognition Attendance System
+2️⃣ E-Commerce Platform
+3️⃣ Team Collaboration
+4️⃣ University Training Programs
+
+🤝 Let's Build Together!
+Visit: nexacore-innovations.com
+📧 info@nexacore-innovations.com
+Free consultation available!
+
+#SoftwareDevelopment #Engineering #TechGhana #MobileApps #CADDesign #AIandML #WebDevelopment #UniversityPartnerships #Innovation #TechAfrica #GhanaianTech #RemoteTeam #OffshoreDevelopment #AccraTech #StartupGhana
+```
+
+**Images to upload (in order):**
+1. public/beads.png
+2. public/portfolio.png
+3. public/hero-main.jpg
+4. public/team-collaboration.jpg
+
+---
+
+### Facebook Post (Long-Form)
+
+```
+🚀 Welcome to NexaCore Innovations!
+
+We're excited to officially launch our Facebook presence! NexaCore Innovations is a professional engineering and software development company delivering world-class technical solutions to clients worldwide.
+
+🌍 WHO WE ARE
+A team of WorldSkills-certified engineers, experienced developers, and creative designers based in Accra, Ghana, serving clients across the globe.
+
+💻 SERVICES WE OFFER
+• Custom Software Development (Web & Mobile)
+• CAD Design & 3D Engineering
+• AI/ML Solutions & Data Analytics
+• UI/UX Design & Branding
+• Blockchain & Web3 Development
+• E-Commerce Solutions
+• Digital Marketing & SEO
+
+🎓 UNIVERSITY PARTNERSHIPS
+We're partnering with universities across Africa to:
+✓ Train the next generation of engineers and developers
+✓ Provide industry-relevant certifications
+✓ Offer internship placements and mentorship
+✓ Bridge the gap between academic theory and industry practice
+
+Building Africa's tech future, one student at a time!
+
+✨ WHAT SETS US APART
+✓ 50+ Successfully Delivered Projects
+✓ WorldSkills-Certified Team Members
+✓ 98% Client Satisfaction Rate
+✓ Global Client Base (Africa, North America, Europe, Asia)
+✓ Agile Methodology & Transparent Communication
+✓ Competitive International Rates
+
+📸 Check out some of our recent work in the photos below:
+• Face Recognition Attendance System (Flutter + AI)
+• E-Commerce Platforms for multiple industries
+• Custom Web Applications for international clients
+• Professional CAD Design for engineering projects
+
+🤝 LET'S CONNECT
+Whether you're looking to:
+• Build a custom application
+• Redesign your digital presence
+• Implement AI/ML solutions
+• Develop engineering drawings
+• Partner with us for university training programs
+
+...we're here to help bring your vision to life.
+
+📞 GET IN TOUCH
+🌐 Website: nexacore-innovations.com
+📧 Email: info@nexacore-innovations.com
+📱 Phone/WhatsApp: +233 20 962 8907
+
+💬 Free consultation available! Drop us a message or call today.
+
+---
+
+👉 Like our page and follow us for:
+• Project showcases & case studies
+• Tech tips & industry insights
+• Job opportunities & internships
+• University partnership updates
+• Behind-the-scenes content
+
+Let's build the future together! 🚀
+
+#NexaCoreInnovations #SoftwareDevelopment #Engineering #CADDesign #MobileApps #WebDevelopment #AIandML #TechGhana #GhanaianTech #AccraBusiness #UniversityPartnerships #Innovation #DigitalTransformation #RemoteTeam #OffshoreDevelopment
+```
+
+**Images to upload:**
+1. public/beads.png
+2. public/portfolio.png
+3. public/hero-main.jpg
+4. public/team-collaboration.jpg
 
 ---
 
