@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from 'sonner';
 
 // Import the new modular components and types
-import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, TaskFormModal, TaskViewModal } from './erp';
+import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, TaskFormModal, TaskViewModal, TaskExportModal } from './erp';
 
 // Additional types needed
 interface ERPTask {
@@ -136,6 +136,7 @@ export function AdminERPTab() {
   const [selectedTask, setSelectedTask] = useState<ERPTask | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isTaskViewOpen, setIsTaskViewOpen] = useState(false);
+  const [isTaskExportOpen, setIsTaskExportOpen] = useState(false);
 
   // Helper function to map staff roles to suggested project roles
   const mapStaffRoleToProjectRole = (staffRole: string): string => {
@@ -715,6 +716,10 @@ export function AdminERPTab() {
     }
   };
 
+  const handleExportTasks = () => {
+    setIsTaskExportOpen(true);
+  };
+
   // Time tracking handlers
   const handleCreateTimeEntry = () => {
     toast.info('Time entry creation functionality would be implemented here');
@@ -925,6 +930,7 @@ export function AdminERPTab() {
             onCompleteTask={handleCompleteTask}
             onDeleteTask={handleDeleteTask}
             onDuplicateTask={handleDuplicateTask}
+            onExportTasks={handleExportTasks}
           />
         </TabsContent>
 
@@ -1025,6 +1031,22 @@ export function AdminERPTab() {
         }}
         task={selectedTask}
         onEdit={handleEditTask}
+      />
+
+      {/* Task Export Modal */}
+      <TaskExportModal
+        isOpen={isTaskExportOpen}
+        onClose={() => setIsTaskExportOpen(false)}
+        tasks={tasks}
+        filteredTasks={tasks.filter(task => {
+          const matchesSearch = !searchTerm ||
+            task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            task.assignee?.toLowerCase().includes(searchTerm.toLowerCase());
+          const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
+          const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+          return matchesSearch && matchesStatus && matchesPriority;
+        })}
       />
     </div>
   );

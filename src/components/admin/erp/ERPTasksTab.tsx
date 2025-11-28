@@ -23,7 +23,8 @@ import {
   PauseCircle,
   CheckSquare,
   Trash2,
-  Copy
+  Copy,
+  FileDown
 } from 'lucide-react';
 
 interface ERPTask {
@@ -58,6 +59,7 @@ interface ERPTasksTabProps {
   onCompleteTask: (task: ERPTask) => void;
   onDeleteTask: (task: ERPTask) => void;
   onDuplicateTask: (task: ERPTask) => void;
+  onExportTasks: () => void;
 }
 
 export function ERPTasksTab({
@@ -75,7 +77,8 @@ export function ERPTasksTab({
   onStartTask,
   onCompleteTask,
   onDeleteTask,
-  onDuplicateTask
+  onDuplicateTask,
+  onExportTasks
 }: ERPTasksTabProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -190,18 +193,33 @@ export function ERPTasksTab({
               Task Management
             </span>
             <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={onCreateTask} className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    New Task
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="font-medium">Create New Task</p>
-                  <p className="text-xs text-muted-foreground">Add a new task to a project</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button onClick={onExportTasks} variant="outline" className="flex items-center gap-2">
+                      <FileDown className="h-4 w-4" />
+                      Export
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="font-medium">Export Tasks Report</p>
+                    <p className="text-xs text-muted-foreground">Generate CSV, Excel, or PDF report</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button onClick={onCreateTask} className="flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      New Task
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="font-medium">Create New Task</p>
+                    <p className="text-xs text-muted-foreground">Add a new task to a project</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </TooltipProvider>
           </CardTitle>
         </CardHeader>

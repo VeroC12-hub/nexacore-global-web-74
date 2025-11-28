@@ -7,6 +7,7 @@ export { ERPSearchResults } from './ERPSearchResults';
 export { EnhancedSearchBar } from './EnhancedSearchBar';
 export { TaskFormModal } from './TaskFormModal';
 export { TaskViewModal } from './TaskViewModal';
+export { TaskExportModal } from './TaskExportModal';
 
 // Types that are shared across ERP components
 export interface ERPProject {
