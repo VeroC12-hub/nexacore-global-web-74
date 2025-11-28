@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Plus,
   Search,
@@ -250,10 +251,20 @@ export function ERPTimeTab({
               <Timer className="h-5 w-5 text-blue-500" />
               Time Entries
             </span>
-            <Button onClick={onCreateTimeEntry} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Log Time
-            </Button>
+            <TooltipProvider>
+              <UITooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={onCreateTimeEntry} className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    Log Time
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="font-medium">Log Time Entry</p>
+                  <p className="text-xs text-muted-foreground">Record time spent on a task</p>
+                </TooltipContent>
+              </UITooltip>
+            </TooltipProvider>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -358,35 +369,62 @@ export function ERPTimeTab({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onEditTimeEntry(entry)}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {entry.status === 'active' ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onStopTimer(entry.id)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Pause className="h-4 w-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onStartTimer(entry.project_id, entry.task_id)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Play className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
+                      <TooltipProvider>
+                        <div className="flex items-center gap-2">
+                          <UITooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onEditTimeEntry(entry)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="font-medium">Edit Time Entry</p>
+                              <p className="text-xs text-muted-foreground">Modify time entry details</p>
+                            </TooltipContent>
+                          </UITooltip>
+
+                          {entry.status === 'active' ? (
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onStopTimer(entry.id)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Pause className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium">Stop Timer</p>
+                                <p className="text-xs text-muted-foreground">End this time tracking session</p>
+                              </TooltipContent>
+                            </UITooltip>
+                          ) : (
+                            <UITooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onStartTimer(entry.project_id, entry.task_id)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Play className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium">Start Timer</p>
+                                <p className="text-xs text-muted-foreground">Resume time tracking</p>
+                              </TooltipContent>
+                            </UITooltip>
+                          )}
+                        </div>
+                      </TooltipProvider>
                     </TableCell>
                   </TableRow>
                 ))}

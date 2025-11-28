@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { searchERP, SearchResult, SearchableData } from '@/utils/erpSearch';
 import { advancedSearchERP } from '@/utils/advancedSearch';
 import { parseSearchQuery } from '@/utils/searchOperators';
@@ -732,19 +733,28 @@ export function ERPOverviewTab({
           <CardDescription>Frequently used actions at your fingertips</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {quickActions.map((action) => (
-              <Button
-                key={action.id}
-                variant="outline"
-                className={`${action.color} text-white border-0 h-20 flex-col gap-2 hover:scale-105 transition-transform`}
-                onClick={() => onQuickAction(action.id)}
-              >
-                <action.icon className="h-6 w-6" />
-                <span className="text-xs font-medium">{action.label}</span>
-              </Button>
-            ))}
-          </div>
+          <TooltipProvider>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {quickActions.map((action) => (
+                <UITooltip key={action.id}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`${action.color} text-white border-0 h-20 flex-col gap-2 hover:scale-105 transition-transform`}
+                      onClick={() => onQuickAction(action.id)}
+                    >
+                      <action.icon className="h-6 w-6" />
+                      <span className="text-xs font-medium">{action.label}</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="font-medium">{action.label}</p>
+                    <p className="text-xs text-muted-foreground">{action.description}</p>
+                  </TooltipContent>
+                </UITooltip>
+              ))}
+            </div>
+          </TooltipProvider>
         </CardContent>
       </Card>
 

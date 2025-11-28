@@ -5,6 +5,8 @@ export { ERPTimeTab } from './ERPTimeTab';
 export { ERPTeamTab } from './ERPTeamTab';
 export { ERPSearchResults } from './ERPSearchResults';
 export { EnhancedSearchBar } from './EnhancedSearchBar';
+export { TaskFormModal } from './TaskFormModal';
+export { TaskViewModal } from './TaskViewModal';
 
 // Types that are shared across ERP components
 export interface ERPProject {

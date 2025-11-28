@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
-import { 
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
   Plus,
   Search,
   Filter,
@@ -20,7 +21,9 @@ import {
   Target,
   PlayCircle,
   PauseCircle,
-  CheckSquare
+  CheckSquare,
+  Trash2,
+  Copy
 } from 'lucide-react';
 
 interface ERPTask {
@@ -53,6 +56,8 @@ interface ERPTasksTabProps {
   onViewTask: (task: ERPTask) => void;
   onStartTask: (task: ERPTask) => void;
   onCompleteTask: (task: ERPTask) => void;
+  onDeleteTask: (task: ERPTask) => void;
+  onDuplicateTask: (task: ERPTask) => void;
 }
 
 export function ERPTasksTab({
@@ -68,7 +73,9 @@ export function ERPTasksTab({
   onEditTask,
   onViewTask,
   onStartTask,
-  onCompleteTask
+  onCompleteTask,
+  onDeleteTask,
+  onDuplicateTask
 }: ERPTasksTabProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -182,10 +189,20 @@ export function ERPTasksTab({
               <Target className="h-5 w-5 text-blue-500" />
               Task Management
             </span>
-            <Button onClick={onCreateTask} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              New Task
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button onClick={onCreateTask} className="flex items-center gap-2">
+                    <Plus className="h-4 w-4" />
+                    New Task
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="font-medium">Create New Task</p>
+                  <p className="text-xs text-muted-foreground">Add a new task to a project</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -294,44 +311,115 @@ export function ERPTasksTab({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onViewTask(task)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onEditTask(task)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {task.status === 'todo' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onStartTask(task)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <PlayCircle className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {task.status !== 'completed' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onCompleteTask(task)}
-                              className="h-8 w-8 p-0"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
+                        <TooltipProvider>
+                          <div className="flex items-center gap-2">
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onViewTask(task)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium">View Task</p>
+                                <p className="text-xs text-muted-foreground">See full task details</p>
+                              </TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onEditTask(task)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium">Edit Task</p>
+                                <p className="text-xs text-muted-foreground">Modify task details and assignment</p>
+                              </TooltipContent>
+                            </Tooltip>
+
+                            {task.status === 'todo' && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => onStartTask(task)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <PlayCircle className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="font-medium">Start Task</p>
+                                  <p className="text-xs text-muted-foreground">Change status to In Progress</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+
+                            {task.status !== 'completed' && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => onCompleteTask(task)}
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p className="font-medium">Complete Task</p>
+                                  <p className="text-xs text-muted-foreground">Mark task as completed</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onDuplicateTask(task)}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium">Duplicate Task</p>
+                                <p className="text-xs text-muted-foreground">Create a copy of this task</p>
+                              </TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onDeleteTask(task)}
+                                  className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium text-red-600">Delete Task</p>
+                                <p className="text-xs text-muted-foreground">Permanently remove this task</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </TooltipProvider>
                       </TableCell>
                     </TableRow>
                   );

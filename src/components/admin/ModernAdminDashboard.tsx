@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Users, 
-  FileText, 
-  CreditCard, 
-  Settings, 
-  BarChart3, 
-  MessageSquare, 
-  FolderOpen, 
+import {
+  Users,
+  FileText,
+  CreditCard,
+  Settings,
+  BarChart3,
+  MessageSquare,
+  FolderOpen,
   Workflow,
   Bell,
   Search,
@@ -22,7 +22,8 @@ import {
   Clock,
   ArrowRight,
   CheckCircle,
-  Camera
+  Camera,
+  LogOut
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -411,12 +412,12 @@ export const ModernAdminDashboard: React.FC = () => {
       <Navbar />
       <div className="flex pt-20">
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-screen">
+        <div className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-screen flex flex-col">
           <div className="p-6">
             <h2 className="text-xl font-bold text-gray-800">Admin Panel</h2>
             <p className="text-sm text-gray-600">NexaCore Innovations</p>
           </div>
-          
+
           {/* Search */}
           <div className="px-6 mb-6">
             <div className="relative">
@@ -431,7 +432,7 @@ export const ModernAdminDashboard: React.FC = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="px-4">
+          <nav className="px-4 flex-1 overflow-y-auto">
             <div className="space-y-1">
               {navigationItems.map((item) => (
                 <button
@@ -456,6 +457,32 @@ export const ModernAdminDashboard: React.FC = () => {
               ))}
             </div>
           </nav>
+
+          {/* User Info & Sign Out - Sticky at bottom */}
+          <div className="border-t border-gray-200 p-4 mt-auto">
+            <div className="mb-3 px-2">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">Signed in as</p>
+              <p className="text-sm font-semibold text-gray-800 truncate">{user?.email}</p>
+            </div>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={async () => {
+                try {
+                  await supabase.auth.signOut();
+                  window.location.href = '/';
+                  toast.success('Signed out successfully');
+                } catch (error) {
+                  console.error('Error signing out:', error);
+                  toast.error('Failed to sign out');
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         {/* Main Content */}

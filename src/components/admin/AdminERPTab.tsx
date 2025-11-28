@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from 'sonner';
 
 // Import the new modular components and types
-import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole } from './erp';
+import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, TaskFormModal, TaskViewModal } from './erp';
 
 // Additional types needed
 interface ERPTask {
@@ -131,6 +131,11 @@ export function AdminERPTab() {
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<string[]>([]);
   const [selectedProjectRole, setSelectedProjectRole] = useState<string>('');
   const [existingTeamMembers, setExistingTeamMembers] = useState<{ user_id: string; role: string }[]>([]);
+
+  // Task modal states
+  const [selectedTask, setSelectedTask] = useState<ERPTask | null>(null);
+  const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
+  const [isTaskViewOpen, setIsTaskViewOpen] = useState(false);
 
   // Helper function to map staff roles to suggested project roles
   const mapStaffRoleToProjectRole = (staffRole: string): string => {
@@ -604,23 +609,110 @@ export function AdminERPTab() {
 
   // Task handlers
   const handleCreateTask = () => {
-    toast.info('Task creation functionality would be implemented here');
+    setSelectedTask(null);
+    setIsTaskFormOpen(true);
   };
 
   const handleEditTask = (task: ERPTask) => {
-    toast.info(`Edit task: ${task.title}`);
+    setSelectedTask(task);
+    setIsTaskFormOpen(true);
   };
 
   const handleViewTask = (task: ERPTask) => {
-    toast.info(`View task: ${task.title}`);
+    setSelectedTask(task);
+    setIsTaskViewOpen(true);
   };
 
-  const handleStartTask = (task: ERPTask) => {
-    toast.success(`Started task: ${task.title}`);
+  const handleStartTask = async (task: ERPTask) => {
+    try {
+      const { error } = await supabase
+        .from('erp_tasks')
+        .update({ status: 'in_progress', updated_at: new Date().toISOString() })
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      toast.success(`Started task: ${task.title}`);
+      await loadTasks(); // Reload tasks to reflect changes
+      await loadERPStats(); // Update stats
+    } catch (error) {
+      console.error('Error starting task:', error);
+      toast.error('Failed to start task');
+    }
   };
 
-  const handleCompleteTask = (task: ERPTask) => {
-    toast.success(`Completed task: ${task.title}`);
+  const handleCompleteTask = async (task: ERPTask) => {
+    try {
+      const { error } = await supabase
+        .from('erp_tasks')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      toast.success(`Completed task: ${task.title}`);
+      await loadTasks(); // Reload tasks to reflect changes
+      await loadERPStats(); // Update stats
+    } catch (error) {
+      console.error('Error completing task:', error);
+      toast.error('Failed to complete task');
+    }
+  };
+
+  const handleTaskFormSuccess = async () => {
+    setIsTaskFormOpen(false);
+    setSelectedTask(null);
+    await loadTasks(); // Reload tasks after create/update
+    await loadERPStats(); // Update stats
+  };
+
+  const handleDeleteTask = async (task: ERPTask) => {
+    if (!confirm(`Are you sure you want to delete "${task.title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('erp_tasks')
+        .delete()
+        .eq('id', task.id);
+
+      if (error) throw error;
+
+      toast.success(`Task "${task.title}" deleted successfully`);
+      await loadTasks(); // Reload tasks
+      await loadERPStats(); // Update stats
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      toast.error('Failed to delete task');
+    }
+  };
+
+  const handleDuplicateTask = async (task: ERPTask) => {
+    try {
+      const { error } = await supabase
+        .from('erp_tasks')
+        .insert({
+          title: `${task.title} (Copy)`,
+          description: task.description,
+          status: 'todo',
+          priority: task.priority,
+          project_id: task.project_id,
+          assignee_id: task.assignee_id,
+          due_date: task.due_date,
+          estimated_hours: task.estimated_hours,
+          actual_hours: 0
+        });
+
+      if (error) throw error;
+
+      toast.success(`Task duplicated: "${task.title} (Copy)"`);
+      await loadTasks(); // Reload tasks
+      await loadERPStats(); // Update stats
+    } catch (error) {
+      console.error('Error duplicating task:', error);
+      toast.error('Failed to duplicate task');
+    }
   };
 
   // Time tracking handlers
@@ -831,6 +923,8 @@ export function AdminERPTab() {
             onViewTask={handleViewTask}
             onStartTask={handleStartTask}
             onCompleteTask={handleCompleteTask}
+            onDeleteTask={handleDeleteTask}
+            onDuplicateTask={handleDuplicateTask}
           />
         </TabsContent>
 
@@ -910,6 +1004,28 @@ export function AdminERPTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Task Form Modal */}
+      <TaskFormModal
+        isOpen={isTaskFormOpen}
+        onClose={() => {
+          setIsTaskFormOpen(false);
+          setSelectedTask(null);
+        }}
+        onSuccess={handleTaskFormSuccess}
+        task={selectedTask}
+      />
+
+      {/* Task View Modal */}
+      <TaskViewModal
+        isOpen={isTaskViewOpen}
+        onClose={() => {
+          setIsTaskViewOpen(false);
+          setSelectedTask(null);
+        }}
+        task={selectedTask}
+        onEdit={handleEditTask}
+      />
     </div>
   );
 }

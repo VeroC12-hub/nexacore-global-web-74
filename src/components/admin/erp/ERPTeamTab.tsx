@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   Users,
   UserPlus,
@@ -275,14 +276,24 @@ export function ERPTeamTab({
               {/* Assign Button */}
               {selectedTeamMembers.length > 0 && (
                 <div className="pt-4">
-                  <Button 
-                    onClick={onAssignTeamMembers} 
-                    className="w-full flex items-center gap-2"
-                    disabled={selectedTeamMembers.length === 0}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Assign {selectedTeamMembers.length} Team Member{selectedTeamMembers.length !== 1 ? 's' : ''} to Project
-                  </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          onClick={onAssignTeamMembers}
+                          className="w-full flex items-center gap-2"
+                          disabled={selectedTeamMembers.length === 0}
+                        >
+                          <UserPlus className="h-4 w-4" />
+                          Assign {selectedTeamMembers.length} Team Member{selectedTeamMembers.length !== 1 ? 's' : ''} to Project
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="font-medium">Assign Team Members</p>
+                        <p className="text-xs text-muted-foreground">Add selected members to the project</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               )}
             </>
