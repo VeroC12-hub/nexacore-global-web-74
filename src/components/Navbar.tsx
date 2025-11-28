@@ -26,10 +26,46 @@ const Navbar = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut();
-      window.location.href = '/';
+      // First, call the sign-out function
+      const { error } = await signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        alert('Failed to sign out. Please try again.');
+        return;
+      }
+
+      // Clear local state
+      setRole(null);
+
+      // Clear all Supabase-related items from storage
+      try {
+        const localKeysToRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('sb-')) {
+            localKeysToRemove.push(key);
+          }
+        }
+        localKeysToRemove.forEach(key => localStorage.removeItem(key));
+
+        // Also clear session storage
+        const sessionKeysToRemove: string[] = [];
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const key = sessionStorage.key(i);
+          if (key && key.startsWith('sb-')) {
+            sessionKeysToRemove.push(key);
+          }
+        }
+        sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
+      } catch (storageError) {
+        console.error('Error clearing storage:', storageError);
+      }
+
+      // Force a full page reload to home to clear all state
+      window.location.replace('/');
     } catch (error) {
       console.error('Error signing out:', error);
+      alert('Failed to sign out. Please try again.');
     }
   };
 

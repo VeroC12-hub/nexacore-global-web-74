@@ -137,6 +137,7 @@ export function AdminERPTab() {
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false);
   const [isTaskViewOpen, setIsTaskViewOpen] = useState(false);
   const [isTaskExportOpen, setIsTaskExportOpen] = useState(false);
+  const [singleTaskToExport, setSingleTaskToExport] = useState<ERPTask | null>(null);
 
   // Helper function to map staff roles to suggested project roles
   const mapStaffRoleToProjectRole = (staffRole: string): string => {
@@ -717,6 +718,12 @@ export function AdminERPTab() {
   };
 
   const handleExportTasks = () => {
+    setSingleTaskToExport(null); // Export all/filtered tasks
+    setIsTaskExportOpen(true);
+  };
+
+  const handleExportSingleTask = (task: ERPTask) => {
+    setSingleTaskToExport(task); // Export only this task
     setIsTaskExportOpen(true);
   };
 
@@ -931,6 +938,7 @@ export function AdminERPTab() {
             onDeleteTask={handleDeleteTask}
             onDuplicateTask={handleDuplicateTask}
             onExportTasks={handleExportTasks}
+            onExportSingleTask={handleExportSingleTask}
           />
         </TabsContent>
 
@@ -1036,7 +1044,10 @@ export function AdminERPTab() {
       {/* Task Export Modal */}
       <TaskExportModal
         isOpen={isTaskExportOpen}
-        onClose={() => setIsTaskExportOpen(false)}
+        onClose={() => {
+          setIsTaskExportOpen(false);
+          setSingleTaskToExport(null);
+        }}
         tasks={tasks}
         filteredTasks={tasks.filter(task => {
           const matchesSearch = !searchTerm ||
@@ -1047,6 +1058,7 @@ export function AdminERPTab() {
           const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
           return matchesSearch && matchesStatus && matchesPriority;
         })}
+        singleTask={singleTaskToExport}
       />
     </div>
   );

@@ -31,15 +31,27 @@ interface TaskExportModalProps {
   onClose: () => void;
   tasks: ERPTask[];
   filteredTasks: ERPTask[];
+  singleTask?: ERPTask | null;
 }
 
-export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks }: TaskExportModalProps) {
+export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleTask }: TaskExportModalProps) {
   const [exportFormat, setExportFormat] = useState<'csv' | 'excel' | 'pdf'>('excel');
   const [includeAllTasks, setIncludeAllTasks] = useState(false);
   const [includeStatistics, setIncludeStatistics] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'detailed' | 'compact'>('detailed');
 
-  const tasksToExport = includeAllTasks ? tasks : filteredTasks;
+  // Determine available tasks for selection
+  const availableTasks = includeAllTasks ? tasks : filteredTasks;
+
+  // If singleTask is provided, export only that task
+  // Otherwise export selected tasks, or all available if none selected
+  const tasksToExport = singleTask
+    ? [singleTask]
+    : selectedTaskIds.length > 0
+      ? availableTasks.filter(t => selectedTaskIds.includes(t.id))
+      : availableTasks;
 
   // Calculate statistics
   const getStatistics = () => {
@@ -270,34 +282,290 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks }: TaskE
       const stats = getStatistics();
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
+      const pageHeight = doc.internal.pageSize.height;
       let yPos = 20;
 
-      // Add header
+      // Define colors matching company branding
+      const tealColor: [number, number, number] = [0, 152, 166]; // #0098A6
+      const limeColor: [number, number, number] = [205, 220, 57]; // #CDDC39
+      const navyColor: [number, number, number] = [30, 58, 95]; // #1E3A5F
+
+      // Add diagonal geometric accent (top right)
+      doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+      doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
+      doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
+      doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+
+      // Add company name
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('NexaCore Innovations', pageWidth / 2, yPos, { align: 'center' });
+      doc.setTextColor(tealColor[0], tealColor[1], tealColor[2]);
+      doc.text('NEXACORE', 14, yPos);
+      yPos += 5;
+      doc.setFontSize(9);
+      doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+      doc.text('I N N O V A T I O N S', 14, yPos);
       yPos += 8;
 
-      doc.setFontSize(14);
-      doc.text('Task Management Report', pageWidth / 2, yPos, { align: 'center' });
-      yPos += 10;
-
-      // Add report info
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Generated: ${new Date().toLocaleString()}`, 14, yPos);
+      // Add title
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+      doc.text('Task Management Report', 14, yPos);
       yPos += 6;
-      doc.text(`Total Tasks: ${stats.total}`, 14, yPos);
+
+      // Add tagline
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 100, 100);
+      doc.text('Engineering Global Innovation with Excellence', 14, yPos);
+      yPos += 8;
+
+      // Add report info with styling
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      doc.text(`Generated: ${new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`, 14, yPos);
+      yPos += 4;
+      doc.text(`Report Type: ${includeStatistics ? 'Comprehensive with Statistics' : 'Task List Only'}`, 14, yPos);
+      yPos += 4;
+      doc.text(`Tasks: ${stats.total} | Layout: ${viewMode === 'compact' && tasksToExport.length > 1 ? 'Compact' : 'Detailed'}`, 14, yPos);
       yPos += 10;
 
-      // Add statistics if enabled
-      if (includeStatistics) {
-        doc.setFontSize(12);
+      // Choose between compact and detailed view
+      if (viewMode === 'compact' && tasksToExport.length > 1) {
+        // COMPACT VIEW - All tasks in grouped table
+        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+        doc.rect(14, yPos - 4, pageWidth - 28, 10, 'F');
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text('Summary Statistics', 14, yPos);
-        yPos += 8;
+        doc.setTextColor(255, 255, 255);
+        doc.text('ALL TASKS - GROUPED VIEW', pageWidth / 2, yPos + 2, { align: 'center' });
+        yPos += 12;
 
-        // Statistics table
+        // Create comprehensive table with all task information
+        const compactTableData = tasksToExport.map(task => [
+          task.title,
+          task.description || 'No description',
+          task.assignee || 'Unassigned',
+          task.project_title || 'N/A',
+          formatStatus(task.status),
+          formatPriority(task.priority),
+          formatDate(task.due_date),
+          task.estimated_hours.toString(),
+          task.actual_hours.toString()
+        ]);
+
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Task', 'Description', 'Assignee', 'Project', 'Status', 'Priority', 'Due Date', 'Est.', 'Act.']],
+          body: compactTableData,
+          theme: 'grid',
+          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          headStyles: {
+            fillColor: tealColor,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 8
+          },
+          alternateRowStyles: { fillColor: [250, 252, 254] },
+          styles: {
+            fontSize: 7,
+            cellPadding: 2.5,
+            lineColor: [200, 210, 220],
+            lineWidth: 0.3,
+            overflow: 'linebreak'
+          },
+          columnStyles: {
+            0: { cellWidth: 38 },  // Task
+            1: { cellWidth: 48 },  // Description
+            2: { cellWidth: 24 },  // Assignee
+            3: { cellWidth: 24 },  // Project
+            4: { cellWidth: 18 },  // Status
+            5: { cellWidth: 16 },  // Priority
+            6: { cellWidth: 20 },  // Due Date
+            7: { cellWidth: 11 },  // Est.
+            8: { cellWidth: 11 }   // Act.
+          },
+          didDrawPage: function(data) {
+            // Add header decoration on new pages
+            if (data.pageNumber > 1 && data.cursor && data.cursor.y < 30) {
+              doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+              doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
+              doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
+              doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+            }
+          }
+        });
+
+        yPos = (doc as any).lastAutoTable.finalY + 12;
+      } else {
+        // DETAILED VIEW - Individual sections for each task
+        tasksToExport.forEach((task, index) => {
+        // Check if we need a new page (reserve more space for content)
+        if (yPos > pageHeight - 100) {
+          doc.addPage();
+          // Add diagonal accent on new page
+          doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+          doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
+          doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
+          doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+          yPos = 20;
+        }
+
+        // Task header with number and professional styling
+        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+        doc.rect(14, yPos, pageWidth - 28, 10, 'F');
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(255, 255, 255);
+        const taskHeader = tasksToExport.length === 1 ? 'TASK INFORMATION' : `TASK ${index + 1} OF ${tasksToExport.length}`;
+        doc.text(taskHeader, pageWidth / 2, yPos + 6, { align: 'center' });
+        yPos += 14;
+
+        // Task Details Table with professional grid layout
+        const detailsData = [
+          [
+            { content: 'TASK NAME', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: task.title, styles: { fontStyle: 'bold', fontSize: 11 } }
+          ],
+          [
+            { content: 'DESCRIPTION', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: task.description || 'No description provided' }
+          ],
+          [
+            { content: 'ASSIGNED TO', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: task.assignee || 'Unassigned' }
+          ],
+          [
+            { content: 'PROJECT', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: task.project_title || 'Not assigned to a project' }
+          ],
+          [
+            { content: 'STATUS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: formatStatus(task.status) }
+          ],
+          [
+            { content: 'PRIORITY', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: formatPriority(task.priority) }
+          ],
+          [
+            { content: 'DUE DATE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: formatDate(task.due_date) }
+          ],
+          [
+            { content: 'ESTIMATED HOURS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: task.estimated_hours.toString() + ' hours' }
+          ],
+          [
+            { content: 'ACTUAL HOURS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: task.actual_hours.toString() + ' hours' }
+          ],
+          [
+            { content: 'VARIANCE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            {
+              content: `${task.actual_hours - task.estimated_hours} hours`,
+              styles: {
+                textColor: task.actual_hours > task.estimated_hours ? [220, 38, 38] : [21, 128, 61]
+              }
+            }
+          ]
+        ];
+
+        autoTable(doc, {
+          startY: yPos,
+          body: detailsData,
+          theme: 'grid',
+          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          styles: {
+            fontSize: 9,
+            cellPadding: 3,
+            lineColor: [200, 210, 220],
+            lineWidth: 0.3,
+            overflow: 'linebreak'
+          },
+          columnStyles: {
+            0: {
+              cellWidth: 45,
+              fontStyle: 'bold',
+              textColor: [30, 58, 95],
+              halign: 'right',
+              valign: 'top',
+              fontSize: 8
+            },
+            1: {
+              cellWidth: pageWidth - 73,
+              textColor: [40, 40, 40],
+              valign: 'top'
+            }
+          },
+          didParseCell: function(data) {
+            // Ensure text wraps properly in description cells
+            if (data.row.index === 1 && data.column.index === 1) {
+              data.cell.styles.cellPadding = { top: 3, right: 3, bottom: 3, left: 3 };
+            }
+          },
+          didDrawPage: function(data) {
+            // Add header decoration on new pages if table spans multiple pages
+            if (data.pageNumber > 1 && data.cursor && data.cursor.y < 30) {
+              doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+              doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
+              doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
+              doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+            }
+          }
+        });
+
+        yPos = (doc as any).lastAutoTable.finalY + 12;
+
+        // Ensure we're not too close to bottom before adding separator
+        if (yPos > pageHeight - 30 && index < tasksToExport.length - 1) {
+          doc.addPage();
+          doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+          doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
+          doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
+          doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+          yPos = 20;
+        }
+
+        // Add separator line between tasks (except for the last task)
+        if (index < tasksToExport.length - 1) {
+          doc.setDrawColor(tealColor[0], tealColor[1], tealColor[2]);
+          doc.setLineWidth(0.5);
+          doc.line(14, yPos, pageWidth - 14, yPos);
+          yPos += 12;
+        }
+        });
+      }
+
+      // Add statistics section AFTER tasks if enabled
+      if (includeStatistics) {
+        // Add new page for statistics
+        doc.addPage();
+
+        // Add diagonal accent on new page
+        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+        doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
+        doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
+        doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+
+        yPos = 20;
+        // Summary section with background
+        doc.setFillColor(245, 250, 252);
+        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+        doc.text('SUMMARY STATISTICS', 16, yPos + 2);
+        yPos += 11;
+
+        // Statistics table with company colors
         const statsTableData = [
           ['Metric', 'Value'],
           ['Completion Rate', `${stats.completionRate}%`],
@@ -312,18 +580,30 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks }: TaskE
           head: [statsTableData[0]],
           body: statsTableData.slice(1),
           theme: 'grid',
-          headStyles: { fillColor: [59, 130, 246] },
-          margin: { left: 14, right: 14 },
-          styles: { fontSize: 9 }
+          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          headStyles: {
+            fillColor: tealColor,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9
+          },
+          alternateRowStyles: { fillColor: [250, 252, 254] },
+          styles: {
+            fontSize: 8,
+            cellPadding: 3
+          }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
 
-        // Priority breakdown
-        doc.setFontSize(12);
+        // Priority breakdown section
+        doc.setFillColor(245, 250, 252);
+        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text('Priority Breakdown', 14, yPos);
-        yPos += 8;
+        doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+        doc.text('PRIORITY BREAKDOWN', 16, yPos + 2);
+        yPos += 11;
 
         const priorityTableData = [
           ['Priority', 'Count'],
@@ -338,18 +618,30 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks }: TaskE
           head: [priorityTableData[0]],
           body: priorityTableData.slice(1),
           theme: 'grid',
-          headStyles: { fillColor: [59, 130, 246] },
-          margin: { left: 14, right: 14 },
-          styles: { fontSize: 9 }
+          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          headStyles: {
+            fillColor: tealColor,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9
+          },
+          alternateRowStyles: { fillColor: [250, 252, 254] },
+          styles: {
+            fontSize: 8,
+            cellPadding: 3
+          }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
 
-        // Hours tracking
-        doc.setFontSize(12);
+        // Hours tracking section
+        doc.setFillColor(245, 250, 252);
+        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
-        doc.text('Hours Tracking', 14, yPos);
-        yPos += 8;
+        doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+        doc.text('HOURS TRACKING', 16, yPos + 2);
+        yPos += 11;
 
         const hoursTableData = [
           ['Metric', 'Hours'],
@@ -363,67 +655,148 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks }: TaskE
           head: [hoursTableData[0]],
           body: hoursTableData.slice(1),
           theme: 'grid',
-          headStyles: { fillColor: [59, 130, 246] },
-          margin: { left: 14, right: 14 },
-          styles: { fontSize: 9 }
+          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          headStyles: {
+            fillColor: tealColor,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 9
+          },
+          alternateRowStyles: { fillColor: [250, 252, 254] },
+          styles: {
+            fontSize: 8,
+            cellPadding: 3
+          }
         });
 
-        // Add new page for tasks
-        doc.addPage();
-        yPos = 20;
+        yPos = (doc as any).lastAutoTable.finalY + 15;
       }
 
-      // Add tasks table
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text('Task Details', 14, yPos);
-      yPos += 8;
-
-      const taskTableData = tasksToExport.map(task => [
-        task.title.substring(0, 30) + (task.title.length > 30 ? '...' : ''),
-        formatStatus(task.status),
-        formatPriority(task.priority),
-        task.assignee || 'Unassigned',
-        formatDate(task.due_date),
-        task.estimated_hours.toString(),
-        task.actual_hours.toString()
-      ]);
-
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Task', 'Status', 'Priority', 'Assignee', 'Due Date', 'Est. Hrs', 'Actual Hrs']],
-        body: taskTableData,
-        theme: 'striped',
-        headStyles: { fillColor: [59, 130, 246] },
-        margin: { left: 14, right: 14 },
-        styles: { fontSize: 8 },
-        columnStyles: {
-          0: { cellWidth: 50 },
-          1: { cellWidth: 25 },
-          2: { cellWidth: 20 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 25 },
-          5: { cellWidth: 18 },
-          6: { cellWidth: 18 }
+      // Add a quick reference summary table only if exporting multiple tasks
+      if (tasksToExport.length > 1) {
+        // Check if we need a new page for the summary
+        if (yPos > pageHeight - 100) {
+          doc.addPage();
+          // Add diagonal accent on new page
+          doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+          doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
+          doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
+          doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+          yPos = 20;
         }
-      });
 
-      // Add footer
+        doc.setFillColor(245, 250, 252);
+        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+        doc.text('QUICK REFERENCE SUMMARY', 16, yPos + 2);
+        yPos += 11;
+
+        const taskTableData = tasksToExport.map(task => [
+          task.title.substring(0, 35) + (task.title.length > 35 ? '...' : ''),
+          task.project_title?.substring(0, 25) || 'N/A',
+          task.assignee?.substring(0, 25) || 'Unassigned',
+          formatStatus(task.status),
+          formatPriority(task.priority),
+          formatDate(task.due_date)
+        ]);
+
+        autoTable(doc, {
+          startY: yPos,
+          head: [['Task', 'Project', 'Assignee', 'Status', 'Priority', 'Due Date']],
+          body: taskTableData,
+          theme: 'striped',
+          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          headStyles: {
+            fillColor: tealColor,
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 8
+          },
+          alternateRowStyles: { fillColor: [250, 252, 254] },
+          styles: {
+            fontSize: 7,
+            cellPadding: 2.5,
+            overflow: 'linebreak'
+          },
+          columnStyles: {
+            0: { cellWidth: 48 },  // Task
+            1: { cellWidth: 32 },  // Project
+            2: { cellWidth: 32 },  // Assignee
+            3: { cellWidth: 23 },  // Status
+            4: { cellWidth: 20 },  // Priority
+            5: { cellWidth: 23 }   // Due Date
+          },
+          didDrawPage: function(data) {
+            // Add header decoration on new pages
+            if (data.pageNumber > 1 && data.cursor && data.cursor.y < 30) {
+              doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+              doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
+              doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
+              doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+            }
+          }
+        });
+      }
+
+      // Add professional footer to all pages
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
+
+        // Teal footer bar
+        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+        doc.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+
+        // Footer text in white
         doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
+        doc.setTextColor(255, 255, 255);
+
+        // Copyright text (left)
+        doc.text(
+          '© 2025 NexaCore Innovations. All rights reserved.',
+          14,
+          pageHeight - 7
+        );
+
+        // Page number (center)
         doc.text(
           `Page ${i} of ${pageCount}`,
           pageWidth / 2,
-          doc.internal.pageSize.height - 10,
+          pageHeight - 7,
           { align: 'center' }
         );
+
+        // Contact info (right)
         doc.text(
-          'NexaCore Innovations - Confidential',
+          'www.nexacore-innovations.com',
+          pageWidth - 14,
+          pageHeight - 7,
+          { align: 'right' }
+        );
+
+        // Additional contact info line
+        doc.setFontSize(7);
+        doc.text(
+          'Accra, Ghana',
           14,
-          doc.internal.pageSize.height - 10
+          pageHeight - 3
+        );
+
+        doc.text(
+          'info@nexacore-innovations.com',
+          pageWidth / 2,
+          pageHeight - 3,
+          { align: 'center' }
+        );
+
+        doc.text(
+          '+233-50-1588-710',
+          pageWidth - 14,
+          pageHeight - 3,
+          { align: 'right' }
         );
       }
 
@@ -438,6 +811,23 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks }: TaskE
       toast.error('Failed to export to PDF');
       return false;
     }
+  };
+
+  // Task selection helpers
+  const toggleTaskSelection = (taskId: string) => {
+    setSelectedTaskIds(prev =>
+      prev.includes(taskId)
+        ? prev.filter(id => id !== taskId)
+        : [...prev, taskId]
+    );
+  };
+
+  const selectAllTasks = () => {
+    setSelectedTaskIds(availableTasks.map(t => t.id));
+  };
+
+  const deselectAllTasks = () => {
+    setSelectedTaskIds([]);
   };
 
   // Handle export
@@ -477,7 +867,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks }: TaskE
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileDown className="h-5 w-5 text-blue-500" />
@@ -532,20 +922,112 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks }: TaskE
           <div className="space-y-3">
             <Label className="text-sm font-medium">Export Options</Label>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="all-tasks"
-                checked={includeAllTasks}
-                onCheckedChange={(checked) => setIncludeAllTasks(checked as boolean)}
-              />
-              <Label htmlFor="all-tasks" className="text-sm cursor-pointer">
-                Export all tasks ({tasks.length} total)
-              </Label>
-            </div>
+            {singleTask ? (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-blue-700 mb-1">
+                  <FileDown className="h-4 w-4" />
+                  <span className="text-sm font-medium">Single Task Export</span>
+                </div>
+                <div className="text-xs text-blue-600">
+                  Exporting: <span className="font-semibold">{singleTask.title}</span>
+                </div>
+                <div className="text-xs text-blue-500 mt-1">
+                  Status: {formatStatus(singleTask.status)} | Priority: {formatPriority(singleTask.priority)}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="all-tasks"
+                      checked={includeAllTasks}
+                      onCheckedChange={(checked) => {
+                        setIncludeAllTasks(checked as boolean);
+                        setSelectedTaskIds([]); // Reset selection when toggling
+                      }}
+                    />
+                    <Label htmlFor="all-tasks" className="text-sm cursor-pointer">
+                      Use all tasks ({tasks.length} total)
+                    </Label>
+                  </div>
+                  {!includeAllTasks && (
+                    <div className="text-xs text-muted-foreground">
+                      {filteredTasks.length} filtered
+                    </div>
+                  )}
+                </div>
 
-            {!includeAllTasks && (
-              <div className="text-xs text-muted-foreground ml-6">
-                Currently exporting {filteredTasks.length} filtered task{filteredTasks.length !== 1 ? 's' : ''}
+                {/* Task Selection */}
+                <div className="border rounded-lg p-3 space-y-2 max-h-48 overflow-y-auto bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-700">Select Tasks to Export</span>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={selectAllTasks}
+                        className="h-6 text-xs"
+                      >
+                        Select All
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={deselectAllTasks}
+                        className="h-6 text-xs"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                  {availableTasks.map((task) => (
+                    <div key={task.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`task-${task.id}`}
+                        checked={selectedTaskIds.includes(task.id)}
+                        onCheckedChange={() => toggleTaskSelection(task.id)}
+                      />
+                      <Label
+                        htmlFor={`task-${task.id}`}
+                        className="text-xs cursor-pointer flex-1 truncate"
+                      >
+                        {task.title}
+                      </Label>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                        task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                        task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-gray-100 text-gray-700'
+                      }`}>
+                        {formatPriority(task.priority)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* View Mode for PDF (only for multiple tasks) */}
+            {!singleTask && tasksToExport.length > 1 && exportFormat === 'pdf' && (
+              <div className="space-y-2">
+                <Label className="text-xs font-medium text-gray-700">PDF Layout</Label>
+                <RadioGroup value={viewMode} onValueChange={(value: any) => setViewMode(value)}>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="detailed" id="detailed" />
+                    <Label htmlFor="detailed" className="text-xs cursor-pointer">
+                      Detailed View - Full information for each task (recommended)
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="compact" id="compact" />
+                    <Label htmlFor="compact" className="text-xs cursor-pointer">
+                      Compact View - All tasks in grouped table format
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
             )}
 

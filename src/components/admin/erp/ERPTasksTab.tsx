@@ -60,6 +60,7 @@ interface ERPTasksTabProps {
   onDeleteTask: (task: ERPTask) => void;
   onDuplicateTask: (task: ERPTask) => void;
   onExportTasks: () => void;
+  onExportSingleTask: (task: ERPTask) => void;
 }
 
 export function ERPTasksTab({
@@ -78,7 +79,8 @@ export function ERPTasksTab({
   onCompleteTask,
   onDeleteTask,
   onDuplicateTask,
-  onExportTasks
+  onExportTasks,
+  onExportSingleTask
 }: ERPTasksTabProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -417,6 +419,23 @@ export function ERPTasksTab({
                               <TooltipContent>
                                 <p className="font-medium">Duplicate Task</p>
                                 <p className="text-xs text-muted-foreground">Create a copy of this task</p>
+                              </TooltipContent>
+                            </Tooltip>
+
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => onExportSingleTask(task)}
+                                  className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600 hover:border-green-200"
+                                >
+                                  <FileDown className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="font-medium text-green-600">Export This Task</p>
+                                <p className="text-xs text-muted-foreground">Generate report for this task only</p>
                               </TooltipContent>
                             </Tooltip>
 
