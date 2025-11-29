@@ -8,6 +8,10 @@ export { EnhancedSearchBar } from './EnhancedSearchBar';
 export { TaskFormModal } from './TaskFormModal';
 export { TaskViewModal } from './TaskViewModal';
 export { TaskExportModal } from './TaskExportModal';
+export { TimeEntryFormModal } from './TimeEntryFormModal';
+export { ActiveTimerWidget } from './ActiveTimerWidget';
+export { TimeEntryApproval } from './TimeEntryApproval';
+export { TimeEntryExport } from './TimeEntryExport';
 
 // Types that are shared across ERP components
 export interface ERPProject {

@@ -26,7 +26,8 @@ interface ERPTask {
   description: string;
   status: 'todo' | 'in_progress' | 'review' | 'completed';
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  assignee_id?: string;
+  assignee_id?: string;  // Form field name
+  assigned_to?: string;  // Database column name
   project_id: string;
   due_date: string;
   estimated_hours: number;
@@ -70,7 +71,7 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
           status: task.status,
           priority: task.priority,
           project_id: task.project_id,
-          assignee_id: task.assignee_id || '',
+          assignee_id: task.assigned_to || '',  // Database uses 'assigned_to' column
           due_date: task.due_date.split('T')[0], // Extract date part
           estimated_hours: task.estimated_hours,
           actual_hours: task.actual_hours || 0
@@ -149,42 +150,82 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
     setIsSubmitting(true);
 
     try {
-      const taskData = {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        priority: formData.priority,
-        project_id: formData.project_id,
-        assignee_id: formData.assignee_id || null,
-        due_date: formData.due_date,
-        estimated_hours: formData.estimated_hours,
-        actual_hours: formData.actual_hours || 0
-      };
+      // Validate required fields
+      if (!formData.title.trim()) {
+        toast.error('Task title is required');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!formData.project_id) {
+        toast.error('Please select a project');
+        setIsSubmitting(false);
+        return;
+      }
 
       if (task?.id) {
-        // Update existing task
+        // Update existing task - don't update erp_project_id as it's a fixed relationship
+        const updateData = {
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          status: formData.status === 'todo' ? 'new' : formData.status,  // Map 'todo' to 'new'
+          priority: formData.priority,
+          assigned_to: formData.assignee_id || null,
+          due_date: formData.due_date,
+          estimated_hours: formData.estimated_hours,
+          actual_hours: formData.actual_hours || 0
+        };
+
+        console.log('Updating task:', task.id, updateData);
         const { error } = await supabase
           .from('erp_tasks')
-          .update(taskData)
+          .update(updateData)
           .eq('id', task.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
         toast.success('Task updated successfully');
       } else {
-        // Create new task
-        const { error } = await supabase
-          .from('erp_tasks')
-          .insert(taskData);
+        // Create new task - include erp_project_id on creation
+        const insertData = {
+          title: formData.title.trim(),
+          description: formData.description.trim(),
+          status: formData.status === 'todo' ? 'new' : formData.status,
+          priority: formData.priority,
+          erp_project_id: formData.project_id,  // Column is erp_project_id, not project_id
+          assigned_to: formData.assignee_id || null,
+          due_date: formData.due_date,
+          estimated_hours: formData.estimated_hours,
+          actual_hours: formData.actual_hours || 0
+        };
 
-        if (error) throw error;
+        console.log('Creating new task with data:', insertData);
+
+        const { data, error } = await supabase
+          .from('erp_tasks')
+          .insert(insertData)
+          .select();
+
+        if (error) {
+          console.error('Insert error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw error;
+        }
+        console.log('Task created successfully:', data);
         toast.success('Task created successfully');
       }
 
       onSuccess();
       resetForm();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving task:', error);
-      toast.error(task?.id ? 'Failed to update task' : 'Failed to create task');
+      const errorMessage = error?.message || 'Unknown error';
+      toast.error(task?.id ? `Failed to update task: ${errorMessage}` : `Failed to create task: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }

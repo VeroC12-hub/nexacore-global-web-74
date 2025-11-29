@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from 'sonner';
 
 // Import the new modular components and types
-import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, TaskFormModal, TaskViewModal, TaskExportModal } from './erp';
+import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, TaskFormModal, TaskViewModal, TaskExportModal, TimeEntryFormModal } from './erp';
 
 // Additional types needed
 interface ERPTask {
@@ -139,6 +139,10 @@ export function AdminERPTab() {
   const [isTaskExportOpen, setIsTaskExportOpen] = useState(false);
   const [singleTaskToExport, setSingleTaskToExport] = useState<ERPTask | null>(null);
 
+  // Time entry modal states
+  const [selectedTimeEntry, setSelectedTimeEntry] = useState<TimeEntry | null>(null);
+  const [isTimeEntryFormOpen, setIsTimeEntryFormOpen] = useState(false);
+
   // Helper function to map staff roles to suggested project roles
   const mapStaffRoleToProjectRole = (staffRole: string): string => {
     const roleMapping: Record<string, string> = {
@@ -254,17 +258,17 @@ export function AdminERPTab() {
         .from('erp_tasks')
         .select(`
           *,
-          erp_projects (
+          erp_projects!erp_project_id (
             id,
             title
           ),
-          profiles (
+          assignee:profiles!assigned_to (
             id,
             full_name,
             email
           )
         `)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false});
 
       if (error) {
         console.error('Error loading tasks:', error);
@@ -272,11 +276,13 @@ export function AdminERPTab() {
         return;
       }
 
+      console.log('Loaded tasks with relationships:', data);
+
       // Transform data to match component interface
       const transformedTasks = data?.map(task => ({
         ...task,
         project_title: task.erp_projects?.title || 'Unknown Project',
-        assignee: task.profiles?.full_name || task.profiles?.email || 'Unassigned'
+        assignee: task.assignee?.full_name || task.assignee?.email || 'Unassigned'
       })) || [];
 
       setTasks(transformedTasks);
@@ -292,21 +298,21 @@ export function AdminERPTab() {
         .from('erp_time_entries')
         .select(`
           *,
-          erp_projects (
+          erp_projects!erp_project_id (
             id,
             title
           ),
-          erp_tasks (
+          erp_tasks!erp_task_id (
             id,
             title
           ),
-          profiles (
+          profiles!user_id (
             id,
             full_name,
             email
           )
         `)
-        .order('start_time', { ascending: false });
+        .order('date', { ascending: false });
 
       if (error) {
         console.error('Error loading time entries:', error);
@@ -319,11 +325,7 @@ export function AdminERPTab() {
         ...entry,
         project_title: entry.erp_projects?.title || 'Unknown Project',
         task_title: entry.erp_tasks?.title || null,
-        user_name: entry.profiles?.full_name || entry.profiles?.email || 'Unknown User',
-        hours: entry.end_time 
-          ? (new Date(entry.end_time).getTime() - new Date(entry.start_time).getTime()) / (1000 * 60 * 60) 
-          : 0,
-        status: entry.end_time ? 'completed' : 'active'
+        user_name: entry.profiles?.full_name || entry.profiles?.email || 'Unknown User'
       })) || [];
 
       setTimeEntries(transformedEntries);
@@ -530,6 +532,11 @@ export function AdminERPTab() {
     initializeERPData();
   }, []);
 
+  // Wrapper functions for refreshing data
+  const fetchTimeEntries = () => {
+    loadTimeEntries();
+  };
+
   // Event handlers
   const handleCreateProject = () => {
     setSelectedProject(null);
@@ -692,15 +699,15 @@ export function AdminERPTab() {
 
   const handleDuplicateTask = async (task: ERPTask) => {
     try {
-      const { error } = await supabase
+      const { error} = await supabase
         .from('erp_tasks')
         .insert({
           title: `${task.title} (Copy)`,
           description: task.description,
-          status: 'todo',
+          status: 'new',
           priority: task.priority,
-          project_id: task.project_id,
-          assignee_id: task.assignee_id,
+          erp_project_id: task.erp_project_id,
+          assigned_to: task.assigned_to,
           due_date: task.due_date,
           estimated_hours: task.estimated_hours,
           actual_hours: 0
@@ -729,19 +736,88 @@ export function AdminERPTab() {
 
   // Time tracking handlers
   const handleCreateTimeEntry = () => {
-    toast.info('Time entry creation functionality would be implemented here');
+    setSelectedTimeEntry(null);
+    setIsTimeEntryFormOpen(true);
   };
 
   const handleEditTimeEntry = (entry: TimeEntry) => {
-    toast.info(`Edit time entry: ${entry.description}`);
+    setSelectedTimeEntry(entry);
+    setIsTimeEntryFormOpen(true);
   };
 
-  const handleStartTimer = (projectId: string, taskId?: string) => {
-    toast.success('Timer started!');
+  const handleStartTimer = async (projectId: string, taskId?: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to start a timer');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('erp_time_entries')
+        .insert([{
+          user_id: user.id,
+          erp_project_id: projectId,
+          erp_task_id: taskId || null,
+          description: 'Timer started',
+          date: new Date().toISOString().split('T')[0],
+          hours: 0,
+          hourly_rate: 50,
+          billable: true,
+          status: 'pending'
+        }]);
+
+      if (error) throw error;
+
+      toast.success('Timer started!');
+      fetchTimeEntries();
+    } catch (error: any) {
+      console.error('Error starting timer:', error);
+      toast.error(error.message || 'Failed to start timer');
+    }
   };
 
-  const handleStopTimer = (entryId: string) => {
-    toast.success('Timer stopped!');
+  const handleStopTimer = async (entryId: string, hours?: number) => {
+    try {
+      const hoursLogged = hours || 1; // Default to 1 hour if not provided
+
+      const { error } = await supabase
+        .from('erp_time_entries')
+        .update({
+          hours: hoursLogged,
+          status: 'pending' // Set to pending for manager approval
+        })
+        .eq('id', entryId);
+
+      if (error) throw error;
+
+      toast.success(`Timer stopped! ${hoursLogged.toFixed(2)} hours logged.`);
+      fetchTimeEntries();
+    } catch (error: any) {
+      console.error('Error stopping timer:', error);
+      toast.error(error.message || 'Failed to stop timer');
+    }
+  };
+
+  const handleDeleteTimeEntry = async (entry: TimeEntry) => {
+    if (!confirm(`Are you sure you want to delete this time entry?\n\n"${entry.description}"`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('erp_time_entries')
+        .delete()
+        .eq('id', entry.id);
+
+      if (error) throw error;
+
+      toast.success('Time entry deleted successfully');
+      fetchTimeEntries();
+    } catch (error: any) {
+      console.error('Error deleting time entry:', error);
+      toast.error(error.message || 'Failed to delete time entry');
+    }
   };
 
   // Quick action handler for Overview tab
@@ -807,7 +883,7 @@ export function AdminERPTab() {
         toast.info('Switched to Overview tab');
         break;
       case 'goto-projects':
-        setActiveTab('projects');
+        setActiveTab('erp_projects');
         toast.info('Switched to Projects tab');
         break;
       case 'goto-tasks':
@@ -956,6 +1032,9 @@ export function AdminERPTab() {
             onEditTimeEntry={handleEditTimeEntry}
             onStartTimer={handleStartTimer}
             onStopTimer={handleStopTimer}
+            onDeleteTimeEntry={handleDeleteTimeEntry}
+            onRefresh={loadTimeEntries}
+            projects={projects.map(p => ({ id: p.id, title: p.title }))}
           />
         </TabsContent>
 
@@ -1059,6 +1138,19 @@ export function AdminERPTab() {
           return matchesSearch && matchesStatus && matchesPriority;
         })}
         singleTask={singleTaskToExport}
+      />
+
+      {/* Time Entry Form Modal */}
+      <TimeEntryFormModal
+        isOpen={isTimeEntryFormOpen}
+        onClose={() => {
+          setIsTimeEntryFormOpen(false);
+          setSelectedTimeEntry(null);
+        }}
+        onSuccess={() => {
+          fetchTimeEntries();
+        }}
+        timeEntry={selectedTimeEntry}
       />
     </div>
   );
