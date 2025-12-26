@@ -169,6 +169,7 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
           description: formData.description.trim(),
           status: formData.status === 'todo' ? 'new' : formData.status,  // Map 'todo' to 'new'
           priority: formData.priority,
+          erp_project_id: formData.project_id,  // Allow changing project when editing
           assigned_to: formData.assignee_id || null,
           due_date: formData.due_date,
           estimated_hours: formData.estimated_hours,
