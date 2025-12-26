@@ -1035,7 +1035,22 @@ export function AdminERPTab() {
         break;
 
       case 'refresh-data':
-        window.location.reload();
+        setLoading(true);
+        toast.loading('Refreshing all data...');
+        Promise.all([
+          loadERPStats(),
+          loadProjects(),
+          loadStaffRoles(),
+          loadTasks(),
+          loadTimeEntries(),
+          loadChartData()
+        ]).then(() => {
+          toast.success('Data refreshed successfully');
+          setLoading(false);
+        }).catch(() => {
+          toast.error('Failed to refresh data');
+          setLoading(false);
+        });
         break;
 
       // Search result actions
@@ -1128,12 +1143,31 @@ export function AdminERPTab() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.reload()}
+          <Button
+            variant="outline"
+            onClick={async () => {
+              setLoading(true);
+              toast.loading('Refreshing data...');
+              try {
+                await Promise.all([
+                  loadERPStats(),
+                  loadProjects(),
+                  loadStaffRoles(),
+                  loadTasks(),
+                  loadTimeEntries(),
+                  loadChartData()
+                ]);
+                toast.success('Data refreshed successfully');
+              } catch (error) {
+                toast.error('Failed to refresh data');
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
             className="flex items-center gap-2"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>

@@ -469,12 +469,25 @@ export const ModernAdminDashboard: React.FC = () => {
               size="sm"
               onClick={async () => {
                 try {
-                  await supabase.auth.signOut();
-                  window.location.href = '/';
+                  toast.loading('Signing out...');
+                  // Sign out from Supabase
+                  const { error } = await supabase.auth.signOut();
+                  if (error) throw error;
+
+                  // Clear any local storage or cached data
+                  localStorage.clear();
+                  sessionStorage.clear();
+
+                  // Show success message
                   toast.success('Signed out successfully');
+
+                  // Wait a moment for state to clear, then redirect
+                  setTimeout(() => {
+                    window.location.href = '/auth';
+                  }, 300);
                 } catch (error) {
                   console.error('Error signing out:', error);
-                  toast.error('Failed to sign out');
+                  toast.error('Failed to sign out. Please try again.');
                 }
               }}
               className="w-full flex items-center justify-center gap-2"
