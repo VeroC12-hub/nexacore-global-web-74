@@ -448,7 +448,7 @@ export function ERPOverviewTab({
 
   // Real-time data and alerts (now interactive)
   const alerts = [
-    { id: 1, type: 'urgent', title: 'Budget Alert', message: 'Development project 67% over budget', time: '2 min ago', actionable: true },
+    { id: 1, type: 'urgent', title: 'Budget Alert', message: 'Civil Engineering project 67% over budget', time: '2 min ago', actionable: true },
     { id: 2, type: 'warning', title: 'Deadline Risk', message: '3 projects due this week', time: '5 min ago', actionable: true },
     { id: 3, type: 'success', title: 'Goal Achievement', message: 'Q3 revenue target reached!', time: '1 hour ago', actionable: false },
     { id: 4, type: 'info', title: 'New Assignment', message: '2 new team members added', time: '2 hours ago', actionable: false }
@@ -464,16 +464,16 @@ export function ERPOverviewTab({
   ];
 
   const recentActivity = [
-    { id: 1, type: 'project', title: 'Web Application project updated', user: 'John Doe', time: '5 min ago', status: 'completed' },
-    { id: 2, type: 'task', title: 'Database optimization task assigned', user: 'Jane Smith', time: '12 min ago', status: 'active' },
+    { id: 1, type: 'project', title: 'Residential Building Design project updated', user: 'John Doe', time: '5 min ago', status: 'completed' },
+    { id: 2, type: 'task', title: 'Structural calculations task assigned', user: 'Jane Smith', time: '12 min ago', status: 'active' },
     { id: 3, type: 'payment', title: 'Invoice #1234 paid', user: 'Client Corp', time: '1 hour ago', status: 'success' },
     { id: 4, type: 'team', title: 'New team member joined', user: 'Mike Wilson', time: '2 hours ago', status: 'info' }
   ];
 
   const upcomingTasks = [
-    { id: 1, title: 'Complete UI Design Review', project: 'Mobile App', due: '2 hours', priority: 'high' },
-    { id: 2, title: 'Client Presentation', project: 'E-commerce', due: '4 hours', priority: 'urgent' },
-    { id: 3, title: 'Code Review Session', project: 'API Development', due: '1 day', priority: 'medium' },
+    { id: 1, title: 'Complete CAD Drawing Review', project: 'Office Complex', due: '2 hours', priority: 'high' },
+    { id: 2, title: 'Client Presentation', project: 'Bridge Design', due: '4 hours', priority: 'urgent' },
+    { id: 3, title: 'Site Survey Analysis', project: 'Highway Project', due: '1 day', priority: 'medium' },
     { id: 4, title: 'Budget Planning Meeting', project: 'Q4 Strategy', due: '2 days', priority: 'low' }
   ];
 
@@ -1229,28 +1229,28 @@ export function ERPOverviewTab({
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Development Team</span>
+                        <span className="text-sm font-medium">CAD Engineering Team</span>
                         <span className="text-sm text-gray-500">85% capacity</span>
                       </div>
                       <Progress value={85} className="h-2" />
-                      
+
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Design Team</span>
+                        <span className="text-sm font-medium">Civil Engineering Team</span>
                         <span className="text-sm text-gray-500">92% capacity</span>
                       </div>
                       <Progress value={92} className="h-2" />
-                      
+
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Marketing Team</span>
-                        <span className="text-sm text-gray-500">67% capacity</span>
-                      </div>
-                      <Progress value={67} className="h-2" />
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">Operations Team</span>
+                        <span className="text-sm font-medium">Architecture Team</span>
                         <span className="text-sm text-gray-500">78% capacity</span>
                       </div>
                       <Progress value={78} className="h-2" />
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Software Development Team</span>
+                        <span className="text-sm text-gray-500">67% capacity</span>
+                      </div>
+                      <Progress value={67} className="h-2" />
                     </div>
                   </CardContent>
                 </Card>
@@ -1271,7 +1271,7 @@ export function ERPOverviewTab({
                           <TrendingUp className="h-4 w-4 text-blue-600" />
                           <span className="text-sm font-medium text-blue-900">Performance Boost</span>
                         </div>
-                        <p className="text-xs text-blue-700">Your development team's productivity increased 23% this month. Consider applying their workflow to other teams.</p>
+                        <p className="text-xs text-blue-700">Your CAD engineering team's productivity increased 23% this month. Consider applying their workflow to other teams.</p>
                       </div>
                       
                       <div className="p-4 border border-yellow-200 bg-yellow-50 rounded-lg">

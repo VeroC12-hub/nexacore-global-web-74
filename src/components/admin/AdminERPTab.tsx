@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from 'sonner';
 
 // Import the new modular components and types
-import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, TaskFormModal, TaskViewModal, TaskExportModal, TimeEntryFormModal } from './erp';
+import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, ProjectFormModal, ProjectViewModal, TaskFormModal, TaskViewModal, TaskExportModal, TimeEntryFormModal } from './erp';
 
 // Additional types needed
 interface ERPTask {
@@ -146,35 +146,63 @@ export function AdminERPTab() {
   // Helper function to map staff roles to suggested project roles
   const mapStaffRoleToProjectRole = (staffRole: string): string => {
     const roleMapping: Record<string, string> = {
+      // Management & Leadership
       'admin': 'manager',
-      'developer': 'developer',
-      'designer': 'designer',
       'manager': 'manager',
-      'analyst': 'analyst',
+      'lead': 'manager',
+      'owner': 'manager',
+      'director': 'manager',
+
+      // CAD & Engineering Roles (NexaCore Core Services)
+      'cad_engineer': 'cad_engineer',
+      'cad_designer': 'cad_designer',
+      'cad_drafter': 'cad_drafter',
+      'civil_engineer': 'civil_engineer',
+      'structural_engineer': 'structural_engineer',
+      'mechanical_engineer': 'mechanical_engineer',
+      'electrical_engineer': 'electrical_engineer',
+      'architect': 'architect',
+      'architectural_designer': 'architect',
+
+      // Software & Technology Roles
+      'developer': 'developer',
+      'software_engineer': 'developer',
+      'programmer': 'developer',
+      'designer': 'designer',
+      'ui_designer': 'designer',
+      'ux_designer': 'designer',
+      'ai_engineer': 'ai_specialist',
+      'ml_engineer': 'ai_specialist',
+      'data_scientist': 'ai_specialist',
+
+      // Support & Quality Roles
       'tester': 'tester',
       'qa': 'tester',
-      'lead': 'manager',
-      'senior': 'developer',
+      'quality_assurance': 'tester',
+      'analyst': 'analyst',
+      'consultant': 'consultant',
+      'advisor': 'consultant',
+
+      // Junior/Entry Levels
+      'senior': 'lead',
       'junior': 'contributor',
       'intern': 'contributor',
-      'consultant': 'analyst',
-      'architect': 'developer',
-      'owner': 'manager',
+      'trainee': 'contributor',
       'staff': 'contributor'
     };
 
-    const normalizedRole = staffRole.toLowerCase().trim();
-    
+    const normalizedRole = staffRole.toLowerCase().trim().replace(/\s+/g, '_');
+
     if (roleMapping[normalizedRole]) {
       return roleMapping[normalizedRole];
     }
-    
+
     for (const [key, value] of Object.entries(roleMapping)) {
       if (normalizedRole.includes(key)) {
         return value;
       }
     }
-    
+
     return 'contributor';
   };
 
@@ -824,40 +852,192 @@ export function AdminERPTab() {
   const handleQuickAction = (action: string, data?: unknown) => {
     switch (action) {
       case 'new-project':
-        handleCreateProject();
+        setActiveTab('projects');
+        // Delay to ensure tab switch completes, then trigger modal
+        setTimeout(() => handleCreateProject(), 100);
+        toast.info('Opening project creation form...');
         break;
+
+      // Alert actions
+      case 'view-alert':
+        const alert = data as any;
+        if (alert) {
+          toast.info(alert.title, {
+            description: alert.message,
+            action: alert.actionable ? {
+              label: 'Resolve',
+              onClick: () => handleQuickAction('resolve-alert', alert)
+            } : undefined
+          });
+        }
+        break;
+
+      case 'resolve-alert':
+        const resolveAlert = data as any;
+        if (resolveAlert) {
+          toast.success(`Alert "${resolveAlert.title}" marked as resolved`);
+        }
+        break;
+
+      // Client management (future feature)
       case 'add-client':
-        toast.info('Client management functionality would be implemented here');
+        toast.info('Client Management', {
+          description: 'Client management system coming in Phase 7. For now, you can manage clients through the Projects tab.'
+        });
         break;
+
+      // Invoice creation (future feature)
       case 'create-invoice':
-        toast.info('Invoice creation functionality would be implemented here');
+        toast.info('Invoice Creation', {
+          description: 'Invoice system coming in Phase 7. You can export time entries for billing from the Time tab.'
+        });
+        setActiveTab('time');
         break;
+
+      // Start timer with project selection
       case 'start-timer':
-        toast.success('Quick timer started!');
+        if (projects.length === 0) {
+          toast.error('No projects available. Create a project first.');
+          return;
+        }
+        // Start timer for the first active project
+        const activeProject = projects.find(p => p.is_active) || projects[0];
+        handleStartTimer(activeProject.id);
+        // Switch to Time tab to see the active timer
+        setTimeout(() => setActiveTab('time'), 1000);
+        toast.success(`Timer started for: ${activeProject.title}`, {
+          description: 'Switching to Time tab...'
+        });
         break;
+
       case 'new-task':
-        handleCreateTask();
+        setActiveTab('tasks');
+        // Delay to ensure tab switch completes, then trigger modal
+        setTimeout(() => handleCreateTask(), 100);
+        toast.info('Opening task creation form...');
         break;
+
+      // Meeting scheduling (future feature)
       case 'schedule-meeting':
-        toast.info('Meeting scheduling functionality would be implemented here');
+        toast.info('Meeting Scheduler', {
+          description: 'Calendar and meeting scheduling coming in Phase 7. Use the Tasks tab to track meeting-related tasks.'
+        });
         break;
+
+      // Productivity view
       case 'view-productivity':
         setActiveTab('tasks');
-        toast.info('Switched to Tasks tab for productivity details');
+        toast.info('Task Productivity', {
+          description: 'View detailed productivity metrics and task completion rates'
+        });
         break;
+
+      // Activity feed actions
       case 'view-all-activity':
-        toast.info('Activity log functionality would be implemented here');
+        toast.info('Activity Log', {
+          description: 'Full activity history view coming soon. Current activities are shown on the Overview tab.'
+        });
         break;
+
+      case 'view-activity':
+        const activity = data as any;
+        if (activity) {
+          // Navigate to the appropriate tab based on activity type
+          switch (activity.type) {
+            case 'project':
+              setActiveTab('projects');
+              toast.success(`Viewing ${activity.title}`);
+              break;
+            case 'task':
+              setActiveTab('tasks');
+              toast.success(`Viewing ${activity.title}`);
+              break;
+            case 'payment':
+              toast.info('Payment Details', {
+                description: `${activity.title} - ${activity.user}`
+              });
+              break;
+            case 'team':
+              setActiveTab('team');
+              toast.success(`Viewing team member: ${activity.user}`);
+              break;
+            default:
+              toast.info(activity.title, {
+                description: `${activity.user} • ${activity.time}`
+              });
+          }
+        }
+        break;
+
+      case 'view-activity-details':
+        const activityDetail = data as any;
+        if (activityDetail) {
+          toast.info(activityDetail.title, {
+            description: `${activityDetail.user} • ${activityDetail.time}\nStatus: ${activityDetail.status}`
+          });
+        }
+        break;
+
+      // Task management actions
       case 'manage-tasks':
         setActiveTab('tasks');
-        toast.info('Switched to Tasks tab');
+        toast.info('Task Management', {
+          description: 'Manage all your tasks and track progress'
+        });
         break;
+
+      case 'start-task':
+        const taskToStart = data as any;
+        if (taskToStart) {
+          // Find the task in the tasks array by matching properties
+          const actualTask = tasks.find(t => t.title === taskToStart.title);
+          if (actualTask) {
+            handleStartTask(actualTask);
+          } else {
+            toast.info(`Starting task: ${taskToStart.title}`, {
+              description: `Project: ${taskToStart.project}`
+            });
+          }
+        }
+        break;
+
+      case 'edit-task':
+        const taskToEdit = data as any;
+        if (taskToEdit) {
+          // Find the task in the tasks array
+          const actualTask = tasks.find(t => t.title === taskToEdit.title);
+          if (actualTask) {
+            handleEditTask(actualTask);
+          } else {
+            setActiveTab('tasks');
+            toast.info('Edit Task', {
+              description: 'Switch to Tasks tab to edit this task'
+            });
+          }
+        }
+        break;
+
+      case 'schedule-task':
+        const taskToSchedule = data as any;
+        if (taskToSchedule) {
+          toast.info('Schedule Task', {
+            description: `Use the Tasks tab to set a due date for: ${taskToSchedule.title}`
+          });
+          setActiveTab('tasks');
+        }
+        break;
+
+      // Data export
       case 'export-data':
-        toast.success('Data export functionality would be implemented here');
+        toast.success('Exporting Data', {
+          description: 'Use individual tab export buttons for detailed exports (Tasks, Time entries, etc.)'
+        });
         break;
+
       case 'refresh-data':
         window.location.reload();
         break;
+
       // Search result actions
       case 'view-project':
         if (data) {
@@ -866,41 +1046,61 @@ export function AdminERPTab() {
           toast.success(`Opened project: ${(data as any).title}`);
         }
         break;
+
       case 'view-task':
-        setActiveTab('tasks');
-        toast.success(`Switched to tasks tab${data ? ` - ${(data as any).title}` : ''}`);
+        if (data && (data as any).id) {
+          // If we have a full task object, open it for viewing
+          const task = data as ERPTask;
+          handleViewTask(task);
+        } else {
+          // Otherwise just switch to tasks tab
+          setActiveTab('tasks');
+          toast.success(`Switched to tasks tab${data ? ` - ${(data as any).title}` : ''}`);
+        }
         break;
+
       case 'view-team-member':
         setActiveTab('team');
         toast.success(`Switched to team tab${data ? ` - ${(data as any).profiles?.full_name || 'Team member'}` : ''}`);
         break;
+
       case 'view-time-entry':
         setActiveTab('time');
         toast.success(`Switched to time tracking tab${data ? ` - ${(data as any).description || 'Time entry'}` : ''}`);
         break;
+
+      // Tab navigation
       case 'goto-overview':
         setActiveTab('overview');
         toast.info('Switched to Overview tab');
         break;
+
       case 'goto-projects':
-        setActiveTab('erp_projects');
+        setActiveTab('projects');
         toast.info('Switched to Projects tab');
         break;
+
       case 'goto-tasks':
         setActiveTab('tasks');
         toast.info('Switched to Tasks tab');
         break;
+
       case 'goto-time':
         setActiveTab('time');
         toast.info('Switched to Time Tracking tab');
         break;
+
       case 'goto-team':
         setActiveTab('team');
         toast.info('Switched to Team tab');
         break;
+
       case 'view-budget':
-        toast.info('Budget overview - would show detailed financial metrics');
+        toast.info('Budget Overview', {
+          description: 'Detailed financial metrics and budget tracking across all projects'
+        });
         break;
+
       case 'global-search':
         const searchData = data as { query: string; result?: any };
         if (searchData?.result) {
@@ -909,8 +1109,12 @@ export function AdminERPTab() {
           toast.info(`Search performed for: "${searchData?.query}"`);
         }
         break;
+
       default:
-        toast.info(`Quick action: ${action}${data ? ` with data` : ''}`);
+        console.log('Unhandled quick action:', action, data);
+        toast.info(`Action: ${action}`, {
+          description: data ? 'Action performed with data' : undefined
+        });
     }
   };
 
@@ -1097,6 +1301,31 @@ export function AdminERPTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Project Form Modal */}
+      <ProjectFormModal
+        isOpen={isProjectFormOpen}
+        onClose={() => {
+          setIsProjectFormOpen(false);
+          setSelectedProject(null);
+        }}
+        onSuccess={() => {
+          loadProjects();
+          loadERPStats();
+        }}
+        project={selectedProject}
+      />
+
+      {/* Project View Modal */}
+      <ProjectViewModal
+        isOpen={isProjectModalOpen}
+        onClose={() => {
+          setIsProjectModalOpen(false);
+          setSelectedProject(null);
+        }}
+        project={selectedProject}
+        onEdit={handleEditProject}
+      />
 
       {/* Task Form Modal */}
       <TaskFormModal

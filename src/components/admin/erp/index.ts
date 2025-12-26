@@ -5,6 +5,8 @@ export { ERPTimeTab } from './ERPTimeTab';
 export { ERPTeamTab } from './ERPTeamTab';
 export { ERPSearchResults } from './ERPSearchResults';
 export { EnhancedSearchBar } from './EnhancedSearchBar';
+export { ProjectFormModal } from './ProjectFormModal';
+export { ProjectViewModal } from './ProjectViewModal';
 export { TaskFormModal } from './TaskFormModal';
 export { TaskViewModal } from './TaskViewModal';
 export { TaskExportModal } from './TaskExportModal';

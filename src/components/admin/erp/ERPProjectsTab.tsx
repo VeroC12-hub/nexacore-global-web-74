@@ -69,6 +69,23 @@ export function ERPProjectsTab({
   onViewProject,
   onAssignTeam
 }: ERPProjectsTabProps) {
+  const getDepartmentLabel = (department: string) => {
+    const labels: Record<string, string> = {
+      'cad_engineering': 'CAD Design & Engineering',
+      'civil_engineering': 'Civil Engineering',
+      'architecture': 'Architecture',
+      'software_development': 'Software Development',
+      'ai_ml': 'AI/ML Solutions',
+      'digital_services': 'Digital Services',
+      'consulting': 'Professional Consulting',
+      'operations': 'Operations',
+      'finance': 'Finance',
+      'hr': 'Human Resources',
+      'marketing': 'Marketing & Sales'
+    };
+    return labels[department] || department.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case 'completed': return 'bg-green-100 text-green-800 border-green-200';
@@ -212,17 +229,22 @@ export function ERPProjectsTab({
               </SelectContent>
             </Select>
             <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectTrigger className="w-full sm:w-[240px]">
                 <SelectValue placeholder="Filter by department" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Departments</SelectItem>
-                <SelectItem value="development">Development</SelectItem>
-                <SelectItem value="design">Design</SelectItem>
-                <SelectItem value="marketing">Marketing</SelectItem>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="hr">Human Resources</SelectItem>
+                <SelectItem value="cad_engineering">CAD Design & Engineering</SelectItem>
+                <SelectItem value="civil_engineering">Civil Engineering</SelectItem>
+                <SelectItem value="architecture">Architecture</SelectItem>
+                <SelectItem value="software_development">Software Development</SelectItem>
+                <SelectItem value="ai_ml">AI/ML Solutions</SelectItem>
+                <SelectItem value="digital_services">Digital Services</SelectItem>
+                <SelectItem value="consulting">Professional Consulting</SelectItem>
+                <SelectItem value="operations">Operations</SelectItem>
                 <SelectItem value="finance">Finance</SelectItem>
+                <SelectItem value="hr">Human Resources</SelectItem>
+                <SelectItem value="marketing">Marketing & Sales</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -247,7 +269,7 @@ export function ERPProjectsTab({
                     <TableCell>
                       <div>
                         <p className="font-medium">{project.title}</p>
-                        <p className="text-sm text-muted-foreground">{project.department}</p>
+                        <p className="text-sm text-muted-foreground">{getDepartmentLabel(project.department)}</p>
                       </div>
                     </TableCell>
                     <TableCell>
