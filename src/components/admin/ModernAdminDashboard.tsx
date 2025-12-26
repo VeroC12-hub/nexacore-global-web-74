@@ -469,22 +469,15 @@ export const ModernAdminDashboard: React.FC = () => {
               size="sm"
               onClick={async () => {
                 try {
-                  toast.loading('Signing out...');
                   // Sign out from Supabase
                   const { error } = await supabase.auth.signOut();
                   if (error) throw error;
 
-                  // Clear any local storage or cached data
-                  localStorage.clear();
-                  sessionStorage.clear();
-
-                  // Show success message
+                  // Show success message and redirect
                   toast.success('Signed out successfully');
 
-                  // Wait a moment for state to clear, then redirect
-                  setTimeout(() => {
-                    window.location.href = '/auth';
-                  }, 300);
+                  // Redirect immediately
+                  window.location.href = '/auth';
                 } catch (error) {
                   console.error('Error signing out:', error);
                   toast.error('Failed to sign out. Please try again.');
