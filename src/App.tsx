@@ -30,7 +30,7 @@ import Dashboard from "./pages/Dashboard";
 import QuoteReview from "./pages/QuoteReview";
 import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation"; // NEW IMPORT
 import StaffDashboardPage from "./pages/StaffDashboardPage"; // NEW IMPORT FOR STAFF DASHBOARD
-import AIAssistant from "./components/AIAssistant";
+import EnhancedAIAssistant from "./components/EnhancedAIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
 // Optional: Only import these if they exist in your project
@@ -100,7 +100,7 @@ const App = () => {
                 {/* 404 FALLBACK */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
-                <AIAssistant />
+                <EnhancedAIAssistant />
                 <CookieConsent />
                 <Toaster />
                 <Sonner />

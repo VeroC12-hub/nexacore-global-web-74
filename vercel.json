@@ -4,6 +4,14 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/api/ai/chat",
+      "destination": "/api/ai/chat"
+    },
+    {
+      "source": "/api/ai/embeddings",
+      "destination": "/api/ai/embeddings"
+    },
+    {
       "source": "/api/quotes/([^/]+)/pdf",
       "destination": "/api/quotes/[id]/pdf?id=$1"
     },
