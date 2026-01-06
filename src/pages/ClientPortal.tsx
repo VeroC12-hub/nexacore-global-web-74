@@ -242,15 +242,11 @@ const ClientPortal: React.FC = () => {
     priority: 'medium'
   });
 
-  // Project Edit Modal States
+  // Modal States
   const [showProjectEditModal, setShowProjectEditModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-
-  // Invoice Detail Modal States
   const [showInvoiceDetailModal, setShowInvoiceDetailModal] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-
-  // Service Request Edit Modal States
   const [showServiceRequestEditModal, setShowServiceRequestEditModal] = useState(false);
   const [selectedServiceRequest, setSelectedServiceRequest] = useState<ServiceRequest | null>(null);
 
@@ -1692,7 +1688,7 @@ const ClientPortal: React.FC = () => {
                     </div>
                   </Card>
                 ))}
-                
+
                 {filteredProjects.length === 0 && (
                   <div className="col-span-full text-center py-12">
                     <FolderOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -1879,7 +1875,7 @@ const ClientPortal: React.FC = () => {
                     </div>
                   </Card>
                 ))}
-                
+
                 {serviceRequests.length === 0 && (
                   <div className="col-span-full text-center py-12">
                     <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -2046,7 +2042,7 @@ const ClientPortal: React.FC = () => {
         </div>
       )}
 
-      {/* Project Edit Modal */}
+      {/* Modals */}
       <ProjectEditModal
         project={selectedProject}
         isOpen={showProjectEditModal}
@@ -2055,12 +2051,11 @@ const ClientPortal: React.FC = () => {
           setSelectedProject(null);
         }}
         onSuccess={() => {
-          loadProjects(); // Refresh projects list
+          loadProjects();
           toast.success('Project updated successfully!');
         }}
       />
 
-      {/* Invoice Detail Modal */}
       <InvoiceDetailModal
         invoice={selectedInvoice}
         isOpen={showInvoiceDetailModal}
@@ -2070,11 +2065,9 @@ const ClientPortal: React.FC = () => {
         }}
         onDownload={(invoiceId) => {
           toast.info('PDF download feature coming soon!');
-          // TODO: Implement PDF generation
         }}
       />
 
-      {/* Service Request Edit Modal */}
       <ServiceRequestEditModal
         serviceRequest={selectedServiceRequest}
         isOpen={showServiceRequestEditModal}
@@ -2083,7 +2076,7 @@ const ClientPortal: React.FC = () => {
           setSelectedServiceRequest(null);
         }}
         onSuccess={() => {
-          loadServiceRequests(); // Refresh service requests list
+          loadServiceRequests();
           toast.success('Service request updated successfully!');
         }}
       />
