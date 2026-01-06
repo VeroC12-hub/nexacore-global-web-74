@@ -814,7 +814,7 @@ const ClientPortal: React.FC = () => {
         {/* Elegant Premium Sidebar */}
         <div className={`
           fixed lg:static top-16 lg:top-0 bottom-0 left-0 z-[50]
-          w-80 sm:w-72 lg:w-72
+          w-64 sm:w-72 lg:w-72
           bg-gradient-to-b from-white via-blue-50/30 to-purple-50/20
           backdrop-blur-xl shadow-2xl border-r
           border-gradient-to-b from-blue-200/20 to-purple-200/20
