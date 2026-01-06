@@ -61,7 +61,9 @@ import {
   Download,
   Printer,
   RefreshCw,
-  Home
+  Home,
+  Menu,
+  X
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -74,6 +76,7 @@ export const ModernStaffDashboard: React.FC = () => {
   // State
   const [activeView, setActiveView] = useState('overview');
   const [dataLoading, setDataLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPortfolioForm, setShowPortfolioForm] = useState(false);
   const [showSimplePortfolioForm, setShowSimplePortfolioForm] = useState(false);
   const [showPortfolioHelp, setShowPortfolioHelp] = useState(false);
@@ -416,13 +419,13 @@ export const ModernStaffDashboard: React.FC = () => {
   const renderOverview = () => (
     <div className="space-y-6">
       {/* ERP Dashboard Header */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">NexaCore ERP Dashboard</h1>
-            <p className="text-gray-600">Welcome, {user?.email?.split('@')[0]} ({role?.replace('_', ' ')})</p>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">NexaCore ERP Dashboard</h1>
+            <p className="text-sm md:text-base text-gray-600">Welcome, {user?.email?.split('@')[0]} ({role?.replace('_', ' ')})</p>
           </div>
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={loadDashboardData} disabled={dataLoading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${dataLoading ? 'animate-spin' : ''}`} />
               Refresh
@@ -435,7 +438,7 @@ export const ModernStaffDashboard: React.FC = () => {
         </div>
 
         {/* KPI Cards - SAP/Odoo Style */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -519,13 +522,13 @@ export const ModernStaffDashboard: React.FC = () => {
   const renderProjects = () => (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 md:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Project Management</h2>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Project Management</h2>
             <p className="text-sm text-gray-600">Manage and track all your projects in one centralized dashboard</p>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
             <Button 
               variant="outline"
               onClick={() => setShowProjectHelp(true)}
@@ -613,7 +616,7 @@ export const ModernStaffDashboard: React.FC = () => {
       </div>
 
       {/* Project Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
@@ -885,7 +888,7 @@ export const ModernStaffDashboard: React.FC = () => {
         </div>
 
         {/* Portfolio Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <div className="flex items-center">
               <CheckCircle className="h-8 w-8 text-green-600" />
@@ -1163,10 +1166,33 @@ export const ModernStaffDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="lg:hidden fixed top-24 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+      >
+        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30 pt-20"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       <div className="flex pt-20">
         {/* SAP/Odoo Style Sidebar */}
-        <div className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-screen">
+        <div className={`
+          fixed lg:static inset-y-0 left-0 z-40
+          w-64 lg:w-64
+          bg-white shadow-sm border-r border-gray-200 min-h-screen
+          pt-20 lg:pt-0
+          transform transition-transform duration-300 ease-in-out
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
           <div className="p-6">
             <div className="flex items-center space-x-2 mb-6">
               <div className="bg-blue-600 rounded p-1">
@@ -1182,7 +1208,10 @@ export const ModernStaffDashboard: React.FC = () => {
               {navigationItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveView(item.id)}
+                  onClick={() => {
+                    setActiveView(item.id);
+                    setMobileMenuOpen(false);
+                  }}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-sm transition-colors ${
                     activeView === item.id
                       ? 'bg-blue-100 text-blue-700 border border-blue-200 font-medium'
@@ -1214,7 +1243,7 @@ export const ModernStaffDashboard: React.FC = () => {
               </div>
             </div>
           )}
-          <div className="p-6">
+          <div className="p-4 md:p-6 overflow-auto h-full">
             {renderActiveView()}
           </div>
         </div>
@@ -1266,7 +1295,7 @@ export const ModernStaffDashboard: React.FC = () => {
           </DialogHeader>
           {selectedProject && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <h3 className="font-semibold mb-2">Project Information</h3>
                   <div className="space-y-2 text-sm">
@@ -1312,7 +1341,7 @@ export const ModernStaffDashboard: React.FC = () => {
           </DialogHeader>
           {selectedProject && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="edit-title">Project Title</Label>
@@ -1448,7 +1477,7 @@ export const ModernStaffDashboard: React.FC = () => {
           </DialogHeader>
           {selectedProjectForEdit && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <h3 className="font-semibold mb-2">Project Information</h3>
                   <div className="space-y-2 text-sm">
@@ -1489,7 +1518,7 @@ export const ModernStaffDashboard: React.FC = () => {
           </DialogHeader>
           {selectedProjectForEdit && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="project-title">Project Title</Label>

@@ -73,9 +73,14 @@ import {
   Database,
   Network,
   Quote,
-  XCircle
+  XCircle,
+  Menu,
+  X
 } from 'lucide-react';
 import { InvoicePaymentCard } from '@/components/payments/InvoicePaymentCard';
+import { ProjectEditModal } from '@/components/client/ProjectEditModal';
+import { InvoiceDetailModal } from '@/components/client/InvoiceDetailModal';
+import { ServiceRequestEditModal } from '@/components/client/ServiceRequestEditModal';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -199,6 +204,7 @@ const ClientPortal: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Data States
   const [projects, setProjects] = useState<Project[]>([]);
@@ -235,6 +241,18 @@ const ClientPortal: React.FC = () => {
     message: '',
     priority: 'medium'
   });
+
+  // Project Edit Modal States
+  const [showProjectEditModal, setShowProjectEditModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  // Invoice Detail Modal States
+  const [showInvoiceDetailModal, setShowInvoiceDetailModal] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+
+  // Service Request Edit Modal States
+  const [showServiceRequestEditModal, setShowServiceRequestEditModal] = useState(false);
+  const [selectedServiceRequest, setSelectedServiceRequest] = useState<ServiceRequest | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -672,6 +690,8 @@ const ClientPortal: React.FC = () => {
     // Reset filters when changing tabs
     setSearchTerm('');
     setFilterStatus('all');
+    // Close mobile menu when tab changes
+    setMobileMenuOpen(false);
   };
 
   // UTILITY FUNCTIONS
@@ -776,16 +796,42 @@ const ClientPortal: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <Navbar />
-      
+
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="lg:hidden fixed top-24 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+      >
+        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30 pt-20"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       <div className="flex pt-20">
         {/* Elegant Premium Sidebar */}
-        <div className="w-72 bg-gradient-to-b from-white via-blue-50/30 to-purple-50/20 backdrop-blur-xl shadow-2xl border-r border-gradient-to-b from-blue-200/20 to-purple-200/20 min-h-screen flex flex-col overflow-hidden">
+        <div className={`
+          fixed lg:static inset-y-0 left-0 z-40
+          w-72 lg:w-72
+          bg-gradient-to-b from-white via-blue-50/30 to-purple-50/20
+          backdrop-blur-xl shadow-2xl border-r
+          border-gradient-to-b from-blue-200/20 to-purple-200/20
+          min-h-screen flex flex-col overflow-hidden
+          pt-20 lg:pt-0
+          transform transition-transform duration-300 ease-in-out
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
           {/* Decorative Elements */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-400/10 to-purple-400/10 rounded-full -translate-y-16 translate-x-16 blur-xl"></div>
           <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-400/10 to-pink-400/10 rounded-full translate-y-12 -translate-x-12 blur-xl"></div>
           
           {/* Header Section */}
-          <div className="relative p-8 border-b border-gradient-to-r from-transparent via-border/20 to-transparent">
+          <div className="relative p-4 md:p-6 lg:p-8 border-b border-gradient-to-r from-transparent via-border/20 to-transparent">
             <div className="flex items-center space-x-4 mb-4">
               <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <User className="w-6 h-6 text-white" />
@@ -808,7 +854,7 @@ const ClientPortal: React.FC = () => {
           </div>
           
           {/* Premium Search */}
-          <div className="px-8 mt-6 mb-8">
+          <div className="px-4 md:px-6 lg:px-8 mt-4 md:mt-6 mb-6 md:mb-8">
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl blur opacity-75 group-hover:opacity-100 transition-opacity"></div>
               <div className="relative">
@@ -873,7 +919,7 @@ const ClientPortal: React.FC = () => {
           </nav>
 
           {/* Premium Status Panel - Fixed at Bottom */}
-          <div className="px-6 pb-8 mt-auto">
+          <div className="px-4 md:px-6 pb-6 md:pb-8 mt-auto">
             <div className="bg-gradient-to-r from-white/60 to-blue-50/60 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-gray-700">Account Status</p>
@@ -898,7 +944,7 @@ const ClientPortal: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30">
-          <div className="p-8">
+          <div className="p-4 md:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
           {/* Action Bar */}
           <div className="flex justify-end gap-2 mb-6">
@@ -922,13 +968,13 @@ const ClientPortal: React.FC = () => {
             {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* Welcome Section - Admin Style */}
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-                <h1 className="text-2xl font-bold mb-2">Welcome back, {profile?.full_name || user?.email?.split('@')[0]}!</h1>
-                <p className="opacity-90">Track your projects and manage your account with ease.</p>
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 md:p-6 text-white">
+                <h1 className="text-xl md:text-2xl font-bold mb-2">Welcome back, {profile?.full_name || user?.email?.split('@')[0]}!</h1>
+                <p className="text-sm md:text-base opacity-90">Track your projects and manage your account with ease.</p>
               </div>
 
               {/* Stats Overview - Admin Style */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 <Card className="hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
@@ -992,7 +1038,7 @@ const ClientPortal: React.FC = () => {
                   <CardDescription>Common tasks you can perform</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                     <Button
                       onClick={() => handleQuickAction('new-request')}
                       className="bg-blue-500 hover:bg-blue-600 text-white p-4 h-auto flex flex-col items-center space-y-2"
@@ -1040,9 +1086,9 @@ const ClientPortal: React.FC = () => {
                 </CardContent>
               </Card>
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                 {/* Recent Quotes */}
-                <Card className="p-6">
+                <Card className="p-4 md:p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Recent Quotes</h3>
                     <Button 
@@ -1115,7 +1161,7 @@ const ClientPortal: React.FC = () => {
                 </Card>
 
                 {/* Recent Projects */}
-                <Card className="p-6">
+                <Card className="p-4 md:p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold">Recent Projects</h3>
                     <Button 
@@ -1226,7 +1272,7 @@ const ClientPortal: React.FC = () => {
                   <CardDescription>Your performance metrics and analytics</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                     <div 
                       className="text-center p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                       onClick={() => handleStatCardClick('success')}
@@ -1258,7 +1304,7 @@ const ClientPortal: React.FC = () => {
               </Card>
 
               {/* Additional Metrics - Admin Style */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                 <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleTabChange('requests')}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
@@ -1337,7 +1383,7 @@ const ClientPortal: React.FC = () => {
               </div>
 
               {/* Quote Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
                 <Card 
                   className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
                   onClick={() => setFilterStatus('sent')}
@@ -1559,7 +1605,7 @@ const ClientPortal: React.FC = () => {
               </div>
 
               {/* Enhanced Projects Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {filteredProjects.map((project) => (
                   <Card 
                     key={project.id} 
@@ -1626,7 +1672,8 @@ const ClientPortal: React.FC = () => {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          toast.info('Project edit functionality coming soon');
+                          setSelectedProject(project);
+                          setShowProjectEditModal(true);
                         }}
                       >
                         <Edit className="w-4 h-4 mr-1" />
@@ -1654,7 +1701,7 @@ const ClientPortal: React.FC = () => {
 
             {activeTab === 'invoices' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
                 <Card 
                   className="p-4 cursor-pointer hover:shadow-md transition-all duration-200 transform hover:scale-105"
                   onClick={() => setFilterStatus('paid')}
@@ -1719,8 +1766,8 @@ const ClientPortal: React.FC = () => {
                     invoice={invoice}
                     onPaymentSuccess={loadInvoices}
                     onViewDetails={(invoiceId) => {
-                      toast.info(`Viewing invoice details: ${invoiceId.substring(0, 8)}...`);
-                      // TODO: Navigate to invoice details page or open modal
+                      setSelectedInvoice(invoice);
+                      setShowInvoiceDetailModal(true);
                     }}
                     onDownload={(invoiceId) => {
                       toast.info('PDF download feature coming soon!');
@@ -1755,7 +1802,7 @@ const ClientPortal: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {serviceRequests.map((request) => (
                   <Card 
                     key={request.id} 
@@ -1812,7 +1859,8 @@ const ClientPortal: React.FC = () => {
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation();
-                          toast.info('Edit functionality coming soon');
+                          setSelectedServiceRequest(request);
+                          setShowServiceRequestEditModal(true);
                         }}
                       >
                         <Edit className="w-4 h-4 mr-1" />
@@ -1838,9 +1886,9 @@ const ClientPortal: React.FC = () => {
 
             {activeTab === 'profile' && (
             <div className="space-y-6">
-              <Card className="p-6">
+              <Card className="p-4 md:p-6">
                 <h3 className="text-lg font-semibold mb-6">Profile Information</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div>
                     <label className="block text-sm font-medium mb-2">Full Name</label>
                     <Input 
@@ -1880,7 +1928,7 @@ const ClientPortal: React.FC = () => {
                 
                 <div className="mt-6 p-4 bg-muted/30 rounded-lg">
                   <h4 className="font-medium mb-2">Account Summary</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Member Since</p>
                       <p className="font-medium">{stats.clientSince}</p>
@@ -1904,7 +1952,7 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="mt-6 flex gap-4">
+                <div className="mt-6 flex flex-col sm:flex-row gap-3 md:gap-4">
                   <Button 
                     variant="outline"
                     onClick={() => handleQuickAction('contact-support')}
@@ -1987,6 +2035,48 @@ const ClientPortal: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {/* Project Edit Modal */}
+      <ProjectEditModal
+        project={selectedProject}
+        isOpen={showProjectEditModal}
+        onClose={() => {
+          setShowProjectEditModal(false);
+          setSelectedProject(null);
+        }}
+        onSuccess={() => {
+          loadProjects(); // Refresh projects list
+          toast.success('Project updated successfully!');
+        }}
+      />
+
+      {/* Invoice Detail Modal */}
+      <InvoiceDetailModal
+        invoice={selectedInvoice}
+        isOpen={showInvoiceDetailModal}
+        onClose={() => {
+          setShowInvoiceDetailModal(false);
+          setSelectedInvoice(null);
+        }}
+        onDownload={(invoiceId) => {
+          toast.info('PDF download feature coming soon!');
+          // TODO: Implement PDF generation
+        }}
+      />
+
+      {/* Service Request Edit Modal */}
+      <ServiceRequestEditModal
+        serviceRequest={selectedServiceRequest}
+        isOpen={showServiceRequestEditModal}
+        onClose={() => {
+          setShowServiceRequestEditModal(false);
+          setSelectedServiceRequest(null);
+        }}
+        onSuccess={() => {
+          loadServiceRequests(); // Refresh service requests list
+          toast.success('Service request updated successfully!');
+        }}
+      />
 
       <Footer />
     </div>

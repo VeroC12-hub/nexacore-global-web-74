@@ -23,7 +23,9 @@ import {
   ArrowRight,
   CheckCircle,
   Camera,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
@@ -74,6 +76,7 @@ export const ModernAdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const { permissions, loading: permissionsLoading } = useRolePermissions();
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'projects' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp'>('overview');
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -290,13 +293,13 @@ export const ModernAdminDashboard: React.FC = () => {
   const renderOverview = () => (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.email?.split('@')[0]}!</h1>
-        <p className="opacity-90">Here's what's happening with your business today.</p>
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 md:p-6 text-white">
+        <h1 className="text-xl md:text-2xl font-bold mb-2">Welcome back, {user?.email?.split('@')[0]}!</h1>
+        <p className="text-sm md:text-base opacity-90">Here's what's happening with your business today.</p>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card className="hover:shadow-md transition-shadow">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -360,7 +363,7 @@ export const ModernAdminDashboard: React.FC = () => {
           <CardDescription>Common tasks you can perform</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             {quickActions.map((action) => (
               <Button
                 key={action.id}
@@ -410,16 +413,40 @@ export const ModernAdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        className="lg:hidden fixed top-24 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+      >
+        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30 pt-20"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       <div className="flex pt-20">
         {/* Sidebar */}
-        <div className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-screen flex flex-col">
-          <div className="p-6">
-            <h2 className="text-xl font-bold text-gray-800">Admin Panel</h2>
-            <p className="text-sm text-gray-600">NexaCore Innovations</p>
+        <div className={`
+          fixed lg:static inset-y-0 left-0 z-40
+          w-64 lg:w-64
+          bg-white shadow-sm border-r border-gray-200 min-h-screen flex flex-col
+          pt-20 lg:pt-0
+          transform transition-transform duration-300 ease-in-out
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
+          <div className="p-4 md:p-6">
+            <h2 className="text-lg md:text-xl font-bold text-gray-800">Admin Panel</h2>
+            <p className="text-xs md:text-sm text-gray-600">NexaCore Innovations</p>
           </div>
 
           {/* Search */}
-          <div className="px-6 mb-6">
+          <div className="px-4 md:px-6 mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -437,7 +464,10 @@ export const ModernAdminDashboard: React.FC = () => {
               {navigationItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => setActiveView(item.id as any)}
+                  onClick={() => {
+                    setActiveView(item.id as any);
+                    setMobileMenuOpen(false);
+                  }}
                   className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-colors ${
                     activeView === item.id
                       ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600'
@@ -493,7 +523,7 @@ export const ModernAdminDashboard: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 overflow-auto">
-          <div className="p-6">
+          <div className="p-4 md:p-6">
             {loading || permissionsLoading ? (
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
