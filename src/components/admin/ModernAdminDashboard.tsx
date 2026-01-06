@@ -436,7 +436,7 @@ export const ModernAdminDashboard: React.FC = () => {
         {/* Sidebar */}
         <div className={`
           fixed lg:static top-16 lg:top-0 bottom-0 left-0 z-[50]
-          w-72 sm:w-64 lg:w-64
+          w-64 sm:w-64 lg:w-64
           bg-white shadow-sm border-r border-gray-200 flex flex-col
           overflow-y-auto overflow-x-hidden
           transform transition-transform duration-300 ease-in-out
