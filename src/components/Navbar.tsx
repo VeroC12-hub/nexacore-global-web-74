@@ -26,46 +26,18 @@ const Navbar = () => {
 
   const handleSignOut = async () => {
     try {
-      // First, call the sign-out function
-      const { error } = await signOut();
-      if (error) {
-        console.error('Error signing out:', error);
-        alert('Failed to sign out. Please try again.');
-        return;
-      }
-
-      // Clear local state
+      // Clear local state first
       setRole(null);
 
-      // Clear all Supabase-related items from storage
-      try {
-        const localKeysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith('sb-')) {
-            localKeysToRemove.push(key);
-          }
-        }
-        localKeysToRemove.forEach(key => localStorage.removeItem(key));
+      // Sign out from Supabase
+      await supabase.auth.signOut();
 
-        // Also clear session storage
-        const sessionKeysToRemove: string[] = [];
-        for (let i = 0; i < sessionStorage.length; i++) {
-          const key = sessionStorage.key(i);
-          if (key && key.startsWith('sb-')) {
-            sessionKeysToRemove.push(key);
-          }
-        }
-        sessionKeysToRemove.forEach(key => sessionStorage.removeItem(key));
-      } catch (storageError) {
-        console.error('Error clearing storage:', storageError);
-      }
-
-      // Force a full page reload to home to clear all state
-      window.location.replace('/');
+      // Redirect to home page
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
-      alert('Failed to sign out. Please try again.');
+      // Force clear and redirect anyway
+      window.location.href = '/';
     }
   };
 
@@ -80,6 +52,20 @@ const Navbar = () => {
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Get dashboard URL based on user role
+  const getDashboardUrl = () => {
+    if (!role) return '/dashboard';
+
+    // Staff roles go to /staff
+    const staffRoles = ['admin', 'project_manager', 'operations_manager', 'developer', 'support'];
+    if (staffRoles.includes(role)) {
+      return '/staff';
+    }
+
+    // Clients go to /dashboard
+    return '/dashboard';
+  };
 
   return (
     <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md z-50 border-b border-border/50">
@@ -113,7 +99,7 @@ const Navbar = () => {
             {user ? (
               <div className="flex items-center gap-4">
                 <Link
-                  to={role === 'admin' ? '/admin' : '/client-portal'}
+                  to={getDashboardUrl()}
                   className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
                   Dashboard
@@ -180,7 +166,7 @@ const Navbar = () => {
               {user ? (
                 <>
                   <Link
-                    to={role === 'admin' ? '/admin' : '/client-portal'}
+                    to={getDashboardUrl()}
                     className="block text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => setIsOpen(false)}
                   >

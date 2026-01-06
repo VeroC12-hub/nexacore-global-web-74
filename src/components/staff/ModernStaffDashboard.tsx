@@ -1167,41 +1167,53 @@ export const ModernStaffDashboard: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - Like Navbar */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-24 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+        className={`lg:hidden fixed top-20 left-4 z-[60] flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-full shadow-2xl border-2 border-white hover:scale-105 transition-all active:scale-95 ${!mobileMenuOpen ? 'animate-pulse' : ''}`}
+        aria-label="Toggle Menu"
       >
-        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        <span className="text-sm font-medium">{mobileMenuOpen ? 'Close' : 'Menu'}</span>
       </button>
 
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30 pt-20"
+          className="lg:hidden fixed inset-0 bg-black/60 z-[45] backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      <div className="flex pt-20">
+      <div className="flex pt-16 min-h-screen">
         {/* SAP/Odoo Style Sidebar */}
         <div className={`
-          fixed lg:static inset-y-0 left-0 z-40
-          w-64 lg:w-64
-          bg-white shadow-sm border-r border-gray-200 min-h-screen
-          pt-20 lg:pt-0
+          fixed lg:static top-16 lg:top-0 bottom-0 left-0 z-[50]
+          w-72 sm:w-64 lg:w-64
+          bg-white shadow-sm border-r border-gray-200
+          flex flex-col overflow-y-auto overflow-x-hidden
           transform transition-transform duration-300 ease-in-out
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
           <div className="p-6">
-            <div className="flex items-center space-x-2 mb-6">
-              <div className="bg-blue-600 rounded p-1">
-                <Database className="h-6 w-6 text-white" />
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-2">
+                <div className="bg-blue-600 rounded p-1">
+                  <Database className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">NexaCore ERP</h2>
+                  <p className="text-xs text-gray-500">Enterprise Resource Planning</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">NexaCore ERP</h2>
-                <p className="text-xs text-gray-500">Enterprise Resource Planning</p>
-              </div>
+              {/* Close button for mobile */}
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
             </div>
             
             <nav className="space-y-1">
@@ -1212,10 +1224,10 @@ export const ModernStaffDashboard: React.FC = () => {
                     setActiveView(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left text-sm transition-colors ${
+                  className={`w-full flex items-center justify-between px-4 py-3 min-h-[52px] rounded-lg text-left text-sm transition-colors active:scale-98 ${
                     activeView === item.id
                       ? 'bg-blue-100 text-blue-700 border border-blue-200 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      : 'text-gray-700 hover:bg-gray-100 active:bg-gray-200'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -1234,7 +1246,7 @@ export const ModernStaffDashboard: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 w-full overflow-hidden relative">
           {dataLoading && (
             <div className="absolute inset-0 bg-white/50 z-10 flex items-center justify-center">
               <div className="bg-white rounded-lg shadow-lg p-6 flex items-center space-x-3">
@@ -1243,7 +1255,7 @@ export const ModernStaffDashboard: React.FC = () => {
               </div>
             </div>
           )}
-          <div className="p-4 md:p-6 overflow-auto h-full">
+          <div className="p-4 md:p-6 overflow-x-hidden overflow-y-auto h-full w-full max-w-full">
             {renderActiveView()}
           </div>
         </div>

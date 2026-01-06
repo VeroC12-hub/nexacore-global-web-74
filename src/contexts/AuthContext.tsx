@@ -89,8 +89,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    try {
+      // Clear state first
+      setUser(null);
+      setSession(null);
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+
+      // Clear all Supabase storage keys
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('sb-')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+
+      return { error };
+    } catch (error: any) {
+      console.error('Sign out error:', error);
+      return { error };
+    }
   };
 
   const value = {

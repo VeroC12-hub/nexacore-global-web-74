@@ -645,11 +645,10 @@ const ClientPortal: React.FC = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/');
-      toast.success('Signed out successfully');
+      window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
-      toast.error('Failed to sign out');
+      window.location.href = '/';
     }
   };
 
@@ -797,32 +796,33 @@ const ClientPortal: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <Navbar />
 
-      {/* Mobile Menu Button */}
+      {/* Mobile Menu Button - Like Navbar */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="lg:hidden fixed top-24 left-4 z-50 p-2 bg-white rounded-lg shadow-lg border border-gray-200"
+        className={`lg:hidden fixed top-20 left-4 z-[60] flex items-center gap-2 px-4 py-3 bg-primary text-white rounded-full shadow-2xl border-2 border-white hover:scale-105 transition-all active:scale-95 ${!mobileMenuOpen ? 'animate-pulse' : ''}`}
+        aria-label="Toggle Menu"
       >
-        {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        <span className="text-sm font-medium">{mobileMenuOpen ? 'Close' : 'Menu'}</span>
       </button>
 
       {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30 pt-20"
+          className="lg:hidden fixed inset-0 bg-black/60 z-[45] backdrop-blur-sm"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      <div className="flex pt-20">
+      <div className="flex pt-16 min-h-screen">
         {/* Elegant Premium Sidebar */}
         <div className={`
-          fixed lg:static inset-y-0 left-0 z-40
-          w-72 lg:w-72
+          fixed lg:static top-16 lg:top-0 bottom-0 left-0 z-[50]
+          w-80 sm:w-72 lg:w-72
           bg-gradient-to-b from-white via-blue-50/30 to-purple-50/20
           backdrop-blur-xl shadow-2xl border-r
           border-gradient-to-b from-blue-200/20 to-purple-200/20
-          min-h-screen flex flex-col overflow-hidden
-          pt-20 lg:pt-0
+          flex flex-col overflow-y-auto overflow-x-hidden
           transform transition-transform duration-300 ease-in-out
           ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}>
@@ -832,14 +832,24 @@ const ClientPortal: React.FC = () => {
           
           {/* Header Section */}
           <div className="relative p-4 md:p-6 lg:p-8 border-b border-gradient-to-r from-transparent via-border/20 to-transparent">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                <User className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">Client Portal</h2>
+                  <p className="text-sm text-muted-foreground font-medium">Premium Access</p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">Client Portal</h2>
-                <p className="text-sm text-muted-foreground font-medium">Premium Access</p>
-              </div>
+              {/* Close button for mobile */}
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
             </div>
             <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3 border border-blue-100/50">
               <p className="text-xs font-medium text-gray-700">Welcome back,</p>
@@ -883,10 +893,10 @@ const ClientPortal: React.FC = () => {
                 <button
                   key={item.id}
                   onClick={() => handleTabChange(item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 text-left rounded-lg transition-all duration-200 ${
+                  className={`w-full flex items-center justify-between px-4 py-4 min-h-[56px] text-left rounded-lg transition-all duration-200 active:scale-98 ${
                     activeTab === item.id
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
-                      : 'text-gray-700 hover:bg-white/80 hover:text-gray-900 hover:shadow-sm'
+                      : 'text-gray-700 hover:bg-white/80 hover:text-gray-900 hover:shadow-sm active:bg-white'
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -943,9 +953,9 @@ const ClientPortal: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30">
-          <div className="p-4 md:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
+        <div className="flex-1 w-full overflow-x-hidden overflow-y-auto bg-gradient-to-br from-gray-50/50 via-white to-blue-50/30">
+          <div className="p-4 md:p-6 lg:p-8 w-full max-w-full">
+            <div className="max-w-7xl mx-auto w-full">
           {/* Action Bar */}
           <div className="flex justify-end gap-2 mb-6">
             <Button 
