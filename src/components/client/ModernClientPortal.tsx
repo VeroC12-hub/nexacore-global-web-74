@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -87,13 +87,12 @@ export const ModernClientPortal: React.FC = () => {
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  useEffect(() => {
-    loadClientData();
-  }, [user]);
+  const loadClientData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
-  const loadClientData = async () => {
-    if (!user) return;
-    
     setLoading(true);
     try {
       // Load projects
@@ -147,7 +146,11 @@ export const ModernClientPortal: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadClientData();
+  }, [loadClientData]);
 
   const quickActions: QuickAction[] = [
     {

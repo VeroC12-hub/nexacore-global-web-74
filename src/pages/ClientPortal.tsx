@@ -1,5 +1,5 @@
 // src/pages/ClientPortal.tsx - ENHANCED VERSION WITH FULLY CLICKABLE BUTTONS
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -250,21 +250,17 @@ const ClientPortal: React.FC = () => {
   const [showServiceRequestEditModal, setShowServiceRequestEditModal] = useState(false);
   const [selectedServiceRequest, setSelectedServiceRequest] = useState<ServiceRequest | null>(null);
 
-  // Redirect if not authenticated
-  useEffect(() => {
+  const loadClientData = useCallback(async () => {
     if (!user) {
-      navigate('/auth');
+      setLoading(false);
       return;
     }
-    loadClientData();
-  }, [user, navigate]);
 
-  const loadClientData = async () => {
     try {
       setLoading(true);
-      
+
       // Load user profile
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData, error: profileError} = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
@@ -289,7 +285,16 @@ const ClientPortal: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    loadClientData();
+  }, [user, navigate, loadClientData]);
 
   const loadProjects = async () => {
     try {
