@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
+import {
   Plus,
   Search,
   Filter,
@@ -18,7 +18,8 @@ import {
   DollarSign,
   Users,
   Target,
-  Clock
+  Clock,
+  FileDown
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
@@ -53,6 +54,8 @@ interface ERPProjectsTabProps {
   onEditProject: (project: ERPProject) => void;
   onViewProject: (project: ERPProject) => void;
   onAssignTeam: (project: ERPProject) => void;
+  onExportProjects: () => void;
+  onExportSingleProject: (project: ERPProject) => void;
 }
 
 export function ERPProjectsTab({
@@ -67,7 +70,9 @@ export function ERPProjectsTab({
   onCreateProject,
   onEditProject,
   onViewProject,
-  onAssignTeam
+  onAssignTeam,
+  onExportProjects,
+  onExportSingleProject
 }: ERPProjectsTabProps) {
   const getDepartmentLabel = (department: string) => {
     const labels: Record<string, string> = {
@@ -188,18 +193,32 @@ export function ERPProjectsTab({
               Project Management
             </span>
             <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button onClick={onCreateProject} className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    New Project
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="font-medium">Create New Project</p>
-                  <p className="text-xs text-muted-foreground">Start a new ERP project</p>
-                </TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" onClick={onExportProjects} className="flex items-center gap-2">
+                      <FileDown className="h-4 w-4" />
+                      Export
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="font-medium">Export Projects</p>
+                    <p className="text-xs text-muted-foreground">Download project reports</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button onClick={onCreateProject} className="flex items-center gap-2">
+                      <Plus className="h-4 w-4" />
+                      New Project
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="font-medium">Create New Project</p>
+                    <p className="text-xs text-muted-foreground">Start a new ERP project</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </TooltipProvider>
           </CardTitle>
         </CardHeader>
@@ -337,6 +356,23 @@ export function ERPProjectsTab({
                             <TooltipContent>
                               <p className="font-medium">Edit Project</p>
                               <p className="text-xs text-muted-foreground">Modify project details</p>
+                            </TooltipContent>
+                          </Tooltip>
+
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onExportSingleProject(project)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <FileDown className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="font-medium">Export Project</p>
+                              <p className="text-xs text-muted-foreground">Download this project</p>
                             </TooltipContent>
                           </Tooltip>
 

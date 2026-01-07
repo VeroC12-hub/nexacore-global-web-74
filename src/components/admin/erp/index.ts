@@ -10,6 +10,7 @@ export { ProjectViewModal } from './ProjectViewModal';
 export { TaskFormModal } from './TaskFormModal';
 export { TaskViewModal } from './TaskViewModal';
 export { TaskExportModal } from './TaskExportModal';
+export { ERPProjectExportModal } from './ERPProjectExportModal';
 export { TimeEntryFormModal } from './TimeEntryFormModal';
 export { ActiveTimerWidget } from './ActiveTimerWidget';
 export { TimeEntryApproval } from './TimeEntryApproval';

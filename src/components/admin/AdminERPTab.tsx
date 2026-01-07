@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from 'sonner';
 
 // Import the new modular components and types
-import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, ProjectFormModal, ProjectViewModal, TaskFormModal, TaskViewModal, TaskExportModal, TimeEntryFormModal } from './erp';
+import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, ProjectFormModal, ProjectViewModal, TaskFormModal, TaskViewModal, TaskExportModal, ERPProjectExportModal, TimeEntryFormModal } from './erp';
 
 // Additional types needed
 interface ERPTask {
@@ -138,6 +138,10 @@ export function AdminERPTab() {
   const [isTaskViewOpen, setIsTaskViewOpen] = useState(false);
   const [isTaskExportOpen, setIsTaskExportOpen] = useState(false);
   const [singleTaskToExport, setSingleTaskToExport] = useState<ERPTask | null>(null);
+
+  // Project export modal states
+  const [isProjectExportOpen, setIsProjectExportOpen] = useState(false);
+  const [singleProjectToExport, setSingleProjectToExport] = useState<ERPProject | null>(null);
 
   // Time entry modal states
   const [selectedTimeEntry, setSelectedTimeEntry] = useState<TimeEntry | null>(null);
@@ -762,6 +766,17 @@ export function AdminERPTab() {
     setIsTaskExportOpen(true);
   };
 
+  // Project export handlers
+  const handleExportProjects = () => {
+    setSingleProjectToExport(null); // Export all/filtered projects
+    setIsProjectExportOpen(true);
+  };
+
+  const handleExportSingleProject = (project: ERPProject) => {
+    setSingleProjectToExport(project); // Export only this project
+    setIsProjectExportOpen(true);
+  };
+
   // Time tracking handlers
   const handleCreateTimeEntry = () => {
     setSelectedTimeEntry(null);
@@ -1231,6 +1246,8 @@ export function AdminERPTab() {
             onEditProject={handleEditProject}
             onViewProject={handleViewProject}
             onAssignTeam={handleAssignTeam}
+            onExportProjects={handleExportProjects}
+            onExportSingleProject={handleExportSingleProject}
           />
         </TabsContent>
 
@@ -1401,6 +1418,26 @@ export function AdminERPTab() {
           return matchesSearch && matchesStatus && matchesPriority;
         })}
         singleTask={singleTaskToExport}
+      />
+
+      {/* Project Export Modal */}
+      <ERPProjectExportModal
+        isOpen={isProjectExportOpen}
+        onClose={() => {
+          setIsProjectExportOpen(false);
+          setSingleProjectToExport(null);
+        }}
+        projects={projects}
+        filteredProjects={projects.filter(project => {
+          const matchesSearch = !searchTerm ||
+            project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            project.department.toLowerCase().includes(searchTerm.toLowerCase());
+          const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+          const matchesDepartment = departmentFilter === 'all' || project.department === departmentFilter;
+          return matchesSearch && matchesStatus && matchesDepartment;
+        })}
+        singleProject={singleProjectToExport}
       />
 
       {/* Time Entry Form Modal */}
