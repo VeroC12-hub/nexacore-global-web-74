@@ -12,13 +12,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Plus, 
-  Search, 
-  Filter, 
+import {
+  Eye,
+  Edit,
+  Trash2,
+  Plus,
+  Search,
+  Filter,
   Calendar,
   DollarSign,
   Users,
@@ -32,9 +32,11 @@ import {
   FileText,
   BarChart3,
   Bell,
-  Mail
+  Mail,
+  FileDown
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { ProjectExportModal } from './ProjectExportModal';
 
 interface Project {
   id: string;
@@ -130,6 +132,8 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
     details: false,
     team: false
   });
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportSingleProject, setExportSingleProject] = useState<Project | null>(null);
 
   // Enhanced form state for create/edit
   const [formData, setFormData] = useState({
@@ -670,10 +674,23 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
           <h2 className="text-2xl font-bold">Projects Management</h2>
           <p className="text-muted-foreground">Manage and track all client projects</p>
         </div>
-        <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          New Project
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => {
+              setExportSingleProject(null);
+              setIsExportModalOpen(true);
+            }}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <FileDown className="h-4 w-4" />
+            Export Projects
+          </Button>
+          <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            New Project
+          </Button>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -861,6 +878,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                             variant="ghost"
                             size="sm"
                             onClick={() => openViewModal(project)}
+                            title="View Details"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -868,14 +886,27 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                             variant="ghost"
                             size="sm"
                             onClick={() => openEditModal(project)}
+                            title="Edit Project"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => {
+                              setExportSingleProject(project);
+                              setIsExportModalOpen(true);
+                            }}
+                            title="Export Project"
+                          >
+                            <FileDown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleDeleteProject(project.id)}
                             className="text-red-400 hover:text-red-300"
+                            title="Delete Project"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -1856,6 +1887,18 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Export Projects Modal */}
+      <ProjectExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => {
+          setIsExportModalOpen(false);
+          setExportSingleProject(null);
+        }}
+        projects={projects}
+        filteredProjects={filteredProjects}
+        singleProject={exportSingleProject}
+      />
     </div>
   );
 }
