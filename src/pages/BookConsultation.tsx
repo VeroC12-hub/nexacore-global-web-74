@@ -116,6 +116,8 @@ const BookConsultation = () => {
     projectDetails: '',
     preferredMeeting: ''
   });
+  const [selectedMultipleServices, setSelectedMultipleServices] = useState<string[]>([]);
+  const [customRequirement, setCustomRequirement] = useState('');
   const [routingResult, setRoutingResult] = useState(null);
 
   // Updated Service Categories with YOUR ACTUAL Calendly URLs
@@ -208,12 +210,35 @@ const BookConsultation = () => {
     const serviceInfo = serviceCategories[service];
     const urgencyText = urgency === 'urgent' ? 'We understand this is urgent and' : 'Our team';
     const budgetText = budget ? ` with your ${budget} budget range` : '';
-    
+
+    // Special message for multiple services
+    if (formData.projectType === 'other') {
+      if (selectedMultipleServices.length > 0) {
+        return `Excellent! ${urgencyText} will connect you with specialists who can handle multiple services including ${selectedMultipleServices.map(s => s.replace('-', ' ')).join(', ')}${budgetText}. This comprehensive ${serviceInfo.duration} session will help us understand all your needs and create an integrated solution.`;
+      } else if (customRequirement) {
+        return `Perfect! ${urgencyText} will review your custom requirements in detail${budgetText}. This ${serviceInfo.duration} consultation will help us craft a tailored solution that meets your specific needs.`;
+      }
+    }
+
     return `Perfect! ${urgencyText} will connect you with our ${serviceInfo.title.toLowerCase()} specialists${budgetText}. This ${serviceInfo.duration} session will help us understand your specific needs and provide tailored recommendations.`;
   };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Reset multiple selections when changing project type
+    if (field === 'projectType' && value !== 'other') {
+      setSelectedMultipleServices([]);
+      setCustomRequirement('');
+    }
+  };
+
+  const toggleMultipleService = (serviceKey: string) => {
+    setSelectedMultipleServices(prev =>
+      prev.includes(serviceKey)
+        ? prev.filter(s => s !== serviceKey)
+        : [...prev, serviceKey]
+    );
   };
 
   const handleNext = () => {
@@ -259,6 +284,15 @@ const BookConsultation = () => {
   };
 
   const handleWhatsAppFallback = () => {
+    let projectInfo = formData.projectType;
+    if (formData.projectType === 'other') {
+      if (selectedMultipleServices.length > 0) {
+        projectInfo = `Multiple Services: ${selectedMultipleServices.map(s => s.replace('-', ' ')).join(', ')}`;
+      } else if (customRequirement) {
+        projectInfo = `Custom: ${customRequirement}`;
+      }
+    }
+
     const message = encodeURIComponent(`🚨 URGENT CONSULTATION REQUEST
 
 Hi NexaCore Innovations! I need immediate assistance with my project.
@@ -266,7 +300,7 @@ Hi NexaCore Innovations! I need immediate assistance with my project.
 👤 Name: ${formData.name}
 🏢 Company: ${formData.company || 'Not specified'}
 📧 Email: ${formData.email}
-🔥 Project: ${formData.projectType}
+🔥 Project: ${projectInfo}
 ⚡ Urgency: ${formData.urgency}
 💰 Budget: ${formData.budget || 'To be discussed'}
 ⏰ Timeline: ${formData.timeline || 'To be discussed'}
@@ -274,7 +308,7 @@ Hi NexaCore Innovations! I need immediate assistance with my project.
 📝 Details: ${formData.projectDetails}
 
 Please contact me ASAP to schedule an urgent consultation. Thank you!`);
-    
+
     window.open(`https://wa.me/233558330610?text=${message}`, '_blank');
   };
 
@@ -404,6 +438,86 @@ Please contact me ASAP to schedule an urgent consultation. Thank you!`);
               ))}
             </div>
           </div>
+
+          {/* Multiple Services Selection - Shows when "Other/Multiple" is selected */}
+          {formData.projectType === 'other' && (
+            <div className="space-y-6 p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">Tell us more about your needs</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Select all services you're interested in, or describe your custom requirements below.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label className="text-base font-semibold text-gray-900">Select Multiple Services (Optional)</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {[
+                    { key: 'web-development', label: 'Web Development', icon: '🌐' },
+                    { key: 'mobile-app', label: 'Mobile App', icon: '📱' },
+                    { key: 'cad-engineering', label: 'CAD Engineering', icon: '📐' },
+                    { key: 'custom-software', label: 'Custom Software', icon: '⚙️' },
+                    { key: 'ui-ux-design', label: 'UI/UX Design', icon: '🎨' },
+                    { key: 'branding', label: 'Branding', icon: '✨' },
+                    { key: 'digital-marketing', label: 'Digital Marketing', icon: '📈' },
+                    { key: 'data-analysis', label: 'Data & Analytics', icon: '📊' }
+                  ].map((service) => (
+                    <div
+                      key={service.key}
+                      onClick={() => toggleMultipleService(service.key)}
+                      className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                        selectedMultipleServices.includes(service.key)
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className={`w-5 h-5 border-2 rounded flex items-center justify-center ${
+                        selectedMultipleServices.includes(service.key)
+                          ? 'border-blue-600 bg-blue-600'
+                          : 'border-gray-400'
+                      }`}>
+                        {selectedMultipleServices.includes(service.key) && (
+                          <CheckCircle className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                      <span className="text-xl">{service.icon}</span>
+                      <span className="font-medium text-gray-900">{service.label}</span>
+                    </div>
+                  ))}
+                </div>
+                {selectedMultipleServices.length > 0 && (
+                  <div className="flex items-center gap-2 p-3 bg-blue-100 rounded-lg">
+                    <CheckCircle className="w-5 h-5 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">
+                      {selectedMultipleServices.length} service{selectedMultipleServices.length !== 1 ? 's' : ''} selected
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                <Label htmlFor="custom-requirement" className="text-base font-semibold text-gray-900">
+                  Or Describe Your Custom Requirements
+                </Label>
+                <Textarea
+                  id="custom-requirement"
+                  value={customRequirement}
+                  onChange={(e) => setCustomRequirement(e.target.value)}
+                  placeholder="Example: We need a complete digital transformation including website redesign, mobile app development, and integration with our existing systems..."
+                  rows={5}
+                  className="text-base focus:ring-2 focus:ring-blue-600 border-2"
+                />
+                <p className="text-xs text-gray-600">
+                  💡 Tip: The more specific you are, the better we can prepare for your consultation
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
@@ -859,14 +973,16 @@ Please contact me ASAP to schedule an urgent consultation. Thank you!`);
 
         {/* Start Over */}
         <div className="text-center">
-          <Button 
+          <Button
             variant="outline"
             onClick={() => {
               setCurrentStep(1);
               setFormData({
-                name: '', email: '', company: '', projectType: '', 
+                name: '', email: '', company: '', projectType: '',
                 urgency: '', budget: '', timeline: '', projectDetails: '', preferredMeeting: ''
               });
+              setSelectedMultipleServices([]);
+              setCustomRequirement('');
               setRoutingResult(null);
             }}
             className="h-12 text-base px-8"
