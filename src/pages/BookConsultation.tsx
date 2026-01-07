@@ -148,13 +148,13 @@ const BookConsultation = () => {
       features: ['Web Applications', 'Mobile Apps', 'Custom Software', 'API Development']
     },
     'engineering': {
-      title: 'Engineering Consultation',
+      title: 'CAD Engineering & Design',
       icon: Wrench,
-      description: 'Technical consulting, system architecture, engineering solutions',
+      description: 'Autodesk Partner - CAD design, civil engineering, 3D modeling, technical drawings',
       calendlyUrl: 'https://calendly.com/godwin-ocloo-nexacore-innovations/30min',
       duration: '30-45 minutes',
       color: 'from-blue-500 to-blue-600',
-      features: ['System Architecture', 'Technical Consulting', 'Integration Solutions', 'Performance Optimization']
+      features: ['AutoCAD & Revit Design', 'Civil Engineering', '3D Modeling & Rendering', 'Technical Drawings & BIM', 'Autodesk Partner Support']
     },
     'general': {
       title: 'General Consultation',
@@ -185,6 +185,7 @@ const BookConsultation = () => {
       'web-development': 'software',
       'mobile-app': 'software',
       'custom-software': 'software',
+      'cad-engineering': 'engineering',
       'ui-ux-design': 'creative',
       'branding': 'creative',
       'digital-marketing': 'data',
@@ -373,6 +374,7 @@ Please contact me ASAP to schedule an urgent consultation. Thank you!`);
               {[
                 { key: 'web-development', label: 'Web Development', icon: '🌐', desc: 'Websites, web apps, e-commerce' },
                 { key: 'mobile-app', label: 'Mobile App', icon: '📱', desc: 'iOS, Android, cross-platform' },
+                { key: 'cad-engineering', label: 'CAD Engineering & Design', icon: '📐', desc: 'AutoCAD, Revit, civil engineering (Autodesk Partner)' },
                 { key: 'custom-software', label: 'Custom Software', icon: '⚙️', desc: 'Enterprise solutions, integrations' },
                 { key: 'ui-ux-design', label: 'UI/UX Design', icon: '🎨', desc: 'User interface, user experience' },
                 { key: 'branding', label: 'Branding & Identity', icon: '✨', desc: 'Logo, brand guidelines, marketing' },
