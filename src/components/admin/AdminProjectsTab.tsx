@@ -1,6 +1,9 @@
 // src/components/admin/AdminProjectsTab.tsx - ENHANCED VERSION WITH ALL ORIGINAL FEATURES
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '@/hooks/queries/useProjectQueries';
+import { Pagination } from './Pagination';
+import { DashboardSkeleton } from './LoadingSkeletons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -112,20 +115,51 @@ interface FormValidation {
 }
 
 export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [serviceFilter, setServiceFilter] = useState('all');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
+  // Modal and selection state
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+
+  // React Query hooks for data fetching
+  const {
+    data: projectsData,
+    isLoading: loading,
+    error,
+    refetch
+  } = useProjects({
+    page: currentPage,
+    pageSize: itemsPerPage,
+    statusFilter,
+    priorityFilter,
+    serviceFilter,
+    searchTerm,
+    sortBy,
+    sortOrder,
+  });
+
+  // Memoized projects data
+  const projects = useMemo(() => projectsData?.data || [], [projectsData]);
+  const totalCount = useMemo(() => projectsData?.count || 0, [projectsData]);
+  const totalPages = useMemo(() => projectsData?.totalPages || 1, [projectsData]);
+
+  // Mutation hooks
+  const createProjectMutation = useCreateProject();
+  const updateProjectMutation = useUpdateProject();
+  const deleteProjectMutation = useDeleteProject();
+
   const [currentTab, setCurrentTab] = useState('basic');
   const [formValidation, setFormValidation] = useState<FormValidation>({
     basic: false,
@@ -161,10 +195,21 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [clientUsers, setClientUsers] = useState<any[]>([]);
 
+  // Load users on mount (projects loaded via React Query)
   useEffect(() => {
-    loadProjects();
     loadAvailableUsers();
     loadClientUsers();
+  }, []);
+
+  // Memoized pagination handlers
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page
   }, []);
 
   // Real-time form validation
@@ -172,57 +217,6 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
     validateForm();
   }, [formData]);
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      
-      // Enhanced query to match actual database schema
-      const { data, error } = await supabase
-        .from('projects')
-        .select(`
-          *,
-          profiles!client_id (
-            full_name,
-            email
-          )
-        `)
-        .order(sortBy, { ascending: sortOrder === 'asc' });
-
-      if (error) {
-        console.error('Database error:', error);
-        throw error;
-      }
-
-      // Enhanced projects with calculated fields and proper client info
-      const enhancedProjects = (data || []).map(project => {
-        // Calculate progress from metadata or direct field
-        const progress = project.metadata?.progress || project.progress || 0;
-        
-        return {
-          ...project,
-          client_name: project.profiles?.full_name || 'Unknown Client',
-          client_email: project.profiles?.email || '',
-          spent_amount: project.budget ? (project.budget * progress / 100) : 0,
-          completion_percentage: progress,
-          progress: progress,
-          actual_hours: project.estimated_hours ? (project.estimated_hours * progress / 100) : 0,
-          deliverables: project.metadata?.deliverables || project.deliverables || [],
-          team_members: project.metadata?.team_members || project.team_members || [],
-          milestones: project.metadata?.milestones || [],
-          risks: project.metadata?.risks || [],
-          documents: project.metadata?.documents || [],
-          estimated_completion: project.estimated_completion || project.deadline
-        };
-      });
-
-      setProjects(enhancedProjects);
-    } catch (error) {
-      console.error('Error loading projects:', error);
-      toast.error('Failed to load projects. Please check your database connection.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const loadAvailableUsers = async () => {
     try {
@@ -308,25 +302,10 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
     }
   };
 
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.service_type.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || project.priority === priorityFilter;
-    const matchesService = serviceFilter === 'all' || project.service_type === serviceFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority && matchesService;
-  });
-
-  const paginatedProjects = filteredProjects.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  // Projects are now server-side filtered and paginated via React Query
+  // Keep filteredProjects for export modal compatibility
+  const filteredProjects = useMemo(() => projects, [projects]);
+  const paginatedProjects = useMemo(() => projects, [projects]); // Already paginated from server
 
   const handleCreateProject = async () => {
     // Enforce form completion
@@ -391,7 +370,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
       // Send notification to client
       await sendClientNotification(data, 'created');
 
-      await loadProjects();
+      // React Query auto-refetches after mutations
       onStatsUpdate();
       setIsCreateModalOpen(false);
       resetForm();
@@ -455,7 +434,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
       // Send notification to client about update
       await sendClientNotification(data, 'updated');
 
-      await loadProjects();
+      // React Query auto-refetches after mutations
       onStatsUpdate();
       setIsEditModalOpen(false);
       setSelectedProject(null);
@@ -509,7 +488,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
 
       if (error) throw error;
 
-      await loadProjects();
+      // React Query auto-refetches after mutations
       onStatsUpdate();
       
       // Notify client of progress update if significant change
@@ -664,6 +643,11 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
         <span className="ml-2">Loading projects...</span>
       </div>
     );
+  }
+
+  // Show loading skeleton while data loads
+  if (loading) {
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -916,38 +900,6 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
                   ))}
                 </TableBody>
               </Table>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-between px-6 py-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                    {Math.min(currentPage * itemsPerPage, filteredProjects.length)} of{' '}
-                    {filteredProjects.length} projects
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      Previous
-                    </Button>
-                    <span className="text-sm">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </CardContent>
@@ -1899,6 +1851,18 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
         filteredProjects={filteredProjects}
         singleProject={exportSingleProject}
       />
+
+      {/* Pagination */}
+      {totalCount > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={itemsPerPage}
+          totalItems={totalCount}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
     </div>
   );
 }
