@@ -556,8 +556,9 @@ Please contact me ASAP to schedule an urgent consultation. Thank you!`);
               <Label className="text-lg font-semibold">What's your budget range?</Label>
               <div className="space-y-3">
                 {[
-                  { key: 'under-5k', label: 'Under $5,000', desc: 'Small projects, MVPs' },
-                  { key: '5k-15k', label: '$5,000 - $15,000', desc: 'Medium projects, standard features' },
+                  { key: 'under-1k', label: 'Under $1,000', desc: 'Basic services, quick tasks, small designs' },
+                  { key: '1k-5k', label: '$1,000 - $5,000', desc: 'Small to medium projects, MVPs' },
+                  { key: '5k-15k', label: '$5,000 - $15,000', desc: 'Professional projects, standard features' },
                   { key: '15k-50k', label: '$15,000 - $50,000', desc: 'Large projects, complex features' },
                   { key: 'over-50k', label: '$50,000+', desc: 'Enterprise solutions, full systems' },
                   { key: 'discuss', label: 'Prefer to discuss', desc: 'Will determine during consultation' }
