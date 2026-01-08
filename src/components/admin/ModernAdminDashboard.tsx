@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,22 +35,25 @@ import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-// Import existing admin components
-import { AdminProjectsTab } from '@/components/admin/AdminProjectsTab';
-import { AdminInvoicesTab } from '@/components/admin/AdminInvoicesTab';
-import EnhancedProjectManagement from '@/components/admin/EnhancedProjectManagement';
-import { AdminServiceRequestsTab } from '@/components/admin/AdminServiceRequestsTab';
-import { AdminUsersTab } from '@/components/admin/AdminUsersTab';
-import AdminPortfolioTab from '@/components/admin/AdminPortfolioTab';
-import { AdminTeamTab } from '@/components/admin/AdminTeamTab';
-import { AdminFileRepositoryTab } from '@/components/admin/AdminFileRepositoryTab';
-import { AdminMessagingTab } from '@/components/admin/AdminMessagingTab';
-import { AdminWorkflowTab } from '@/components/admin/AdminWorkflowTab';
-import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab';
-import AdminQuoteRequestsTab from '@/components/admin/AdminQuoteRequestsTab';
-import AdminAnalytics from '@/components/analytics/AdminAnalytics';
-import { AdminERPTab } from '@/components/admin/AdminERPTab';
+// Lazy-load admin components for better performance
+const AdminProjectsTab = lazy(() => import('@/components/admin/AdminProjectsTab').then(m => ({ default: m.AdminProjectsTab })));
+const AdminInvoicesTab = lazy(() => import('@/components/admin/AdminInvoicesTab').then(m => ({ default: m.AdminInvoicesTab })));
+const EnhancedProjectManagement = lazy(() => import('@/components/admin/EnhancedProjectManagement'));
+const AdminServiceRequestsTab = lazy(() => import('@/components/admin/AdminServiceRequestsTab').then(m => ({ default: m.AdminServiceRequestsTab })));
+const AdminUsersTab = lazy(() => import('@/components/admin/AdminUsersTab').then(m => ({ default: m.AdminUsersTab })));
+const AdminPortfolioTab = lazy(() => import('@/components/admin/AdminPortfolioTab'));
+const AdminTeamTab = lazy(() => import('@/components/admin/AdminTeamTab').then(m => ({ default: m.AdminTeamTab })));
+const AdminFileRepositoryTab = lazy(() => import('@/components/admin/AdminFileRepositoryTab').then(m => ({ default: m.AdminFileRepositoryTab })));
+const AdminMessagingTab = lazy(() => import('@/components/admin/AdminMessagingTab').then(m => ({ default: m.AdminMessagingTab })));
+const AdminWorkflowTab = lazy(() => import('@/components/admin/AdminWorkflowTab').then(m => ({ default: m.AdminWorkflowTab })));
+const AdminSettingsTab = lazy(() => import('@/components/admin/AdminSettingsTab').then(m => ({ default: m.AdminSettingsTab })));
+const AdminQuoteRequestsTab = lazy(() => import('@/components/admin/AdminQuoteRequestsTab'));
+const AdminAnalytics = lazy(() => import('@/components/analytics/AdminAnalytics'));
+const AdminERPTab = lazy(() => import('@/components/admin/AdminERPTab').then(m => ({ default: m.AdminERPTab })));
+
+// Import ErrorBoundary and loading components immediately (not lazy)
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { DashboardSkeleton } from '@/components/admin/LoadingSkeletons';
 
 interface DashboardStats {
   totalUsers: number;
@@ -227,31 +230,103 @@ export const ModernAdminDashboard: React.FC = () => {
     // Temporarily disable permission checks for debugging
     switch (activeView) {
       case 'analytics':
-        return <AdminAnalytics />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminAnalytics />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'business':
         return renderAnalytics(); // Business intelligence view
       case 'quotes':
-        return <AdminQuoteRequestsTab />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminQuoteRequestsTab />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'projects':
-        return <EnhancedProjectManagement />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <EnhancedProjectManagement />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'portfolio':
-        return <AdminPortfolioTab onStatsUpdate={loadDashboardStats} />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminPortfolioTab onStatsUpdate={loadDashboardStats} />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'invoices':
-        return <AdminInvoicesTab onStatsUpdate={loadDashboardStats} />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminInvoicesTab onStatsUpdate={loadDashboardStats} />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'requests':
-        return <AdminServiceRequestsTab onStatsUpdate={loadDashboardStats} />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminServiceRequestsTab onStatsUpdate={loadDashboardStats} />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'users':
-        return <AdminUsersTab onStatsUpdate={loadDashboardStats} />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminUsersTab onStatsUpdate={loadDashboardStats} />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'team':
-        return <AdminTeamTab onStatsUpdate={loadDashboardStats} />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminTeamTab onStatsUpdate={loadDashboardStats} />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'files':
-        return <AdminFileRepositoryTab onStatsUpdate={loadDashboardStats} />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminFileRepositoryTab onStatsUpdate={loadDashboardStats} />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'messages':
-        return <AdminMessagingTab onStatsUpdate={loadDashboardStats} />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminMessagingTab onStatsUpdate={loadDashboardStats} />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'workflows':
-        return <AdminWorkflowTab />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminWorkflowTab />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'settings':
-        return <AdminSettingsTab />;
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminSettingsTab />
+            </Suspense>
+          </ErrorBoundary>
+        );
       case 'erp':
         return (
           <ErrorBoundary
@@ -260,7 +335,9 @@ export const ModernAdminDashboard: React.FC = () => {
               console.error('🚨 Component Stack:', errorInfo.componentStack);
             }}
           >
-            <AdminERPTab />
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminERPTab />
+            </Suspense>
           </ErrorBoundary>
         );
       default:
