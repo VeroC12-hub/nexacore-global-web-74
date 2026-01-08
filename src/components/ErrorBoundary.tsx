@@ -1,66 +1,67 @@
 import React, { Component, ReactNode } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: any) => void;
+  onReset?: () => void;
 }
 
 interface State {
   hasError: boolean;
-  error?: Error;
+  error: Error | null;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
-    console.error('🚨 Error Boundary caught error:', error);
-    console.error('🚨 Component Stack:', errorInfo.componentStack);
-    console.error('🚨 Error Info:', errorInfo);
-    
-    // Call custom error handler if provided
-    if (this.props.onError) {
-      this.props.onError(error, errorInfo);
-    }
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught error:', error, errorInfo);
   }
+
+  handleReset = () => {
+    this.setState({ hasError: false, error: null });
+    this.props.onReset?.();
+  };
 
   render() {
     if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
       return (
-        this.props.fallback || (
-          <div className="min-h-screen flex items-center justify-center bg-red-50">
-            <div className="max-w-md p-6 bg-white rounded-lg shadow-lg">
-              <h2 className="text-xl font-bold text-red-600 mb-4">
-                Component Error
-              </h2>
-              <p className="text-gray-600 mb-4">
-                A component error occurred. Check the console for details.
+        <div className="p-6 max-w-2xl mx-auto">
+          <Alert variant="destructive">
+            <AlertTriangle className="h-5 w-5" />
+            <AlertTitle className="text-lg font-semibold">
+              Something went wrong
+            </AlertTitle>
+            <AlertDescription className="mt-3">
+              <p className="mb-4 text-sm">
+                {this.state.error?.message || 'An unexpected error occurred. Please try refreshing the page.'}
               </p>
-              <details className="text-sm text-gray-500">
-                <summary className="cursor-pointer">Error Details</summary>
-                <pre className="mt-2 p-2 bg-gray-100 rounded text-xs overflow-auto">
-                  {this.state.error?.message}
-                  {'\n\n'}
-                  {this.state.error?.stack}
-                </pre>
-              </details>
-              <button
-                onClick={() => this.setState({ hasError: false })}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              <Button
+                onClick={this.handleReset}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
               >
+                <RefreshCw className="h-4 w-4" />
                 Try Again
-              </button>
-            </div>
-          </div>
-        )
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
       );
     }
 

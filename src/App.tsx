@@ -1,6 +1,8 @@
 import React from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EnhancedAuthProvider } from "./hooks/useEnhancedAuth";
 import { RoleBasedRedirect } from "./components/auth/RoleBasedRedirect";
@@ -39,18 +41,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh for 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes - cached data stays in memory
-      refetchOnMount: false, // Don't refetch on component mount if data is fresh
-    },
-  },
-});
 
 const App = () => {
   return (
@@ -109,6 +99,7 @@ const App = () => {
             </EnhancedAuthProvider>
           </AuthProvider>
         </TooltipProvider>
+        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
       </QueryClientProvider>
     </HelmetProvider>
   );
