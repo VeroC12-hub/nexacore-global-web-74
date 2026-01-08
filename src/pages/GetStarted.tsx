@@ -495,11 +495,12 @@ const GetStarted = () => {
               budget_estimate: currentMaxPrice,
               description: projectDescription.trim(),
               quote_request_id: quoteRequest.id,
+              operations_email: 'operations@nexacore-innovations.com', // Add operations team
             },
           },
         });
 
-        console.log('Enhanced email sent to PM:', emailResponse);
+        console.log('Enhanced email sent to PM and operations:', emailResponse);
 
         await supabase.functions.invoke('send-email', {
           body: {
