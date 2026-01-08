@@ -5,6 +5,11 @@ export { ERPTimeTab } from './ERPTimeTab';
 export { ERPTeamTab } from './ERPTeamTab';
 export { ERPSearchResults } from './ERPSearchResults';
 export { EnhancedSearchBar } from './EnhancedSearchBar';
+
+// Data wrapper components with pagination
+export { ERPProjectsTabWithData } from './ERPProjectsTabWithData';
+export { ERPTasksTabWithData } from './ERPTasksTabWithData';
+export { ERPTimeTabWithData } from './ERPTimeTabWithData';
 export { ProjectFormModal } from './ProjectFormModal';
 export { ProjectViewModal } from './ProjectViewModal';
 export { TaskFormModal } from './TaskFormModal';
