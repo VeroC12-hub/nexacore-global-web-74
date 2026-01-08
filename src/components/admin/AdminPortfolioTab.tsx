@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { usePortfolioProjects } from '@/hooks/queries/usePortfolioQueries';
+import { Pagination } from './Pagination';
+import { DashboardSkeleton } from './LoadingSkeletons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -55,66 +58,59 @@ interface PortfolioProject {
 }
 
 export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabProps) {
-  const [projects, setProjects] = useState<PortfolioProject[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewNotes, setReviewNotes] = useState('');
+  // Filter and search state
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'management' | 'analytics'>('management');
 
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    featured: 0
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
+  // Modal state
+  const [selectedProject, setSelectedProject] = useState<PortfolioProject | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewNotes, setReviewNotes] = useState('');
+
+  // React Query hook for data fetching
+  const {
+    data: projectsData,
+    isLoading: loading,
+    error,
+    refetch
+  } = usePortfolioProjects({
+    page: currentPage,
+    pageSize: itemsPerPage,
+    filter,
+    searchTerm,
   });
 
-  useEffect(() => {
-    loadProjects();
-  }, [filter]);
+  // Memoized projects and stats
+  const projects = useMemo(() => projectsData?.data || [], [projectsData]);
+  const totalCount = useMemo(() => projectsData?.count || 0, [projectsData]);
+  const totalPages = useMemo(() => projectsData?.totalPages || 1, [projectsData]);
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
-      let query = supabase
-        .from('portfolio_projects')
-        .select('*, portfolio_files(*)')
-        .order('created_at', { ascending: false });
+  const stats = useMemo(() => {
+    return {
+      total: totalCount,
+      pending: projects.filter(p => p.submission_status === 'pending_review').length,
+      approved: projects.filter(p => p.submission_status === 'approved').length,
+      rejected: projects.filter(p => p.submission_status === 'rejected').length,
+      featured: projects.filter(p => p.is_featured).length,
+    };
+  }, [projects, totalCount]);
 
-      if (filter !== 'all') {
-        if (filter === 'pending') {
-          query = query.eq('submission_status', 'pending_review');
-        } else if (filter === 'approved') {
-          query = query.in('submission_status', ['approved']);
-        } else if (filter === 'rejected') {
-          query = query.in('submission_status', ['rejected', 'revision_needed']);
-        }
-      }
+  // Memoized pagination handlers
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
-      const { data, error } = await query;
-      if (error) throw error;
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1);
+  }, []);
 
-      setProjects(data || []);
-      
-      // Calculate stats
-      const total = data?.length || 0;
-      const pending = data?.filter(p => p.submission_status === 'pending_review').length || 0;
-      const approved = data?.filter(p => p.submission_status === 'approved').length || 0;
-      const rejected = data?.filter(p => ['rejected', 'revision_needed'].includes(p.submission_status)).length || 0;
-      const featured = data?.filter(p => p.is_featured).length || 0;
-
-      setStats({ total, pending, approved, rejected, featured });
-      
-    } catch (error) {
-      console.error('Error loading projects:', error);
-      toast.error('Failed to load portfolio projects');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleApprove = async (project: PortfolioProject, makePublic: boolean = true) => {
     try {
@@ -137,7 +133,7 @@ export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabPr
       }
 
       toast.success(`Portfolio project approved${makePublic ? ' and published' : ''}`);
-      loadProjects();
+      // React Query auto-refetches
       onStatsUpdate?.();
     } catch (error) {
       console.error('Error approving project:', error);
@@ -161,7 +157,7 @@ export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabPr
       toast.success('Portfolio project rejected');
       setShowReviewModal(false);
       setReviewNotes('');
-      loadProjects();
+      // React Query auto-refetches
       onStatsUpdate?.();
     } catch (error) {
       console.error('Error rejecting project:', error);
@@ -185,7 +181,7 @@ export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabPr
       toast.success('Revision requested');
       setShowReviewModal(false);
       setReviewNotes('');
-      loadProjects();
+      // React Query auto-refetches
       onStatsUpdate?.();
     } catch (error) {
       console.error('Error requesting revision:', error);
@@ -229,6 +225,11 @@ export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabPr
     project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.service_id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Show loading skeleton while data loads
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -562,6 +563,18 @@ export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabPr
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Pagination */}
+      {totalCount > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={itemsPerPage}
+          totalItems={totalCount}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
     </div>
   );
 }

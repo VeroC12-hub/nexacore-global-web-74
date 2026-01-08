@@ -1,6 +1,9 @@
 // src/components/admin/AdminUsersTab.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useUsers, useUpdateUser } from '@/hooks/queries/useUserQueries';
+import { Pagination } from './Pagination';
+import { DashboardSkeleton } from './LoadingSkeletons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,20 +88,47 @@ interface AdminUsersTabProps {
 }
 
 export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
+  // Modal and selection state
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [userActivity, setUserActivity] = useState<UserActivity[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+
+  // React Query hooks for data fetching
+  const {
+    data: usersData,
+    isLoading: loading,
+    error,
+    refetch
+  } = useUsers({
+    page: currentPage,
+    pageSize: itemsPerPage,
+    roleFilter,
+    statusFilter,
+    searchTerm,
+    sortBy,
+    sortOrder,
+  });
+
+  // Memoized users data
+  const users = useMemo(() => usersData?.data || [], [usersData]);
+  const totalCount = useMemo(() => usersData?.count || 0, [usersData]);
+  const totalPages = useMemo(() => usersData?.totalPages || 1, [usersData]);
+
+  // Mutation hook
+  const updateUserMutation = useUpdateUser();
 
   // Form state for create/edit user
   const [formData, setFormData] = useState({
@@ -121,45 +151,16 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
   const [bulkActions, setBulkActions] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadUsers();
+  // Memoized pagination handlers
+  const handlePageChange = useCallback((newPage: number) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          projects!projects_client_id_fkey (count)
-        `)
-        .order(sortBy, { ascending: sortOrder === 'asc' });
-
-      if (error) throw error;
-
-      // Enhance users with calculated data
-      const enhancedUsers = (data || []).map(user => ({
-        ...user,
-        projects_count: user.projects?.length || 0,
-        total_spent: 0, // This would come from invoices/payments
-        login_count: Math.floor(Math.random() * 100), // Mock data
-        notification_preferences: {
-          email: true,
-          push: true,
-          sms: false
-        },
-        two_factor_enabled: Math.random() > 0.7
-      }));
-
-      setUsers(enhancedUsers);
-    } catch (error) {
-      console.error('Error loading users:', error);
-      toast.error('Failed to load users');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setItemsPerPage(newSize);
+    setCurrentPage(1); // Reset to first page
+  }, []);
 
   const loadUserActivity = async (userId: string) => {
     try {
@@ -201,24 +202,9 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone?.includes(searchTerm);
-    
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    
-    return matchesSearch && matchesRole && matchesStatus;
-  });
-
-  const paginatedUsers = filteredUsers.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  // Users are now server-side filtered and paginated via React Query
+  const filteredUsers = useMemo(() => users, [users]);
+  const paginatedUsers = useMemo(() => users, [users]); // Already paginated from server
 
   const handleCreateUser = async () => {
     try {
@@ -252,7 +238,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
 
       if (profileError) throw profileError;
 
-      await loadUsers();
+      // React Query auto-refetches
       onStatsUpdate();
       setIsCreateModalOpen(false);
       resetForm();
@@ -291,7 +277,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
 
       if (error) throw error;
 
-      await loadUsers();
+      // React Query auto-refetches
       onStatsUpdate();
       setIsEditModalOpen(false);
       setSelectedUser(null);
@@ -497,6 +483,11 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
         <span className="ml-2">Loading users...</span>
       </div>
     );
+  }
+
+  // Show loading skeleton while data loads
+  if (loading) {
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -1547,6 +1538,18 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Pagination */}
+      {totalCount > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={itemsPerPage}
+          totalItems={totalCount}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
     </div>
   );
 }
