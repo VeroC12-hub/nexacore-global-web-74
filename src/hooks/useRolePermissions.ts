@@ -7,6 +7,8 @@ export type UserRole = 'admin' | 'operations_manager' | 'project_manager' | 'sta
 export interface RolePermissions {
   canAccessPaymentConfig: boolean;
   canViewAllProjects: boolean;
+  canManageProjects: boolean;
+  canManageQuotes: boolean;
   canManageUsers: boolean;
   canViewReports: boolean;
   canManageWorkflows: boolean;
@@ -20,6 +22,8 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
   const basePermissions: RolePermissions = {
     canAccessPaymentConfig: false,
     canViewAllProjects: false,
+    canManageProjects: false,
+    canManageQuotes: false,
     canManageUsers: false,
     canViewReports: false,
     canManageWorkflows: false,
@@ -35,6 +39,8 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
         ...basePermissions,
         canAccessPaymentConfig: true, // ONLY ADMIN
         canViewAllProjects: true,
+        canManageProjects: true,
+        canManageQuotes: true,
         canManageUsers: true,
         canViewReports: true,
         canManageWorkflows: true,
@@ -48,6 +54,8 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
         ...basePermissions,
         canAccessPaymentConfig: false, // BLOCKED
         canViewAllProjects: true,
+        canManageProjects: true,
+        canManageQuotes: true,
         canManageUsers: false,
         canViewReports: true,
         canManageWorkflows: true,
@@ -59,14 +67,16 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
     case 'project_manager':
       return {
         ...basePermissions,
-        canAccessPaymentConfig: false, // BLOCKED
+        canAccessPaymentConfig: false, // BLOCKED - Only admin
         canViewAllProjects: true,
-        canManageUsers: false,
+        canManageProjects: true, // ✅ CAN MANAGE PROJECTS
+        canManageQuotes: true, // ✅ CAN MANAGE QUOTES
+        canManageUsers: false, // Can't change roles - Only admin
         canViewReports: true,
-        canManageWorkflows: false,
-        canAccessSystemSettings: false,
-        canViewFinancials: false,
-        canManageInvoices: false,
+        canManageWorkflows: true, // ✅ CAN MANAGE WORKFLOWS
+        canAccessSystemSettings: false, // BLOCKED - Only admin
+        canViewFinancials: true, // ✅ CAN VIEW FINANCIALS
+        canManageInvoices: true, // ✅ CAN MANAGE INVOICES
       };
 
     case 'staff':
@@ -74,6 +84,8 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
         ...basePermissions,
         canAccessPaymentConfig: false, // BLOCKED
         canViewAllProjects: false,
+        canManageProjects: false,
+        canManageQuotes: false,
         canManageUsers: false,
         canViewReports: false,
         canManageWorkflows: false,
