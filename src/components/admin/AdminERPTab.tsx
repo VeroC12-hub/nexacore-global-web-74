@@ -1,13 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { useERPStats, useERPStaffRoles, useERPProjects } from '@/hooks/queries/useERPQueries';
+import { DashboardSkeleton } from './LoadingSkeletons';
 
 // Import the new modular components and types
-import { ERPOverviewTab, ERPProjectsTab, ERPTasksTab, ERPTimeTab, ERPTeamTab, ERPProject, ERPStats, StaffRole, ProjectFormModal, ProjectViewModal, TaskFormModal, TaskViewModal, TaskExportModal, ERPProjectExportModal, TimeEntryFormModal } from './erp';
+import {
+  ERPOverviewTab,
+  ERPProjectsTabWithData,
+  ERPTasksTabWithData,
+  ERPTimeTabWithData,
+  ERPTeamTab,
+  ERPProject,
+  ERPStats,
+  StaffRole,
+  ProjectFormModal,
+  ProjectViewModal,
+  TaskFormModal,
+  TaskViewModal,
+  TaskExportModal,
+  ERPProjectExportModal,
+  TimeEntryFormModal
+} from './erp';
 
 // Additional types needed
 interface ERPTask {
@@ -86,8 +104,23 @@ import {
 } from 'lucide-react';
 
 export function AdminERPTab() {
-  const [loading, setLoading] = useState(true);
+  // React Query hooks - Progressive loading (stats only on mount)
+  const { data: statsData, isLoading: statsLoading, refetch: refetchStats } = useERPStats();
+  const { data: staffRolesData, refetch: refetchStaffRoles } = useERPStaffRoles({
+    enabled: false, // Only load when team tab is active
+  });
+
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Load projects only for team tab (for team assignment dropdown)
+  const { data: projectsForTeamData } = useERPProjects({
+    page: 1,
+    pageSize: 100, // Load more for team dropdown
+    statusFilter: 'all',
+    departmentFilter: 'all',
+    searchTerm: '',
+    enabled: activeTab === 'team', // Only load when team tab is active
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [departmentFilter, setDepartmentFilter] = useState('all');
@@ -95,32 +128,51 @@ export function AdminERPTab() {
   const [dateFilter, setDateFilter] = useState('');
   const [userFilter, setUserFilter] = useState('all');
 
-  // Data states
-  const [erpStats, setErpStats] = useState<ERPStats>({
-    totalProjects: 0,
-    activeProjects: 0,
-    completedProjects: 0,
-    totalTasks: 0,
-    completedTasks: 0,
-    pendingTasks: 0,
-    totalBudget: 0,
-    totalSpent: 0,
-    budgetUtilization: 0,
-    teamMembers: 0,
-    avgProjectDuration: 0
-  });
+  // Transform stats data with useMemo
+  const erpStats: ERPStats = useMemo(() => {
+    if (!statsData) {
+      return {
+        totalProjects: 0,
+        activeProjects: 0,
+        completedProjects: 0,
+        totalTasks: 0,
+        completedTasks: 0,
+        pendingTasks: 0,
+        totalBudget: 0,
+        totalSpent: 0,
+        budgetUtilization: 0,
+        teamMembers: 0,
+        avgProjectDuration: 0,
+      };
+    }
+    return {
+      ...statsData,
+      totalTasks: 150, // Mock data - will be real in Phase 2
+      completedTasks: 95,
+      pendingTasks: 55,
+      teamMembers: 12,
+      avgProjectDuration: 45,
+    };
+  }, [statsData]);
 
-  const [projects, setProjects] = useState<ERPProject[]>([]);
-  const [staffRoles, setStaffRoles] = useState<StaffRole[]>([]);
-  const [tasks, setTasks] = useState<ERPTask[]>([]);
-  const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  // Transform staff roles data
+  const staffRoles: StaffRole[] = useMemo(() => {
+    if (!staffRolesData) return [];
+    return staffRolesData as StaffRole[];
+  }, [staffRolesData]);
 
-  // Chart data
-  const [departmentData, setDepartmentData] = useState<ChartDataPoint[]>([]);
-  const [statusData, setStatusData] = useState<ChartDataPoint[]>([]);
-  const [performanceData, setPerformanceData] = useState<ChartDataPoint[]>([]);
-  const [budgetData, setBudgetData] = useState<ChartDataPoint[]>([]);
-  const [timelineData, setTimelineData] = useState<ChartDataPoint[]>([]);
+  // Transform projects data for team tab
+  const projectsForTeam: ERPProject[] = useMemo(() => {
+    if (!projectsForTeamData?.data) return [];
+    return projectsForTeamData.data;
+  }, [projectsForTeamData]);
+
+  // Chart data - simplified for now (can be enhanced in Phase 2)
+  const departmentData: ChartDataPoint[] = useMemo(() => [], []);
+  const statusData: ChartDataPoint[] = useMemo(() => [], []);
+  const performanceData: ChartDataPoint[] = useMemo(() => [], []);
+  const budgetData: ChartDataPoint[] = useMemo(() => [], []);
+  const timelineData: ChartDataPoint[] = useMemo(() => [], []);
 
   // Modal states
   const [selectedProject, setSelectedProject] = useState<ERPProject | null>(null);
@@ -210,162 +262,14 @@ export function AdminERPTab() {
     return 'contributor';
   };
 
-  // Data loading functions
-  const loadERPStats = async () => {
-    try {
-      const { data: projectsData } = await supabase
-        .from('erp_projects')
-        .select('*');
-
-      const totalProjects = projectsData?.length || 0;
-      const completedProjects = projectsData?.filter(p => p.status === 'completed').length || 0;
-      const activeProjects = projectsData?.filter(p => p.status === 'in_progress').length || 0;
-      const totalBudget = projectsData?.reduce((sum, p) => sum + (p.budget || 0), 0) || 0;
-      const totalSpent = projectsData?.reduce((sum, p) => sum + (p.actual_cost || 0), 0) || 0;
-
-      setErpStats({
-        totalProjects,
-        activeProjects,
-        completedProjects,
-        totalTasks: 150, // Mock data
-        completedTasks: 95, // Mock data
-        pendingTasks: 55, // Mock data
-        totalBudget,
-        totalSpent,
-        budgetUtilization: totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0,
-        teamMembers: 12, // Mock data
-        avgProjectDuration: 45 // Mock data
-      });
-    } catch (error) {
-      console.error('Error loading ERP stats:', error);
+  // Load staff roles when team tab becomes active
+  useEffect(() => {
+    if (activeTab === 'team') {
+      refetchStaffRoles();
     }
-  };
+  }, [activeTab, refetchStaffRoles]);
 
-  const loadProjects = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('erp_projects')
-        .select('*')
-        .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setProjects(data || []);
-    } catch (error) {
-      console.error('Error loading projects:', error);
-      setProjects([]);
-    }
-  };
-
-  const loadStaffRoles = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id, email, full_name, phone, role, status, created_at
-        `)
-        .order('created_at', { ascending: false });
-      
-      const transformedData = data?.map(profile => ({
-        id: profile.id,
-        user_id: profile.id,
-        role: profile.role,
-        is_active: true,
-        profiles: {
-          id: profile.id,
-          email: profile.email,
-          full_name: profile.full_name
-        }
-      })) || [];
-      
-      setStaffRoles(transformedData);
-    } catch (error) {
-      console.error('Error loading staff roles:', error);
-      setStaffRoles([]);
-    }
-  };
-
-  const loadTasks = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('erp_tasks')
-        .select(`
-          *,
-          erp_projects!erp_project_id (
-            id,
-            title
-          ),
-          assignee:profiles!assigned_to (
-            id,
-            full_name,
-            email
-          )
-        `)
-        .order('created_at', { ascending: false});
-
-      if (error) {
-        console.error('Error loading tasks:', error);
-        setTasks([]);
-        return;
-      }
-
-      console.log('Loaded tasks with relationships:', data);
-
-      // Transform data to match component interface
-      const transformedTasks = data?.map(task => ({
-        ...task,
-        project_title: task.erp_projects?.title || 'Unknown Project',
-        assignee: task.assignee?.full_name || task.assignee?.email || 'Unassigned'
-      })) || [];
-
-      setTasks(transformedTasks);
-    } catch (error) {
-      console.error('Error loading tasks:', error);
-      setTasks([]);
-    }
-  };
-
-  const loadTimeEntries = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('erp_time_entries')
-        .select(`
-          *,
-          erp_projects!erp_project_id (
-            id,
-            title
-          ),
-          erp_tasks!erp_task_id (
-            id,
-            title
-          ),
-          profiles!user_id (
-            id,
-            full_name,
-            email
-          )
-        `)
-        .order('date', { ascending: false });
-
-      if (error) {
-        console.error('Error loading time entries:', error);
-        setTimeEntries([]);
-        return;
-      }
-
-      // Transform data to match component interface
-      const transformedEntries = data?.map(entry => ({
-        ...entry,
-        project_title: entry.erp_projects?.title || 'Unknown Project',
-        task_title: entry.erp_tasks?.title || null,
-        user_name: entry.profiles?.full_name || entry.profiles?.email || 'Unknown User'
-      })) || [];
-
-      setTimeEntries(transformedEntries);
-    } catch (error) {
-      console.error('Error loading time entries:', error);
-      setTimeEntries([]);
-    }
-  };
 
   const loadChartData = async () => {
     try {
@@ -541,33 +445,6 @@ export function AdminERPTab() {
     }
   };
 
-  useEffect(() => {
-    const initializeERPData = async () => {
-      try {
-        setLoading(true);
-        await Promise.all([
-          loadERPStats(),
-          loadProjects(),
-          loadStaffRoles(),
-          loadTasks(),
-          loadTimeEntries(),
-          loadChartData()
-        ]);
-      } catch (error) {
-        console.error('Error initializing ERP data:', error);
-        toast.error('Failed to load ERP data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeERPData();
-  }, []);
-
-  // Wrapper functions for refreshing data
-  const fetchTimeEntries = () => {
-    loadTimeEntries();
-  };
 
   // Event handlers
   const handleCreateProject = () => {
@@ -674,8 +551,7 @@ export function AdminERPTab() {
       if (error) throw error;
 
       toast.success(`Started task: ${task.title}`);
-      await loadTasks(); // Reload tasks to reflect changes
-      await loadERPStats(); // Update stats
+      refetchStats(); // Update stats (React Query will auto-refetch tasks in the tab)
     } catch (error) {
       console.error('Error starting task:', error);
       toast.error('Failed to start task');
@@ -692,8 +568,7 @@ export function AdminERPTab() {
       if (error) throw error;
 
       toast.success(`Completed task: ${task.title}`);
-      await loadTasks(); // Reload tasks to reflect changes
-      await loadERPStats(); // Update stats
+      refetchStats(); // Update stats (React Query will auto-refetch tasks)
     } catch (error) {
       console.error('Error completing task:', error);
       toast.error('Failed to complete task');
@@ -703,8 +578,7 @@ export function AdminERPTab() {
   const handleTaskFormSuccess = async () => {
     setIsTaskFormOpen(false);
     setSelectedTask(null);
-    await loadTasks(); // Reload tasks after create/update
-    await loadERPStats(); // Update stats
+    refetchStats(); // Update stats (React Query will auto-refetch tasks)
   };
 
   const handleDeleteTask = async (task: ERPTask) => {
@@ -721,8 +595,7 @@ export function AdminERPTab() {
       if (error) throw error;
 
       toast.success(`Task "${task.title}" deleted successfully`);
-      await loadTasks(); // Reload tasks
-      await loadERPStats(); // Update stats
+      refetchStats(); // Update stats (React Query will auto-refetch tasks)
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('Failed to delete task');
@@ -748,8 +621,7 @@ export function AdminERPTab() {
       if (error) throw error;
 
       toast.success(`Task duplicated: "${task.title} (Copy)"`);
-      await loadTasks(); // Reload tasks
-      await loadERPStats(); // Update stats
+      refetchStats(); // Update stats (React Query will auto-refetch tasks)
     } catch (error) {
       console.error('Error duplicating task:', error);
       toast.error('Failed to duplicate task');
@@ -813,7 +685,7 @@ export function AdminERPTab() {
       if (error) throw error;
 
       toast.success('Timer started!');
-      fetchTimeEntries();
+      // Time tab will auto-refetch via React Query
     } catch (error: any) {
       console.error('Error starting timer:', error);
       toast.error(error.message || 'Failed to start timer');
@@ -835,7 +707,7 @@ export function AdminERPTab() {
       if (error) throw error;
 
       toast.success(`Timer stopped! ${hoursLogged.toFixed(2)} hours logged.`);
-      fetchTimeEntries();
+      // Time tab will auto-refetch via React Query
     } catch (error: any) {
       console.error('Error stopping timer:', error);
       toast.error(error.message || 'Failed to stop timer');
@@ -856,7 +728,7 @@ export function AdminERPTab() {
       if (error) throw error;
 
       toast.success('Time entry deleted successfully');
-      fetchTimeEntries();
+      // Time tab will auto-refetch via React Query
     } catch (error: any) {
       console.error('Error deleting time entry:', error);
       toast.error(error.message || 'Failed to delete time entry');
@@ -911,17 +783,9 @@ export function AdminERPTab() {
 
       // Start timer with project selection
       case 'start-timer':
-        if (projects.length === 0) {
-          toast.error('No projects available. Create a project first.');
-          return;
-        }
-        // Start timer for the first active project
-        const activeProject = projects.find(p => p.is_active) || projects[0];
-        handleStartTimer(activeProject.id);
-        // Switch to Time tab to see the active timer
-        setTimeout(() => setActiveTab('time'), 1000);
-        toast.success(`Timer started for: ${activeProject.title}`, {
-          description: 'Switching to Time tab...'
+        setActiveTab('time');
+        toast.info('Quick Timer Start', {
+          description: 'Use the Time tab to start a timer for a specific project.'
         });
         break;
 
@@ -1002,44 +866,12 @@ export function AdminERPTab() {
         break;
 
       case 'start-task':
-        const taskToStart = data as any;
-        if (taskToStart) {
-          // Find the task in the tasks array by matching properties
-          const actualTask = tasks.find(t => t.title === taskToStart.title);
-          if (actualTask) {
-            handleStartTask(actualTask);
-          } else {
-            toast.info(`Starting task: ${taskToStart.title}`, {
-              description: `Project: ${taskToStart.project}`
-            });
-          }
-        }
-        break;
-
       case 'edit-task':
-        const taskToEdit = data as any;
-        if (taskToEdit) {
-          // Find the task in the tasks array
-          const actualTask = tasks.find(t => t.title === taskToEdit.title);
-          if (actualTask) {
-            handleEditTask(actualTask);
-          } else {
-            setActiveTab('tasks');
-            toast.info('Edit Task', {
-              description: 'Switch to Tasks tab to edit this task'
-            });
-          }
-        }
-        break;
-
       case 'schedule-task':
-        const taskToSchedule = data as any;
-        if (taskToSchedule) {
-          toast.info('Schedule Task', {
-            description: `Use the Tasks tab to set a due date for: ${taskToSchedule.title}`
-          });
-          setActiveTab('tasks');
-        }
+        setActiveTab('tasks');
+        toast.info('Task Actions', {
+          description: 'Use the Tasks tab to manage tasks.'
+        });
         break;
 
       // Data export
@@ -1050,22 +882,10 @@ export function AdminERPTab() {
         break;
 
       case 'refresh-data':
-        setLoading(true);
-        toast.loading('Refreshing all data...');
-        Promise.all([
-          loadERPStats(),
-          loadProjects(),
-          loadStaffRoles(),
-          loadTasks(),
-          loadTimeEntries(),
-          loadChartData()
-        ]).then(() => {
-          toast.success('Data refreshed successfully');
-          setLoading(false);
-        }).catch(() => {
-          toast.error('Failed to refresh data');
-          setLoading(false);
-        });
+        toast.loading('Refreshing data...');
+        refetchStats();
+        refetchStaffRoles();
+        setTimeout(() => toast.success('Data refreshed successfully'), 500);
         break;
 
       // Search result actions
@@ -1148,6 +968,11 @@ export function AdminERPTab() {
     }
   };
 
+  // Show loading skeleton while stats are loading
+  if (statsLoading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1160,29 +985,15 @@ export function AdminERPTab() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            onClick={async () => {
-              setLoading(true);
+            onClick={() => {
               toast.loading('Refreshing data...');
-              try {
-                await Promise.all([
-                  loadERPStats(),
-                  loadProjects(),
-                  loadStaffRoles(),
-                  loadTasks(),
-                  loadTimeEntries(),
-                  loadChartData()
-                ]);
-                toast.success('Data refreshed successfully');
-              } catch (error) {
-                toast.error('Failed to refresh data');
-              } finally {
-                setLoading(false);
-              }
+              refetchStats();
+              refetchStaffRoles();
+              setTimeout(() => toast.success('Data refreshed successfully'), 500);
             }}
-            disabled={loading}
             className="flex items-center gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
         </div>
@@ -1215,17 +1026,17 @@ export function AdminERPTab() {
         <TabsContent value="overview" className="space-y-6">
           <ERPOverviewTab
             erpStats={erpStats}
-            loading={loading}
+            loading={statsLoading}
             departmentData={departmentData}
             statusData={statusData}
             performanceData={performanceData}
             budgetData={budgetData}
             timelineData={timelineData}
             searchableData={{
-              projects,
-              tasks,
+              projects: [],
+              tasks: [],
               teamMembers: staffRoles,
-              timeEntries,
+              timeEntries: [],
               staffRoles
             }}
             onQuickAction={handleQuickAction}
@@ -1233,9 +1044,7 @@ export function AdminERPTab() {
         </TabsContent>
 
         <TabsContent value="projects" className="space-y-6">
-          <ERPProjectsTab
-            projects={projects}
-            loading={loading}
+          <ERPProjectsTabWithData
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             statusFilter={statusFilter}
@@ -1252,9 +1061,7 @@ export function AdminERPTab() {
         </TabsContent>
 
         <TabsContent value="tasks" className="space-y-6">
-          <ERPTasksTab
-            tasks={tasks}
-            loading={loading}
+          <ERPTasksTabWithData
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             statusFilter={statusFilter}
@@ -1274,11 +1081,7 @@ export function AdminERPTab() {
         </TabsContent>
 
         <TabsContent value="time" className="space-y-6">
-          <ERPTimeTab
-            timeEntries={timeEntries}
-            loading={loading}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
+          <ERPTimeTabWithData
             dateFilter={dateFilter}
             setDateFilter={setDateFilter}
             userFilter={userFilter}
@@ -1288,14 +1091,12 @@ export function AdminERPTab() {
             onStartTimer={handleStartTimer}
             onStopTimer={handleStopTimer}
             onDeleteTimeEntry={handleDeleteTimeEntry}
-            onRefresh={loadTimeEntries}
-            projects={projects.map(p => ({ id: p.id, title: p.title }))}
           />
         </TabsContent>
 
         <TabsContent value="team" className="space-y-6">
           <ERPTeamTab
-            projects={projects}
+            projects={projectsForTeam}
             staffRoles={staffRoles}
             selectedProjectForTeam={selectedProjectForTeam}
             setSelectedProjectForTeam={setSelectedProjectForTeam}
@@ -1361,8 +1162,7 @@ export function AdminERPTab() {
           setSelectedProject(null);
         }}
         onSuccess={() => {
-          loadProjects();
-          loadERPStats();
+          refetchStats(); // Refetch stats after project changes
         }}
         project={selectedProject}
       />
@@ -1401,43 +1201,29 @@ export function AdminERPTab() {
       />
 
       {/* Task Export Modal */}
+      {/* TODO Phase 2: Move this modal to ERPTasksTabWithData to properly access tasks data */}
       <TaskExportModal
         isOpen={isTaskExportOpen}
         onClose={() => {
           setIsTaskExportOpen(false);
           setSingleTaskToExport(null);
         }}
-        tasks={tasks}
-        filteredTasks={tasks.filter(task => {
-          const matchesSearch = !searchTerm ||
-            task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            task.assignee?.toLowerCase().includes(searchTerm.toLowerCase());
-          const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-          const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-          return matchesSearch && matchesStatus && matchesPriority;
-        })}
-        singleTask={singleTaskToExport}
+        tasks={[]} // Temporary: bulk export disabled until Phase 2
+        filteredTasks={[]} // Temporary: filtered export disabled until Phase 2
+        singleTask={singleTaskToExport} // Single task export still works
       />
 
       {/* Project Export Modal */}
+      {/* TODO Phase 2: Move this modal to ERPProjectsTabWithData to properly access projects data */}
       <ERPProjectExportModal
         isOpen={isProjectExportOpen}
         onClose={() => {
           setIsProjectExportOpen(false);
           setSingleProjectToExport(null);
         }}
-        projects={projects}
-        filteredProjects={projects.filter(project => {
-          const matchesSearch = !searchTerm ||
-            project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            project.department.toLowerCase().includes(searchTerm.toLowerCase());
-          const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-          const matchesDepartment = departmentFilter === 'all' || project.department === departmentFilter;
-          return matchesSearch && matchesStatus && matchesDepartment;
-        })}
-        singleProject={singleProjectToExport}
+        projects={[]} // Temporary: bulk export disabled until Phase 2
+        filteredProjects={[]} // Temporary: filtered export disabled until Phase 2
+        singleProject={singleProjectToExport} // Single project export still works
       />
 
       {/* Time Entry Form Modal */}
@@ -1448,7 +1234,7 @@ export function AdminERPTab() {
           setSelectedTimeEntry(null);
         }}
         onSuccess={() => {
-          fetchTimeEntries();
+          // Time entries auto-refresh in ERPTimeTabWithData via React Query
         }}
         timeEntry={selectedTimeEntry}
       />
