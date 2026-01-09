@@ -48,6 +48,7 @@ const AdminMessagingTab = lazy(() => import('@/components/admin/AdminMessagingTa
 const AdminWorkflowTab = lazy(() => import('@/components/admin/AdminWorkflowTab').then(m => ({ default: m.AdminWorkflowTab })));
 const AdminSettingsTab = lazy(() => import('@/components/admin/AdminSettingsTab').then(m => ({ default: m.AdminSettingsTab })));
 const AdminQuoteRequestsTab = lazy(() => import('@/components/admin/AdminQuoteRequestsTab'));
+const AdminProposalsTab = lazy(() => import('@/components/admin/AdminProposalsTab').then(m => ({ default: m.AdminProposalsTab })));
 const AdminAnalytics = lazy(() => import('@/components/analytics/AdminAnalytics'));
 const AdminERPTab = lazy(() => import('@/components/admin/AdminERPTab').then(m => ({ default: m.AdminERPTab })));
 
@@ -80,7 +81,7 @@ export const ModernAdminDashboard: React.FC = () => {
   const { permissions, loading: permissionsLoading } = useRolePermissions();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'projects' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'proposals' | 'projects' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp'>('overview');
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalProjects: 0,
@@ -244,6 +245,14 @@ export const ModernAdminDashboard: React.FC = () => {
           <ErrorBoundary>
             <Suspense fallback={<DashboardSkeleton />}>
               <AdminQuoteRequestsTab />
+            </Suspense>
+          </ErrorBoundary>
+        );
+      case 'proposals':
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminProposalsTab />
             </Suspense>
           </ErrorBoundary>
         );
