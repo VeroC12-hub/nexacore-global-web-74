@@ -51,6 +51,7 @@ export const AdminWorkflowTab: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'instances' | 'templates'>('instances');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState<WorkflowInstance | null>(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     initializeWorkflowSystem();
@@ -477,8 +478,8 @@ CREATE TABLE public.workflow_templates (
                       <Button
                         size="sm"
                         onClick={() => {
-                          // TODO: Implement template-based workflow creation
-                          toast.info('Template-based workflow creation coming soon!');
+                          setSelectedTemplateId(template.id);
+                          setShowCreateModal(true);
                         }}
                       >
                         Use Template
@@ -496,12 +497,17 @@ CREATE TABLE public.workflow_templates (
       {showCreateModal && (
         <CreateWorkflowModal
           isOpen={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => {
+            setShowCreateModal(false);
+            setSelectedTemplateId(null);
+          }}
           onSuccess={() => {
             setShowCreateModal(false);
+            setSelectedTemplateId(null);
             fetchWorkflowData();
           }}
           templates={templates}
+          preSelectedTemplateId={selectedTemplateId}
         />
       )}
 

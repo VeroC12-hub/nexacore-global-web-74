@@ -32,19 +32,21 @@ interface CreateWorkflowModalProps {
   onClose: () => void;
   onSuccess: () => void;
   templates: WorkflowTemplate[];
+  preSelectedTemplateId?: string | null;
 }
 
 export const CreateWorkflowModal: React.FC<CreateWorkflowModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  templates
+  templates,
+  preSelectedTemplateId
 }) => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     priority: 'normal',
-    templateId: '',
+    templateId: preSelectedTemplateId || '',
     assignedTo: '',
     projectId: ''
   });
@@ -58,8 +60,21 @@ export const CreateWorkflowModal: React.FC<CreateWorkflowModalProps> = ({
     if (isOpen) {
       fetchTeamMembers();
       fetchProjects();
+
+      // Pre-fill template and title if template is pre-selected
+      if (preSelectedTemplateId) {
+        const template = templates.find(t => t.id === preSelectedTemplateId);
+        if (template) {
+          setFormData(prev => ({
+            ...prev,
+            templateId: preSelectedTemplateId,
+            title: template.name,
+            description: template.description || ''
+          }));
+        }
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, preSelectedTemplateId, templates]);
 
   const fetchTeamMembers = async () => {
     try {
