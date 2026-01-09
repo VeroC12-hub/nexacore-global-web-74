@@ -45,6 +45,8 @@ import { useSendProposal, useDeleteProposal } from '@/hooks/useProposalActions';
 import type { Proposal, ProposalStatus } from '@/types/proposal';
 import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS } from '@/types/proposal';
 import { ProposalCreationModal } from './proposals/ProposalCreationModal';
+import { ProposalPDFPreview } from './proposals/ProposalPDFPreview';
+import { generateProposalPDF } from '@/services/proposalPDFService';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -53,6 +55,7 @@ export const AdminProposalsTab: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'all'>('all');
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
 
   // Fetch proposals
   const {
@@ -108,13 +111,19 @@ export const AdminProposalsTab: React.FC = () => {
   };
 
   const handleViewProposal = (proposal: Proposal) => {
-    // TODO: Navigate to proposal detail page in Phase 5
-    toast.info('Proposal detail view coming in Phase 5!');
+    setSelectedProposal(proposal);
+    setShowPDFPreview(true);
   };
 
-  const handleDownloadPDF = (proposal: Proposal) => {
-    // TODO: PDF generation in Phase 3
-    toast.info('PDF generation coming in Phase 3!');
+  const handleDownloadPDF = async (proposal: Proposal) => {
+    try {
+      toast.info('Generating PDF...');
+      await generateProposalPDF(proposal);
+      toast.success('PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF');
+    }
   };
 
   const formatDate = (dateString: string | null | undefined) => {
@@ -320,7 +329,7 @@ export const AdminProposalsTab: React.FC = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleViewProposal(proposal)}>
                               <Eye className="h-4 w-4 mr-2" />
-                              View Details
+                              Preview PDF
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDownloadPDF(proposal)}>
                               <Download className="h-4 w-4 mr-2" />
@@ -361,41 +370,45 @@ export const AdminProposalsTab: React.FC = () => {
       </Card>
 
       {/* Phase Progress Info */}
-      <Card className="border-2 border-dashed border-blue-200 bg-blue-50">
+      <Card className="border-2 border-dashed border-green-200 bg-green-50">
         <CardHeader>
-          <CardTitle className="text-blue-900 flex items-center gap-2">
-            <AlertCircle className="h-5 w-5" />
-            Phase 2: PM Interface Complete ✓
+          <CardTitle className="text-green-900 flex items-center gap-2">
+            <CheckCircle className="h-5 w-5" />
+            Phase 3: PDF Generation Complete ✓
           </CardTitle>
-          <CardDescription className="text-blue-700">
-            You can now create proposals with the 8-step wizard
+          <CardDescription className="text-green-700">
+            Professional NexaCore-branded PDFs with complete proposal content
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>✓ Create proposals from scratch or quote requests</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>✓ 8-step guided wizard</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>✓ Save as draft or create immediately</span>
+              <span>✓ Create proposals with 8-step wizard</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <span>✓ View, filter, and search proposals</span>
             </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span>✓ Generate NexaCore-branded PDFs</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span>✓ Preview PDF before downloading</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span>✓ Download professional proposals</span>
+            </div>
             <div className="flex items-center gap-2 text-yellow-600">
               <Clock className="h-4 w-4" />
-              <span>Phase 3: PDF Generation (Next)</span>
+              <span>Phase 4: Version Control (Next)</span>
             </div>
             <div className="flex items-center gap-2 text-gray-500">
               <Clock className="h-4 w-4" />
-              <span>Phases 4-7: Version control, client portal, emails, testing</span>
+              <span>Phases 5-7: Client portal, emails, testing</span>
             </div>
           </div>
         </CardContent>
@@ -411,6 +424,18 @@ export const AdminProposalsTab: React.FC = () => {
           toast.success('Proposal created successfully!');
         }}
       />
+
+      {/* PDF Preview Modal */}
+      {selectedProposal && (
+        <ProposalPDFPreview
+          proposal={selectedProposal}
+          isOpen={showPDFPreview}
+          onClose={() => {
+            setShowPDFPreview(false);
+            setSelectedProposal(null);
+          }}
+        />
+      )}
     </div>
   );
 };
