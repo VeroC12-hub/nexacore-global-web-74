@@ -42,6 +42,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 
 interface User {
   id: string;
@@ -88,6 +89,9 @@ interface AdminUsersTabProps {
 }
 
 export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
+  // Role permissions
+  const { permissions } = useRolePermissions();
+
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -503,10 +507,12 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-2">
-            <UserPlus className="h-4 w-4" />
-            Add User
-          </Button>
+          {permissions.canManageUsers && (
+            <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-2">
+              <UserPlus className="h-4 w-4" />
+              Add User
+            </Button>
+          )}
         </div>
       </div>
 

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 
 interface TeamMember {
   id: string;
@@ -57,6 +58,7 @@ interface AdminTeamTabProps {
 }
 
 const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
+  const { permissions } = useRolePermissions();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -446,13 +448,14 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-2xl font-bold">Team Management</CardTitle>
-        <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-          <DialogTrigger asChild>
-            <Button disabled={actionLoading === 'adding'}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              {actionLoading === 'adding' ? 'Adding...' : 'Add Team Member'}
-            </Button>
-          </DialogTrigger>
+        {permissions.canManageUsers && (
+          <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+            <DialogTrigger asChild>
+              <Button disabled={actionLoading === 'adding'}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                {actionLoading === 'adding' ? 'Adding...' : 'Add Team Member'}
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Add New Team Member</DialogTitle>
@@ -522,17 +525,24 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </CardHeader>
       <CardContent>
         {teamMembers.length === 0 ? (
           <div className="text-center py-8">
             <UserPlus className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No team members yet</h3>
-            <p className="text-gray-500 mb-4">Start building your NexaCore team by inviting members.</p>
-            <Button onClick={() => setIsAddModalOpen(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add First Team Member
-            </Button>
+            <p className="text-gray-500 mb-4">
+              {permissions.canManageUsers
+                ? "Start building your NexaCore team by inviting members."
+                : "Only administrators can add team members."}
+            </p>
+            {permissions.canManageUsers && (
+              <Button onClick={() => setIsAddModalOpen(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add First Team Member
+              </Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
