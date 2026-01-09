@@ -206,6 +206,7 @@ export const ModernAdminDashboard: React.FC = () => {
     { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="h-5 w-5" />, count: null, requiresPermission: 'canViewReports' },
     { id: 'business', label: 'Business', icon: <DollarSign className="h-5 w-5" />, count: null, requiresPermission: 'canViewFinancials' },
     { id: 'quotes', label: 'Quotes', icon: <FileText className="h-5 w-5" />, count: stats.pendingRequests, requiresPermission: null },
+    { id: 'proposals', label: 'Proposals', icon: <FileText className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'projects', label: 'Projects', icon: <FolderOpen className="h-5 w-5" />, count: stats.totalProjects, requiresPermission: null },
     { id: 'portfolio', label: 'Portfolio', icon: <Camera className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'invoices', label: 'Invoices', icon: <CreditCard className="h-5 w-5" />, count: stats.totalInvoices, requiresPermission: 'canManageInvoices' },
