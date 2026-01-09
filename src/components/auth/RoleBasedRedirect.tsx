@@ -20,11 +20,12 @@ export function RoleBasedRedirect({ children }: RoleBasedRedirectProps) {
     
     // Define role-based redirects
     const roleRedirects: Record<string, string> = {
-      'admin': '/staff',
-      'project_manager': '/staff', 
-      'operations_manager': '/staff',
+      'admin': '/admin',
+      'project_manager': '/admin',
+      'operations_manager': '/admin',
       'developer': '/staff',
       'support': '/staff',
+      'staff': '/staff',
       'client': '/dashboard' // or /client-portal
     };
 
@@ -34,11 +35,11 @@ export function RoleBasedRedirect({ children }: RoleBasedRedirectProps) {
     if (targetPath && !currentPath.startsWith(targetPath)) {
       // Special handling for root dashboard redirect
       if (currentPath === '/dashboard' && user.role !== 'client') {
-        navigate('/staff', { replace: true });
+        navigate(targetPath, { replace: true });
       }
       // Special handling for client portal redirect
       else if (currentPath === '/client-portal' && user.role !== 'client') {
-        navigate('/staff', { replace: true });
+        navigate(targetPath, { replace: true });
       }
       // General redirect for users accessing inappropriate areas
       else if (currentPath === '/' || currentPath === '/login' || currentPath === '/auth') {
