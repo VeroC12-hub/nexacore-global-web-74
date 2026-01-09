@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { CreateWorkflowModal } from "./CreateWorkflowModal";
 import { WorkflowDetailsModal } from "./WorkflowDetailsModal";
 import { checkWorkflowTablesExist } from "@/services/workflowMigration";
+import { SeedWorkflowTemplatesButton } from "./SeedWorkflowTemplatesButton";
 
 interface WorkflowInstance {
   id: string;
@@ -439,37 +440,56 @@ CREATE TABLE public.workflow_templates (
 
       {/* Workflow Templates Tab */}
       {activeTab === 'templates' && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {templates.map((template) => (
-            <Card key={template.id} className="hover:shadow-md transition-shadow">
+        <>
+          {templates.length === 0 ? (
+            <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{template.name}</CardTitle>
-                  <Badge className={getCategoryColor(template.category)}>
-                    {template.category}
-                  </Badge>
-                </div>
-                <CardDescription>{template.description}</CardDescription>
+                <CardTitle>No Templates Found</CardTitle>
+                <CardDescription>
+                  Get started by seeding the default NexaCore workflow templates
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">
-                    Created {formatDate(template.created_at)}
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      // TODO: Implement template-based workflow creation
-                      toast.info('Template-based workflow creation coming soon!');
-                    }}
-                  >
-                    Use Template
-                  </Button>
-                </div>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <p className="text-muted-foreground mb-4">
+                  Click below to create default workflow templates for your organization
+                </p>
+                <SeedWorkflowTemplatesButton onSuccess={fetchWorkflowData} />
               </CardContent>
             </Card>
-          ))}
-        </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {templates.map((template) => (
+                <Card key={template.id} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{template.name}</CardTitle>
+                      <Badge className={getCategoryColor(template.category)}>
+                        {template.category}
+                      </Badge>
+                    </div>
+                    <CardDescription>{template.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-500">
+                        Created {formatDate(template.created_at)}
+                      </span>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          // TODO: Implement template-based workflow creation
+                          toast.info('Template-based workflow creation coming soon!');
+                        }}
+                      >
+                        Use Template
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Modals */}

@@ -265,7 +265,8 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
       formData.estimated_hours > 0
     );
 
-    const teamValid = formData.deliverables.length > 0 && formData.team_members.length > 0;
+    // Team & deliverables are now optional - just needs at least one of them
+    const teamValid = formData.deliverables.length > 0 || formData.team_members.length > 0 || true;
 
     setFormValidation({
       basic: basicValid,
@@ -275,7 +276,8 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
   };
 
   const isFormComplete = () => {
-    return formValidation.basic && formValidation.details && formValidation.team;
+    // Only require basic and details to be complete, team section is optional
+    return formValidation.basic && formValidation.details;
   };
 
   // Enhanced notification system
@@ -308,17 +310,15 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
   const paginatedProjects = useMemo(() => projects, [projects]); // Already paginated from server
 
   const handleCreateProject = async () => {
-    // Enforce form completion
+    // Enforce form completion (only basic and details required)
     if (!isFormComplete()) {
-      toast.error('Please complete all required sections (Basic Info, Details, and Team & Deliverables) before creating the project.');
-      
+      toast.error('Please complete all required sections (Basic Info and Details) before creating the project.');
+
       // Switch to the first incomplete tab
       if (!formValidation.basic) {
         setCurrentTab('basic');
       } else if (!formValidation.details) {
         setCurrentTab('details');
-      } else if (!formValidation.team) {
-        setCurrentTab('team');
       }
       return;
     }
@@ -384,9 +384,9 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
   const handleUpdateProject = async () => {
     if (!selectedProject) return;
 
-    // Enforce form completion for updates too
+    // Enforce form completion for updates too (only basic and details required)
     if (!isFormComplete()) {
-      toast.error('Please complete all required sections before updating the project.');
+      toast.error('Please complete all required sections (Basic Info and Details) before updating the project.');
       return;
     }
 
@@ -1225,7 +1225,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
           
           {!isFormComplete() && (
             <div className="text-sm text-muted-foreground text-center">
-              Complete all sections to enable project creation
+              Complete Basic Info and Details sections to enable project creation (Team & Deliverables are optional)
             </div>
           )}
         </DialogContent>
