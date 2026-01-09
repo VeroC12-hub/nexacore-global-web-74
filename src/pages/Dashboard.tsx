@@ -24,9 +24,13 @@ const Dashboard: React.FC = () => {
 
       const role = data?.role;
 
-      // Redirect staff to staff dashboard
-      const staffRoles = ['admin', 'project_manager', 'operations_manager', 'developer', 'support'];
-      if (role && staffRoles.includes(role)) {
+      // Redirect to appropriate dashboard based on role
+      const adminRoles = ['admin', 'project_manager', 'operations_manager'];
+      const staffRoles = ['developer', 'support', 'staff'];
+
+      if (role && adminRoles.includes(role)) {
+        navigate('/admin', { replace: true });
+      } else if (role && staffRoles.includes(role)) {
         navigate('/staff', { replace: true });
       }
     };
