@@ -24,6 +24,7 @@ export type ProposalActivityType =
   | 'rejected'
   | 'revision_requested'
   | 'version_created'
+  | 'rollback'
   | 'pdf_downloaded'
   | 'email_sent'
   | 'project_created'
@@ -484,14 +485,23 @@ export interface ProposalCompletionStatus {
 
 // Type for version comparison
 export interface ProposalVersionComparison {
-  old_version: ProposalVersion;
-  new_version: ProposalVersion;
-  changes: {
-    field: string;
-    old_value: any;
-    new_value: any;
-    change_type: 'added' | 'removed' | 'modified';
-  }[];
+  version1: ProposalVersion;
+  version2: ProposalVersion;
+  diffs: ProposalVersionDiff[];
+  totalChanges: number;
+}
+
+export interface ProposalVersionDiff {
+  field: string;
+  oldValue: any;
+  newValue: any;
+  changeType: 'added' | 'removed' | 'modified';
+}
+
+export interface ProposalVersionCreateData {
+  proposal_id: string;
+  changes_summary: string;
+  changed_fields?: string[];
 }
 
 // =====================================================

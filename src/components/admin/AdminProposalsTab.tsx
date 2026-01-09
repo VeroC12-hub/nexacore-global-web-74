@@ -23,6 +23,7 @@ import {
   Send,
   MoreVertical,
   AlertCircle,
+  History,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -46,6 +47,8 @@ import type { Proposal, ProposalStatus } from '@/types/proposal';
 import { PROPOSAL_STATUS_LABELS, PROPOSAL_STATUS_COLORS } from '@/types/proposal';
 import { ProposalCreationModal } from './proposals/ProposalCreationModal';
 import { ProposalPDFPreview } from './proposals/ProposalPDFPreview';
+import { ProposalVersionHistory } from './proposals/ProposalVersionHistory';
+import { ProposalVersionCompare } from './proposals/ProposalVersionCompare';
 import { generateProposalPDF } from '@/services/proposalPDFService';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -56,6 +59,8 @@ export const AdminProposalsTab: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'all'>('all');
   const [selectedProposal, setSelectedProposal] = useState<Proposal | null>(null);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [compareVersions, setCompareVersions] = useState<{ v1: string; v2: string } | null>(null);
 
   // Fetch proposals
   const {
@@ -113,6 +118,15 @@ export const AdminProposalsTab: React.FC = () => {
   const handleViewProposal = (proposal: Proposal) => {
     setSelectedProposal(proposal);
     setShowPDFPreview(true);
+  };
+
+  const handleViewHistory = (proposal: Proposal) => {
+    setSelectedProposal(proposal);
+    setShowVersionHistory(true);
+  };
+
+  const handleCompareVersions = (version1Id: string, version2Id: string) => {
+    setCompareVersions({ v1: version1Id, v2: version2Id });
   };
 
   const handleDownloadPDF = async (proposal: Proposal) => {
@@ -335,6 +349,10 @@ export const AdminProposalsTab: React.FC = () => {
                               <Download className="h-4 w-4 mr-2" />
                               Download PDF
                             </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleViewHistory(proposal)}>
+                              <History className="h-4 w-4 mr-2" />
+                              View History
+                            </DropdownMenuItem>
                             {proposal.status === 'draft' && (
                               <>
                                 <DropdownMenuItem
@@ -434,6 +452,45 @@ export const AdminProposalsTab: React.FC = () => {
             setShowPDFPreview(false);
             setSelectedProposal(null);
           }}
+        />
+      )}
+
+      {/* Version History Modal */}
+      {selectedProposal && showVersionHistory && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold">
+                  Version History: {selectedProposal.proposal_number}
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setShowVersionHistory(false);
+                    setSelectedProposal(null);
+                  }}
+                >
+                  <XCircle className="h-5 w-5" />
+                </Button>
+              </div>
+              <ProposalVersionHistory
+                proposalId={selectedProposal.id}
+                onCompareVersions={handleCompareVersions}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Version Comparison Modal */}
+      {compareVersions && (
+        <ProposalVersionCompare
+          version1Id={compareVersions.v1}
+          version2Id={compareVersions.v2}
+          isOpen={!!compareVersions}
+          onClose={() => setCompareVersions(null)}
         />
       )}
     </div>
