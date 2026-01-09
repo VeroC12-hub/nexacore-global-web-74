@@ -173,13 +173,13 @@
   - **File:** `src/components/admin/AdminProposalsTab.tsx` (419 lines)
   - **Status:** ✅ Complete
 
-- [ ] **Quote Requests Integration** (Priority: High)
-  - [ ] Add "Create Proposal" button to quote requests
-  - [ ] Add "Upgrade to Proposal" button for quotes
-  - [ ] Link proposal to original quote/request in UI
-  - **File:** `src/components/admin/AdminQuoteRequestsTab.tsx` (modify)
-  - **Status:** 🔜 Deferred to Phase 3
-  - **Note:** Core proposal creation from quote requests is functional via modal pre-fill logic
+- [x] **Quote Requests Integration** (Priority: High) ✅
+  - [x] Add "Create Proposal" button to quote requests
+  - [x] Pre-fill proposal data from quote request
+  - [x] Navigate to proposals tab with action parameter
+  - **File:** `src/components/admin/AdminQuoteRequestsTab.tsx` (modified)
+  - **Status:** ✅ Complete
+  - **Note:** "Create Proposal" button added to each quote request with pre-fill via sessionStorage
 
 ### Phase 2 Checklist
 - [x] 8-step wizard functional ✅
@@ -197,7 +197,7 @@
 ### Phase 2 Notes
 - **Advanced features deferred:** Rich text editor (TipTap), drag-and-drop section builder, auto-save will be added in future iterations
 - **Core functionality complete:** All essential features for creating and managing proposals are working
-- **Quote integration:** Pre-fill logic from quote requests is implemented; UI integration button will be added in Phase 3
+- **Quote integration:** ✅ "Create Proposal" button added to AdminQuoteRequestsTab with pre-fill data
 
 ---
 

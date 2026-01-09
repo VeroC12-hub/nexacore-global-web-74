@@ -22,7 +22,8 @@ import {
   X,
   Edit,
   Plus,
-  Save
+  Save,
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -1027,6 +1028,37 @@ Database is now optimized!`,
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Quote
+                    </Button>
+                  )}
+
+                  {/* Create Proposal Button - for any quote request with a quote */}
+                  {relatedQuote && (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="bg-teal-600 hover:bg-teal-700"
+                      onClick={() => {
+                        // Store quote request data in sessionStorage for proposal pre-fill
+                        sessionStorage.setItem('proposalPrefillData', JSON.stringify({
+                          quote_request_id: request.id,
+                          quote_id: relatedQuote.id,
+                          client_name: request.full_name,
+                          client_email: request.email,
+                          client_company: request.company,
+                          client_phone: request.phone,
+                          service_type: request.service_type,
+                          description: request.description,
+                          total_price: relatedQuote.price,
+                          currency: relatedQuote.currency,
+                          timeline: relatedQuote.timeline,
+                        }));
+                        // Navigate to proposals tab
+                        navigate('/admin?tab=proposals&action=create');
+                        toast.info('Opening proposal creation with pre-filled data...');
+                      }}
+                    >
+                      <FileText className="h-4 w-4 mr-2" />
+                      Create Proposal
                     </Button>
                   )}
 

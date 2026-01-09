@@ -81,7 +81,7 @@ export const ModernAdminDashboard: React.FC = () => {
   const { permissions, loading: permissionsLoading } = useRolePermissions();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'proposals' | 'projects' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'proposals' | 'projects' | 'portfolio' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp'>('overview');
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalProjects: 0,
@@ -338,12 +338,7 @@ export const ModernAdminDashboard: React.FC = () => {
         );
       case 'erp':
         return (
-          <ErrorBoundary
-            onError={(error, errorInfo) => {
-              console.error('🚨 AdminERPTab Error:', error);
-              console.error('🚨 Component Stack:', errorInfo.componentStack);
-            }}
-          >
+          <ErrorBoundary>
             <Suspense fallback={<DashboardSkeleton />}>
               <AdminERPTab />
             </Suspense>

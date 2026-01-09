@@ -30,8 +30,8 @@ const SEOEnhancements: React.FC<SEOEnhancementsProps> = ({
   
   useEffect(() => {
     // Track page view for analytics
-    if (typeof gtag !== 'undefined') {
-      gtag('config', 'GA_MEASUREMENT_ID', {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('config', 'GA_MEASUREMENT_ID', {
         page_title: title,
         page_location: canonical || window.location.href,
       });

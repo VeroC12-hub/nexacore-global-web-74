@@ -69,11 +69,12 @@ const MessageBubble = ({ message, onFeedback }: MessageBubbleProps) => {
           <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'prose-invert' : 'prose-slate'}`}>
             <ReactMarkdown
               components={{
-                code({ node, inline, className, children, ...props }) {
+                code({ className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const codeString = String(children).replace(/\n$/, '');
+                  const isInline = !match;
 
-                  return !inline && match ? (
+                  return !isInline && match ? (
                     <div className="relative group">
                       <button
                         onClick={() => copyToClipboard(codeString)}
@@ -82,10 +83,9 @@ const MessageBubble = ({ message, onFeedback }: MessageBubbleProps) => {
                         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                       </button>
                       <SyntaxHighlighter
-                        style={vscDarkPlus}
+                        style={vscDarkPlus as any}
                         language={match[1]}
                         PreTag="div"
-                        {...props}
                       >
                         {codeString}
                       </SyntaxHighlighter>

@@ -206,8 +206,11 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
 
     } catch (error: any) {
       console.error('Error adding team member:', error);
-      toast.dismiss();
-      toast.error(error.message || 'Failed to add team member');
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to add team member',
+        variant: 'destructive'
+      });
     } finally {
       setActionLoading(null);
     }
