@@ -457,7 +457,7 @@ export function AdminProjectsTab({ onStatsUpdate }: AdminProjectsTabProps) {
 
       if (error) throw error;
 
-      setProjects(projects.filter(p => p.id !== projectId));
+      await refetch();
       onStatsUpdate();
       toast.success('Project deleted successfully');
     } catch (error) {

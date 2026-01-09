@@ -336,11 +336,4 @@ export const ProcessMethodologySection = () => {
   );
 };
 
-// Export all components for easy use
-export {
-  SEOFAQSection,
-  ServiceAreasSection, 
-  AchievementsSection,
-  TechnologyStackSection,
-  ProcessMethodologySection
-};
+// Components are already exported inline above

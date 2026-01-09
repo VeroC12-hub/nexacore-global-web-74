@@ -300,7 +300,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
       const { error } = await supabase.auth.admin.deleteUser(userId);
       if (error) throw error;
 
-      setUsers(users.filter(u => u.id !== userId));
+      await refetch();
       onStatsUpdate();
       toast.success('User deleted successfully');
     } catch (error) {
@@ -321,9 +321,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
 
       if (error) throw error;
 
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, role: newRole } : user
-      ));
+      await refetch();
       onStatsUpdate();
       toast.success(`User role updated to ${newRole}`);
     } catch (error) {
@@ -344,9 +342,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
 
       if (error) throw error;
 
-      setUsers(users.map(user => 
-        user.id === userId ? { ...user, status: newStatus } : user
-      ));
+      await refetch();
       onStatsUpdate();
       toast.success(`User status updated to ${newStatus}`);
     } catch (error) {
