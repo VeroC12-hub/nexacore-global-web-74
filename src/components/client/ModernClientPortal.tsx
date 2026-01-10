@@ -236,7 +236,7 @@ export const ModernClientPortal: React.FC = () => {
       case 'files':
         return renderFilesView();
       case 'settings':
-        return <ClientSettings />;
+        return <ClientSettings isOpen={true} onClose={() => setActiveView('overview')} />;
       default:
         return renderOverview();
     }
@@ -662,14 +662,23 @@ export const ModernClientPortal: React.FC = () => {
       {showServiceModal && (
         <ServiceRequestModal 
           isOpen={showServiceModal} 
-          onClose={() => setShowServiceModal(false)} 
+          onClose={() => setShowServiceModal(false)}
+          onSuccess={() => {
+            setShowServiceModal(false);
+            loadClientData();
+          }}
         />
       )}
       
       {showPaymentForm && (
         <VisaPaymentForm 
           isOpen={showPaymentForm} 
-          onClose={() => setShowPaymentForm(false)} 
+          onClose={() => setShowPaymentForm(false)}
+          invoice={{ id: '', invoice_number: '', total_amount: 0, title: '' }}
+          onPaymentComplete={() => {
+            setShowPaymentForm(false);
+            loadClientData();
+          }}
         />
       )}
       <Footer />

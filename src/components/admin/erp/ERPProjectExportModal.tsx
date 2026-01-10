@@ -454,7 +454,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
 
           autoTable(doc, {
             startY: yPos,
-            body: detailsData,
+            body: detailsData as any,
             theme: 'grid',
             margin: { top: 20, right: 14, bottom: 20, left: 14 },
             styles: {
