@@ -121,10 +121,12 @@ export const useRolePermissions = () => {
 
         if (error) {
           console.error('Error fetching user role:', error);
-          // Default to admin role if profile doesn't exist (system owner)
-          setPermissions(getRolePermissions('admin'));
+          // SECURITY: Default to member role (least privilege) if profile doesn't exist
+          // Never default to admin - this would allow privilege escalation
+          setPermissions(getRolePermissions('member'));
         } else {
-          const userRole = (profile?.role || 'admin') as UserRole;
+          // SECURITY: Default to member role if not set (least privilege principle)
+          const userRole = (profile?.role || 'member') as UserRole;
           setPermissions(getRolePermissions(userRole));
         }
       } catch (error) {
