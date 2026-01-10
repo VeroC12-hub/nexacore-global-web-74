@@ -441,6 +441,18 @@ const SecureConfigModal: React.FC<SecureConfigModalProps> = ({ isOpen, onClose, 
   );
 };
 
+// Helper function for method icons (shared)
+const getMethodIconGlobal = (type: string) => {
+  switch (type) {
+    case 'stripe': return <CreditCard className="w-5 h-5" />;
+    case 'paypal': return <Wallet className="w-5 h-5" />;
+    case 'square': return <Building2 className="w-5 h-5" />;
+    case 'mobile_money': return <Smartphone className="w-5 h-5" />;
+    case 'crypto': return <Bitcoin className="w-5 h-5" />;
+    default: return <CreditCard className="w-5 h-5" />;
+  }
+};
+
 export const SecurePaymentConfig: React.FC = () => {
   const { user } = useAuth();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -449,6 +461,9 @@ export const SecurePaymentConfig: React.FC = () => {
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
+
+  // Use the global helper
+  const getMethodIcon = getMethodIconGlobal;
 
   useEffect(() => {
     checkAdminAccess();

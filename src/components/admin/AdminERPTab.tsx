@@ -158,7 +158,12 @@ export function AdminERPTab() {
   // Transform staff roles data
   const staffRoles: StaffRole[] = useMemo(() => {
     if (!staffRolesData) return [];
-    return staffRolesData as StaffRole[];
+    return (staffRolesData as any[]).map(item => ({
+      ...item,
+      user_id: item.id || item.user_id,
+      is_active: item.status === 'active' || true,
+      profiles: item
+    })) as StaffRole[];
   }, [staffRolesData]);
 
   // Transform projects data for team tab
@@ -167,12 +172,12 @@ export function AdminERPTab() {
     return projectsForTeamData.data;
   }, [projectsForTeamData]);
 
-  // Chart data - simplified for now (can be enhanced in Phase 2)
-  const departmentData: ChartDataPoint[] = useMemo(() => [], []);
-  const statusData: ChartDataPoint[] = useMemo(() => [], []);
-  const performanceData: ChartDataPoint[] = useMemo(() => [], []);
-  const budgetData: ChartDataPoint[] = useMemo(() => [], []);
-  const timelineData: ChartDataPoint[] = useMemo(() => [], []);
+  // Chart data - using state since we load async
+  const [departmentData, setDepartmentData] = useState<ChartDataPoint[]>([]);
+  const [statusData, setStatusData] = useState<ChartDataPoint[]>([]);
+  const [performanceData, setPerformanceData] = useState<ChartDataPoint[]>([]);
+  const [budgetData, setBudgetData] = useState<ChartDataPoint[]>([]);
+  const [timelineData, setTimelineData] = useState<ChartDataPoint[]>([]);
 
   // Modal states
   const [selectedProject, setSelectedProject] = useState<ERPProject | null>(null);
@@ -276,20 +281,21 @@ export function AdminERPTab() {
       // Load department data from projects
       const { data: projectsData, error: projectsError } = await supabase
         .from('erp_projects')
-        .select('department, status, is_active');
+        .select('department, status');
 
       if (projectsError) {
         console.error('Error loading department data:', projectsError);
       } else {
-        const deptStats = (projectsData || []).reduce((acc: Record<string, ChartDataPoint>, project) => {
+        const deptStats = (projectsData || []).reduce((acc: Record<string, { name: string; value: number; completed: number; pending: number; total: number }>, project: any) => {
           const dept = project.department || 'Other';
           if (!acc[dept]) {
-            acc[dept] = { name: dept, completed: 0, pending: 0, total: 0 };
+            acc[dept] = { name: dept, value: 0, completed: 0, pending: 0, total: 0 };
           }
           acc[dept].total += 1;
+          acc[dept].value += 1;
           if (project.status === 'completed') {
             acc[dept].completed += 1;
-          } else if (project.is_active) {
+          } else {
             acc[dept].pending += 1;
           }
           return acc;
@@ -352,8 +358,9 @@ export function AdminERPTab() {
           return acc;
         }, {});
 
-        const performanceChartData = Object.values(monthlyStats).slice(-6).map((stats) => ({
-          month: stats.month,
+        const performanceChartData = Object.values(monthlyStats).slice(-6).map((stats: any) => ({
+          name: stats.month,
+          value: Math.round((stats.completed / Math.max(stats.total, 1)) * 100),
           productivity: Math.round((stats.completed / Math.max(stats.total, 1)) * 100),
           quality: Math.round((stats.onTime / Math.max(stats.completed, 1)) * 100)
         }));
@@ -370,13 +377,14 @@ export function AdminERPTab() {
       if (budgetError) {
         console.error('Error loading budget data:', budgetError);
       } else {
-        const monthlyBudget = (budgetProjectsData || []).reduce((acc: Record<string, { month: string; allocated: number; spent: number }>, project) => {
+        const monthlyBudget = (budgetProjectsData || []).reduce((acc: Record<string, { name: string; value: number; allocated: number; spent: number }>, project: any) => {
           const month = new Date(project.created_at).toLocaleDateString('en-US', { month: 'short' });
           if (!acc[month]) {
-            acc[month] = { month, allocated: 0, spent: 0 };
+            acc[month] = { name: month, value: 0, allocated: 0, spent: 0 };
           }
           acc[month].allocated += project.budget || 0;
           acc[month].spent += project.actual_cost || 0;
+          acc[month].value = acc[month].spent;
           return acc;
         }, {});
 
@@ -387,12 +395,12 @@ export function AdminERPTab() {
       const { data: budgetDistData, error: budgetDistError } = await supabase
         .from('erp_projects')
         .select('department, budget')
-        .eq('is_active', true);
+        .eq('status', 'in_progress');
 
       if (budgetDistError) {
         console.error('Error loading budget distribution:', budgetDistError);
       } else {
-        const budgetByDept = (budgetDistData || []).reduce((acc: Record<string, number>, project) => {
+        const budgetByDept = (budgetDistData || []).reduce((acc: Record<string, number>, project: any) => {
           const dept = project.department || 'Other';
           acc[dept] = (acc[dept] || 0) + (project.budget || 0);
           return acc;
@@ -405,10 +413,10 @@ export function AdminERPTab() {
       console.error('Error loading chart data:', error);
       // Fallback to mock data if database queries fail
       setDepartmentData([
-        { name: 'Development', completed: 12, pending: 8, total: 20 },
-        { name: 'Design', completed: 8, pending: 4, total: 12 },
-        { name: 'Marketing', completed: 6, pending: 3, total: 9 },
-        { name: 'Sales', completed: 4, pending: 2, total: 6 }
+        { name: 'Development', value: 20, completed: 12, pending: 8, total: 20 },
+        { name: 'Design', value: 12, completed: 8, pending: 4, total: 12 },
+        { name: 'Marketing', value: 9, completed: 6, pending: 3, total: 9 },
+        { name: 'Sales', value: 6, completed: 4, pending: 2, total: 6 }
       ]);
 
       setStatusData([
@@ -419,21 +427,21 @@ export function AdminERPTab() {
       ]);
 
       setPerformanceData([
-        { month: 'Jan', productivity: 78, quality: 85 },
-        { month: 'Feb', productivity: 82, quality: 88 },
-        { month: 'Mar', productivity: 79, quality: 86 },
-        { month: 'Apr', productivity: 85, quality: 90 },
-        { month: 'May', productivity: 88, quality: 92 },
-        { month: 'Jun', productivity: 91, quality: 94 }
+        { name: 'Jan', value: 78, productivity: 78, quality: 85 },
+        { name: 'Feb', value: 82, productivity: 82, quality: 88 },
+        { name: 'Mar', value: 79, productivity: 79, quality: 86 },
+        { name: 'Apr', value: 85, productivity: 85, quality: 90 },
+        { name: 'May', value: 88, productivity: 88, quality: 92 },
+        { name: 'Jun', value: 91, productivity: 91, quality: 94 }
       ]);
 
       setTimelineData([
-        { month: 'Jan', allocated: 50000, spent: 45000 },
-        { month: 'Feb', allocated: 60000, spent: 55000 },
-        { month: 'Mar', allocated: 70000, spent: 65000 },
-        { month: 'Apr', allocated: 65000, spent: 60000 },
-        { month: 'May', allocated: 75000, spent: 70000 },
-        { month: 'Jun', allocated: 80000, spent: 75000 }
+        { name: 'Jan', value: 45000, allocated: 50000, spent: 45000 },
+        { name: 'Feb', value: 55000, allocated: 60000, spent: 55000 },
+        { name: 'Mar', value: 65000, allocated: 70000, spent: 65000 },
+        { name: 'Apr', value: 60000, allocated: 65000, spent: 60000 },
+        { name: 'May', value: 70000, allocated: 75000, spent: 70000 },
+        { name: 'Jun', value: 75000, allocated: 80000, spent: 75000 }
       ]);
 
       setBudgetData([
@@ -604,15 +612,14 @@ export function AdminERPTab() {
 
   const handleDuplicateTask = async (task: ERPTask) => {
     try {
-      const { error} = await supabase
+      const { error } = await supabase
         .from('erp_tasks')
         .insert({
           title: `${task.title} (Copy)`,
           description: task.description,
-          status: 'new',
+          status: 'todo',
           priority: task.priority,
-          erp_project_id: task.erp_project_id,
-          assigned_to: task.assigned_to,
+          erp_project_id: task.project_id,
           due_date: task.due_date,
           estimated_hours: task.estimated_hours,
           actual_hours: 0

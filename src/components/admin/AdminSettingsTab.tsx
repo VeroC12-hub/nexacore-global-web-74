@@ -304,7 +304,7 @@ export function AdminSettingsTab() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setStaffRoles(data || []);
+      setStaffRoles((data || []) as any);
     } catch (error) {
       console.error('Error loading staff roles:', error);
     }

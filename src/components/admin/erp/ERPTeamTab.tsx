@@ -164,7 +164,7 @@ export function ERPTeamTab({
                 <label className="text-sm font-medium">Add Team Members</label>
                 <Select onValueChange={(value) => {
                   if (value && !selectedTeamMembers.includes(value)) {
-                    setSelectedTeamMembers(prev => [...prev, value]);
+                    setSelectedTeamMembers((prev: string[]) => [...prev, value]);
                     
                     // Auto-suggest role based on staff member's role
                     const selectedStaff = staffRoles.find(staff => staff.user_id === value);
