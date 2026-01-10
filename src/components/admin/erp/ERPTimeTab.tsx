@@ -99,8 +99,8 @@ export function ERPTimeTab({
   projects
 }: ERPTimeTabProps) {
   // Separate entries by status
-  const pendingEntries = timeEntries.filter(e => e.status === 'pending');
-  const activeTimers = timeEntries.filter(e => e.hours === 0 && e.status === 'pending').map(entry => ({
+  const pendingEntries = timeEntries.filter(e => (e.status as string) === 'pending');
+  const activeTimers = timeEntries.filter(e => e.hours === 0 && (e.status as string) === 'pending').map(entry => ({
     id: entry.id,
     project_title: entry.project_title,
     task_title: entry.task_title,

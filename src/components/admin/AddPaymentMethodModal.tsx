@@ -384,7 +384,7 @@ export function AddPaymentMethodModal({ isOpen, onClose, onSuccess }: AddPayment
                 </div>
                 <Switch
                   checked={formData.is_enabled}
-                  onCheckedChange={(checked) => handleInputChange('is_enabled', checked)}
+                  onCheckedChange={(checked) => handleInputChange('is_enabled', String(checked))}
                 />
               </div>
             </CardContent>

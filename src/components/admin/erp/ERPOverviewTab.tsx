@@ -228,7 +228,7 @@ export function ERPOverviewTab({
       setCurrentSearchId(searchId);
       
       // Add to search history
-      addSearchToHistory(query, results.length > 0, 'voice');
+      addSearchToHistory(query, results.length, { tab: 'voice' });
     }, 100);
   }, [searchableData]);
 
@@ -455,12 +455,12 @@ export function ERPOverviewTab({
   ].filter(alert => !dismissedAlerts.includes(alert.id));
 
   const quickActions = [
-    { id: 'new-project', label: 'New Project', icon: Plus, color: 'bg-blue-500 hover:bg-blue-600' },
-    { id: 'add-client', label: 'Add Client', icon: UserPlus, color: 'bg-green-500 hover:bg-green-600' },
-    { id: 'create-invoice', label: 'Create Invoice', icon: FileText, color: 'bg-purple-500 hover:bg-purple-600' },
-    { id: 'start-timer', label: 'Start Timer', icon: Play, color: 'bg-orange-500 hover:bg-orange-600' },
-    { id: 'new-task', label: 'Quick Task', icon: Target, color: 'bg-pink-500 hover:bg-pink-600' },
-    { id: 'schedule-meeting', label: 'Meeting', icon: Calendar, color: 'bg-indigo-500 hover:bg-indigo-600' }
+    { id: 'new-project', label: 'New Project', icon: Plus, color: 'bg-blue-500 hover:bg-blue-600', description: 'Create a new project' },
+    { id: 'add-client', label: 'Add Client', icon: UserPlus, color: 'bg-green-500 hover:bg-green-600', description: 'Add a new client' },
+    { id: 'create-invoice', label: 'Create Invoice', icon: FileText, color: 'bg-purple-500 hover:bg-purple-600', description: 'Generate an invoice' },
+    { id: 'start-timer', label: 'Start Timer', icon: Play, color: 'bg-orange-500 hover:bg-orange-600', description: 'Start time tracking' },
+    { id: 'new-task', label: 'Quick Task', icon: Target, color: 'bg-pink-500 hover:bg-pink-600', description: 'Create a quick task' },
+    { id: 'schedule-meeting', label: 'Meeting', icon: Calendar, color: 'bg-indigo-500 hover:bg-indigo-600', description: 'Schedule a meeting' }
   ];
 
   const recentActivity = [
