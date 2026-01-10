@@ -557,6 +557,17 @@ export const SecurePaymentConfig: React.FC = () => {
     });
   };
 
+  const getMethodIcon = (type: string) => {
+    switch (type) {
+      case 'stripe': return <CreditCard className="w-5 h-5" />;
+      case 'paypal': return <Wallet className="w-5 h-5" />;
+      case 'square': return <Building2 className="w-5 h-5" />;
+      case 'mobile_money': return <Smartphone className="w-5 h-5" />;
+      case 'crypto': return <Bitcoin className="w-5 h-5" />;
+      default: return <CreditCard className="w-5 h-5" />;
+    }
+  };
+
   const getStatusBadge = (method: PaymentMethod) => {
     if (method.is_active) {
       return (
