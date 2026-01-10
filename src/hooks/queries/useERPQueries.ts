@@ -9,16 +9,17 @@ export function useERPStats() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('erp_projects')
-        .select('id, status, is_active, budget, actual_cost', { count: 'exact' });
+        .select('id, status, budget, actual_cost', { count: 'exact' });
 
       if (error) throw error;
 
       // Calculate stats from projects
-      const total = data?.length || 0;
-      const active = data?.filter(p => p.is_active).length || 0;
-      const completed = data?.filter(p => p.status === 'completed').length || 0;
-      const totalBudget = data?.reduce((sum, p) => sum + (p.budget || 0), 0) || 0;
-      const totalSpent = data?.reduce((sum, p) => sum + (p.actual_cost || 0), 0) || 0;
+      const projectList = data as any[] || [];
+      const total = projectList.length;
+      const active = projectList.filter(p => p.status === 'active' || p.status === 'in_progress').length;
+      const completed = projectList.filter(p => p.status === 'completed').length;
+      const totalBudget = projectList.reduce((sum, p) => sum + (p.budget || 0), 0);
+      const totalSpent = projectList.reduce((sum, p) => sum + (p.actual_cost || 0), 0);
 
       return {
         totalProjects: total,

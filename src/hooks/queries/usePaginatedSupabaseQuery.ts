@@ -53,8 +53,8 @@ export function usePaginatedSupabaseQuery<TData = any>(
 
       try {
         // Build query with pagination
-        let query = supabase
-          .from(tableName)
+        let query = (supabase
+          .from(tableName as any) as any)
           .select(select, { count: 'exact' })
           .range(start, end);
 

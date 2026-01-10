@@ -86,6 +86,7 @@ export const ModernClientPortal: React.FC = () => {
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<{ id: string; invoice_number: string; total_amount: number; title: string } | null>(null);
 
   const loadClientData = useCallback(async () => {
     if (!user) {
@@ -236,7 +237,7 @@ export const ModernClientPortal: React.FC = () => {
       case 'files':
         return renderFilesView();
       case 'settings':
-        return <ClientSettings />;
+        return <ClientSettings isOpen={true} onClose={() => setActiveView('overview')} />;
       default:
         return renderOverview();
     }
@@ -662,14 +663,20 @@ export const ModernClientPortal: React.FC = () => {
       {showServiceModal && (
         <ServiceRequestModal 
           isOpen={showServiceModal} 
-          onClose={() => setShowServiceModal(false)} 
+          onClose={() => setShowServiceModal(false)}
+          onSuccess={() => setShowServiceModal(false)}
         />
       )}
       
-      {showPaymentForm && (
+      {showPaymentForm && selectedInvoice && (
         <VisaPaymentForm 
           isOpen={showPaymentForm} 
-          onClose={() => setShowPaymentForm(false)} 
+          onClose={() => setShowPaymentForm(false)}
+          invoice={selectedInvoice}
+          onPaymentComplete={() => {
+            setShowPaymentForm(false);
+            loadClientData();
+          }}
         />
       )}
       <Footer />

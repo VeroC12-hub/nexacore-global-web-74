@@ -4279,6 +4279,7 @@ export type Database = {
       current_user_role: { Args: never; Returns: string }
       exec_sql: { Args: { query: string }; Returns: Json }
       generate_proposal_number: { Args: never; Returns: string }
+      get_current_user_role: { Args: never; Returns: string }
       get_portfolio_projects_by_service: {
         Args: {
           include_unpublished?: boolean

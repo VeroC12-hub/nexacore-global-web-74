@@ -269,7 +269,7 @@ export default function PortfolioExport({
                   <Checkbox 
                     id="includeImages" 
                     checked={includeImages}
-                    onCheckedChange={setIncludeImages}
+                    onCheckedChange={(checked) => setIncludeImages(checked === true)}
                   />
                   <Label htmlFor="includeImages" className="flex items-center">
                     <Image className="h-4 w-4 mr-2" />
@@ -281,7 +281,7 @@ export default function PortfolioExport({
                   <Checkbox 
                     id="includeMetrics" 
                     checked={includeMetrics}
-                    onCheckedChange={setIncludeMetrics}
+                    onCheckedChange={(checked) => setIncludeMetrics(checked === true)}
                   />
                   <Label htmlFor="includeMetrics" className="flex items-center">
                     <Presentation className="h-4 w-4 mr-2" />
@@ -293,7 +293,7 @@ export default function PortfolioExport({
                   <Checkbox 
                     id="includeFiles" 
                     checked={includeFiles}
-                    onCheckedChange={setIncludeFiles}
+                    onCheckedChange={(checked) => setIncludeFiles(checked === true)}
                   />
                   <Label htmlFor="includeFiles" className="flex items-center">
                     <FileDown className="h-4 w-4 mr-2" />
@@ -305,7 +305,7 @@ export default function PortfolioExport({
                   <Checkbox 
                     id="includeTeamInfo" 
                     checked={includeTeamInfo}
-                    onCheckedChange={setIncludeTeamInfo}
+                    onCheckedChange={(checked) => setIncludeTeamInfo(checked === true)}
                   />
                   <Label htmlFor="includeTeamInfo" className="flex items-center">
                     <User className="h-4 w-4 mr-2" />

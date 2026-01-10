@@ -18,7 +18,8 @@ interface ERPProject {
 interface ERPTask {
   id: string;
   title: string;
-  project_id: string;
+  project_id?: string;
+  erp_project_id?: string;
 }
 
 interface Profile {

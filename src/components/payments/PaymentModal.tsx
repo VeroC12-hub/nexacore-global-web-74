@@ -177,11 +177,12 @@ export function PaymentModal({ isOpen, onClose, invoice, onPaymentSuccess }: Pay
             const config = method.configuration || {};
             
             // Determine fees and processing time from configuration or defaults
+            const configObj = typeof config === 'object' && config !== null && !Array.isArray(config) ? config as Record<string, any> : {};
             const getMethodDetails = (type: string) => {
               const defaults = defaultPaymentMethods.find(dm => dm.id === type);
               return {
-                processingTime: config.processing_time || defaults?.processingTime || 'Instant',
-                fees: config.fees || defaults?.fees || 'Contact for rates'
+                processingTime: configObj.processing_time || defaults?.processingTime || 'Instant',
+                fees: configObj.fees || defaults?.fees || 'Contact for rates'
               };
             };
 
@@ -191,7 +192,7 @@ export function PaymentModal({ isOpen, onClose, invoice, onPaymentSuccess }: Pay
               id: method.type as PaymentMethod,
               name: method.name,
               icon: getPaymentIcon(method.type),
-              description: config.description || defaultPaymentMethods.find(dm => dm.id === method.type)?.description || method.type,
+              description: configObj.description || defaultPaymentMethods.find(dm => dm.id === method.type)?.description || method.type,
               processingTime: details.processingTime,
               fees: details.fees,
               popular: index === 0, // Mark first configured method as popular
