@@ -53,27 +53,17 @@ export function StaffDashboard({ className }: StaffDashboardProps) {
     try {
       setLoading(true);
       
-      // Load projects
+      // Load projects using erp_projects table
       const { data: projectsData } = await supabase
-        .from('projects')
-        .select(`
-          *,
-          client:profiles(full_name, email)
-        `)
-        .eq('tenant_id', user?.tenant_id)
+        .from('erp_projects')
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
-      // Load tasks assigned to current user or all tasks if manager/admin
+      // Load tasks from erp_tasks table
       let tasksQuery = supabase
-        .from('tasks')
-        .select(`
-          *,
-          assignee:assigned_to(email, profile:profiles(full_name, avatar_url)),
-          creator:created_by(email, profile:profiles(full_name)),
-          project:projects(id, title, status)
-        `)
-        .eq('tenant_id', user?.tenant_id);
+        .from('erp_tasks')
+        .select('*');
 
       if (!hasPermission('view_all_projects')) {
         tasksQuery = tasksQuery.eq('assigned_to', user?.id);
@@ -83,16 +73,10 @@ export function StaffDashboard({ className }: StaffDashboardProps) {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      // Load time entries
+      // Load time entries from erp_time_entries table
       let timeQuery = supabase
-        .from('time_entries')
-        .select(`
-          *,
-          user:auth.users(email, profile:profiles(full_name)),
-          project:projects(id, title),
-          task:tasks(id, title)
-        `)
-        .eq('tenant_id', user?.tenant_id);
+        .from('erp_time_entries')
+        .select('*');
 
       if (!hasPermission('view_all_time_entries')) {
         timeQuery = timeQuery.eq('user_id', user?.id);
@@ -102,12 +86,12 @@ export function StaffDashboard({ className }: StaffDashboardProps) {
         .gte('date', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0])
         .order('date', { ascending: false });
 
-      setProjects(projectsData || []);
-      setTasks(tasksData || []);
-      setTimeEntries(timeData || []);
+      setProjects(projectsData as any || []);
+      setTasks(tasksData as any || []);
+      setTimeEntries(timeData as any || []);
 
       // Calculate analytics
-      calculateAnalytics(projectsData || [], tasksData || [], timeData || []);
+      calculateAnalytics(projectsData as any || [], tasksData as any || [], timeData as any || []);
       
     } catch (error) {
       console.error('Error loading dashboard data:', error);

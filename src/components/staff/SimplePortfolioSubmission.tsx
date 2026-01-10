@@ -212,8 +212,10 @@ export default function SimplePortfolioSubmission({
         const filePromises = formData.files.map(async (file, index) => {
           // In real implementation, upload files to storage and get URLs
           const fileData = {
-            project_id: project.id,
+            portfolio_project_id: project.id,
             filename: file.name,
+            original_filename: file.name,
+            file_path: `portfolio/${project.id}/${file.name}`,
             file_type: file.type.split('/')[0] || 'document',
             file_size_bytes: file.size,
             file_url: `pending-upload-${Date.now()}-${index}`, // Temporary

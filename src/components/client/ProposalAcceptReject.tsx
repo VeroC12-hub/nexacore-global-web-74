@@ -45,7 +45,7 @@ export const ProposalAcceptReject: React.FC<ProposalAcceptRejectProps> = ({
     try {
       await acceptMutation.mutateAsync({
         proposalId: proposal.id,
-        clientResponse: message || 'Proposal accepted',
+        message: message || 'Proposal accepted',
       });
       toast.success('Proposal accepted! A project will be created for you.');
       onSuccess?.();
@@ -65,7 +65,7 @@ export const ProposalAcceptReject: React.FC<ProposalAcceptRejectProps> = ({
     try {
       await rejectMutation.mutateAsync({
         proposalId: proposal.id,
-        clientResponse: message,
+        reason: message,
       });
       toast.success('Proposal rejected. We\'ll be in touch soon.');
       onSuccess?.();
@@ -85,7 +85,7 @@ export const ProposalAcceptReject: React.FC<ProposalAcceptRejectProps> = ({
     try {
       await reviseMutation.mutateAsync({
         proposalId: proposal.id,
-        clientResponse: message,
+        changes: message,
       });
       toast.success('Revision requested. We\'ll update the proposal and get back to you.');
       onSuccess?.();

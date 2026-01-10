@@ -76,10 +76,21 @@ export function ERPTimeTabWithData(props: ERPTimeTabWithDataProps) {
   return (
     <div>
       <ERPTimeTab
-        {...props}
+        dateFilter={props.dateFilter}
+        setDateFilter={props.setDateFilter}
+        userFilter={props.userFilter}
+        setUserFilter={props.setUserFilter}
+        onCreateTimeEntry={props.onCreateTimeEntry}
+        onEditTimeEntry={props.onEditTimeEntry}
+        onStartTimer={props.onStartTimer}
+        onStopTimer={props.onStopTimer}
+        onDeleteTimeEntry={props.onDeleteTimeEntry}
         timeEntries={timeEntries}
         loading={false}
-        fetchTimeEntries={refetch}
+        onRefresh={refetch}
+        searchTerm=""
+        setSearchTerm={() => {}}
+        projects={[]}
       />
       
       {totalCount > 0 && (

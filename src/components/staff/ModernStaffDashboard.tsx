@@ -42,7 +42,7 @@ import {
   FileText,
   Workflow,
   DollarSign,
-  Portfolio,
+  Briefcase,
   Camera,
   ArrowRight,
   CheckSquare,
@@ -70,7 +70,7 @@ import Footer from '@/components/Footer';
 import { Task, TimeEntry, ProjectAnalytics, TaskAnalytics, ActivityItem } from '@/types/erp';
 
 export const ModernStaffDashboard: React.FC = () => {
-  const { user, role, isAdmin, isProjectManager, isOperationsManager, isDeveloper, isSupport, hasPermission, loading: authLoading } = useEnhancedAuth();
+  const { user, isAdmin, isProjectManager, isOperationsManager, isDeveloper, isSupport, hasPermission, loading: authLoading } = useEnhancedAuth();
   const navigate = useNavigate();
   
   // State
@@ -181,12 +181,12 @@ export const ModernStaffDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      const formattedProjects = data?.map(project => ({
+      const formattedProjects = data?.map((project: any) => ({
         id: project.id,
         title: project.title,
         service: getServiceLabel(project.service_id),
         service_id: project.service_id, // Keep original for editing
-        status: project.submission_status,
+        status: project.submission_status || 'draft',
         date: new Date(project.created_at).toLocaleDateString(),
         client: project.client_name,
         description: project.description || project.short_description,
@@ -360,7 +360,7 @@ export const ModernStaffDashboard: React.FC = () => {
         .limit(50);
 
       if (!tasksError && tasksData) {
-        setTasks(tasksData);
+        setTasks(tasksData as any);
         console.log('ERP Tasks loaded:', tasksData.length);
       } else if (tasksError?.code === 'PGRST116' || tasksError?.message?.includes('relation "erp_tasks" does not exist')) {
         console.log('ERP tasks table does not exist yet. Please run the ERP setup SQL.');
@@ -378,7 +378,7 @@ export const ModernStaffDashboard: React.FC = () => {
         .limit(50);
 
       if (!timeError && timeData) {
-        setTimeEntries(timeData);
+        setTimeEntries(timeData as any);
         console.log('ERP Time entries loaded:', timeData.length);
       } else if (timeError?.code === 'PGRST116' || timeError?.message?.includes('relation "erp_time_entries" does not exist')) {
         console.log('ERP time entries table does not exist yet. Please run the ERP setup SQL.');
@@ -423,7 +423,7 @@ export const ModernStaffDashboard: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-gray-900">NexaCore ERP Dashboard</h1>
-            <p className="text-sm md:text-base text-gray-600">Welcome, {user?.email?.split('@')[0]} ({role?.replace('_', ' ')})</p>
+            <p className="text-sm md:text-base text-gray-600">Welcome, {user?.email?.split('@')[0]} ({user?.role?.replace('_', ' ')})</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
             <Button variant="outline" size="sm" onClick={loadDashboardData} disabled={dataLoading}>

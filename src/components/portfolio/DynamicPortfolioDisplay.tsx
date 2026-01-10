@@ -160,19 +160,11 @@ export default function DynamicPortfolioDisplay({
       // Query ERP projects - automatically finds projects from relevant departments
       const { data: erpProjects, error: projectError } = await supabase
         .from('erp_projects')
-        .select(`
-          *,
-          erp_clients (name, client_code),
-          erp_project_team_members (
-            role,
-            erp_employees (first_name, last_name, job_title)
-          )
-        `)
+        .select('*')
         .in('department', serviceConfig.departments)
         .eq('status', 'completed')
         .eq('project_type', 'client')
-        .eq('is_active', true)
-        .order('actual_end_date', { ascending: false })
+        .order('end_date', { ascending: false, nullsFirst: false })
         .limit(maxProjects);
 
       if (projectError) throw new Error(`ERP Query Error: ${projectError.message}`);
@@ -184,21 +176,18 @@ export default function DynamicPortfolioDisplay({
       }
 
       // Transform ERP data to portfolio format
-      const portfolioProjects: PortfolioProject[] = erpProjects.map(project => ({
+      const portfolioProjects: PortfolioProject[] = (erpProjects as any[]).map(project => ({
         id: project.id,
         project_code: project.project_code,
         title: project.title,
         description: project.description || 'Completed project with excellent results',
         department: project.department,
         service_category: serviceId,
-        client_name: project.erp_clients?.name || 'Confidential Client',
-        completion_date: project.actual_end_date,
+        client_name: 'Confidential Client',
+        completion_date: project.end_date,
         budget: project.budget,
-        team_members: project.erp_project_team_members?.map((member: any) => ({
-          name: `${member.erp_employees?.first_name} ${member.erp_employees?.last_name}`,
-          role: member.role
-        })) || [],
-        tags: project.tags || [],
+        team_members: [],
+        tags: [],
         files: generateProjectFiles(project, serviceConfig),
         thumbnail_url: `/images/portfolio/${serviceId}/${project.project_code}-thumb.jpg`,
         metrics: extractMetrics(project)
