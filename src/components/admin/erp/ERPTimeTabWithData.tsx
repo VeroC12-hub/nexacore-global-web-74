@@ -12,15 +12,11 @@ interface ERPTimeTabWithDataProps {
   setDateFilter: (date: string) => void;
   userFilter: string;
   setUserFilter: (user: string) => void;
-  searchTerm: string;
-  setSearchTerm: (term: string) => void;
   onCreateTimeEntry: () => void;
   onEditTimeEntry: (entry: any) => void;
   onStartTimer: (projectId: string, taskId?: string) => void;
   onStopTimer: (entryId: string) => void;
   onDeleteTimeEntry: (entry: any) => void;
-  onRefresh?: () => void;
-  projects?: Array<{ id: string; title: string }>;
 }
 
 export function ERPTimeTabWithData(props: ERPTimeTabWithDataProps) {
@@ -83,8 +79,7 @@ export function ERPTimeTabWithData(props: ERPTimeTabWithDataProps) {
         {...props}
         timeEntries={timeEntries}
         loading={false}
-        onRefresh={props.onRefresh || (() => refetch())}
-        projects={props.projects || []}
+        fetchTimeEntries={refetch}
       />
       
       {totalCount > 0 && (

@@ -57,15 +57,15 @@ interface TimeEntry {
   hours: number;
   rate: number;
   billable: boolean;
-  status: 'active' | 'completed' | 'pending';
+  status: 'active' | 'completed';
   created_at: string;
 }
 
 interface ERPTimeTabProps {
   timeEntries: TimeEntry[];
   loading: boolean;
-  searchTerm?: string;
-  setSearchTerm?: (term: string) => void;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
   dateFilter: string;
   setDateFilter: (date: string) => void;
   userFilter: string;
@@ -75,8 +75,8 @@ interface ERPTimeTabProps {
   onStartTimer: (projectId: string, taskId?: string) => void;
   onStopTimer: (entryId: string, hours?: number) => void;
   onDeleteTimeEntry: (entry: TimeEntry) => void;
-  onRefresh?: () => void;
-  projects?: Array<{ id: string; title: string }>;
+  onRefresh: () => void;
+  projects: Array<{ id: string; title: string }>;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];

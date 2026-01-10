@@ -304,15 +304,7 @@ export function AdminSettingsTab() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      // Map the data to match ERPStaffRole interface
-      const mappedData = (data || []).map((role: any) => ({
-        ...role,
-        can_approve_timesheets: role.can_approve_timesheets ?? false,
-        can_create_projects: role.can_create_projects ?? false,
-        can_manage_users: role.can_manage_users ?? false,
-        can_view_all_projects: role.can_view_all_projects ?? false
-      }));
-      setStaffRoles(mappedData);
+      setStaffRoles(data || []);
     } catch (error) {
       console.error('Error loading staff roles:', error);
     }

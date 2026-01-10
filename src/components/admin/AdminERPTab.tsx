@@ -36,8 +36,6 @@ interface ERPTask {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignee: string;
   project_id: string;
-  erp_project_id?: string;
-  assigned_to?: string;
   project_title?: string;
   due_date: string;
   estimated_hours: number;
@@ -160,18 +158,7 @@ export function AdminERPTab() {
   // Transform staff roles data
   const staffRoles: StaffRole[] = useMemo(() => {
     if (!staffRolesData) return [];
-    // Transform the data to match StaffRole interface
-    return (staffRolesData as any[]).map(role => ({
-      id: role.id,
-      user_id: role.user_id || role.id,
-      role: role.role,
-      is_active: role.is_active ?? true,
-      profiles: {
-        id: role.id,
-        email: role.email || '',
-        full_name: role.full_name || ''
-      }
-    }));
+    return staffRolesData as StaffRole[];
   }, [staffRolesData]);
 
   // Transform projects data for team tab
@@ -180,12 +167,12 @@ export function AdminERPTab() {
     return projectsForTeamData.data;
   }, [projectsForTeamData]);
 
-  // Chart data state - with setters for loadChartData function
-  const [departmentData, setDepartmentData] = useState<ChartDataPoint[]>([]);
-  const [statusData, setStatusData] = useState<ChartDataPoint[]>([]);
-  const [performanceData, setPerformanceData] = useState<any[]>([]);
-  const [budgetData, setBudgetData] = useState<ChartDataPoint[]>([]);
-  const [timelineData, setTimelineData] = useState<any[]>([]);
+  // Chart data - simplified for now (can be enhanced in Phase 2)
+  const departmentData: ChartDataPoint[] = useMemo(() => [], []);
+  const statusData: ChartDataPoint[] = useMemo(() => [], []);
+  const performanceData: ChartDataPoint[] = useMemo(() => [], []);
+  const budgetData: ChartDataPoint[] = useMemo(() => [], []);
+  const timelineData: ChartDataPoint[] = useMemo(() => [], []);
 
   // Modal states
   const [selectedProject, setSelectedProject] = useState<ERPProject | null>(null);
@@ -289,22 +276,21 @@ export function AdminERPTab() {
       // Load department data from projects
       const { data: projectsData, error: projectsError } = await supabase
         .from('erp_projects')
-        .select('department, status');
+        .select('department, status, is_active');
 
       if (projectsError) {
         console.error('Error loading department data:', projectsError);
       } else {
-        const deptStats = (projectsData || []).reduce((acc: Record<string, ChartDataPoint>, project: any) => {
+        const deptStats = (projectsData || []).reduce((acc: Record<string, ChartDataPoint>, project) => {
           const dept = project.department || 'Other';
           if (!acc[dept]) {
-            acc[dept] = { name: dept, value: 0, completed: 0, pending: 0, total: 0 };
+            acc[dept] = { name: dept, completed: 0, pending: 0, total: 0 };
           }
-          (acc[dept] as any).total = ((acc[dept] as any).total || 0) + 1;
-          acc[dept].value = (acc[dept].value || 0) + 1;
+          acc[dept].total += 1;
           if (project.status === 'completed') {
-            (acc[dept] as any).completed = ((acc[dept] as any).completed || 0) + 1;
-          } else if (project.status === 'in_progress' || project.status === 'active') {
-            (acc[dept] as any).pending = ((acc[dept] as any).pending || 0) + 1;
+            acc[dept].completed += 1;
+          } else if (project.is_active) {
+            acc[dept].pending += 1;
           }
           return acc;
         }, {});
@@ -401,7 +387,7 @@ export function AdminERPTab() {
       const { data: budgetDistData, error: budgetDistError } = await supabase
         .from('erp_projects')
         .select('department, budget')
-        .neq('status', 'cancelled');
+        .eq('is_active', true);
 
       if (budgetDistError) {
         console.error('Error loading budget distribution:', budgetDistError);
@@ -419,10 +405,10 @@ export function AdminERPTab() {
       console.error('Error loading chart data:', error);
       // Fallback to mock data if database queries fail
       setDepartmentData([
-        { name: 'Development', value: 20, completed: 12, pending: 8, total: 20 },
-        { name: 'Design', value: 12, completed: 8, pending: 4, total: 12 },
-        { name: 'Marketing', value: 9, completed: 6, pending: 3, total: 9 },
-        { name: 'Sales', value: 6, completed: 4, pending: 2, total: 6 }
+        { name: 'Development', completed: 12, pending: 8, total: 20 },
+        { name: 'Design', completed: 8, pending: 4, total: 12 },
+        { name: 'Marketing', completed: 6, pending: 3, total: 9 },
+        { name: 'Sales', completed: 4, pending: 2, total: 6 }
       ]);
 
       setStatusData([
@@ -1100,8 +1086,6 @@ export function AdminERPTab() {
             setDateFilter={setDateFilter}
             userFilter={userFilter}
             setUserFilter={setUserFilter}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
             onCreateTimeEntry={handleCreateTimeEntry}
             onEditTimeEntry={handleEditTimeEntry}
             onStartTimer={handleStartTimer}

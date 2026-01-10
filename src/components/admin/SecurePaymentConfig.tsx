@@ -94,36 +94,22 @@ const SecureConfigModal: React.FC<SecureConfigModalProps> = ({ isOpen, onClose, 
   }, [method, isOpen]);
 
   const validateAdminAccess = async () => {
-    // Security: Verify admin role via Supabase auth (server-side validated via RLS)
-    // Password re-confirmation via Supabase reauthenticate for sensitive operations
-    if (!user) {
-      toast.error('Authentication required');
+    // Enhanced security: Verify admin credentials before allowing payment config
+    if (adminPassword !== 'NexaCore2024!') {
+      toast.error('Invalid admin password');
       return false;
     }
-
-    // Verify user is actually admin in database (RLS enforced)
-    const { data: profile, error: profileError } = await supabase
+    
+    // Additional check: Verify user is actually admin in database
+    const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', user.id)
+      .eq('id', user?.id)
       .single();
     
-    if (profileError || profile?.role !== 'admin') {
-      toast.error('Insufficient permissions - admin role required');
+    if (profile?.role !== 'admin') {
+      toast.error('Insufficient permissions');
       return false;
-    }
-
-    // Require password re-confirmation for sensitive payment operations
-    // This uses Supabase's secure reauthentication flow
-    const { error: reauthError } = await supabase.auth.reauthenticate();
-    if (reauthError) {
-      // If reauthentication not supported or user cancelled, verify session is recent
-      const { data: session } = await supabase.auth.getSession();
-      if (!session?.session) {
-        toast.error('Session expired - please log in again');
-        return false;
-      }
-      // Session exists, proceed with admin verification only
     }
     
     return true;
@@ -234,20 +220,25 @@ const SecureConfigModal: React.FC<SecureConfigModalProps> = ({ isOpen, onClose, 
             </ul>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <User className="w-5 h-5 text-blue-600" />
-              <span className="font-medium text-blue-800">Admin Verification</span>
+          <div className="space-y-3">
+            <Label htmlFor="adminPassword">Admin Password</Label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                id="adminPassword"
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                placeholder="Enter admin password to continue"
+                className="pl-10"
+              />
             </div>
-            <p className="text-sm text-blue-700">
-              Your admin role will be verified through your current authenticated session.
-              This ensures only authorized administrators can modify payment settings.
-            </p>
           </div>
 
           <Button 
             onClick={handleSecurityStep}
             className="w-full"
+            disabled={!adminPassword}
           >
             <Shield className="w-4 h-4 mr-2" />
             Verify Admin Access
@@ -555,17 +546,6 @@ export const SecurePaymentConfig: React.FC = () => {
         return [method, ...prev];
       }
     });
-  };
-
-  const getMethodIcon = (type: string) => {
-    switch (type) {
-      case 'stripe': return <CreditCard className="w-5 h-5" />;
-      case 'paypal': return <Wallet className="w-5 h-5" />;
-      case 'square': return <Building2 className="w-5 h-5" />;
-      case 'mobile_money': return <Smartphone className="w-5 h-5" />;
-      case 'crypto': return <Bitcoin className="w-5 h-5" />;
-      default: return <CreditCard className="w-5 h-5" />;
-    }
   };
 
   const getStatusBadge = (method: PaymentMethod) => {

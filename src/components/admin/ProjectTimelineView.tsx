@@ -418,7 +418,7 @@ const ProjectTimelineView: React.FC = () => {
                       <div className="w-80 p-4 border-r pl-8">
                         <div className="flex items-center gap-2">
                           <div className="text-sm">{task.title}</div>
-                          <Badge variant="outline" className={getPriorityColor(task.priority)}>
+                          <Badge variant="outline" size="sm" className={getPriorityColor(task.priority)}>
                             {task.priority}
                           </Badge>
                         </div>

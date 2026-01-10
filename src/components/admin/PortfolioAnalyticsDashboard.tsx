@@ -79,7 +79,7 @@ export default function PortfolioAnalyticsDashboard({ className = "" }: Portfoli
       const total = projects.length;
       const published = projects.filter(p => p.is_published).length;
       const featured = projects.filter(p => p.is_featured).length;
-      const pending = projects.filter(p => !p.is_published && !p.approved_at).length;
+      const pending = projects.filter(p => p.submission_status === 'pending_review').length;
 
       // Service breakdown
       const serviceBreakdown = projects.reduce((acc: any[], project) => {

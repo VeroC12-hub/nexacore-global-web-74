@@ -480,7 +480,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
 
         autoTable(doc, {
           startY: yPos,
-          body: detailsData as any,
+          body: detailsData,
           theme: 'grid',
           margin: { top: 20, right: 14, bottom: 20, left: 14 },
           styles: {
