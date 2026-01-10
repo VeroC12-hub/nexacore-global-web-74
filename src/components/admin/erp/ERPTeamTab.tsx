@@ -48,7 +48,7 @@ interface ERPTeamTabProps {
   selectedProjectForTeam: ERPProject | null;
   setSelectedProjectForTeam: (project: ERPProject | null) => void;
   selectedTeamMembers: string[];
-  setSelectedTeamMembers: (members: string[]) => void;
+  setSelectedTeamMembers: React.Dispatch<React.SetStateAction<string[]>>;
   selectedProjectRole: string;
   setSelectedProjectRole: (role: string) => void;
   existingTeamMembers: any[];
