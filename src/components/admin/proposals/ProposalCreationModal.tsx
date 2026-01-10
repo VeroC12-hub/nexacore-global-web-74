@@ -191,14 +191,16 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, company, phone')
+        .select('id, full_name, email, phone, location')
         .eq('role', 'member')
         .order('full_name');
 
       if (error) throw error;
+      console.log('Fetched clients:', data);
       setClients(data || []);
     } catch (error) {
       console.error('Error fetching clients:', error);
+      toast.error('Failed to load clients');
     }
   };
 
@@ -392,7 +394,7 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="client_id">Client (Optional)</Label>
+          <Label htmlFor="client_id">Select Client *</Label>
           <Select
             value={formData.client_id || ''}
             onValueChange={(value) => {
@@ -401,25 +403,34 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
                 setFormData({
                   ...formData,
                   client_id: value,
-                  client_email: client.email,
-                  client_name: client.full_name || client.email,
-                  client_company: client.company || '',
+                  client_email: client.email || '',
+                  client_name: client.full_name || client.email || '',
+                  client_company: client.location || '',
                   client_phone: client.phone || '',
                 });
               }
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select existing client" />
+              <SelectValue placeholder={clients.length > 0 ? "Select a client" : "No clients available"} />
             </SelectTrigger>
             <SelectContent>
-              {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id}>
-                  {client.full_name || client.email}
-                </SelectItem>
-              ))}
+              {clients.length === 0 ? (
+                <SelectItem value="none" disabled>No clients found</SelectItem>
+              ) : (
+                clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.full_name || client.email} - {client.email}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
+          {clients.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              No clients with 'member' role found. Clients are users registered with the 'member' role.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
