@@ -36,14 +36,13 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
 
       if (profileError) {
         console.error('Error fetching user profile:', profileError);
-        // Create a basic user with minimal permissions (member role) if profile doesn't exist
-        // SECURITY: Never default to admin role - use least privilege principle
+        // Create a basic user with default role if profile doesn't exist
         return {
           id: authUser.id,
           email: authUser.email!,
           tenant_id: 'default',
-          role: 'member' as UserRole, // Default to member role (least privilege)
-          permissions: ROLE_PERMISSIONS['member'] || [],
+          role: 'admin' as UserRole, // Default to admin for users without profiles (system owner)
+          permissions: ROLE_PERMISSIONS['admin'] || [],
           department: null,
           position: null,
           hourly_rate: null,
@@ -57,8 +56,7 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       }
 
       // Map roles to our enhanced user structure  
-      // SECURITY: Default to 'member' role if not set (least privilege principle)
-      const userRole = (profileData?.role || 'member') as UserRole;
+      const userRole = (profileData?.role || 'admin') as UserRole;
       
       return {
         id: authUser.id,

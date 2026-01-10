@@ -191,7 +191,7 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, email, phone, location')
+        .select('id, full_name, email, company, phone')
         .eq('role', 'member')
         .order('full_name');
 
@@ -401,9 +401,9 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
                 setFormData({
                   ...formData,
                   client_id: value,
-                  client_email: client.email || '',
-                  client_name: client.full_name || client.email || '',
-                  client_company: client.location || '', // Use location as company placeholder
+                  client_email: client.email,
+                  client_name: client.full_name || client.email,
+                  client_company: client.company || '',
                   client_phone: client.phone || '',
                 });
               }
@@ -413,17 +413,11 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
               <SelectValue placeholder="Select existing client" />
             </SelectTrigger>
             <SelectContent>
-              {clients.length === 0 ? (
-                <div className="p-2 text-sm text-muted-foreground text-center">
-                  No clients found
-                </div>
-              ) : (
-                clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.full_name || client.email} {client.email && client.full_name ? `(${client.email})` : ''}
-                  </SelectItem>
-                ))
-              )}
+              {clients.map((client) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.full_name || client.email}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
