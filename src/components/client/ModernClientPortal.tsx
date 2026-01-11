@@ -114,7 +114,7 @@ export const ModernClientPortal: React.FC = () => {
       if (invoicesError) throw invoicesError;
 
       // Load messages
-      const { data: messagesData, error: messagesError } = await supabase
+      const { data: messagesData, error: messagesError } = await (supabase as any)
         .from('project_messages')
         .select('*')
         .eq('client_id', user.id);

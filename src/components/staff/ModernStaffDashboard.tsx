@@ -173,7 +173,7 @@ export const ModernStaffDashboard: React.FC = () => {
 
   const loadPortfolioData = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('portfolio_projects')
         .select('*, portfolio_files(*)')
         .eq('submitted_by', user?.id)

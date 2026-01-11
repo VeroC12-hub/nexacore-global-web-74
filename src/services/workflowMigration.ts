@@ -5,19 +5,13 @@ export const runWorkflowMigration = async () => {
   console.log('Running workflow automation migration...');
   
   try {
-    // Check if workflow_templates table already exists
-    const { data: existingTables, error: checkError } = await supabase
-      .from('information_schema.tables')
-      .select('table_name')
-      .eq('table_schema', 'public')
-      .eq('table_name', 'workflow_templates');
+    // Check if workflow_templates table already exists by querying it
+    const { error: checkError } = await supabase
+      .from('workflow_templates')
+      .select('id')
+      .limit(1);
 
-    if (checkError && !checkError.message.includes('does not exist')) {
-      console.error('Error checking existing tables:', checkError);
-      throw checkError;
-    }
-
-    if (existingTables && existingTables.length > 0) {
+    if (!checkError) {
       console.log('Workflow tables already exist, skipping migration');
       return { success: true, message: 'Tables already exist' };
     }

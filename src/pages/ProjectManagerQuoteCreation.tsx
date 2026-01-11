@@ -205,12 +205,17 @@ const ProjectManagerQuoteCreation: React.FC = () => {
         });
         
         // Pre-populate with existing quote data
+        // Safely convert deliverables to string array
+        const deliverablesList = Array.isArray(existingQuote.deliverables) 
+          ? existingQuote.deliverables.map((d: any) => String(d || ''))
+          : [''];
+        
         setQuoteData({
           scope: existingQuote.scope || '',
           price: existingQuote.price || 0,
           currency: existingQuote.currency || 'USD',
           timeline: existingQuote.timeline || '',
-          deliverables: Array.isArray(existingQuote.deliverables) ? existingQuote.deliverables : [''],
+          deliverables: deliverablesList,
           terms: existingQuote.terms || quoteData.terms,
           expires_in_days: expirationDays
         });
