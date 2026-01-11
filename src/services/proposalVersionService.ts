@@ -6,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 import type {
   ProposalVersion,
   Proposal,
-  ProposalVersionCreateData,
   ProposalVersionComparison,
   ProposalVersionDiff
 } from '@/types/proposal';
@@ -30,7 +29,7 @@ export async function getProposalVersions(proposalId: string): Promise<ProposalV
     throw error;
   }
 
-  return data || [];
+  return (data || []) as unknown as ProposalVersion[];
 }
 
 /**
@@ -48,7 +47,7 @@ export async function getProposalVersion(versionId: string): Promise<ProposalVer
     throw error;
   }
 
-  return data;
+  return data as unknown as ProposalVersion;
 }
 
 /**
@@ -56,7 +55,7 @@ export async function getProposalVersion(versionId: string): Promise<ProposalVer
  */
 export async function getProposalVersionByNumber(
   proposalId: string,
-  versionNumber: number
+  versionNumber: string
 ): Promise<ProposalVersion | null> {
   const { data, error } = await supabase
     .from('proposal_versions')
@@ -70,7 +69,7 @@ export async function getProposalVersionByNumber(
     throw error;
   }
 
-  return data;
+  return data as unknown as ProposalVersion;
 }
 
 // =====================================================
@@ -105,9 +104,9 @@ export async function createProposalVersion(
     .insert({
       proposal_id: proposalId,
       version_number: proposal.version_number,
-      content_snapshot: proposal,
+      content_snapshot: proposal as any,
       changes_summary: changesSummary,
-      changed_fields: changedFields,
+      changed_fields: changedFields as any,
       created_by: user?.id || null,
     })
     .select()
@@ -118,7 +117,7 @@ export async function createProposalVersion(
     throw error;
   }
 
-  return data;
+  return data as unknown as ProposalVersion;
 }
 
 // =====================================================
@@ -255,15 +254,19 @@ export async function rollbackToVersion(
     ['rollback']
   );
 
+  // Parse version number and increment
+  const currentVersionNum = parseFloat(versionData.version_number) || 1;
+  const newVersionNumber = (currentVersionNum + 0.1).toFixed(1);
+
   // Update proposal with version data, incrementing version number
   const { data, error } = await supabase
     .from('proposals')
     .update({
       ...versionData,
       id: proposalId, // Keep same ID
-      version_number: versionData.version_number + 0.1, // Increment version
+      version_number: newVersionNumber,
       updated_at: new Date().toISOString(),
-    })
+    } as any)
     .eq('id', proposalId)
     .select()
     .single();
@@ -285,7 +288,7 @@ export async function rollbackToVersion(
     },
   });
 
-  return data;
+  return data as unknown as Proposal;
 }
 
 // =====================================================

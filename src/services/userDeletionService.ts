@@ -97,11 +97,13 @@ This CANNOT be undone!`;
       });
 
       // Call our backend API endpoint
+      // Get session from auth
+      const { data: sessionData } = await supabase.auth.getSession();
       const response = await fetch(`${this.baseUrl}/api/admin/delete-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentUser.session?.access_token}`
+          'Authorization': `Bearer ${sessionData?.session?.access_token}`
         },
         body: JSON.stringify({
           userId: userId,

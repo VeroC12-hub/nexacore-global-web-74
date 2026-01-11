@@ -44,18 +44,25 @@ export async function createProjectFromQuote(quote: any): Promise<any> {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
 
+    const projectData = {
+      title: quote.service_type || 'New Project',
+      description: quote.scope || '',
+      client_id: quote.client_id || null,
+      status: 'planning',
+      priority: 'normal',
+      budget: quote.price,
+      service_type: quote.service_type || 'General',
+      metadata: {
+        created_from_quote: true,
+        quote_id: quote.id,
+        created_by: userId,
+        timeline: quote.timeline,
+      },
+    };
+
     const { data: project, error } = await supabase
       .from('projects')
-      .insert({
-        title: quote.service_type || 'New Project',
-        description: quote.scope || '',
-        client_id: quote.client_id,
-        status: 'planning',
-        priority: 'normal',
-        budget: quote.price,
-        timeline: quote.timeline,
-        created_by: userId,
-      })
+      .insert(projectData as any)
       .select()
       .single();
 
@@ -64,10 +71,13 @@ export async function createProjectFromQuote(quote: any): Promise<any> {
       throw error;
     }
 
-    // Update quote to mark project as created
+    // Update quote to mark project as created - use fields that exist
     await supabase
       .from('quotes')
-      .update({ project_created: true, project_id: project.id })
+      .update({ 
+        status: 'approved',
+        approved_at: new Date().toISOString()
+      } as any)
       .eq('id', quote.id);
 
     return project;
@@ -82,7 +92,7 @@ export async function createProjectFromQuote(quote: any): Promise<any> {
  */
 export async function checkProjectExists(proposalId: string): Promise<boolean> {
   try {
-    const { data, error} = await supabase
+    const { data, error } = await supabase
       .from('proposals')
       .select('project_created, project_id')
       .eq('id', proposalId)

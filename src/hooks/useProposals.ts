@@ -3,8 +3,9 @@
 // =====================================================
 
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { listProposals, getProposalActivities, getProposalVersions, listProposalTemplates } from '@/services/proposalService';
+import { listProposals, getProposalActivities, getProposalVersions } from '@/services/proposalService';
 import type { ProposalListParams, ProposalListResponse, ProposalActivity, ProposalVersion, ProposalTemplate } from '@/types/proposal';
+import { supabase } from '@/integrations/supabase/client';
 
 export const PROPOSALS_QUERY_KEY = 'proposals';
 export const PROPOSAL_ACTIVITIES_QUERY_KEY = 'proposal-activities';
@@ -78,9 +79,14 @@ export function useProposalTemplates(
   return useQuery<ProposalTemplate[] | null, Error>({
     queryKey: [PROPOSAL_TEMPLATES_QUERY_KEY],
     queryFn: async () => {
-      const { data, error } = await listProposalTemplates();
+      const { data, error } = await supabase
+        .from('proposal_templates')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      
       if (error) throw error;
-      return data;
+      return data as unknown as ProposalTemplate[];
     },
     ...options,
   });

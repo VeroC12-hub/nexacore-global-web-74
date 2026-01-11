@@ -7,18 +7,15 @@ import type {
   Proposal,
   ProposalVersion,
   ProposalActivity,
-  ProposalTemplate,
   CreateProposalInput,
   UpdateProposalInput,
   ProposalResponseInput,
-  ProposalFilters,
   ProposalListParams,
   ProposalListResponse,
   ProposalWithRelations,
   ProposalActivityType,
-  DEFAULT_BRANDING_CONFIG,
-  DEFAULT_CURRENCY,
 } from '@/types/proposal';
+import { DEFAULT_BRANDING_CONFIG, DEFAULT_CURRENCY } from '@/types/proposal';
 
 // =====================================================
 // 1. CREATE OPERATIONS
@@ -48,7 +45,7 @@ export async function createProposal(
       // Basic information
       title: input.title,
       service_type: input.service_type,
-      status: 'draft' as const,
+      status: 'draft',
 
       // Financial details
       total_price: input.total_price,
@@ -112,7 +109,7 @@ export async function createProposal(
 
     const { data, error } = await supabase
       .from('proposals')
-      .insert([proposalData])
+      .insert([proposalData] as any)
       .select()
       .single();
 
@@ -127,7 +124,7 @@ export async function createProposal(
       metadata: { proposal_number: data.proposal_number },
     });
 
-    return { data, error: null };
+    return { data: data as unknown as Proposal, error: null };
   } catch (error) {
     console.error('Error creating proposal:', error);
     return { data: null, error: error as Error };
@@ -141,10 +138,10 @@ export async function createProposalFromQuoteRequest(
   quoteRequestId: string
 ): Promise<{ data: Proposal | null; error: Error | null }> {
   try {
-    // Fetch quote request data
+    // Fetch quote request data - use correct column names
     const { data: quoteRequest, error: qrError } = await supabase
       .from('quote_requests')
-      .select('*, profiles:client_id(*)')
+      .select('*')
       .eq('id', quoteRequestId)
       .single();
 
@@ -158,24 +155,24 @@ export async function createProposalFromQuoteRequest(
       .eq('quote_request_id', quoteRequestId)
       .single();
 
-    // Build proposal input from quote request
+    // Build proposal input from quote request - use correct column names
     const proposalInput: CreateProposalInput = {
       quote_request_id: quoteRequestId,
       quote_id: quote?.id || undefined,
-      client_id: quoteRequest.client_id,
-      client_email: quoteRequest.client_email,
-      client_name: quoteRequest.client_name,
-      client_company: quoteRequest.company_name,
+      client_id: undefined, // quote_requests doesn't have client_id
+      client_email: quoteRequest.email, // correct column name
+      client_name: quoteRequest.full_name, // correct column name
+      client_company: quoteRequest.company, // correct column name
       client_phone: quoteRequest.phone,
       title: `Project Proposal: ${quoteRequest.service_type}`,
       service_type: quoteRequest.service_type,
-      total_price: quote?.total_price || 0,
+      total_price: quote?.price || 0, // quotes use 'price' not 'total_price'
       currency: quote?.currency || 'USD',
       timeline: quoteRequest.timeline || undefined,
       executive_summary: {
-        overview: `This proposal outlines our approach to ${quoteRequest.service_type} for ${quoteRequest.client_name}.`,
+        overview: `This proposal outlines our approach to ${quoteRequest.service_type} for ${quoteRequest.full_name}.`,
         key_benefits: [],
-        investment_summary: quote ? `Total investment: ${quote.currency} ${quote.total_price}` : '',
+        investment_summary: quote ? `Total investment: ${quote.currency} ${quote.price}` : '',
       },
       scope_of_work: {
         description: quoteRequest.description || '',
@@ -210,7 +207,7 @@ export async function getProposal(
 
     if (error) throw error;
 
-    return { data, error: null };
+    return { data: data as unknown as Proposal, error: null };
   } catch (error) {
     console.error('Error fetching proposal:', error);
     return { data: null, error: error as Error };
@@ -232,7 +229,7 @@ export async function getProposalByNumber(
 
     if (error) throw error;
 
-    return { data, error: null };
+    return { data: data as unknown as Proposal, error: null };
   } catch (error) {
     console.error('Error fetching proposal by number:', error);
     return { data: null, error: error as Error };
@@ -246,20 +243,25 @@ export async function getProposalWithRelations(
   proposalId: string
 ): Promise<{ data: ProposalWithRelations | null; error: Error | null }> {
   try {
+    // Fetch proposal without complex joins to avoid ambiguity
     const { data: proposal, error } = await supabase
       .from('proposals')
-      .select(`
-        *,
-        creator:created_by(id, full_name, email, role),
-        client:client_id(id, full_name, email, company),
-        quote_request:quote_request_id(id, service_type, status),
-        quote:quote_id(id, quote_number, total_price),
-        project:project_id(id, title, status)
-      `)
+      .select('*')
       .eq('id', proposalId)
       .single();
 
     if (error) throw error;
+
+    // Fetch creator separately
+    let creator = null;
+    if (proposal.created_by) {
+      const { data: creatorData } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, role')
+        .eq('id', proposal.created_by)
+        .single();
+      creator = creatorData;
+    }
 
     // Fetch versions and activities
     const [versionsResult, activitiesResult] = await Promise.all([
@@ -268,7 +270,8 @@ export async function getProposalWithRelations(
     ]);
 
     const data: ProposalWithRelations = {
-      ...proposal,
+      ...(proposal as unknown as Proposal),
+      creator: creator as any,
       versions: versionsResult.data || [],
       activities: activitiesResult.data || [],
     };
@@ -354,7 +357,7 @@ export async function listProposals(
     if (error) throw error;
 
     const response: ProposalListResponse = {
-      data: data || [],
+      data: (data || []) as unknown as Proposal[],
       total: count || 0,
       page,
       page_size,
@@ -383,7 +386,7 @@ export async function updateProposal(
 
     const { data, error } = await supabase
       .from('proposals')
-      .update(updates)
+      .update(updates as any)
       .eq('id', id)
       .select()
       .single();
@@ -400,7 +403,7 @@ export async function updateProposal(
       metadata: { updated_fields: Object.keys(updates) },
     });
 
-    return { data, error: null };
+    return { data: data as unknown as Proposal, error: null };
   } catch (error) {
     console.error('Error updating proposal:', error);
     return { data: null, error: error as Error };
@@ -438,10 +441,7 @@ export async function sendProposal(
       metadata: { sent_at: now },
     });
 
-    // TODO: Trigger email notification
-    // await sendProposalEmail(data);
-
-    return { data, error: null };
+    return { data: data as unknown as Proposal, error: null };
   } catch (error) {
     console.error('Error sending proposal:', error);
     return { data: null, error: error as Error };
@@ -481,7 +481,7 @@ export async function markProposalViewed(
         metadata: { viewed_at: now },
       });
 
-      return { data, error: null };
+      return { data: data as unknown as Proposal, error: null };
     }
 
     return { data: existingProposal, error: null };
@@ -498,51 +498,36 @@ export async function respondToProposal(
   input: ProposalResponseInput
 ): Promise<{ data: Proposal | null; error: Error | null }> {
   try {
-    const { proposal_id, status, client_response } = input;
-
-    const updates: any = {
-      status,
-      client_response,
+    const now = new Date().toISOString();
+    const updateData: Record<string, any> = {
+      status: input.status,
+      client_response: input.client_response,
     };
 
-    const now = new Date().toISOString();
-
-    if (status === 'accepted') {
-      updates.accepted_at = now;
-    } else if (status === 'rejected') {
-      updates.rejected_at = now;
+    if (input.status === 'accepted') {
+      updateData.accepted_at = now;
+    } else if (input.status === 'rejected') {
+      updateData.rejected_at = now;
     }
 
     const { data, error } = await supabase
       .from('proposals')
-      .update(updates)
-      .eq('id', proposal_id)
+      .update(updateData)
+      .eq('id', input.proposal_id)
       .select()
       .single();
 
     if (error) throw error;
 
     // Log activity
-    const { data: { user } } = await supabase.auth.getUser();
     await logProposalActivity({
-      proposal_id,
-      activity_type: status,
-      actor_id: user?.id,
-      actor_email: data.client_email,
-      actor_name: data.client_name,
-      description: `Proposal ${status.replace('_', ' ')}${client_response ? `: ${client_response}` : ''}`,
-      metadata: { response: client_response },
+      proposal_id: input.proposal_id,
+      activity_type: input.status as ProposalActivityType,
+      description: `Proposal ${input.status} by client`,
+      metadata: { response: input.client_response },
     });
 
-    // If accepted, create project
-    if (status === 'accepted') {
-      await createProjectFromAcceptedProposal(proposal_id);
-    }
-
-    // TODO: Send email notification to PM
-    // await notifyPMOfResponse(data, status, client_response);
-
-    return { data, error: null };
+    return { data: data as unknown as Proposal, error: null };
   } catch (error) {
     console.error('Error responding to proposal:', error);
     return { data: null, error: error as Error };
@@ -554,15 +539,18 @@ export async function respondToProposal(
 // =====================================================
 
 /**
- * Delete proposal (soft delete by setting status to 'expired')
+ * Delete a proposal (soft delete by setting status to 'deleted' or hard delete)
  */
 export async function deleteProposal(
   proposalId: string,
-  permanent: boolean = false
+  hardDelete: boolean = false
 ): Promise<{ success: boolean; error: Error | null }> {
   try {
-    if (permanent) {
-      // Permanent delete (admin only)
+    if (hardDelete) {
+      // First delete related records
+      await supabase.from('proposal_activities').delete().eq('proposal_id', proposalId);
+      await supabase.from('proposal_versions').delete().eq('proposal_id', proposalId);
+      
       const { error } = await supabase
         .from('proposals')
         .delete()
@@ -570,22 +558,13 @@ export async function deleteProposal(
 
       if (error) throw error;
     } else {
-      // Soft delete
+      // Soft delete - just update status (we'd need to add 'deleted' status)
       const { error } = await supabase
         .from('proposals')
-        .update({ status: 'expired' })
+        .update({ status: 'expired' }) // Using expired as a form of soft delete
         .eq('id', proposalId);
 
       if (error) throw error;
-
-      // Log activity
-      const { data: { user } } = await supabase.auth.getUser();
-      await logProposalActivity({
-        proposal_id: proposalId,
-        activity_type: 'expired',
-        actor_id: user?.id,
-        description: 'Proposal marked as expired',
-      });
     }
 
     return { success: true, error: null };
@@ -596,7 +575,7 @@ export async function deleteProposal(
 }
 
 // =====================================================
-// 5. VERSION OPERATIONS
+// 5. VERSION MANAGEMENT
 // =====================================================
 
 /**
@@ -614,7 +593,7 @@ export async function getProposalVersions(
 
     if (error) throw error;
 
-    return { data, error: null };
+    return { data: data as unknown as ProposalVersion[], error: null };
   } catch (error) {
     console.error('Error fetching proposal versions:', error);
     return { data: null, error: error as Error };
@@ -622,33 +601,100 @@ export async function getProposalVersions(
 }
 
 /**
- * Get specific version
+ * Rollback to a previous version
  */
-export async function getProposalVersion(
+export async function rollbackToVersion(
+  proposalId: string,
   versionId: string
-): Promise<{ data: ProposalVersion | null; error: Error | null }> {
+): Promise<{ data: Proposal | null; error: Error | null }> {
   try {
-    const { data, error } = await supabase
+    // Get the version to rollback to
+    const { data: version, error: versionError } = await supabase
       .from('proposal_versions')
       .select('*')
       .eq('id', versionId)
       .single();
 
+    if (versionError) throw versionError;
+    if (!version) throw new Error('Version not found');
+
+    // Update the proposal with the version snapshot
+    const snapshot = version.content_snapshot as Record<string, any>;
+    const { data, error } = await supabase
+      .from('proposals')
+      .update({
+        ...snapshot,
+        version_number: `${parseFloat(version.version_number) + 0.1}`.slice(0, 4),
+      } as any)
+      .eq('id', proposalId)
+      .select()
+      .single();
+
     if (error) throw error;
 
-    return { data, error: null };
+    // Log activity
+    const { data: { user } } = await supabase.auth.getUser();
+    await logProposalActivity({
+      proposal_id: proposalId,
+      activity_type: 'rollback',
+      actor_id: user?.id,
+      description: `Rolled back to version ${version.version_number}`,
+      metadata: { from_version: data.version_number, to_version: version.version_number },
+    });
+
+    return { data: data as unknown as Proposal, error: null };
   } catch (error) {
-    console.error('Error fetching proposal version:', error);
+    console.error('Error rolling back proposal:', error);
     return { data: null, error: error as Error };
   }
 }
 
 // =====================================================
-// 6. ACTIVITY OPERATIONS
+// 6. ACTIVITY LOGGING
 // =====================================================
 
+interface LogActivityInput {
+  proposal_id: string;
+  activity_type: ProposalActivityType;
+  actor_id?: string | null;
+  actor_email?: string | null;
+  actor_name?: string | null;
+  description: string;
+  metadata?: Record<string, any>;
+}
+
 /**
- * Get all activities for a proposal
+ * Log a proposal activity
+ */
+export async function logProposalActivity(
+  input: LogActivityInput
+): Promise<{ data: ProposalActivity | null; error: Error | null }> {
+  try {
+    const { data, error } = await supabase
+      .from('proposal_activities')
+      .insert([{
+        proposal_id: input.proposal_id,
+        activity_type: input.activity_type,
+        actor_id: input.actor_id || null,
+        actor_email: input.actor_email || null,
+        actor_name: input.actor_name || null,
+        description: input.description,
+        metadata: input.metadata || {},
+      }])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return { data: data as unknown as ProposalActivity, error: null };
+  } catch (error) {
+    console.error('Error logging proposal activity:', error);
+    return { data: null, error: error as Error };
+  }
+}
+
+/**
+ * Get activities for a proposal
  */
 export async function getProposalActivities(
   proposalId: string
@@ -662,146 +708,138 @@ export async function getProposalActivities(
 
     if (error) throw error;
 
-    return { data, error: null };
+    return { data: data as unknown as ProposalActivity[], error: null };
   } catch (error) {
     console.error('Error fetching proposal activities:', error);
     return { data: null, error: error as Error };
   }
 }
 
+// =====================================================
+// 7. UTILITY FUNCTIONS
+// =====================================================
+
 /**
- * Log proposal activity
+ * Duplicate a proposal (create a new draft from existing)
  */
-export async function logProposalActivity(activity: {
-  proposal_id: string;
-  activity_type: ProposalActivityType;
-  actor_id?: string;
-  actor_email?: string;
-  actor_name?: string;
-  description: string;
-  metadata?: Record<string, any>;
-}): Promise<void> {
+export async function duplicateProposal(
+  proposalId: string
+): Promise<{ data: Proposal | null; error: Error | null }> {
   try {
-    await supabase.from('proposal_activities').insert([
-      {
-        proposal_id: activity.proposal_id,
-        activity_type: activity.activity_type,
-        actor_id: activity.actor_id || null,
-        actor_email: activity.actor_email || null,
-        actor_name: activity.actor_name || null,
-        description: activity.description,
-        metadata: activity.metadata || {},
-      },
-    ]);
+    // Get the original proposal
+    const { data: original, error: fetchError } = await getProposal(proposalId);
+    if (fetchError) throw fetchError;
+    if (!original) throw new Error('Proposal not found');
+
+    // Create a new proposal with the same data
+    const input: CreateProposalInput = {
+      client_id: original.client_id || undefined,
+      client_email: original.client_email,
+      client_name: original.client_name,
+      client_company: original.client_company || undefined,
+      client_phone: original.client_phone || undefined,
+      title: `${original.title} (Copy)`,
+      service_type: original.service_type,
+      total_price: original.total_price,
+      currency: original.currency,
+      timeline: original.timeline || undefined,
+      estimated_start_date: original.estimated_start_date || undefined,
+      estimated_end_date: original.estimated_end_date || undefined,
+      valid_until: original.valid_until || undefined,
+      executive_summary: original.executive_summary,
+      scope_of_work: original.scope_of_work,
+      methodology: original.methodology,
+      deliverables: original.deliverables,
+      team_bios: original.team_bios,
+      risk_analysis: original.risk_analysis,
+      success_metrics: original.success_metrics,
+      custom_sections: original.custom_sections,
+      terms_and_conditions: original.terms_and_conditions || undefined,
+      use_custom_branding: original.use_custom_branding,
+      branding_config: original.branding_config,
+      internal_notes: original.internal_notes || undefined,
+    };
+
+    return await createProposal(input);
   } catch (error) {
-    console.error('Error logging proposal activity:', error);
+    console.error('Error duplicating proposal:', error);
+    return { data: null, error: error as Error };
   }
 }
 
-// =====================================================
-// 7. TEMPLATE OPERATIONS
-// =====================================================
-
 /**
- * List all active proposal templates
+ * Get proposal statistics
  */
-export async function listProposalTemplates(): Promise<{
-  data: ProposalTemplate[] | null;
+export async function getProposalStats(): Promise<{
+  data: {
+    total: number;
+    draft: number;
+    sent: number;
+    viewed: number;
+    accepted: number;
+    rejected: number;
+    revision_requested: number;
+    expired: number;
+    total_value: number;
+    accepted_value: number;
+  } | null;
   error: Error | null;
 }> {
   try {
-    const { data, error } = await supabase
-      .from('proposal_templates')
-      .select('*')
-      .eq('is_active', true)
-      .order('name');
+    const { data: proposals, error } = await supabase
+      .from('proposals')
+      .select('status, total_price');
 
     if (error) throw error;
 
-    return { data, error: null };
+    const stats = {
+      total: proposals.length,
+      draft: 0,
+      sent: 0,
+      viewed: 0,
+      accepted: 0,
+      rejected: 0,
+      revision_requested: 0,
+      expired: 0,
+      total_value: 0,
+      accepted_value: 0,
+    };
+
+    proposals.forEach((p) => {
+      const status = p.status as keyof typeof stats;
+      if (status in stats && typeof stats[status] === 'number') {
+        (stats[status] as number)++;
+      }
+      stats.total_value += p.total_price || 0;
+      if (p.status === 'accepted') {
+        stats.accepted_value += p.total_price || 0;
+      }
+    });
+
+    return { data: stats, error: null };
   } catch (error) {
-    console.error('Error listing proposal templates:', error);
+    console.error('Error fetching proposal stats:', error);
     return { data: null, error: error as Error };
   }
 }
 
-/**
- * Get template by ID
- */
-export async function getProposalTemplate(
-  templateId: string
-): Promise<{ data: ProposalTemplate | null; error: Error | null }> {
-  try {
-    const { data, error } = await supabase
-      .from('proposal_templates')
-      .select('*')
-      .eq('id', templateId)
-      .single();
-
-    if (error) throw error;
-
-    return { data, error: null };
-  } catch (error) {
-    console.error('Error fetching proposal template:', error);
-    return { data: null, error: error as Error };
-  }
-}
-
-// =====================================================
-// 8. HELPER FUNCTIONS
-// =====================================================
-
-/**
- * Create project from accepted proposal
- */
-async function createProjectFromAcceptedProposal(
-  proposalId: string
-): Promise<void> {
-  try {
-    const { data: projectId, error } = await supabase.rpc(
-      'create_project_from_proposal',
-      { proposal_uuid: proposalId }
-    );
-
-    if (error) throw error;
-
-    console.log('Project created from proposal:', projectId);
-  } catch (error) {
-    console.error('Error creating project from proposal:', error);
-  }
-}
-
-/**
- * Check if proposal is expired
- */
-export function isProposalExpired(proposal: Proposal): boolean {
-  if (!proposal.valid_until) return false;
-  return new Date(proposal.valid_until) < new Date();
-}
-
-/**
- * Calculate proposal completion percentage
- */
-export function calculateProposalCompletion(proposal: Proposal): number {
-  const sections = [
-    { name: 'Executive Summary', complete: !!proposal.executive_summary?.overview },
-    { name: 'Scope of Work', complete: !!proposal.scope_of_work?.description },
-    { name: 'Methodology', complete: !!proposal.methodology?.approach },
-    { name: 'Deliverables', complete: (proposal.deliverables?.items?.length || 0) > 0 },
-    { name: 'Team Bios', complete: (proposal.team_bios?.members?.length || 0) > 0 },
-    { name: 'Risk Analysis', complete: (proposal.risk_analysis?.risks?.length || 0) > 0 },
-    { name: 'Success Metrics', complete: (proposal.success_metrics?.kpis?.length || 0) > 0 },
-    { name: 'Terms', complete: !!proposal.terms_and_conditions },
-  ];
-
-  const completedSections = sections.filter((s) => s.complete).length;
-  return Math.round((completedSections / sections.length) * 100);
-}
-
-/**
- * Generate public proposal URL
- */
-export function generateProposalURL(proposalId: string, token?: string): string {
-  const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-  return `${baseUrl}/proposal/${proposalId}${token ? `?token=${token}` : ''}`;
-}
+// Default export for backward compatibility
+export const proposalService = {
+  createProposal,
+  createProposalFromQuoteRequest,
+  getProposal,
+  getProposalByNumber,
+  getProposalWithRelations,
+  listProposals,
+  updateProposal,
+  sendProposal,
+  markProposalViewed,
+  respondToProposal,
+  deleteProposal,
+  getProposalVersions,
+  rollbackToVersion,
+  logProposalActivity,
+  getProposalActivities,
+  duplicateProposal,
+  getProposalStats,
+};
