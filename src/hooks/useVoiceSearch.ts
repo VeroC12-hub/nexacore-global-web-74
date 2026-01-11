@@ -28,7 +28,7 @@ export interface UseVoiceSearchOptions {
   continuous?: boolean;
   interimResults?: boolean;
   maxAlternatives?: number;
-  grammars?: SpeechGrammarList;
+  grammars?: any; // SpeechGrammarList
   onResult?: (transcript: string, isFinal: boolean) => void;
   onError?: (error: string) => void;
   onStart?: () => void;
@@ -60,7 +60,7 @@ export function useVoiceSearch(options: UseVoiceSearchOptions = {}): UseVoiceSea
     confidence: 0
   });
 
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check for browser support
@@ -327,7 +327,7 @@ export async function getSupportedLanguages(): Promise<string[]> {
 // Type declarations for browsers that don't have SpeechRecognition types
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
   }
 }

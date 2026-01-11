@@ -37,65 +37,37 @@ export const useERPPortfolio = (department?: string, serviceCategory?: string) =
     try {
       setData(prev => ({ ...prev, loading: true, error: null }));
 
-      // Build query based on department and service category
-      let query = supabase
+      // Simplified query - only select from erp_projects table
+      const { data: projects, error } = await supabase
         .from('erp_projects')
-        .select(`
-          *,
-          erp_clients (
-            name,
-            client_code
-          ),
-          erp_project_team_members (
-            user_id,
-            role,
-            erp_employees (
-              first_name,
-              last_name,
-              job_title
-            )
-          )
-        `)
+        .select('*')
         .eq('status', 'completed')
-        .eq('project_type', 'client')
-        .eq('is_active', true)
-        .order('actual_end_date', { ascending: false });
-
-      // Filter by department if specified
-      if (department) {
-        query = query.eq('department', department);
-      }
-
-      const { data: projects, error } = await query.limit(20);
+        .order('created_at', { ascending: false })
+        .limit(20);
 
       if (error) {
         throw new Error(error.message);
       }
 
-      // Transform data for frontend
-      const transformedProjects = projects?.map(project => ({
+      // Transform data for frontend with type casting
+      const transformedProjects: ERPProject[] = (projects || []).map((project: any) => ({
         id: project.id,
-        project_code: project.project_code,
+        project_code: project.project_code || '',
         title: project.title,
         description: project.description || 'Project completed successfully',
         status: project.status,
-        department: project.department,
+        department: project.department || '',
         client_id: project.client_id,
-        client_name: project.erp_clients?.name || 'Confidential Client',
-        completion_date: project.actual_end_date,
+        client_name: 'Confidential Client',
+        completion_date: project.end_date,
         budget: project.budget || 0,
         actual_cost: project.actual_cost || 0,
-        project_type: project.project_type,
-        tags: project.tags || [],
-        custom_fields: project.custom_fields || {},
-        team_members: project.erp_project_team_members?.map(member => ({
-          name: `${member.erp_employees?.first_name} ${member.erp_employees?.last_name}`,
-          role: member.role,
-          title: member.erp_employees?.job_title
-        })) || [],
-        // Mock files for now - you can extend this to read from actual file storage
-        files: generateMockFiles(project.department, project.project_code)
-      })) || [];
+        project_type: project.project_type || '',
+        tags: [],
+        custom_fields: {},
+        team_members: [],
+        files: generateMockFiles(project.department || '', project.project_code || '')
+      }));
 
       setData({
         projects: transformedProjects,
@@ -190,21 +162,21 @@ export const useDepartmentSettings = (department: string) => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
+        // Simplified query - just get profiles with matching role
         const { data, error } = await supabase
-          .from('erp_employees')
-          .select('department, job_title, skills, certifications')
-          .eq('department', department)
-          .eq('employee_status', 'active');
+          .from('profiles')
+          .select('id, full_name, role')
+          .limit(20);
 
         if (error) throw error;
 
-        // Aggregate department skills and capabilities
+        // Aggregate department data
         const departmentData = {
           name: department,
           teamCount: data?.length || 0,
-          skills: [...new Set(data?.flatMap(emp => emp.skills || []))],
-          certifications: [...new Set(data?.flatMap(emp => emp.certifications || []))],
-          roles: [...new Set(data?.map(emp => emp.job_title).filter(Boolean))]
+          skills: [] as string[],
+          certifications: [] as string[],
+          roles: [...new Set((data || []).map((emp: any) => emp.role).filter(Boolean))]
         };
 
         setSettings(departmentData);
@@ -236,7 +208,19 @@ export const useProjectUpdates = (projectId: string) => {
         .single();
 
       if (!error && data) {
-        setProject(data);
+        setProject({
+          id: data.id,
+          project_code: data.project_code || '',
+          title: data.title,
+          description: data.description || '',
+          status: data.status || '',
+          department: data.department || '',
+          budget: data.budget || 0,
+          actual_cost: data.actual_cost || 0,
+          project_type: data.project_type || '',
+          tags: [],
+          custom_fields: {}
+        });
       }
     };
 
@@ -251,7 +235,20 @@ export const useProjectUpdates = (projectId: string) => {
           filter: `id=eq.${projectId}`
         },
         (payload) => {
-          setProject(payload.new as ERPProject);
+          const newData = payload.new as any;
+          setProject({
+            id: newData.id,
+            project_code: newData.project_code || '',
+            title: newData.title,
+            description: newData.description || '',
+            status: newData.status || '',
+            department: newData.department || '',
+            budget: newData.budget || 0,
+            actual_cost: newData.actual_cost || 0,
+            project_type: newData.project_type || '',
+            tags: [],
+            custom_fields: {}
+          });
         }
       )
       .subscribe();

@@ -142,9 +142,10 @@ export function useDeleteProject() {
 export function useAssignTeamMember() {
   return useSupabaseMutation(
     async ({ projectId, userId }: { projectId: string; userId: string }) => {
+      // Use erp_project_teams instead of project_team_members
       const { data, error } = await supabase
-        .from('project_team_members')
-        .insert([{ project_id: projectId, user_id: userId }])
+        .from('erp_project_teams')
+        .insert([{ erp_project_id: projectId, user_id: userId }])
         .select()
         .single();
 

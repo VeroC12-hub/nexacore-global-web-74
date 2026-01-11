@@ -912,7 +912,7 @@ Thank you! 😊`;
 
     try {
       // Check if EmailJS is available
-      if (typeof window !== 'undefined' && window.emailjs) {
+      if (typeof window !== 'undefined' && (window as any).emailjs) {
         const templateParams = {
           from_name: contactForm.name,
           from_email: contactForm.email,
@@ -923,7 +923,7 @@ Thank you! 😊`;
           timestamp: new Date().toISOString()
         };
 
-        const response = await window.emailjs.send(
+        const response = await (window as any).emailjs.send(
           'service_nexacore',
           'template_contact',
           templateParams,
