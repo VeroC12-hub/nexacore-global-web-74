@@ -79,9 +79,9 @@ export const ProposalReview: React.FC = () => {
     isLoading,
     error,
     refetch,
-  } = useQuery<Proposal>({
+  } = useQuery({
     queryKey: ['proposal-public', id],
-    queryFn: async () => {
+    queryFn: async (): Promise<any> => {
       if (!id) throw new Error('No proposal ID');
 
       const { data, error } = await supabase
@@ -95,6 +95,8 @@ export const ProposalReview: React.FC = () => {
     },
     enabled: !!id && !!token,
   });
+
+  
 
   const handleDownloadPDF = async () => {
     if (!proposal) return;

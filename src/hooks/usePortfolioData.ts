@@ -78,7 +78,7 @@ export const usePortfolioData = (serviceId?: string, maxProjects: number = 10) =
         throw new Error(fetchError.message);
       }
 
-      setProjects(data || []);
+      setProjects((data || []) as any);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch portfolio data';
       setError(errorMessage);
@@ -168,7 +168,7 @@ export const useProjectDetails = (projectId: string) => {
           throw new Error(fetchError.message);
         }
 
-        setProject(data);
+        setProject(data as any);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to fetch project details';
         setError(errorMessage);

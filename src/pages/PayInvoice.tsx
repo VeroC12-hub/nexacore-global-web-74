@@ -78,7 +78,7 @@ const PayInvoice: React.FC = () => {
         return;
       }
 
-      setInvoice(data);
+      setInvoice(data as any);
     } catch (error) {
       console.error('Error loading invoice:', error);
       toast.error('Failed to load invoice');

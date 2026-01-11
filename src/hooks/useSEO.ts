@@ -32,8 +32,8 @@ export const useSEO = (options: UseSEOOptions = {}) => {
     }
     
     // Update page URL in analytics/tracking scripts if available
-    if (typeof gtag !== 'undefined') {
-      gtag('config', 'GA_MEASUREMENT_ID', {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('config', 'GA_MEASUREMENT_ID', {
         page_title: seoData.title,
         page_location: seoData.canonical || window.location.href,
       });

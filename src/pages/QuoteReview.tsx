@@ -210,7 +210,7 @@ const QuoteReview = () => {
         toast.info('Quote expiration date needs to be updated');
       }
 
-      setQuote(quoteData);
+      setQuote(quoteData as any);
 
       // Load related quote request
       if (quoteData.quote_request_id) {

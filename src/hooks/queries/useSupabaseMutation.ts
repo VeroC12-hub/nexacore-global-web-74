@@ -1,10 +1,14 @@
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-interface SupabaseMutationOptions<TData, TVariables> extends Omit<UseMutationOptions<TData, Error, TVariables>, 'mutationFn'> {
+interface SupabaseMutationOptions<TData, TVariables> {
   invalidateKeys?: (string | number)[][];
   successMessage?: string;
   errorMessage?: string;
+  onSuccess?: (data: TData, variables: TVariables) => void;
+  onError?: (error: Error, variables: TVariables) => void;
+  onSettled?: (data: TData | undefined, error: Error | null, variables: TVariables) => void;
+  retry?: number;
 }
 
 export function useSupabaseMutation<TData = any, TVariables = any>(
@@ -16,7 +20,7 @@ export function useSupabaseMutation<TData = any, TVariables = any>(
   return useMutation<TData, Error, TVariables>({
     mutationFn,
 
-    onSuccess: (data, variables, context) => {
+    onSuccess: (data, variables) => {
       // Invalidate related queries to refetch fresh data
       if (options?.invalidateKeys) {
         options.invalidateKeys.forEach((key) => {
@@ -29,28 +33,32 @@ export function useSupabaseMutation<TData = any, TVariables = any>(
         toast.success(options.successMessage);
       }
 
-      // Call user's onSuccess handler
-      options?.onSuccess?.(data, variables, context);
+      // Call user's onSuccess handler if provided
+      if (options?.onSuccess) {
+        options.onSuccess(data, variables);
+      }
     },
 
-    onError: (error, variables, context) => {
+    onError: (error, variables) => {
       // Show error toast
       const errorMsg = options?.errorMessage || error.message || 'An error occurred';
       toast.error(errorMsg);
 
       console.error('Mutation error:', error);
 
-      // Call user's onError handler
-      options?.onError?.(error, variables, context);
+      // Call user's onError handler if provided
+      if (options?.onError) {
+        options.onError(error, variables);
+      }
     },
 
-    onSettled: (data, error, variables, context) => {
-      // Call user's onSettled handler
-      options?.onSettled?.(data, error, variables, context);
+    onSettled: (data, error, variables) => {
+      // Call user's onSettled handler if provided
+      if (options?.onSettled) {
+        options.onSettled(data, error, variables);
+      }
     },
 
-    // Pass through other options
     retry: options?.retry ?? 1,
-    ...options,
   });
 }

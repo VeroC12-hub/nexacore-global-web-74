@@ -15,7 +15,8 @@ export function useAIAssistant(options?: {
   autoLoad?: boolean;
   conversationId?: string;
 }): UseAIAssistantReturn {
-  const { user, userRole } = useEnhancedAuth();
+  const { user } = useEnhancedAuth();
+  const userRole = user?.role || 'visitor';
   const [messages, setMessages] = useState<AIMessage[]>([]);
   const [conversation, setConversation] = useState<AIConversation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +48,7 @@ export function useAIAssistant(options?: {
           .single();
 
         if (!fetchError && data) {
-          conv = data as AIConversation;
+          conv = data as unknown as AIConversation;
         }
       }
 
@@ -60,7 +61,7 @@ export function useAIAssistant(options?: {
           .maybeSingle();
 
         if (!existingError && existingConv) {
-          conv = existingConv as AIConversation;
+          conv = existingConv as unknown as AIConversation;
         }
       }
 
@@ -91,11 +92,11 @@ export function useAIAssistant(options?: {
               .single();
 
             if (retryData) {
-              conv = retryData as AIConversation;
+              conv = retryData as unknown as AIConversation;
             }
           }
         } else {
-          conv = data as AIConversation;
+          conv = data as unknown as AIConversation;
         }
       }
 
@@ -123,7 +124,7 @@ export function useAIAssistant(options?: {
       if (fetchError) {
         console.error('Error loading messages:', fetchError);
       } else {
-        setMessages((data as AIMessage[]) || []);
+        setMessages((data as unknown as AIMessage[]) || []);
       }
     } catch (err) {
       console.error('Error loading messages:', err);
@@ -176,7 +177,7 @@ export function useAIAssistant(options?: {
 
     try {
       // Create user message
-      const userMessage: Partial<AIMessage> = {
+      const userMessage = {
         conversation_id: conversation.id,
         role: 'user',
         content: messageText,
@@ -193,7 +194,7 @@ export function useAIAssistant(options?: {
       if (userMsgError) throw userMsgError;
 
       // Update local state
-      setMessages(prev => [...prev, savedUserMessage as AIMessage]);
+      setMessages(prev => [...prev, savedUserMessage as unknown as AIMessage]);
 
       // Search knowledge base for context (disabled for now - needs OpenAI key)
       // const knowledgeResults = await searchKnowledge(messageText);
@@ -228,7 +229,7 @@ export function useAIAssistant(options?: {
       console.log(`🤖 AI Response from: ${aiResponse.source === 'claude' ? 'Claude API ☁️' : 'Local AI 🤖'}`);
 
       // Create assistant message
-      const assistantMessage: Partial<AIMessage> = {
+      const assistantMessage = {
         conversation_id: conversation.id,
         role: 'assistant',
         content: aiResponse.message,
@@ -236,7 +237,7 @@ export function useAIAssistant(options?: {
         model_used: aiResponse.source === 'claude' ? (aiResponse.metadata?.model || 'claude-3-5-sonnet-20241022') : 'local-ai-v1',
         tokens_used: aiResponse.metadata?.tokensUsed || 0,
         response_time_ms: responseTime,
-        retrieved_knowledge: [], // knowledgeResults.map(k => k.id),
+        retrieved_knowledge: [] as string[],
       };
 
       // Save assistant message to DB
@@ -249,7 +250,7 @@ export function useAIAssistant(options?: {
       if (assistantMsgError) throw assistantMsgError;
 
       // Update local state
-      setMessages(prev => [...prev, savedAssistantMessage as AIMessage]);
+      setMessages(prev => [...prev, savedAssistantMessage as unknown as AIMessage]);
 
       // Update conversation title if first message
       if (messages.length === 0) {

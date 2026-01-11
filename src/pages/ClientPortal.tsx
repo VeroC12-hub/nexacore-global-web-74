@@ -339,7 +339,7 @@ const ClientPortal: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setServiceRequests(data || []);
+      setServiceRequests((data || []) as any);
       return data || [];
     } catch (error) {
       console.error('Error loading service requests:', error);
@@ -356,7 +356,7 @@ const ClientPortal: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setQuotes(data || []);
+      setQuotes((data || []) as any);
       return data || [];
     } catch (error) {
       console.error('Error loading quotes:', error);
