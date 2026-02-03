@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,14 @@ import { Mail, Lock, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
+function getRedirectPath(role: string): string {
+  const adminRoles = ['admin', 'project_manager', 'operations_manager'];
+  const staffRoles = ['developer', 'support', 'staff'];
+  if (adminRoles.includes(role)) return '/admin';
+  if (staffRoles.includes(role)) return '/staff';
+  return '/dashboard';
+}
+
 const AuthPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -22,31 +30,29 @@ const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
-  
-  const { signIn, signUp, user } = useAuth();
+
+  const { user, loading: authLoading, signIn: enhancedSignIn } = useEnhancedAuth();
   const navigate = useNavigate();
 
+  // If already logged in with profile loaded, redirect immediately
   React.useEffect(() => {
-    // If user is already logged in, redirect to dashboard
-    // RoleBasedRedirect will handle routing to the correct role-specific page
-    if (user) {
-      navigate('/dashboard', { replace: true });
-    }
-  }, [user, navigate]);
+    if (authLoading || !user) return;
+    navigate(getRedirectPath(user.role), { replace: true });
+  }, [user, authLoading, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const { error } = await signIn(email, password);
+    const result = await enhancedSignIn(email, password);
 
-    if (error) {
-      setError(error.message);
+    if (result.error) {
+      setError(result.error);
       setLoading(false);
     }
-    // On success, the AuthContext will update `user`, triggering the useEffect redirect above
-    // RoleBasedRedirect will then route to the correct dashboard
+    // On success, useEnhancedAuth updates `user` with role included,
+    // the useEffect above will redirect to the correct dashboard
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -54,15 +60,22 @@ const AuthPage = () => {
     setLoading(true);
     setError('');
     setMessage('');
-    
-    const { error } = await signUp(email, password, fullName);
-    
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth`,
+        data: { full_name: fullName },
+      },
+    });
+
     if (error) {
       setError(error.message);
     } else {
       setMessage('Check your email for a verification link!');
     }
-    
+
     setLoading(false);
   };
 
@@ -71,11 +84,11 @@ const AuthPage = () => {
     setLoading(true);
     setError('');
     setMessage('');
-    
+
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
     });
-    
+
     if (error) {
       setError(error.message);
     } else {
@@ -83,14 +96,32 @@ const AuthPage = () => {
       setShowForgotPassword(false);
       setResetEmail('');
     }
-    
+
     setLoading(false);
   };
+
+  // Show loading while checking existing auth
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If user is already logged in, don't show the form (useEffect will redirect)
+  if (user) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background/95 to-primary/5">
       <Navbar />
-      
+
       <div className="container mx-auto px-4 py-20">
         <div className="max-w-md mx-auto">
           <div className="mb-6">
@@ -103,7 +134,7 @@ const AuthPage = () => {
               Back
             </Button>
           </div>
-          
+
           <Card className="w-full">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
@@ -113,14 +144,14 @@ const AuthPage = () => {
                 Access your client portal to manage projects and services
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent>
               <Tabs defaultValue="signin" className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="signin">Sign In</TabsTrigger>
                   <TabsTrigger value="signup">Sign Up</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="signin" className="space-y-4">
                   <form onSubmit={handleSignIn} className="space-y-4">
                     <div className="space-y-2">
@@ -138,7 +169,7 @@ const AuthPage = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="signin-password">Password</Label>
                       <div className="relative">
@@ -161,17 +192,17 @@ const AuthPage = () => {
                         </button>
                       </div>
                     </div>
-                    
+
                     {error && (
                       <Alert variant="destructive">
                         <AlertDescription>{error}</AlertDescription>
                       </Alert>
                     )}
-                    
+
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? 'Signing in...' : 'Sign In'}
                     </Button>
-                    
+
                     <div className="text-center">
                       <button
                         type="button"
@@ -183,7 +214,7 @@ const AuthPage = () => {
                     </div>
                   </form>
                 </TabsContent>
-                
+
                 <TabsContent value="signup" className="space-y-4">
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
@@ -201,7 +232,7 @@ const AuthPage = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
                       <div className="relative">
@@ -217,7 +248,7 @@ const AuthPage = () => {
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
                       <div className="relative">
@@ -241,19 +272,19 @@ const AuthPage = () => {
                         </button>
                       </div>
                     </div>
-                    
+
                     {error && (
                       <Alert variant="destructive">
                         <AlertDescription>{error}</AlertDescription>
                       </Alert>
                     )}
-                    
+
                     {message && (
                       <Alert>
                         <AlertDescription>{message}</AlertDescription>
                       </Alert>
                     )}
-                    
+
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? 'Creating account...' : 'Create Account'}
                     </Button>
@@ -292,19 +323,19 @@ const AuthPage = () => {
                     />
                   </div>
                 </div>
-                
+
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
-                
+
                 {message && (
                   <Alert>
                     <AlertDescription>{message}</AlertDescription>
                   </Alert>
                 )}
-                
+
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -328,7 +359,7 @@ const AuthPage = () => {
           </Card>
         </div>
       )}
-      
+
       <Footer />
     </div>
   );

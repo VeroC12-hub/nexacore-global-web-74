@@ -121,34 +121,19 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     let isMounted = true;
     let subscription: any = null;
+    let initialLoadDone = false;
+
+    // Safety timeout: never stay loading forever
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('Auth loading safety timeout reached');
+        setLoading(false);
+      }
+    }, 8000);
 
     const initializeAuth = async () => {
       try {
-        // Set up auth state listener FIRST
-        const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
-          if (!isMounted) return;
-
-          try {
-            if (session?.user) {
-              // Handle all events that provide a session (SIGNED_IN, TOKEN_REFRESHED, INITIAL_SESSION)
-              const enhancedUser = await fetchEnhancedUserData(session.user);
-              if (isMounted) setUser(enhancedUser);
-            } else if (event === 'SIGNED_OUT') {
-              if (isMounted) setUser(null);
-            }
-          } catch (error) {
-            console.error('Error in auth state change:', error);
-            if (isMounted) setUser(null);
-          } finally {
-            if (isMounted) setLoading(false);
-          }
-        });
-
-        if (authListener?.data?.subscription) {
-          subscription = authListener.data.subscription;
-        }
-
-        // THEN check for existing session
+        // 1. Get session first (synchronous-ish, from localStorage cache)
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (!isMounted) return;
@@ -161,6 +146,7 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
           }
           setUser(null);
           setLoading(false);
+          initialLoadDone = true;
           return;
         }
 
@@ -169,11 +155,13 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
           if (isMounted) {
             setUser(enhancedUser);
             setLoading(false);
+            initialLoadDone = true;
           }
         } else {
           if (isMounted) {
             setUser(null);
             setLoading(false);
+            initialLoadDone = true;
           }
         }
       } catch (error) {
@@ -181,14 +169,54 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
         if (isMounted) {
           setUser(null);
           setLoading(false);
+          initialLoadDone = true;
         }
       }
     };
 
+    // 2. Set up auth state listener for ongoing changes (sign in, sign out, token refresh)
+    try {
+      const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!isMounted) return;
+
+        // Skip if this is the initial load (already handled by getSession above)
+        if (!initialLoadDone && event === 'INITIAL_SESSION') return;
+
+        try {
+          if (session?.user) {
+            const enhancedUser = await fetchEnhancedUserData(session.user);
+            if (isMounted) {
+              setUser(enhancedUser);
+              setLoading(false);
+            }
+          } else if (event === 'SIGNED_OUT') {
+            if (isMounted) {
+              setUser(null);
+              setLoading(false);
+            }
+          }
+        } catch (error) {
+          console.error('Error in auth state change:', error);
+          if (isMounted) {
+            setUser(null);
+            setLoading(false);
+          }
+        }
+      });
+
+      if (authListener?.data?.subscription) {
+        subscription = authListener.data.subscription;
+      }
+    } catch (error) {
+      console.error('Error setting up auth listener:', error);
+    }
+
+    // 3. Run initial session check
     initializeAuth();
 
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimeout);
       try {
         if (subscription?.unsubscribe) {
           subscription.unsubscribe();

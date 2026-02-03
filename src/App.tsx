@@ -5,7 +5,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EnhancedAuthProvider } from "./hooks/useEnhancedAuth";
-import { RoleBasedRedirect } from "./components/auth/RoleBasedRedirect";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Team from "./pages/Team";
@@ -50,7 +49,6 @@ const App = () => {
           <AuthProvider>
             <EnhancedAuthProvider>
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-                <RoleBasedRedirect>
                 <Routes>
                 {/* PUBLIC ROUTES */}
                 <Route path="/" element={<Index />} />
@@ -94,7 +92,6 @@ const App = () => {
                 <CookieConsent />
                 <Toaster />
                 <Sonner />
-                </RoleBasedRedirect>
               </BrowserRouter>
             </EnhancedAuthProvider>
           </AuthProvider>
