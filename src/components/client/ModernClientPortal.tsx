@@ -30,7 +30,7 @@ import {
   Target
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { toast } from 'sonner';
 import ServiceRequestModal from '@/components/ServiceRequestModal';
 import Navbar from '@/components/Navbar';
@@ -70,7 +70,7 @@ interface QuickAction {
 }
 
 export const ModernClientPortal: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useEnhancedAuth();
   const [activeView, setActiveView] = useState<'overview' | 'services' | 'projects' | 'invoices' | 'messages' | 'files' | 'settings'>('overview');
   const [projects, setProjects] = useState<Project[]>([]);
   const [stats, setStats] = useState<ClientStats>({

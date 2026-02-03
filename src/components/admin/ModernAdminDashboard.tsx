@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
@@ -77,7 +77,7 @@ interface QuickAction {
 }
 
 export const ModernAdminDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useEnhancedAuth();
   const { permissions, loading: permissionsLoading } = useRolePermissions();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

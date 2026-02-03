@@ -1,42 +1,41 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ModernClientPortal } from '@/components/client/ModernClientPortal';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading } = useEnhancedAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const checkUserRole = async () => {
-      if (!user) {
-        navigate('/auth');
-        return;
-      }
+  React.useEffect(() => {
+    if (loading) return;
 
-      // Get user role
-      const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+    if (!user) {
+      navigate('/auth', { replace: true });
+      return;
+    }
 
-      const role = data?.role;
+    // Redirect non-client roles to their appropriate dashboards
+    const adminRoles = ['admin', 'project_manager', 'operations_manager'];
+    const staffRoles = ['developer', 'support', 'staff'];
 
-      // Redirect to appropriate dashboard based on role
-      const adminRoles = ['admin', 'project_manager', 'operations_manager'];
-      const staffRoles = ['developer', 'support', 'staff'];
+    if (adminRoles.includes(user.role)) {
+      navigate('/admin', { replace: true });
+    } else if (staffRoles.includes(user.role)) {
+      navigate('/staff', { replace: true });
+    }
+    // Clients stay on this page
+  }, [user, loading, navigate]);
 
-      if (role && adminRoles.includes(role)) {
-        navigate('/admin', { replace: true });
-      } else if (role && staffRoles.includes(role)) {
-        navigate('/staff', { replace: true });
-      }
-    };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-    checkUserRole();
-  }, [user, navigate]);
+  if (!user) return null;
 
   return <ModernClientPortal />;
 };

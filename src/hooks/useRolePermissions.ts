@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 
 export type UserRole = 'admin' | 'operations_manager' | 'project_manager' | 'staff' | 'member' | 'client';
 
@@ -37,7 +36,7 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
     case 'admin':
       return {
         ...basePermissions,
-        canAccessPaymentConfig: true, // ONLY ADMIN
+        canAccessPaymentConfig: true,
         canViewAllProjects: true,
         canManageProjects: true,
         canManageQuotes: true,
@@ -52,7 +51,7 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
     case 'operations_manager':
       return {
         ...basePermissions,
-        canAccessPaymentConfig: false, // BLOCKED
+        canAccessPaymentConfig: false,
         canViewAllProjects: true,
         canManageProjects: true,
         canManageQuotes: true,
@@ -67,22 +66,22 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
     case 'project_manager':
       return {
         ...basePermissions,
-        canAccessPaymentConfig: false, // BLOCKED - Only admin
+        canAccessPaymentConfig: false,
         canViewAllProjects: true,
-        canManageProjects: true, // ✅ CAN MANAGE PROJECTS
-        canManageQuotes: true, // ✅ CAN MANAGE QUOTES
-        canManageUsers: false, // Can't change roles - Only admin
+        canManageProjects: true,
+        canManageQuotes: true,
+        canManageUsers: false,
         canViewReports: true,
-        canManageWorkflows: true, // ✅ CAN MANAGE WORKFLOWS
-        canAccessSystemSettings: false, // BLOCKED - Only admin
-        canViewFinancials: true, // ✅ CAN VIEW FINANCIALS
-        canManageInvoices: true, // ✅ CAN MANAGE INVOICES
+        canManageWorkflows: true,
+        canAccessSystemSettings: false,
+        canViewFinancials: true,
+        canManageInvoices: true,
       };
 
     case 'staff':
       return {
         ...basePermissions,
-        canAccessPaymentConfig: false, // BLOCKED
+        canAccessPaymentConfig: false,
         canViewAllProjects: false,
         canManageProjects: false,
         canManageQuotes: false,
@@ -100,43 +99,24 @@ const getRolePermissions = (role: UserRole | null): RolePermissions => {
 };
 
 export const useRolePermissions = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useEnhancedAuth();
   const [permissions, setPermissions] = useState<RolePermissions>(getRolePermissions(null));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
-      if (!user) {
-        setPermissions(getRolePermissions(null));
-        setLoading(false);
-        return;
-      }
+    if (authLoading) return;
 
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+    if (!user) {
+      setPermissions(getRolePermissions(null));
+      setLoading(false);
+      return;
+    }
 
-        if (error) {
-          console.error('Error fetching user role:', error);
-          // Default to admin role if profile doesn't exist (system owner)
-          setPermissions(getRolePermissions('admin'));
-        } else {
-          const userRole = (profile?.role || 'admin') as UserRole;
-          setPermissions(getRolePermissions(userRole));
-        }
-      } catch (error) {
-        console.error('Error in useRolePermissions:', error);
-        setPermissions(getRolePermissions(null));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserRole();
-  }, [user]);
+    // Use the role already fetched by useEnhancedAuth — no extra DB query needed
+    const userRole = (user.role || 'client') as UserRole;
+    setPermissions(getRolePermissions(userRole));
+    setLoading(false);
+  }, [user, authLoading]);
 
   return { permissions, loading };
 };

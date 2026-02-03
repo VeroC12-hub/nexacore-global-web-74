@@ -27,44 +27,26 @@ const AuthPage = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    const routeAfterLogin = async () => {
-      if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        navigate(profile?.role === 'admin' ? '/admin' : '/client-portal');
-      }
-    };
-    routeAfterLogin();
+    // If user is already logged in, redirect to dashboard
+    // RoleBasedRedirect will handle routing to the correct role-specific page
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
   }, [user, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     const { error } = await signIn(email, password);
-    
+
     if (error) {
       setError(error.message);
-    } else {
-      // Check user role and redirect accordingly
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('email', email)
-        .single();
-      
-      if (profile?.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/client-portal');
-      }
+      setLoading(false);
     }
-    
-    setLoading(false);
+    // On success, the AuthContext will update `user`, triggering the useEffect redirect above
+    // RoleBasedRedirect will then route to the correct dashboard
   };
 
   const handleSignUp = async (e: React.FormEvent) => {

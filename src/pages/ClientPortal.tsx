@@ -83,7 +83,7 @@ import { InvoiceDetailModal } from '@/components/client/InvoiceDetailModal';
 import { ServiceRequestEditModal } from '@/components/client/ServiceRequestEditModal';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -197,7 +197,7 @@ interface RecentActivity {
 }
 
 const ClientPortal: React.FC = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut } = useEnhancedAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');

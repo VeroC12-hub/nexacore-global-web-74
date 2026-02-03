@@ -119,38 +119,76 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
   };
 
   useEffect(() => {
-    // Get initial user
-    refreshUser();
-
-    // Listen for auth changes with error handling
+    let isMounted = true;
     let subscription: any = null;
-    
-    try {
-      const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
-        try {
-          if (event === 'SIGNED_IN' && session?.user) {
-            const enhancedUser = await fetchEnhancedUserData(session.user);
-            setUser(enhancedUser);
-          } else if (event === 'SIGNED_OUT') {
-            setUser(null);
+
+    const initializeAuth = async () => {
+      try {
+        // Set up auth state listener FIRST
+        const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
+          if (!isMounted) return;
+
+          try {
+            if (session?.user) {
+              // Handle all events that provide a session (SIGNED_IN, TOKEN_REFRESHED, INITIAL_SESSION)
+              const enhancedUser = await fetchEnhancedUserData(session.user);
+              if (isMounted) setUser(enhancedUser);
+            } else if (event === 'SIGNED_OUT') {
+              if (isMounted) setUser(null);
+            }
+          } catch (error) {
+            console.error('Error in auth state change:', error);
+            if (isMounted) setUser(null);
+          } finally {
+            if (isMounted) setLoading(false);
           }
-        } catch (error) {
-          console.error('Error in auth state change:', error);
+        });
+
+        if (authListener?.data?.subscription) {
+          subscription = authListener.data.subscription;
+        }
+
+        // THEN check for existing session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (!isMounted) return;
+
+        if (sessionError) {
+          console.error('Session error:', sessionError);
+          if (sessionError.message?.includes('Invalid Refresh Token') ||
+              sessionError.message?.includes('Refresh Token Not Found')) {
+            await supabase.auth.signOut();
+          }
           setUser(null);
-        } finally {
+          setLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          const enhancedUser = await fetchEnhancedUserData(session.user);
+          if (isMounted) {
+            setUser(enhancedUser);
+            setLoading(false);
+          }
+        } else {
+          if (isMounted) {
+            setUser(null);
+            setLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (isMounted) {
+          setUser(null);
           setLoading(false);
         }
-      });
-
-      if (authListener?.data?.subscription) {
-        subscription = authListener.data.subscription;
       }
-    } catch (error) {
-      console.error('Error setting up auth listener:', error);
-      setLoading(false);
-    }
+    };
+
+    initializeAuth();
 
     return () => {
+      isMounted = false;
       try {
         if (subscription?.unsubscribe) {
           subscription.unsubscribe();

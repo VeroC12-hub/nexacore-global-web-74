@@ -1,42 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, LogOut } from 'lucide-react';
 import logo from '@/assets/nexacore-logo.png';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
-  const { user, signOut } = useAuth();
-  const [role, setRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadRole = async () => {
-      if (user) {
-        const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-        setRole(data?.role || 'member');
-      } else {
-        setRole(null);
-      }
-    };
-    loadRole();
-  }, [user]);
+  const { user, signOut: enhancedSignOut } = useEnhancedAuth();
+  const role = user?.role || null;
 
   const handleSignOut = async () => {
     try {
-      // Clear local state first
-      setRole(null);
-
-      // Sign out from Supabase
-      await supabase.auth.signOut();
-
-      // Redirect to home page
+      await enhancedSignOut();
       window.location.href = '/';
     } catch (error) {
       console.error('Error signing out:', error);
-      // Force clear and redirect anyway
       window.location.href = '/';
     }
   };
@@ -57,13 +38,12 @@ const Navbar = () => {
   const getDashboardUrl = () => {
     if (!role) return '/dashboard';
 
-    // Staff roles go to /staff
-    const staffRoles = ['admin', 'project_manager', 'operations_manager', 'developer', 'support'];
-    if (staffRoles.includes(role)) {
-      return '/staff';
-    }
+    const adminRoles = ['admin', 'project_manager', 'operations_manager'];
+    if (adminRoles.includes(role)) return '/admin';
 
-    // Clients go to /dashboard
+    const staffRoles = ['developer', 'support', 'staff'];
+    if (staffRoles.includes(role)) return '/staff';
+
     return '/dashboard';
   };
 
