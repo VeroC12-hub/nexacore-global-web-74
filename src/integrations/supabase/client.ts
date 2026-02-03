@@ -12,8 +12,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   auth: {
     storage: localStorage,
     persistSession: true,
-    autoRefreshToken: false, // Disable auto refresh to prevent unwanted requests
-    detectSessionInUrl: false,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
     flowType: 'pkce'
   },
   global: {
