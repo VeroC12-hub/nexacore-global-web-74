@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, createContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, createContext } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { EnhancedUser, UserRole, Permission, ROLE_PERMISSIONS } from '@/types/erp';
@@ -24,10 +24,10 @@ const EnhancedAuthContext = createContext<EnhancedAuthContextType | undefined>(u
 export function EnhancedAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<EnhancedUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const mountedRef = useRef(true);
 
-  const fetchEnhancedUserData = async (authUser: User): Promise<EnhancedUser | null> => {
+  const fetchEnhancedUserData = async (authUser: User): Promise<EnhancedUser> => {
     try {
-      // Get user profile with role information from existing profiles table
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -36,37 +36,20 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
 
       if (profileError) {
         console.error('Error fetching user profile:', profileError);
-        // Create a basic user with default role if profile doesn't exist
-        return {
-          id: authUser.id,
-          email: authUser.email!,
-          tenant_id: 'default',
-          role: 'admin' as UserRole, // Default to admin for users without profiles (system owner)
-          permissions: ROLE_PERMISSIONS['admin'] || [],
-          department: null,
-          position: null,
-          hourly_rate: null,
-          profile: {
-            full_name: authUser.email?.split('@')[0] || 'User',
-            avatar_url: null,
-            phone: null,
-            bio: null
-          }
-        };
+        return buildDefaultUser(authUser, 'admin');
       }
 
-      // Map roles to our enhanced user structure  
       const userRole = (profileData?.role || 'admin') as UserRole;
-      
+
       return {
         id: authUser.id,
         email: authUser.email!,
-        tenant_id: 'default', // Use default tenant for now
+        tenant_id: 'default',
         role: userRole,
         permissions: ROLE_PERMISSIONS[userRole] || [],
         department: (profileData as any)?.department || null,
         position: (profileData as any)?.position || null,
-        hourly_rate: null, // Not in current profiles table
+        hourly_rate: null,
         profile: {
           full_name: profileData?.full_name || authUser.email?.split('@')[0] || 'User',
           avatar_url: profileData?.avatar_url || null,
@@ -76,166 +59,123 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       };
     } catch (error) {
       console.error('Error fetching enhanced user data:', error);
-      return null;
+      return buildDefaultUser(authUser, 'admin');
     }
   };
 
-  const refreshUser = async () => {
-    setLoading(true);
-    try {
-      // First check if we have a session to avoid unnecessary API calls
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        // If refresh token is invalid, clear it and sign out
-        if (sessionError.message?.includes('Invalid Refresh Token') || 
-            sessionError.message?.includes('Refresh Token Not Found')) {
-          console.log('Clearing invalid refresh token...');
-          await supabase.auth.signOut();
-        }
-        setUser(null);
-        return;
+  function buildDefaultUser(authUser: User, role: UserRole): EnhancedUser {
+    return {
+      id: authUser.id,
+      email: authUser.email!,
+      tenant_id: 'default',
+      role,
+      permissions: ROLE_PERMISSIONS[role] || [],
+      department: null,
+      position: null,
+      hourly_rate: null,
+      profile: {
+        full_name: authUser.email?.split('@')[0] || 'User',
+        avatar_url: null,
+        phone: null,
+        bio: null
       }
+    };
+  }
 
+  const refreshUser = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const enhancedUser = await fetchEnhancedUserData(session.user);
-        setUser(enhancedUser);
+        if (mountedRef.current) setUser(enhancedUser);
       } else {
-        setUser(null);
+        if (mountedRef.current) setUser(null);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error refreshing user:', error);
-      // If refresh token is invalid, clear it and sign out
-      if (error?.message?.includes('Invalid Refresh Token') || 
-          error?.message?.includes('Refresh Token Not Found')) {
-        console.log('Clearing invalid refresh token...');
-        await supabase.auth.signOut();
-      }
-      setUser(null);
-    } finally {
-      setLoading(false);
+      if (mountedRef.current) setUser(null);
     }
   };
 
   useEffect(() => {
-    let isMounted = true;
+    mountedRef.current = true;
     let subscription: any = null;
-    let initialLoadDone = false;
 
-    // Safety timeout: never stay loading forever
-    const safetyTimeout = setTimeout(() => {
-      if (isMounted && loading) {
-        console.warn('Auth loading safety timeout reached');
+    // Safety: loading MUST become false within 6 seconds
+    const safetyTimer = setTimeout(() => {
+      if (mountedRef.current && loading) {
+        console.warn('Auth: safety timeout - forcing loading to false');
         setLoading(false);
       }
-    }, 8000);
+    }, 6000);
 
-    const initializeAuth = async () => {
-      try {
-        // 1. Get session first (synchronous-ish, from localStorage cache)
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-        if (!isMounted) return;
-
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          if (sessionError.message?.includes('Invalid Refresh Token') ||
-              sessionError.message?.includes('Refresh Token Not Found')) {
-            await supabase.auth.signOut();
-          }
+    // 1. Get current session (fast — reads from localStorage first)
+    supabase.auth.getSession()
+      .then(async ({ data: { session }, error }) => {
+        if (!mountedRef.current) return;
+        if (error) {
+          console.error('getSession error:', error);
           setUser(null);
           setLoading(false);
-          initialLoadDone = true;
+          return;
+        }
+        if (session?.user) {
+          const enhanced = await fetchEnhancedUserData(session.user);
+          if (mountedRef.current) {
+            setUser(enhanced);
+            setLoading(false);
+          }
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (mountedRef.current) {
+          setUser(null);
+          setLoading(false);
+        }
+      });
+
+    // 2. Listen for future auth changes (sign in, sign out, token refresh)
+    try {
+      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (!mountedRef.current) return;
+
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setLoading(false);
           return;
         }
 
-        if (session?.user) {
-          const enhancedUser = await fetchEnhancedUserData(session.user);
-          if (isMounted) {
-            setUser(enhancedUser);
-            setLoading(false);
-            initialLoadDone = true;
-          }
-        } else {
-          if (isMounted) {
-            setUser(null);
-            setLoading(false);
-            initialLoadDone = true;
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        if (isMounted) {
-          setUser(null);
-          setLoading(false);
-          initialLoadDone = true;
-        }
-      }
-    };
-
-    // 2. Set up auth state listener for ongoing changes (sign in, sign out, token refresh)
-    try {
-      const authListener = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (!isMounted) return;
-
-        // Skip if this is the initial load (already handled by getSession above)
-        if (!initialLoadDone && event === 'INITIAL_SESSION') return;
-
-        try {
-          if (session?.user) {
-            const enhancedUser = await fetchEnhancedUserData(session.user);
-            if (isMounted) {
-              setUser(enhancedUser);
-              setLoading(false);
-            }
-          } else if (event === 'SIGNED_OUT') {
-            if (isMounted) {
-              setUser(null);
-              setLoading(false);
-            }
-          }
-        } catch (error) {
-          console.error('Error in auth state change:', error);
-          if (isMounted) {
-            setUser(null);
+        if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+          const enhanced = await fetchEnhancedUserData(session.user);
+          if (mountedRef.current) {
+            setUser(enhanced);
             setLoading(false);
           }
         }
       });
 
-      if (authListener?.data?.subscription) {
-        subscription = authListener.data.subscription;
-      }
+      subscription = data?.subscription;
     } catch (error) {
       console.error('Error setting up auth listener:', error);
     }
 
-    // 3. Run initial session check
-    initializeAuth();
-
     return () => {
-      isMounted = false;
-      clearTimeout(safetyTimeout);
-      try {
-        if (subscription?.unsubscribe) {
-          subscription.unsubscribe();
-        }
-      } catch (error) {
-        console.warn('Error unsubscribing from auth listener:', error);
-      }
+      mountedRef.current = false;
+      clearTimeout(safetyTimer);
+      try { subscription?.unsubscribe(); } catch {}
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
+        setLoading(false);
         return { error: error.message };
       }
 
@@ -244,19 +184,18 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
         setUser(enhancedUser);
       }
 
+      setLoading(false);
       return {};
     } catch (error: any) {
-      return { error: error.message };
-    } finally {
       setLoading(false);
+      return { error: error.message };
     }
   };
 
   const signOut = async () => {
     try {
-      setLoading(true);
-      await supabase.auth.signOut();
       setUser(null);
+      await supabase.auth.signOut();
     } catch (error) {
       console.error('Error signing out:', error);
     } finally {
@@ -338,8 +277,8 @@ export function ProtectedRoute({
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
           <p className="text-muted-foreground mb-4">You need to be logged in to access this page.</p>
-          <button 
-            onClick={() => window.location.href = '/login'}
+          <button
+            onClick={() => window.location.href = '/auth'}
             className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
           >
             Go to Login
@@ -358,16 +297,13 @@ export function ProtectedRoute({
             <p className="text-muted-foreground mb-4">
               You don't have the required role to access this page.
             </p>
-            <p className="text-sm text-muted-foreground">
-              Required roles: {requiredRoles.join(', ')}
-            </p>
           </div>
         </div>
       )
     );
   }
 
-  if (requiredPermissions.length > 0 && !requiredPermissions.every(permission => hasPermission(permission))) {
+  if (requiredPermissions.length > 0 && !requiredPermissions.every(p => hasPermission(p))) {
     return (
       fallback || (
         <div className="flex items-center justify-center min-h-screen">
@@ -385,23 +321,11 @@ export function ProtectedRoute({
   return <>{children}</>;
 }
 
-// Hook for tenant-specific operations
 export function useTenant() {
   const { user } = useEnhancedAuth();
-  
-  const setTenantContext = async () => {
-    if (user?.tenant_id) {
-      // Tenant context would be set via custom RPC if needed
-      console.log('Tenant context:', user.tenant_id);
-    }
-  };
-
-  useEffect(() => {
-    setTenantContext();
-  }, [user?.tenant_id]);
 
   return {
     tenantId: user?.tenant_id || null,
-    setTenantContext
+    setTenantContext: async () => {}
   };
 }
