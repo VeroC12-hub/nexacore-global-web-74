@@ -155,15 +155,15 @@ function generateTableBasedPDF(quote: any) {
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       line-height: 1.4;
       color: #333;
-      background: #f8f9fa;
+      background: #f0f4f5;
       padding: 20px;
     }
-    
+
     .quote-container {
       max-width: 21cm;
       margin: 0 auto;
@@ -172,172 +172,193 @@ function generateTableBasedPDF(quote: any) {
       border-radius: 8px;
       overflow: hidden;
     }
-    
-    /* Header with logo and gradient */
+
+    /* ── Header matching NexaCore letterhead ── */
     .header {
-      background: linear-gradient(135deg, #3b82f6 0%, #14b8a6 100%);
+      background: linear-gradient(135deg, #1E3A5F 0%, #0098A6 100%);
       color: white;
-      padding: 30px 40px;
-      text-align: center;
+      padding: 28px 40px;
+      position: relative;
+      overflow: hidden;
     }
-    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      border-style: solid;
+      border-width: 0 100px 70px 0;
+      border-color: transparent rgba(205,220,57,0.3) transparent transparent;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      top: 0; right: 0;
+      border-style: solid;
+      border-width: 0 60px 45px 0;
+      border-color: transparent rgba(0,152,166,0.4) transparent transparent;
+    }
+
     .logo-section {
       display: flex;
       align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
-    
+
     .company-logo {
-      width: 50px;
-      height: 50px;
-      margin-right: 15px;
+      width: 48px;
+      height: 48px;
+      margin-right: 14px;
     }
-    
+
     .company-name {
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
-      background: linear-gradient(45deg, #ffffff, #e0f2fe);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: #fff;
     }
-    
+    .company-subtitle {
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+      margin-top: 2px;
+    }
+
     .quote-title {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 600;
-      margin-top: 10px;
+      margin-top: 6px;
+      color: rgba(255,255,255,0.9);
     }
-    
-    /* Company Information Section */
+
+    /* ── Company Information Section ── */
     .info-section {
-      padding: 30px 40px;
-      border-bottom: 2px solid #e5e7eb;
+      padding: 28px 40px;
+      border-bottom: 2px solid #e8ecee;
     }
-    
+
     .section-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
-      color: #3b82f6;
-      margin-bottom: 15px;
-      padding-bottom: 5px;
-      border-bottom: 2px solid #3b82f6;
+      color: #0098A6;
+      margin-bottom: 14px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #0098A6;
       display: inline-block;
     }
-    
+
     .info-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
-    
+
     .info-table td {
       padding: 8px 12px;
       border: 1px solid #d1d5db;
       vertical-align: top;
     }
-    
+
     .info-label {
-      background: #f3f4f6;
+      background: #f0f7f8;
       font-weight: 600;
-      color: #3b82f6;
+      color: #1E3A5F;
       min-width: 150px;
     }
-    
+
     .info-value {
       background: white;
     }
-    
-    /* Quote Details Bar */
+
+    /* ── Quote Details Bar ── */
     .quote-details {
-      background: #f8f9fa;
+      background: #f5fafb;
       padding: 20px 40px;
       border-bottom: 1px solid #e5e7eb;
     }
-    
+
     .quote-details-table {
       width: 100%;
       border-collapse: collapse;
     }
-    
+
     .quote-details-table td {
       padding: 10px 15px;
       border: 1px solid #d1d5db;
       text-align: center;
       font-weight: 600;
     }
-    
+
     .quote-details-table .header-cell {
-      background: #3b82f6;
+      background: #0098A6;
       color: white;
     }
-    
-    /* Service Breakdown Table */
+
+    /* ── Service Breakdown Table ── */
     .breakdown-section {
       padding: 30px 40px;
     }
-    
+
     .service-title {
       font-size: 18px;
       font-weight: 600;
-      color: #1f2937;
+      color: #1E3A5F;
       margin-bottom: 20px;
       text-align: center;
     }
-    
+
     .breakdown-table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 20px;
     }
-    
+
     .breakdown-table th {
-      background: linear-gradient(135deg, #3b82f6, #14b8a6);
+      background: linear-gradient(135deg, #1E3A5F, #0098A6);
       color: white;
       padding: 12px 15px;
       font-weight: 600;
       text-align: center;
-      border: 1px solid #2563eb;
+      border: 1px solid #1E3A5F;
     }
-    
+
     .breakdown-table td {
       padding: 12px 15px;
       border: 1px solid #d1d5db;
       text-align: center;
     }
-    
+
     .breakdown-table tbody tr:nth-child(even) {
-      background: #f9fafb;
+      background: #f5fafb;
     }
-    
+
     .breakdown-table tbody tr:hover {
-      background: #f3f4f6;
+      background: #edf5f6;
     }
-    
+
     .task-cell {
       text-align: left !important;
       font-weight: 500;
     }
-    
+
     .total-row {
-      background: #e5e7eb !important;
+      background: #e8ecee !important;
       font-weight: 600;
     }
-    
+
     .grand-total-row {
-      background: linear-gradient(135deg, #3b82f6, #14b8a6) !important;
+      background: linear-gradient(135deg, #1E3A5F, #0098A6) !important;
       color: white !important;
       font-weight: 700;
       font-size: 16px;
     }
-    
-    /* Payment Terms */
+
+    /* ── Payment Terms ── */
     .payment-section {
       padding: 30px 40px;
-      background: #f8f9fa;
+      background: #f5fafb;
       border-top: 1px solid #e5e7eb;
     }
-    
+
     .payment-terms {
       background: white;
       padding: 20px;
@@ -345,24 +366,24 @@ function generateTableBasedPDF(quote: any) {
       border-radius: 8px;
       margin-bottom: 20px;
     }
-    
+
     .payment-terms h3 {
-      color: #3b82f6;
+      color: #0098A6;
       margin-bottom: 15px;
       font-size: 16px;
     }
-    
+
     .payment-terms ul {
       list-style: disc;
       padding-left: 20px;
     }
-    
+
     .payment-terms li {
       margin-bottom: 8px;
       color: #4b5563;
     }
-    
-    /* Terms and Conditions */
+
+    /* ── Terms and Conditions ── */
     .terms-section {
       background: white;
       padding: 20px;
@@ -370,134 +391,168 @@ function generateTableBasedPDF(quote: any) {
       border-radius: 8px;
       margin-bottom: 20px;
     }
-    
+
     .terms-section h3 {
-      color: #3b82f6;
+      color: #0098A6;
       margin-bottom: 15px;
       font-size: 16px;
     }
-    
+
     .terms-section ol {
       padding-left: 20px;
     }
-    
+
     .terms-section li {
       margin-bottom: 10px;
       color: #4b5563;
       line-height: 1.6;
     }
-    
-    /* Signature Section */
+
+    /* ── Signature Section ── */
     .signature-section {
       background: white;
       padding: 20px;
       border: 1px solid #d1d5db;
       border-radius: 8px;
     }
-    
+
     .signature-section h3 {
-      color: #3b82f6;
+      color: #0098A6;
       margin-bottom: 15px;
       font-size: 16px;
     }
-    
+
     .signature-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
     }
-    
+
     .signature-table td {
       padding: 10px 12px;
       border: 1px solid #d1d5db;
       vertical-align: middle;
     }
-    
+
     .signature-label {
-      background: #f3f4f6;
+      background: #f0f7f8;
       font-weight: 600;
-      color: #3b82f6;
+      color: #1E3A5F;
       width: 200px;
     }
-    
+
     .signature-field {
       background: white;
       min-height: 40px;
     }
-    
-    /* Footer */
+
+    /* ── Footer matching NexaCore letterhead ── */
     .footer {
-      background: linear-gradient(135deg, #1f2937, #374151);
+      background: linear-gradient(135deg, #0098A6, #1E3A5F);
       color: white;
-      padding: 30px 40px;
+      padding: 28px 40px;
       text-align: center;
+      position: relative;
     }
-    
+
     .contact-info {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
     }
-    
+
     .contact-item {
-      padding: 15px;
+      padding: 12px;
       background: rgba(255,255,255,0.1);
       border-radius: 8px;
-      backdrop-filter: blur(10px);
     }
-    
+
     .contact-item strong {
       display: block;
-      margin-bottom: 5px;
-      color: #60a5fa;
+      margin-bottom: 4px;
+      color: #CDDC39;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    
-    /* Print Styles */
+
+    .footer-line {
+      border-top: 1px solid rgba(255,255,255,0.15);
+      padding-top: 14px;
+      margin-top: 4px;
+      font-size: 13px;
+      opacity: 0.75;
+    }
+
+    /* ── Letterhead background for print ── */
+    #letterhead-bg {
+      display: none;
+    }
+
+    /* ── Print Styles ── */
     @media print {
       body {
         background: white;
         padding: 0;
       }
-      
+
       .quote-container {
         box-shadow: none;
         border-radius: 0;
       }
-      
-      .header, .footer, .grand-total-row {
+
+      .header, .footer, .grand-total-row,
+      .breakdown-table th, .quote-details-table .header-cell,
+      .info-label, .signature-label, .total-row {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
+
+      #letterhead-bg {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+      }
+      #letterhead-bg img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .no-print { display: none !important; }
     }
-    
+
     @media (max-width: 768px) {
-      .info-section {
-        padding: 20px;
-      }
-      
-      .breakdown-section {
-        padding: 20px;
-      }
-      
-      .breakdown-table {
-        font-size: 12px;
-      }
+      .info-section { padding: 20px; }
+      .breakdown-section { padding: 20px; }
+      .breakdown-table { font-size: 12px; }
     }
   </style>
 </head>
 <body>
+  <!-- Letterhead background for print (populated by JS) -->
+  <div id="letterhead-bg"></div>
+
   <div class="quote-container">
     <!-- Header -->
     <div class="header">
       <div class="logo-section">
-        <img src="https://www.nexacore-innovations.com/nexacore-logo.png" 
-             alt="NexaCore Innovations Logo" 
+        <img src="https://www.nexacore-innovations.com/nexacore-logo.png"
+             alt="NexaCore Innovations Logo"
              class="company-logo"
              onerror="this.style.display='none'">
-        <div class="company-name">NexaCore Innovations</div>
+        <div>
+          <div class="company-name">NEXACORE</div>
+          <div class="company-subtitle">I N N O V A T I O N S</div>
+        </div>
       </div>
-      <div class="quote-title">Project Quote - ${serviceType}</div>
+      <div class="quote-title">Project Quote &mdash; ${serviceType}</div>
     </div>
 
     <!-- Company Information -->
@@ -507,8 +562,8 @@ function generateTableBasedPDF(quote: any) {
         <tr>
           <td class="info-label">Company Logo:</td>
           <td class="info-value">
-            <img src="https://www.nexacore-innovations.com/nexacore-logo.png" 
-                 alt="NexaCore Logo" style="height: 30px;" 
+            <img src="https://www.nexacore-innovations.com/nexacore-logo.png"
+                 alt="NexaCore Logo" style="height: 30px;"
                  onerror="this.style.display='none'">
           </td>
           <td class="info-label">Company's Address:</td>
@@ -573,7 +628,7 @@ function generateTableBasedPDF(quote: any) {
     <!-- Service Breakdown -->
     <div class="breakdown-section">
       <div class="service-title">${serviceType} Quote</div>
-      
+
       <table class="breakdown-table">
         <thead>
           <tr>
@@ -602,7 +657,7 @@ function generateTableBasedPDF(quote: any) {
       </table>
 
       ${deliverables.length > 0 ? `
-      <h4 style="margin: 20px 0 10px 0; color: #3b82f6;">Additional Services</h4>
+      <h4 style="margin: 20px 0 10px 0; color: #0098A6;">Additional Services</h4>
       <table class="breakdown-table">
         <thead>
           <tr>
@@ -613,7 +668,7 @@ function generateTableBasedPDF(quote: any) {
           </tr>
         </thead>
         <tbody>
-          ${deliverables.slice(0, 3).map((deliverable, index) => `
+          ${deliverables.slice(0, 3).map((deliverable: string) => `
             <tr>
               <td class="task-cell">${deliverable}</td>
               <td>1</td>
@@ -671,7 +726,7 @@ function generateTableBasedPDF(quote: any) {
         <p style="color: #4b5563; margin-bottom: 15px;">
           By signing below, the client acknowledges that they have read, understood, and agree to the terms and conditions outlined in this ${serviceType} Quote.
         </p>
-        
+
         <table class="signature-table">
           <tr>
             <td class="signature-label">Client's Signature:</td>
@@ -715,25 +770,50 @@ function generateTableBasedPDF(quote: any) {
           Accra, Ghana
         </div>
       </div>
-      <p style="font-size: 14px; opacity: 0.8; margin-top: 20px;">
-        © ${new Date().getFullYear()} NexaCore Innovations. All rights reserved. | Generated on ${new Date().toLocaleString()}
+      <p class="footer-line">
+        &copy; ${new Date().getFullYear()} NexaCore Innovations. All rights reserved. | Generated on ${new Date().toLocaleString()}
       </p>
     </div>
   </div>
 
+  <!-- pdf.js for rendering letterhead as print background -->
+  <script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
   <script>
-    window.onload = function() {
+    window.onload = async function() {
       document.title = 'Quote-${quote.id}-${clientName}-NexaCore';
-      
+
+      // Load letterhead PDF and render as background image for printing
+      try {
+        if (window.pdfjsLib) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+          const pdf = await pdfjsLib.getDocument('/Nexaletterhead.pdf').promise;
+          const page = await pdf.getPage(1);
+          const scale = 3;
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+          const img = document.createElement('img');
+          img.src = dataUrl;
+          document.getElementById('letterhead-bg').appendChild(img);
+        }
+      } catch (e) {
+        console.log('Letterhead not available for print background:', e.message);
+      }
+
       // Add print button
       setTimeout(() => {
         const printBtn = document.createElement('button');
-        printBtn.innerHTML = 'Print/Download PDF';
+        printBtn.innerHTML = 'Print / Download PDF';
+        printBtn.className = 'no-print';
         printBtn.style.cssText = \`
           position: fixed;
           top: 20px;
           right: 20px;
-          background: linear-gradient(135deg, #3b82f6, #14b8a6);
+          background: linear-gradient(135deg, #0098A6, #1E3A5F);
           color: white;
           border: none;
           padding: 12px 24px;
@@ -741,14 +821,15 @@ function generateTableBasedPDF(quote: any) {
           cursor: pointer;
           font-weight: 600;
           z-index: 1000;
-          box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+          box-shadow: 0 4px 15px rgba(0,152,166,0.3);
           font-size: 14px;
+          letter-spacing: 0.3px;
         \`;
         printBtn.onclick = () => window.print();
         document.body.appendChild(printBtn);
-      }, 1000);
+      }, 500);
     };
-    
+
     document.addEventListener('keydown', function(e) {
       if (e.ctrlKey && e.key === 'p') {
         e.preventDefault();

@@ -74,15 +74,15 @@ export const ProposalPDFPreview: React.FC<ProposalPDFPreviewProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl w-[95vw] max-h-[95vh] h-[95vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Proposal PDF Preview</DialogTitle>
           <DialogDescription>
             Preview of {proposal.proposal_number} - {proposal.title}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-[600px] border rounded-lg overflow-hidden bg-gray-100">
+        <div className="flex-1 min-h-0 border rounded-lg overflow-hidden bg-gray-100">
           {loading ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
@@ -94,6 +94,7 @@ export const ProposalPDFPreview: React.FC<ProposalPDFPreviewProps> = ({
             <iframe
               src={pdfUrl}
               className="w-full h-full"
+              style={{ minHeight: '100%' }}
               title="PDF Preview"
             />
           ) : (
@@ -125,7 +126,7 @@ export const ProposalPDFPreview: React.FC<ProposalPDFPreviewProps> = ({
           <Button
             onClick={handleDownload}
             disabled={downloading || loading}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-teal-600 hover:bg-teal-700"
           >
             {downloading ? (
               <>

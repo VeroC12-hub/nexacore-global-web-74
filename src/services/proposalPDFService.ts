@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { Proposal } from '@/types/proposal';
 import { format } from 'date-fns';
+import { getLetterheadImage, addLetterheadToPage, LETTERHEAD } from '@/utils/pdfLetterhead';
 
 // Extend jsPDF type to include autotable
 declare module 'jspdf' {
@@ -36,6 +37,7 @@ export class ProposalPDFGenerator {
   private pageHeight: number;
   private yPos: number = 20;
   private brandColors: typeof COLORS;
+  private letterheadImg: string | null = null;
 
   constructor(proposal: Proposal) {
     this.proposal = proposal;
@@ -58,9 +60,11 @@ export class ProposalPDFGenerator {
   }
 
   /**
-   * Generate complete proposal PDF
+   * Generate complete proposal PDF (async to load letterhead)
    */
-  public generate(): jsPDF {
+  public async generate(): Promise<jsPDF> {
+    this.letterheadImg = await getLetterheadImage();
+
     this.addCoverPage();
     this.addTableOfContents();
     this.addExecutiveSummary();
@@ -73,7 +77,6 @@ export class ProposalPDFGenerator {
     this.addCustomSections();
     this.addPricingAndTimeline();
     this.addTermsAndConditions();
-    this.addFooterToAllPages();
 
     return this.doc;
   }
@@ -94,29 +97,11 @@ export class ProposalPDFGenerator {
   }
 
   /**
-   * Add cover page with geometric triangles
+   * Add cover page with letterhead background
    */
   private addCoverPage(): void {
-    this.yPos = 20;
-
-    // Geometric triangles in top-right corner
-    this.doc.setFillColor(...this.brandColors.teal);
-    this.doc.triangle(this.pageWidth - 40, 0, this.pageWidth, 0, this.pageWidth, 30, 'F');
-    this.doc.setFillColor(...this.brandColors.lime);
-    this.doc.triangle(this.pageWidth - 50, 0, this.pageWidth - 40, 0, this.pageWidth, 40, 'F');
-
-    // Company name - NEXACORE
-    this.doc.setFontSize(28);
-    this.doc.setFont('helvetica', 'bold');
-    this.doc.setTextColor(...this.brandColors.teal);
-    this.doc.text('NEXACORE', 14, this.yPos);
-    this.yPos += 8;
-
-    // INNOVATIONS (spaced)
-    this.doc.setFontSize(12);
-    this.doc.setTextColor(...this.brandColors.navy);
-    this.doc.text('I N N O V A T I O N S', 14, this.yPos);
-    this.yPos += 15;
+    addLetterheadToPage(this.doc, this.letterheadImg);
+    this.yPos = LETTERHEAD.CONTENT_TOP;
 
     // Document type
     this.doc.setFontSize(24);
@@ -130,7 +115,7 @@ export class ProposalPDFGenerator {
     this.doc.setFont('helvetica', 'italic');
     this.doc.setTextColor(...COLORS.darkGray);
     this.doc.text('Engineering Global Innovation with Excellence', 14, this.yPos);
-    this.yPos += 20;
+    this.yPos += 15;
 
     // Proposal number and date (centered)
     const centerX = this.pageWidth / 2;
@@ -202,8 +187,8 @@ export class ProposalPDFGenerator {
 
     // Add new page for content
     this.doc.addPage();
-    this.addGeometricTriangles();
-    this.yPos = 20;
+    addLetterheadToPage(this.doc, this.letterheadImg);
+    this.yPos = LETTERHEAD.CONTENT_TOP;
   }
 
   /**
@@ -400,7 +385,8 @@ export class ProposalPDFGenerator {
       head: [['#', 'Deliverable', 'Description', 'Format', 'Delivery Date']],
       body: tableData,
       theme: 'grid',
-      margin: { left: 14, right: 14 },
+      margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
+      didDrawPage: this.getDidDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -493,7 +479,8 @@ export class ProposalPDFGenerator {
       head: [['Risk', 'Description', 'Impact', 'Probability', 'Mitigation Strategy']],
       body: tableData,
       theme: 'grid',
-      margin: { left: 14, right: 14 },
+      margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
+      didDrawPage: this.getDidDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -548,7 +535,8 @@ export class ProposalPDFGenerator {
       head: [['#', 'KPI', 'Description', 'Target', 'Measurement Method']],
       body: tableData,
       theme: 'grid',
-      margin: { left: 14, right: 14 },
+      margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
+      didDrawPage: this.getDidDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -618,7 +606,8 @@ export class ProposalPDFGenerator {
       startY: this.yPos,
       body: pricingData,
       theme: 'grid',
-      margin: { left: 14, right: 14 },
+      margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
+      didDrawPage: this.getDidDrawPage(),
       styles: {
         fontSize: 10,
         cellPadding: 4,
@@ -717,49 +706,19 @@ export class ProposalPDFGenerator {
   }
 
   private checkPageBreak(requiredSpace: number = 30): void {
-    if (this.yPos > this.pageHeight - requiredSpace) {
+    const maxY = this.pageHeight - LETTERHEAD.CONTENT_BOTTOM;
+    if (this.yPos > maxY - requiredSpace) {
       this.doc.addPage();
-      this.addGeometricTriangles();
-      this.yPos = 20;
+      addLetterheadToPage(this.doc, this.letterheadImg);
+      this.yPos = LETTERHEAD.CONTENT_TOP;
     }
   }
 
-  private addGeometricTriangles(): void {
-    this.doc.setFillColor(...this.brandColors.teal);
-    this.doc.triangle(this.pageWidth - 40, 0, this.pageWidth, 0, this.pageWidth, 30, 'F');
-    this.doc.setFillColor(...this.brandColors.lime);
-    this.doc.triangle(this.pageWidth - 50, 0, this.pageWidth - 40, 0, this.pageWidth, 40, 'F');
-  }
-
-  private addFooterToAllPages(): void {
-    const pageCount = this.doc.getNumberOfPages();
-
-    for (let i = 1; i <= pageCount; i++) {
-      this.doc.setPage(i);
-
-      // Footer background
-      this.doc.setFillColor(...this.brandColors.teal);
-      this.doc.rect(0, this.pageHeight - 15, this.pageWidth, 15, 'F');
-
-      // Footer text - line 1
-      this.doc.setFontSize(8);
-      this.doc.setFont('helvetica', 'normal');
-      this.doc.setTextColor(...COLORS.white);
-
-      const companyName = this.proposal.use_custom_branding && this.proposal.branding_config?.company_name
-        ? this.proposal.branding_config.company_name
-        : 'NexaCore Innovations';
-
-      this.doc.text(`© ${new Date().getFullYear()} ${companyName}. All rights reserved.`, 14, this.pageHeight - 7);
-      this.doc.text(`Page ${i} of ${pageCount}`, this.pageWidth / 2, this.pageHeight - 7, { align: 'center' });
-      this.doc.text('www.nexacore-innovations.com', this.pageWidth - 14, this.pageHeight - 7, { align: 'right' });
-
-      // Footer text - line 2
-      this.doc.setFontSize(7);
-      this.doc.text('Accra, Ghana', 14, this.pageHeight - 3);
-      this.doc.text('info@nexacore-innovations.com', this.pageWidth / 2, this.pageHeight - 3, { align: 'center' });
-      this.doc.text(this.proposal.proposal_number, this.pageWidth - 14, this.pageHeight - 3, { align: 'right' });
-    }
+  /** Get the didDrawPage callback for autoTable that adds letterhead to new pages */
+  private getDidDrawPage() {
+    return () => {
+      addLetterheadToPage(this.doc, this.letterheadImg);
+    };
   }
 
   private hexToRgb(hex: string): [number, number, number] {
@@ -775,7 +734,7 @@ export class ProposalPDFGenerator {
  */
 export async function generateProposalPDF(proposal: Proposal): Promise<void> {
   const generator = new ProposalPDFGenerator(proposal);
-  const doc = generator.generate();
+  await generator.generate();
   generator.download();
 }
 
@@ -784,6 +743,6 @@ export async function generateProposalPDF(proposal: Proposal): Promise<void> {
  */
 export async function generateProposalPDFBlob(proposal: Proposal): Promise<Blob> {
   const generator = new ProposalPDFGenerator(proposal);
-  generator.generate();
+  await generator.generate();
   return generator.getBlob();
 }

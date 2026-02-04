@@ -9,6 +9,7 @@ import { FileDown, FileSpreadsheet, FileText, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getLetterheadImage, addLetterheadToPage, LETTERHEAD } from '@/utils/pdfLetterhead';
 
 interface ERPProject {
   id: string;
@@ -266,32 +267,20 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     try {
+      const letterheadImg = await getLetterheadImage();
       const stats = getStatistics();
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      let yPos = 20;
+      let yPos = LETTERHEAD.CONTENT_TOP;
 
       const tealColor: [number, number, number] = [0, 152, 166];
       const limeColor: [number, number, number] = [205, 220, 57];
       const navyColor: [number, number, number] = [30, 58, 95];
 
-      doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-      doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-      doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-      doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(tealColor[0], tealColor[1], tealColor[2]);
-      doc.text('NEXACORE', 14, yPos);
-      yPos += 5;
-      doc.setFontSize(9);
-      doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-      doc.text('I N N O V A T I O N S', 14, yPos);
-      yPos += 8;
+      addLetterheadToPage(doc, letterheadImg);
 
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
@@ -345,7 +334,8 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           head: [['Project', 'Department', 'Status', 'Priority', 'Progress', 'Budget', 'Due Date']],
           body: compactTableData,
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -374,13 +364,10 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
         yPos = (doc as any).lastAutoTable.finalY + 12;
       } else {
         projectsToExport.forEach((project, index) => {
-          if (yPos > pageHeight - 100) {
+          if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 100) {
             doc.addPage();
-            doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-            doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-            doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-            doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-            yPos = 20;
+            addLetterheadToPage(doc, letterheadImg);
+            yPos = LETTERHEAD.CONTENT_TOP;
           }
 
           doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
@@ -456,7 +443,8 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
             startY: yPos,
             body: detailsData as any,
             theme: 'grid',
-            margin: { top: 20, right: 14, bottom: 20, left: 14 },
+            margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+            didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
             styles: {
               fontSize: 9,
               cellPadding: 3,
@@ -483,13 +471,10 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
 
           yPos = (doc as any).lastAutoTable.finalY + 12;
 
-          if (yPos > pageHeight - 30 && index < projectsToExport.length - 1) {
+          if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM && index < projectsToExport.length - 1) {
             doc.addPage();
-            doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-            doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-            doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-            doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-            yPos = 20;
+            addLetterheadToPage(doc, letterheadImg);
+            yPos = LETTERHEAD.CONTENT_TOP;
           }
 
           if (index < projectsToExport.length - 1) {
@@ -503,12 +488,9 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
 
       if (includeStatistics) {
         doc.addPage();
-        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-        doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-        doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
+        addLetterheadToPage(doc, letterheadImg);
 
-        yPos = 20;
+        yPos = LETTERHEAD.CONTENT_TOP;
         doc.setFillColor(245, 250, 252);
         doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
         doc.setFontSize(11);
@@ -534,7 +516,8 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           head: [statsTableData[0]],
           body: statsTableData.slice(1),
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -570,7 +553,8 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           head: [priorityTableData[0]],
           body: priorityTableData.slice(1),
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -607,7 +591,8 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           head: [financialTableData[0]],
           body: financialTableData.slice(1),
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -620,24 +605,6 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
             cellPadding: 3
           }
         });
-      }
-
-      // Add footer to all pages
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.rect(0, pageHeight - 15, pageWidth, 15, 'F');
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(255, 255, 255);
-        doc.text('© 2025 NexaCore Innovations. All rights reserved.', 14, pageHeight - 7);
-        doc.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 7, { align: 'center' });
-        doc.text('www.nexacore-innovations.com', pageWidth - 14, pageHeight - 7, { align: 'right' });
-        doc.setFontSize(7);
-        doc.text('Accra, Ghana', 14, pageHeight - 3);
-        doc.text('info@nexacore-innovations.com', pageWidth / 2, pageHeight - 3, { align: 'center' });
-        doc.text('+233-50-1588-710', pageWidth - 14, pageHeight - 3, { align: 'right' });
       }
 
       const fileName = `NexaCore_ERP_Projects_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -687,7 +654,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           success = exportToExcel();
           break;
         case 'pdf':
-          success = exportToPDF();
+          success = await exportToPDF();
           break;
       }
 

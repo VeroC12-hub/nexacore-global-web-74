@@ -9,6 +9,7 @@ import { FileDown, FileSpreadsheet, FileText, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getLetterheadImage, addLetterheadToPage, LETTERHEAD } from '@/utils/pdfLetterhead';
 
 interface Project {
   id: string;
@@ -333,35 +334,20 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
   };
 
   // Export to PDF
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     try {
       const stats = getStatistics();
+      const letterheadImg = await getLetterheadImage();
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      let yPos = 20;
+      addLetterheadToPage(doc, letterheadImg);
+      let yPos = LETTERHEAD.CONTENT_TOP;
 
       // Define colors matching company branding
       const tealColor: [number, number, number] = [0, 152, 166]; // #0098A6
       const limeColor: [number, number, number] = [205, 220, 57]; // #CDDC39
       const navyColor: [number, number, number] = [30, 58, 95]; // #1E3A5F
-
-      // Add diagonal geometric accent (top right)
-      doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-      doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-      doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-      doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-
-      // Add company name
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(tealColor[0], tealColor[1], tealColor[2]);
-      doc.text('NEXACORE', 14, yPos);
-      yPos += 5;
-      doc.setFontSize(9);
-      doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-      doc.text('I N N O V A T I O N S', 14, yPos);
-      yPos += 8;
 
       // Add title
       doc.setFontSize(16);
@@ -422,7 +408,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [['Project', 'Client', 'Service', 'Status', 'Priority', 'Progress', 'Budget', 'Deadline']],
           body: compactTableData,
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -447,15 +433,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             6: { cellWidth: 20 },  // Budget
             7: { cellWidth: 22 }   // Deadline
           },
-          didDrawPage: function(data) {
-            // Add header decoration on new pages
-            if (data.pageNumber > 1 && data.cursor && data.cursor.y < 30) {
-              doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-              doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-              doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-              doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-            }
-          }
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 12;
@@ -463,14 +441,10 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
         // DETAILED VIEW - Individual sections for each project
         projectsToExport.forEach((project, index) => {
           // Check if we need a new page (reserve more space for content)
-          if (yPos > pageHeight - 100) {
+          if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 60) {
             doc.addPage();
-            // Add diagonal accent on new page
-            doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-            doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-            doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-            doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-            yPos = 20;
+            addLetterheadToPage(doc, letterheadImg);
+            yPos = LETTERHEAD.CONTENT_TOP;
           }
 
           // Project header with number and professional styling
@@ -569,7 +543,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             startY: yPos,
             body: detailsData as any,
             theme: 'grid',
-            margin: { top: 20, right: 14, bottom: 20, left: 14 },
+            margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
             styles: {
               fontSize: 9,
               cellPadding: 3,
@@ -598,27 +572,16 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
                 data.cell.styles.cellPadding = { top: 3, right: 3, bottom: 3, left: 3 };
               }
             },
-            didDrawPage: function(data) {
-              // Add header decoration on new pages if table spans multiple pages
-              if (data.pageNumber > 1 && data.cursor && data.cursor.y < 30) {
-                doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-                doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-                doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-                doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-              }
-            }
+            didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
           });
 
           yPos = (doc as any).lastAutoTable.finalY + 12;
 
           // Ensure we're not too close to bottom before adding separator
-          if (yPos > pageHeight - 30 && index < projectsToExport.length - 1) {
+          if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 60 && index < projectsToExport.length - 1) {
             doc.addPage();
-            doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-            doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-            doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-            doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-            yPos = 20;
+            addLetterheadToPage(doc, letterheadImg);
+            yPos = LETTERHEAD.CONTENT_TOP;
           }
 
           // Add separator line between projects (except for the last project)
@@ -635,14 +598,9 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
       if (includeStatistics) {
         // Add new page for statistics
         doc.addPage();
+        addLetterheadToPage(doc, letterheadImg);
 
-        // Add diagonal accent on new page
-        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-        doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-        doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-
-        yPos = 20;
+        yPos = LETTERHEAD.CONTENT_TOP;
         // Summary section with background
         doc.setFillColor(245, 250, 252);
         doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
@@ -671,7 +629,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [statsTableData[0]],
           body: statsTableData.slice(1),
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -682,7 +640,8 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           styles: {
             fontSize: 8,
             cellPadding: 3
-          }
+          },
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
@@ -709,7 +668,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [priorityTableData[0]],
           body: priorityTableData.slice(1),
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -720,7 +679,8 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           styles: {
             fontSize: 8,
             cellPadding: 3
-          }
+          },
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
@@ -747,7 +707,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [financialTableData[0]],
           body: financialTableData.slice(1),
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -758,7 +718,8 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           styles: {
             fontSize: 8,
             cellPadding: 3
-          }
+          },
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
@@ -784,7 +745,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [hoursTableData[0]],
           body: hoursTableData.slice(1),
           theme: 'grid',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -795,7 +756,8 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           styles: {
             fontSize: 8,
             cellPadding: 3
-          }
+          },
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 15;
@@ -804,14 +766,10 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
       // Add a quick reference summary table only if exporting multiple projects
       if (projectsToExport.length > 1) {
         // Check if we need a new page for the summary
-        if (yPos > pageHeight - 100) {
+        if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 60) {
           doc.addPage();
-          // Add diagonal accent on new page
-          doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-          doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-          doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-          doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-          yPos = 20;
+          addLetterheadToPage(doc, letterheadImg);
+          yPos = LETTERHEAD.CONTENT_TOP;
         }
 
         doc.setFillColor(245, 250, 252);
@@ -836,7 +794,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [['Project', 'Client', 'Status', 'Priority', 'Progress', 'Deadline']],
           body: projectTableData,
           theme: 'striped',
-          margin: { top: 20, right: 14, bottom: 20, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -857,76 +815,8 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             4: { cellWidth: 20 },  // Progress
             5: { cellWidth: 28 }   // Deadline
           },
-          didDrawPage: function(data) {
-            // Add header decoration on new pages
-            if (data.pageNumber > 1 && data.cursor && data.cursor.y < 30) {
-              doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-              doc.triangle(pageWidth - 40, 0, pageWidth, 0, pageWidth, 30, 'F');
-              doc.setFillColor(limeColor[0], limeColor[1], limeColor[2]);
-              doc.triangle(pageWidth - 50, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
-            }
-          }
+          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
-      }
-
-      // Add professional footer to all pages
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-
-        // Teal footer bar
-        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.rect(0, pageHeight - 15, pageWidth, 15, 'F');
-
-        // Footer text in white
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.setTextColor(255, 255, 255);
-
-        // Copyright text (left)
-        doc.text(
-          '© 2025 NexaCore Innovations. All rights reserved.',
-          14,
-          pageHeight - 7
-        );
-
-        // Page number (center)
-        doc.text(
-          `Page ${i} of ${pageCount}`,
-          pageWidth / 2,
-          pageHeight - 7,
-          { align: 'center' }
-        );
-
-        // Contact info (right)
-        doc.text(
-          'www.nexacore-innovations.com',
-          pageWidth - 14,
-          pageHeight - 7,
-          { align: 'right' }
-        );
-
-        // Additional contact info line
-        doc.setFontSize(7);
-        doc.text(
-          'Accra, Ghana',
-          14,
-          pageHeight - 3
-        );
-
-        doc.text(
-          'info@nexacore-innovations.com',
-          pageWidth / 2,
-          pageHeight - 3,
-          { align: 'center' }
-        );
-
-        doc.text(
-          '+233-50-1588-710',
-          pageWidth - 14,
-          pageHeight - 3,
-          { align: 'right' }
-        );
       }
 
       // Save file
@@ -979,7 +869,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           success = exportToExcel();
           break;
         case 'pdf':
-          success = exportToPDF();
+          success = await exportToPDF();
           break;
       }
 
