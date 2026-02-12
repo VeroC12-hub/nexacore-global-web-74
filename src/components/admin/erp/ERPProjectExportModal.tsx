@@ -335,7 +335,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           body: compactTableData,
           theme: 'grid',
           margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -444,7 +444,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
             body: detailsData as any,
             theme: 'grid',
             margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
-            didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
+            willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
             styles: {
               fontSize: 9,
               cellPadding: 3,
@@ -517,7 +517,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           body: statsTableData.slice(1),
           theme: 'grid',
           margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -554,7 +554,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           body: priorityTableData.slice(1),
           theme: 'grid',
           margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -592,7 +592,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           body: financialTableData.slice(1),
           theme: 'grid',
           margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],

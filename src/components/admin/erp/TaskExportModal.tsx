@@ -381,7 +381,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
             7: { cellWidth: 11 },  // Est.
             8: { cellWidth: 11 }   // Act.
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 12;
@@ -487,7 +487,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
               data.cell.styles.cellPadding = { top: 3, right: 3, bottom: 3, left: 3 };
             }
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 12;
@@ -552,7 +552,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
             fontSize: 8,
             cellPadding: 3
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
@@ -591,7 +591,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
             fontSize: 8,
             cellPadding: 3
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
@@ -629,7 +629,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
             fontSize: 8,
             cellPadding: 3
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 15;
@@ -687,7 +687,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
             4: { cellWidth: 20 },  // Priority
             5: { cellWidth: 23 }   // Due Date
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
       }
 

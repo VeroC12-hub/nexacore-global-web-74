@@ -433,7 +433,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             6: { cellWidth: 20 },  // Budget
             7: { cellWidth: 22 }   // Deadline
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 12;
@@ -572,7 +572,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
                 data.cell.styles.cellPadding = { top: 3, right: 3, bottom: 3, left: 3 };
               }
             },
-            didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+            willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
           });
 
           yPos = (doc as any).lastAutoTable.finalY + 12;
@@ -641,7 +641,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             fontSize: 8,
             cellPadding: 3
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
@@ -680,7 +680,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             fontSize: 8,
             cellPadding: 3
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
@@ -719,7 +719,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             fontSize: 8,
             cellPadding: 3
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 10;
@@ -757,7 +757,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             fontSize: 8,
             cellPadding: 3
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
 
         yPos = (doc as any).lastAutoTable.finalY + 15;
@@ -815,7 +815,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             4: { cellWidth: 20 },  // Progress
             5: { cellWidth: 28 }   // Deadline
           },
-          didDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
       }
 

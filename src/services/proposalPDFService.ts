@@ -386,7 +386,7 @@ export class ProposalPDFGenerator {
       body: tableData,
       theme: 'grid',
       margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
-      didDrawPage: this.getDidDrawPage(),
+      willDrawPage: this.getDidDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -480,7 +480,7 @@ export class ProposalPDFGenerator {
       body: tableData,
       theme: 'grid',
       margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
-      didDrawPage: this.getDidDrawPage(),
+      willDrawPage: this.getDidDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -536,7 +536,7 @@ export class ProposalPDFGenerator {
       body: tableData,
       theme: 'grid',
       margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
-      didDrawPage: this.getDidDrawPage(),
+      willDrawPage: this.getDidDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -607,7 +607,7 @@ export class ProposalPDFGenerator {
       body: pricingData,
       theme: 'grid',
       margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
-      didDrawPage: this.getDidDrawPage(),
+      willDrawPage: this.getDidDrawPage(),
       styles: {
         fontSize: 10,
         cellPadding: 4,
