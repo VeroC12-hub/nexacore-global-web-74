@@ -424,14 +424,14 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             overflow: 'linebreak'
           },
           columnStyles: {
-            0: { cellWidth: 45 },  // Project
-            1: { cellWidth: 30 },  // Client
-            2: { cellWidth: 28 },  // Service
-            3: { cellWidth: 22 },  // Status
-            4: { cellWidth: 18 },  // Priority
-            5: { cellWidth: 16 },  // Progress
-            6: { cellWidth: 20 },  // Budget
-            7: { cellWidth: 22 }   // Deadline
+            0: { cellWidth: 30 },  // Project
+            1: { cellWidth: 22 },  // Client
+            2: { cellWidth: 20 },  // Service
+            3: { cellWidth: 20 },  // Status
+            4: { cellWidth: 16 },  // Priority
+            5: { cellWidth: 15 },  // Progress
+            6: { cellWidth: 24 },  // Budget
+            7: { cellWidth: 27 }   // Deadline
           },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
@@ -801,12 +801,12 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             overflow: 'linebreak'
           },
           columnStyles: {
-            0: { cellWidth: 50 },  // Project
-            1: { cellWidth: 35 },  // Client
-            2: { cellWidth: 25 },  // Status
+            0: { cellWidth: 46 },  // Project
+            1: { cellWidth: 34 },  // Client
+            2: { cellWidth: 24 },  // Status
             3: { cellWidth: 20 },  // Priority
             4: { cellWidth: 20 },  // Progress
-            5: { cellWidth: 28 }   // Deadline
+            5: { cellWidth: 30 }   // Deadline
           },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
@@ -1008,12 +1008,11 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
                       >
                         {project.title}
                       </Label>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                        project.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                        project.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                        project.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${project.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                          project.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                            project.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-700'
+                        }`}>
                         {formatPriority(project.priority)}
                       </span>
                     </div>

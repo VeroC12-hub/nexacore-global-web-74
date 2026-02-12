@@ -351,13 +351,13 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
             overflow: 'linebreak'
           },
           columnStyles: {
-            0: { cellWidth: 40 },
-            1: { cellWidth: 35 },
+            0: { cellWidth: 38 },
+            1: { cellWidth: 32 },
             2: { cellWidth: 22 },
             3: { cellWidth: 18 },
             4: { cellWidth: 16 },
             5: { cellWidth: 22 },
-            6: { cellWidth: 25 }
+            6: { cellWidth: 26 }
           }
         });
 
@@ -806,11 +806,10 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
                       >
                         {project.title}
                       </Label>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                        project.priority === 'high' ? 'bg-red-100 text-red-700' :
-                        project.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${project.priority === 'high' ? 'bg-red-100 text-red-700' :
+                          project.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-700'
+                        }`}>
                         {formatPriority(project.priority)}
                       </span>
                     </div>

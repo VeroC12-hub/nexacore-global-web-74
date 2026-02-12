@@ -371,15 +371,15 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
             overflow: 'linebreak'
           },
           columnStyles: {
-            0: { cellWidth: 38 },  // Task
-            1: { cellWidth: 48 },  // Description
-            2: { cellWidth: 24 },  // Assignee
-            3: { cellWidth: 24 },  // Project
-            4: { cellWidth: 18 },  // Status
-            5: { cellWidth: 16 },  // Priority
-            6: { cellWidth: 20 },  // Due Date
-            7: { cellWidth: 11 },  // Est.
-            8: { cellWidth: 11 }   // Act.
+            0: { cellWidth: 28 },  // Task
+            1: { cellWidth: 34 },  // Description
+            2: { cellWidth: 20 },  // Assignee
+            3: { cellWidth: 20 },  // Project
+            4: { cellWidth: 16 },  // Status
+            5: { cellWidth: 14 },  // Priority
+            6: { cellWidth: 18 },  // Due Date
+            7: { cellWidth: 12 },  // Est.
+            8: { cellWidth: 12 }   // Act.
           },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
@@ -388,113 +388,113 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
       } else {
         // DETAILED VIEW - Individual sections for each task
         tasksToExport.forEach((task, index) => {
-        // Start each task on a new page (except the first which uses the cover page)
-        if (index > 0) {
-          yPos = newLetterheadPage(doc, letterheadImg);
-        }
-
-        // ── Task header banner ──
-        doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(255, 255, 255);
-        const taskHeader = tasksToExport.length === 1 ? 'TASK INFORMATION' : `TASK ${index + 1} OF ${tasksToExport.length}`;
-        doc.text(taskHeader, pageWidth / 2, yPos + 6, { align: 'center' });
-        yPos += 14;
-
-        // ── Task title (standalone, prominent) ──
-        doc.setFontSize(13);
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        const titleLines = doc.splitTextToSize(task.title, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT);
-        doc.text(titleLines, LETTERHEAD.MARGIN_LEFT, yPos);
-        yPos += titleLines.length * 5.5 + 4;
-
-        // ── Metadata table (compact, NO description) ──
-        const labelW = 35;
-        const valW = (pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - labelW * 2 - 4) / 2;
-        const metadataRows = [
-          [
-            { content: 'ASSIGNED TO', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            { content: task.assignee || 'Unassigned' },
-            { content: 'PROJECT', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            { content: task.project_title || 'N/A' },
-          ],
-          [
-            { content: 'STATUS', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            { content: formatStatus(task.status) },
-            { content: 'PRIORITY', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            { content: formatPriority(task.priority) },
-          ],
-          [
-            { content: 'DUE DATE', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            { content: formatDate(task.due_date) },
-            { content: 'CREATED', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            { content: formatDate(task.created_at) },
-          ],
-          [
-            { content: 'ESTIMATED', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            { content: task.estimated_hours + ' hrs' },
-            { content: 'ACTUAL', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            { content: task.actual_hours + ' hrs' },
-          ],
-          [
-            { content: 'VARIANCE', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
-            {
-              content: `${task.actual_hours - task.estimated_hours} hrs`,
-              styles: {
-                textColor: task.actual_hours > task.estimated_hours ? [220, 38, 38] as [number, number, number] : [21, 128, 61] as [number, number, number],
-                fontStyle: 'bold' as const,
-              },
-            },
-            { content: '', styles: { fillColor: [255, 255, 255] } },
-            { content: '' },
-          ],
-        ];
-
-        autoTable(doc, {
-          startY: yPos,
-          body: metadataRows as any,
-          theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
-          styles: {
-            fontSize: 8.5,
-            cellPadding: 2.5,
-            lineColor: [210, 218, 225],
-            lineWidth: 0.25,
-          },
-          columnStyles: {
-            0: { cellWidth: labelW, fontStyle: 'bold', textColor: NAVY, halign: 'right', fontSize: 7.5 },
-            1: { cellWidth: valW, textColor: [40, 40, 40] },
-            2: { cellWidth: labelW, fontStyle: 'bold', textColor: NAVY, halign: 'right', fontSize: 7.5 },
-            3: { cellWidth: valW, textColor: [40, 40, 40] },
-          },
-          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
-        });
-
-        yPos = (doc as any).lastAutoTable.finalY + 6;
-
-        // ── Description: parse and render with proper formatting ──
-        if (task.description && task.description.trim()) {
-          // Section header for description
-          if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 20) {
+          // Start each task on a new page (except the first which uses the cover page)
+          if (index > 0) {
             yPos = newLetterheadPage(doc, letterheadImg);
           }
-          doc.setFillColor(245, 250, 252);
-          doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 2, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 8, 'F');
-          doc.setFontSize(9);
+
+          // ── Task header banner ──
+          doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
+          doc.rect(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(255, 255, 255);
+          const taskHeader = tasksToExport.length === 1 ? 'TASK INFORMATION' : `TASK ${index + 1} OF ${tasksToExport.length}`;
+          doc.text(taskHeader, pageWidth / 2, yPos + 6, { align: 'center' });
+          yPos += 14;
+
+          // ── Task title (standalone, prominent) ──
+          doc.setFontSize(13);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-          doc.text('DESCRIPTION', LETTERHEAD.MARGIN_LEFT + 2, yPos + 3);
-          yPos += 10;
+          const titleLines = doc.splitTextToSize(task.title, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT);
+          doc.text(titleLines, LETTERHEAD.MARGIN_LEFT, yPos);
+          yPos += titleLines.length * 5.5 + 4;
 
-          // Parse description into structured blocks and render
-          const blocks = parseContent(task.description);
-          yPos = renderContentToPDF(doc, blocks, yPos, letterheadImg);
-        }
+          // ── Metadata table (compact, NO description) ──
+          const labelW = 35;
+          const valW = (pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - labelW * 2) / 2;
+          const metadataRows = [
+            [
+              { content: 'ASSIGNED TO', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              { content: task.assignee || 'Unassigned' },
+              { content: 'PROJECT', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              { content: task.project_title || 'N/A' },
+            ],
+            [
+              { content: 'STATUS', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              { content: formatStatus(task.status) },
+              { content: 'PRIORITY', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              { content: formatPriority(task.priority) },
+            ],
+            [
+              { content: 'DUE DATE', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              { content: formatDate(task.due_date) },
+              { content: 'CREATED', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              { content: formatDate(task.created_at) },
+            ],
+            [
+              { content: 'ESTIMATED', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              { content: task.estimated_hours + ' hrs' },
+              { content: 'ACTUAL', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              { content: task.actual_hours + ' hrs' },
+            ],
+            [
+              { content: 'VARIANCE', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+              {
+                content: `${task.actual_hours - task.estimated_hours} hrs`,
+                styles: {
+                  textColor: task.actual_hours > task.estimated_hours ? [220, 38, 38] as [number, number, number] : [21, 128, 61] as [number, number, number],
+                  fontStyle: 'bold' as const,
+                },
+              },
+              { content: '', styles: { fillColor: [255, 255, 255] } },
+              { content: '' },
+            ],
+          ];
 
-        yPos += 6;
+          autoTable(doc, {
+            startY: yPos,
+            body: metadataRows as any,
+            theme: 'grid',
+            margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
+            styles: {
+              fontSize: 8.5,
+              cellPadding: 2.5,
+              lineColor: [210, 218, 225],
+              lineWidth: 0.25,
+            },
+            columnStyles: {
+              0: { cellWidth: labelW, fontStyle: 'bold', textColor: NAVY, halign: 'right', fontSize: 7.5 },
+              1: { cellWidth: valW, textColor: [40, 40, 40] },
+              2: { cellWidth: labelW, fontStyle: 'bold', textColor: NAVY, halign: 'right', fontSize: 7.5 },
+              3: { cellWidth: valW, textColor: [40, 40, 40] },
+            },
+            willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
+          });
+
+          yPos = (doc as any).lastAutoTable.finalY + 6;
+
+          // ── Description: parse and render with proper formatting ──
+          if (task.description && task.description.trim()) {
+            // Section header for description
+            if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 20) {
+              yPos = newLetterheadPage(doc, letterheadImg);
+            }
+            doc.setFillColor(245, 250, 252);
+            doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 2, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 8, 'F');
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+            doc.text('DESCRIPTION', LETTERHEAD.MARGIN_LEFT + 2, yPos + 3);
+            yPos += 10;
+
+            // Parse description into structured blocks and render
+            const blocks = parseContent(task.description);
+            yPos = renderContentToPDF(doc, blocks, yPos, letterheadImg);
+          }
+
+          yPos += 6;
         });
       }
 
@@ -669,12 +669,12 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
             overflow: 'linebreak'
           },
           columnStyles: {
-            0: { cellWidth: 48 },  // Task
-            1: { cellWidth: 32 },  // Project
-            2: { cellWidth: 32 },  // Assignee
-            3: { cellWidth: 23 },  // Status
+            0: { cellWidth: 44 },  // Task
+            1: { cellWidth: 30 },  // Project
+            2: { cellWidth: 30 },  // Assignee
+            3: { cellWidth: 24 },  // Status
             4: { cellWidth: 20 },  // Priority
-            5: { cellWidth: 23 }   // Due Date
+            5: { cellWidth: 26 }   // Due Date
           },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
@@ -876,12 +876,11 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
                       >
                         {task.title}
                       </Label>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${
-                        task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                        task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                          task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                            task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-700'
+                        }`}>
                         {formatPriority(task.priority)}
                       </span>
                     </div>

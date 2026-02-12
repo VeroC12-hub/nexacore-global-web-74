@@ -135,22 +135,22 @@ export class ProposalPDFGenerator {
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...this.brandColors.navy);
-    this.doc.text('PREPARED FOR:', LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 8);
+    this.doc.text('PREPARED FOR:', LETTERHEAD.MARGIN_LEFT + 4, this.yPos + 8);
 
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...COLORS.textGray);
-    this.doc.text(this.proposal.client_name, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 18);
+    this.doc.text(this.proposal.client_name, LETTERHEAD.MARGIN_LEFT + 4, this.yPos + 18);
 
     if (this.proposal.client_company) {
       this.doc.setFontSize(11);
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text(this.proposal.client_company, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 28);
+      this.doc.text(this.proposal.client_company, LETTERHEAD.MARGIN_LEFT + 4, this.yPos + 28);
     }
 
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
-    this.doc.text(this.proposal.client_email, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 38);
+    this.doc.text(this.proposal.client_email, LETTERHEAD.MARGIN_LEFT + 4, this.yPos + 38);
 
     this.yPos += 55;
 
@@ -231,7 +231,7 @@ export class ProposalPDFGenerator {
     this.doc.setTextColor(...COLORS.textGray);
 
     tocItems.forEach(item => {
-      this.doc.text(item, LETTERHEAD.MARGIN_LEFT + 2, this.yPos);
+      this.doc.text(item, LETTERHEAD.MARGIN_LEFT, this.yPos);
       this.yPos += 8;
     });
 
@@ -255,8 +255,8 @@ export class ProposalPDFGenerator {
 
     // Key Benefits
     if (this.proposal.executive_summary.key_benefits &&
-        this.proposal.executive_summary.key_benefits.length > 0 &&
-        this.proposal.executive_summary.key_benefits.some(b => b.trim())) {
+      this.proposal.executive_summary.key_benefits.length > 0 &&
+      this.proposal.executive_summary.key_benefits.some(b => b.trim())) {
       this.addSubheader('Key Benefits');
       this.proposal.executive_summary.key_benefits
         .filter(benefit => benefit.trim())
@@ -264,10 +264,10 @@ export class ProposalPDFGenerator {
           this.doc.setFontSize(10);
           this.doc.setFont('helvetica', 'normal');
           this.doc.setTextColor(...COLORS.textGray);
-          this.doc.text('•', LETTERHEAD.MARGIN_LEFT + 2, this.yPos);
-          const lines = this.doc.splitTextToSize(benefit, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 12);
+          this.doc.text('•', LETTERHEAD.MARGIN_LEFT, this.yPos);
+          const lines = this.doc.splitTextToSize(benefit, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 10);
           lines.forEach((line: string) => {
-            this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 10, this.yPos);
+            this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 8, this.yPos);
             this.yPos += 6;
           });
           this.yPos += 2;
@@ -298,15 +298,15 @@ export class ProposalPDFGenerator {
     }
 
     if (this.proposal.scope_of_work.inclusions &&
-        this.proposal.scope_of_work.inclusions.length > 0 &&
-        this.proposal.scope_of_work.inclusions.some(i => i.trim())) {
+      this.proposal.scope_of_work.inclusions.length > 0 &&
+      this.proposal.scope_of_work.inclusions.some(i => i.trim())) {
       this.addSubheader('What\'s Included');
       this.addBulletList(this.proposal.scope_of_work.inclusions.filter(i => i.trim()));
     }
 
     if (this.proposal.scope_of_work.exclusions &&
-        this.proposal.scope_of_work.exclusions.length > 0 &&
-        this.proposal.scope_of_work.exclusions.some(e => e.trim())) {
+      this.proposal.scope_of_work.exclusions.length > 0 &&
+      this.proposal.scope_of_work.exclusions.some(e => e.trim())) {
       this.addSubheader('Out of Scope');
       this.addBulletList(this.proposal.scope_of_work.exclusions.filter(e => e.trim()));
     }
@@ -356,8 +356,8 @@ export class ProposalPDFGenerator {
     }
 
     if (this.proposal.methodology.tools_technologies &&
-        this.proposal.methodology.tools_technologies.length > 0 &&
-        this.proposal.methodology.tools_technologies.some(t => t.trim())) {
+      this.proposal.methodology.tools_technologies.length > 0 &&
+      this.proposal.methodology.tools_technologies.some(t => t.trim())) {
       this.addSubheader('Tools & Technologies');
       this.addBulletList(this.proposal.methodology.tools_technologies.filter(t => t.trim()));
     }
@@ -665,12 +665,12 @@ export class ProposalPDFGenerator {
     this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...this.brandColors.navy);
-    this.doc.text(title, LETTERHEAD.MARGIN_LEFT + 2, this.yPos);
+    this.doc.text(title, LETTERHEAD.MARGIN_LEFT, this.yPos);
 
     this.yPos += 8;
   }
 
-  private addParagraph(text: string, leftMargin: number = LETTERHEAD.MARGIN_LEFT + 2): void {
+  private addParagraph(text: string, leftMargin: number = LETTERHEAD.MARGIN_LEFT): void {
     const blocks = parseContent(text);
     if (blocks.length > 0) {
       // Use the structured content renderer for rich text (handles markdown, lists, tables, etc.)
@@ -700,11 +700,11 @@ export class ProposalPDFGenerator {
       this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(...COLORS.textGray);
-      this.doc.text('•', LETTERHEAD.MARGIN_LEFT + 2, this.yPos);
+      this.doc.text('•', LETTERHEAD.MARGIN_LEFT, this.yPos);
 
-      const lines = this.doc.splitTextToSize(item, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 12);
+      const lines = this.doc.splitTextToSize(item, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 10);
       lines.forEach((line: string) => {
-        this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 10, this.yPos);
+        this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 8, this.yPos);
         this.yPos += 6;
       });
 

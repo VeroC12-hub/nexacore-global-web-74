@@ -169,7 +169,7 @@ export async function generateInvoicePDF(
     startY: y,
     body: detailRows,
     theme: 'plain',
-    margin: { left: leftM, right: pageWidth - LETTERHEAD.MARGIN_RIGHT },
+    margin: { left: leftM, right: LETTERHEAD.MARGIN_RIGHT },
     tableWidth: contentWidth * 0.55,
     styles: { fontSize: 9, cellPadding: 2 },
     columnStyles: {
