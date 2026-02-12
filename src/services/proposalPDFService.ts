@@ -107,20 +107,20 @@ export class ProposalPDFGenerator {
     this.doc.setFontSize(24);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...this.brandColors.navy);
-    this.doc.text('PROJECT PROPOSAL', 14, this.yPos);
+    this.doc.text('PROJECT PROPOSAL', LETTERHEAD.MARGIN_LEFT, this.yPos);
     this.yPos += 8;
 
     // Tagline
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'italic');
     this.doc.setTextColor(...COLORS.darkGray);
-    this.doc.text('Engineering Global Innovation with Excellence', 14, this.yPos);
+    this.doc.text('Engineering Global Innovation with Excellence', LETTERHEAD.MARGIN_LEFT, this.yPos);
     this.yPos += 15;
 
     // Proposal number and date (centered)
     const centerX = this.pageWidth / 2;
     this.doc.setFillColor(...this.brandColors.teal);
-    this.doc.rect(14, this.yPos, this.pageWidth - 28, 12, 'F');
+    this.doc.rect(LETTERHEAD.MARGIN_LEFT, this.yPos, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 12, 'F');
     this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...COLORS.white);
@@ -129,27 +129,27 @@ export class ProposalPDFGenerator {
 
     // Client information box
     this.doc.setFillColor(...COLORS.mediumGray);
-    this.doc.rect(14, this.yPos, this.pageWidth - 28, 45, 'F');
+    this.doc.rect(LETTERHEAD.MARGIN_LEFT, this.yPos, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 45, 'F');
 
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...this.brandColors.navy);
-    this.doc.text('PREPARED FOR:', 20, this.yPos + 10);
+    this.doc.text('PREPARED FOR:', LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 10);
 
     this.doc.setFontSize(14);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...COLORS.textGray);
-    this.doc.text(this.proposal.client_name, 20, this.yPos + 20);
+    this.doc.text(this.proposal.client_name, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 20);
 
     if (this.proposal.client_company) {
       this.doc.setFontSize(11);
       this.doc.setFont('helvetica', 'normal');
-      this.doc.text(this.proposal.client_company, 20, this.yPos + 28);
+      this.doc.text(this.proposal.client_company, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 28);
     }
 
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
-    this.doc.text(this.proposal.client_email, 20, this.yPos + 36);
+    this.doc.text(this.proposal.client_email, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 36);
 
     this.yPos += 60;
 
@@ -157,7 +157,7 @@ export class ProposalPDFGenerator {
     this.doc.setFontSize(18);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...this.brandColors.navy);
-    const titleLines = this.doc.splitTextToSize(this.proposal.title, this.pageWidth - 40);
+    const titleLines = this.doc.splitTextToSize(this.proposal.title, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 4);
     titleLines.forEach((line: string) => {
       this.doc.text(line, centerX, this.yPos, { align: 'center' });
       this.yPos += 8;
@@ -230,7 +230,7 @@ export class ProposalPDFGenerator {
     this.doc.setTextColor(...COLORS.textGray);
 
     tocItems.forEach(item => {
-      this.doc.text(item, 20, this.yPos);
+      this.doc.text(item, LETTERHEAD.MARGIN_LEFT + 2, this.yPos);
       this.yPos += 8;
     });
 
@@ -263,10 +263,10 @@ export class ProposalPDFGenerator {
           this.doc.setFontSize(10);
           this.doc.setFont('helvetica', 'normal');
           this.doc.setTextColor(...COLORS.textGray);
-          this.doc.text('•', 20, this.yPos);
-          const lines = this.doc.splitTextToSize(benefit, this.pageWidth - 50);
+          this.doc.text('•', LETTERHEAD.MARGIN_LEFT + 2, this.yPos);
+          const lines = this.doc.splitTextToSize(benefit, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 12);
           lines.forEach((line: string) => {
-            this.doc.text(line, 28, this.yPos);
+            this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 10, this.yPos);
             this.yPos += 6;
           });
           this.yPos += 2;
@@ -332,23 +332,23 @@ export class ProposalPDFGenerator {
         this.checkPageBreak(50);
 
         this.doc.setFillColor(...this.brandColors.mediumGray);
-        this.doc.rect(20, this.yPos - 2, this.pageWidth - 40, 8, 'F');
+        this.doc.rect(LETTERHEAD.MARGIN_LEFT + 2, this.yPos - 2, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 4, 8, 'F');
 
         this.doc.setFontSize(11);
         this.doc.setFont('helvetica', 'bold');
         this.doc.setTextColor(...this.brandColors.navy);
-        this.doc.text(`Phase ${phase.phase_number}: ${phase.title}`, 24, this.yPos + 4);
+        this.doc.text(`Phase ${phase.phase_number}: ${phase.title}`, LETTERHEAD.MARGIN_LEFT + 6, this.yPos + 4);
         this.yPos += 12;
 
         if (phase.description) {
-          this.addParagraph(phase.description, 24);
+          this.addParagraph(phase.description, LETTERHEAD.MARGIN_LEFT + 6);
         }
 
         if (phase.duration) {
           this.doc.setFontSize(9);
           this.doc.setFont('helvetica', 'italic');
           this.doc.setTextColor(...COLORS.darkGray);
-          this.doc.text(`Duration: ${phase.duration}`, 24, this.yPos);
+          this.doc.text(`Duration: ${phase.duration}`, LETTERHEAD.MARGIN_LEFT + 6, this.yPos);
           this.yPos += 8;
         }
       });
@@ -425,30 +425,30 @@ export class ProposalPDFGenerator {
       this.checkPageBreak(40);
 
       this.doc.setFillColor(...this.brandColors.mediumGray);
-      this.doc.rect(20, this.yPos - 2, this.pageWidth - 40, 8, 'F');
+      this.doc.rect(LETTERHEAD.MARGIN_LEFT + 2, this.yPos - 2, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 4, 8, 'F');
 
       this.doc.setFontSize(11);
       this.doc.setFont('helvetica', 'bold');
       this.doc.setTextColor(...this.brandColors.navy);
-      this.doc.text(`${member.name} - ${member.role}`, 24, this.yPos + 4);
+      this.doc.text(`${member.name} - ${member.role}`, LETTERHEAD.MARGIN_LEFT + 6, this.yPos + 4);
       this.yPos += 12;
 
       if (member.bio) {
-        this.addParagraph(member.bio, 24);
+        this.addParagraph(member.bio, LETTERHEAD.MARGIN_LEFT + 6);
       }
 
       if (member.expertise && member.expertise.length > 0) {
         this.doc.setFontSize(9);
         this.doc.setFont('helvetica', 'bold');
         this.doc.setTextColor(...COLORS.darkGray);
-        this.doc.text('Expertise:', 24, this.yPos);
+        this.doc.text('Expertise:', LETTERHEAD.MARGIN_LEFT + 6, this.yPos);
         this.yPos += 6;
 
         this.doc.setFont('helvetica', 'normal');
         const expertiseText = member.expertise.join(', ');
-        const lines = this.doc.splitTextToSize(expertiseText, this.pageWidth - 55);
+        const lines = this.doc.splitTextToSize(expertiseText, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 4);
         lines.forEach((line: string) => {
-          this.doc.text(line, 24, this.yPos);
+          this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 6, this.yPos);
           this.yPos += 5;
         });
         this.yPos += 6;
@@ -648,7 +648,7 @@ export class ProposalPDFGenerator {
     this.checkPageBreak(30);
 
     this.doc.setFillColor(...this.brandColors.teal);
-    this.doc.rect(14, this.yPos - 2, this.pageWidth - 28, 10, 'F');
+    this.doc.rect(LETTERHEAD.MARGIN_LEFT, this.yPos - 2, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
 
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
@@ -664,17 +664,17 @@ export class ProposalPDFGenerator {
     this.doc.setFontSize(11);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...this.brandColors.navy);
-    this.doc.text(title, 20, this.yPos);
+    this.doc.text(title, LETTERHEAD.MARGIN_LEFT + 2, this.yPos);
 
     this.yPos += 8;
   }
 
-  private addParagraph(text: string, leftMargin: number = 20): void {
+  private addParagraph(text: string, leftMargin: number = LETTERHEAD.MARGIN_LEFT + 2): void {
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
     this.doc.setTextColor(...COLORS.textGray);
 
-    const lines = this.doc.splitTextToSize(text, this.pageWidth - leftMargin - 20);
+    const lines = this.doc.splitTextToSize(text, this.pageWidth - leftMargin - LETTERHEAD.MARGIN_RIGHT);
     lines.forEach((line: string) => {
       this.checkPageBreak();
       this.doc.text(line, leftMargin, this.yPos);
@@ -691,11 +691,11 @@ export class ProposalPDFGenerator {
       this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'normal');
       this.doc.setTextColor(...COLORS.textGray);
-      this.doc.text('•', 20, this.yPos);
+      this.doc.text('•', LETTERHEAD.MARGIN_LEFT + 2, this.yPos);
 
-      const lines = this.doc.splitTextToSize(item, this.pageWidth - 50);
+      const lines = this.doc.splitTextToSize(item, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 12);
       lines.forEach((line: string) => {
-        this.doc.text(line, 28, this.yPos);
+        this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 10, this.yPos);
         this.yPos += 6;
       });
 

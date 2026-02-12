@@ -277,7 +277,6 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
       let yPos = LETTERHEAD.CONTENT_TOP;
 
       const tealColor: [number, number, number] = [0, 152, 166];
-      const limeColor: [number, number, number] = [205, 220, 57];
       const navyColor: [number, number, number] = [30, 58, 95];
 
       addLetterheadToPage(doc, letterheadImg);
@@ -285,13 +284,13 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-      doc.text('ERP Project Management Report', 14, yPos);
+      doc.text('ERP Project Management Report', LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 6;
 
       doc.setFontSize(8);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(100, 100, 100);
-      doc.text('Engineering Global Innovation with Excellence', 14, yPos);
+      doc.text('Engineering Global Innovation with Excellence', LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 8;
 
       doc.setFontSize(8);
@@ -303,16 +302,16 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}`, 14, yPos);
+      })}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 4;
-      doc.text(`Report Type: ${includeStatistics ? 'Comprehensive with Statistics' : 'Project List Only'}`, 14, yPos);
+      doc.text(`Report Type: ${includeStatistics ? 'Comprehensive with Statistics' : 'Project List Only'}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 4;
-      doc.text(`Projects: ${stats.total} | Layout: ${viewMode === 'compact' && projectsToExport.length > 1 ? 'Compact' : 'Detailed'}`, 14, yPos);
+      doc.text(`Projects: ${stats.total} | Layout: ${viewMode === 'compact' && projectsToExport.length > 1 ? 'Compact' : 'Detailed'}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 10;
 
       if (viewMode === 'compact' && projectsToExport.length > 1) {
         doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.rect(14, yPos - 4, pageWidth - 28, 10, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
@@ -334,7 +333,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           head: [['Project', 'Department', 'Status', 'Priority', 'Progress', 'Budget', 'Due Date']],
           body: compactTableData,
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
@@ -371,7 +370,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           }
 
           doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-          doc.rect(14, yPos, pageWidth - 28, 10, 'F');
+          doc.rect(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(255, 255, 255);
@@ -443,7 +442,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
             startY: yPos,
             body: detailsData as any,
             theme: 'grid',
-            margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+            margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
             willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
             styles: {
               fontSize: 9,
@@ -462,7 +461,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
                 fontSize: 8
               },
               1: {
-                cellWidth: pageWidth - 73,
+                cellWidth: pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 45,
                 textColor: [40, 40, 40],
                 valign: 'top'
               }
@@ -480,7 +479,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           if (index < projectsToExport.length - 1) {
             doc.setDrawColor(tealColor[0], tealColor[1], tealColor[2]);
             doc.setLineWidth(0.5);
-            doc.line(14, yPos, pageWidth - 14, yPos);
+            doc.line(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_RIGHT, yPos);
             yPos += 12;
           }
         });
@@ -492,11 +491,11 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
 
         yPos = LETTERHEAD.CONTENT_TOP;
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('SUMMARY STATISTICS', 16, yPos + 2);
+        doc.text('SUMMARY STATISTICS', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const statsTableData = [
@@ -516,7 +515,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           head: [statsTableData[0]],
           body: statsTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
@@ -534,11 +533,11 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
         yPos = (doc as any).lastAutoTable.finalY + 10;
 
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('PRIORITY BREAKDOWN', 16, yPos + 2);
+        doc.text('PRIORITY BREAKDOWN', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const priorityTableData = [
@@ -553,7 +552,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           head: [priorityTableData[0]],
           body: priorityTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,
@@ -571,11 +570,11 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
         yPos = (doc as any).lastAutoTable.finalY + 10;
 
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('FINANCIAL SUMMARY', 16, yPos + 2);
+        doc.text('FINANCIAL SUMMARY', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const financialTableData = [
@@ -591,7 +590,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           head: [financialTableData[0]],
           body: financialTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
           headStyles: {
             fillColor: tealColor,

@@ -346,21 +346,20 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
 
       // Define colors matching company branding
       const tealColor: [number, number, number] = [0, 152, 166]; // #0098A6
-      const limeColor: [number, number, number] = [205, 220, 57]; // #CDDC39
       const navyColor: [number, number, number] = [30, 58, 95]; // #1E3A5F
 
       // Add title
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-      doc.text('Project Management Report', 14, yPos);
+      doc.text('Project Management Report', LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 6;
 
       // Add tagline
       doc.setFontSize(8);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(100, 100, 100);
-      doc.text('Engineering Global Innovation with Excellence', 14, yPos);
+      doc.text('Engineering Global Innovation with Excellence', LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 8;
 
       // Add report info with styling
@@ -373,18 +372,18 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}`, 14, yPos);
+      })}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 4;
-      doc.text(`Report Type: ${includeStatistics ? 'Comprehensive with Statistics' : 'Project List Only'}`, 14, yPos);
+      doc.text(`Report Type: ${includeStatistics ? 'Comprehensive with Statistics' : 'Project List Only'}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 4;
-      doc.text(`Projects: ${stats.total} | Layout: ${viewMode === 'compact' && projectsToExport.length > 1 ? 'Compact' : 'Detailed'}`, 14, yPos);
+      doc.text(`Projects: ${stats.total} | Layout: ${viewMode === 'compact' && projectsToExport.length > 1 ? 'Compact' : 'Detailed'}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 10;
 
       // Choose between compact and detailed view
       if (viewMode === 'compact' && projectsToExport.length > 1) {
         // COMPACT VIEW - All projects in grouped table
         doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.rect(14, yPos - 4, pageWidth - 28, 10, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
@@ -408,7 +407,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [['Project', 'Client', 'Service', 'Status', 'Priority', 'Progress', 'Budget', 'Deadline']],
           body: compactTableData,
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -449,7 +448,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
 
           // Project header with number and professional styling
           doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-          doc.rect(14, yPos, pageWidth - 28, 10, 'F');
+          doc.rect(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
           doc.setFontSize(11);
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(255, 255, 255);
@@ -543,7 +542,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             startY: yPos,
             body: detailsData as any,
             theme: 'grid',
-            margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+            margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
             styles: {
               fontSize: 9,
               cellPadding: 3,
@@ -561,7 +560,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
                 fontSize: 8
               },
               1: {
-                cellWidth: pageWidth - 73,
+                cellWidth: pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 45,
                 textColor: [40, 40, 40],
                 valign: 'top'
               }
@@ -588,7 +587,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           if (index < projectsToExport.length - 1) {
             doc.setDrawColor(tealColor[0], tealColor[1], tealColor[2]);
             doc.setLineWidth(0.5);
-            doc.line(14, yPos, pageWidth - 14, yPos);
+            doc.line(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_RIGHT, yPos);
             yPos += 12;
           }
         });
@@ -603,11 +602,11 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
         yPos = LETTERHEAD.CONTENT_TOP;
         // Summary section with background
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('SUMMARY STATISTICS', 16, yPos + 2);
+        doc.text('SUMMARY STATISTICS', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         // Statistics table with company colors
@@ -629,7 +628,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [statsTableData[0]],
           body: statsTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -648,11 +647,11 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
 
         // Priority breakdown section
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('PRIORITY BREAKDOWN', 16, yPos + 2);
+        doc.text('PRIORITY BREAKDOWN', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const priorityTableData = [
@@ -668,7 +667,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [priorityTableData[0]],
           body: priorityTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -687,11 +686,11 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
 
         // Financial summary section
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('FINANCIAL SUMMARY', 16, yPos + 2);
+        doc.text('FINANCIAL SUMMARY', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const financialTableData = [
@@ -707,7 +706,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [financialTableData[0]],
           body: financialTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -726,11 +725,11 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
 
         // Hours tracking section
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('HOURS TRACKING', 16, yPos + 2);
+        doc.text('HOURS TRACKING', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const hoursTableData = [
@@ -745,7 +744,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [hoursTableData[0]],
           body: hoursTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -773,11 +772,11 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
         }
 
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('QUICK REFERENCE SUMMARY', 16, yPos + 2);
+        doc.text('QUICK REFERENCE SUMMARY', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const projectTableData = projectsToExport.map(project => [
@@ -794,7 +793,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           head: [['Project', 'Client', 'Status', 'Priority', 'Progress', 'Deadline']],
           body: projectTableData,
           theme: 'striped',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],

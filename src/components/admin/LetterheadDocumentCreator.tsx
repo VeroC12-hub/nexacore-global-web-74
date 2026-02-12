@@ -130,7 +130,6 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       case 'table':
         body += '<table class="doc-table">\n';
         if (block.rows && block.rows.length > 0) {
-          // First row as header
           body += '  <thead><tr>';
           block.rows[0].forEach(cell => { body += `<th>${cell}</th>`; });
           body += '</tr></thead>\n  <tbody>\n';
@@ -164,7 +163,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
     body {
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
       color: #2d3748;
-      background: #e8edf2;
+      background: #d0d5dc;
       padding: 20px;
       line-height: 1.6;
       font-size: 13px;
@@ -174,152 +173,198 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       min-height: 297mm;
       margin: 0 auto;
       background: white;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
       position: relative;
-      display: flex;
-      flex-direction: column;
+      overflow: hidden;
     }
 
-    /* ─── LETTERHEAD HEADER ─── */
-    .letterhead-header {
-      background: linear-gradient(135deg, #1E3A5F 0%, #0098A6 100%);
-      color: white;
-      padding: 32px 48px 24px;
+    /* ─── HEADER: Diagonal triangles matching letterhead PDF ─── */
+    .lh-header {
       position: relative;
-      flex-shrink: 0;
+      height: 100px;
+      overflow: hidden;
     }
-    .letterhead-header::after {
-      content: '';
+    /* Large teal triangle from top-left */
+    .lh-header .tri-teal {
       position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #CDDC39, #0098A6, #1E3A5F);
+      top: 0; left: 0;
+      width: 0; height: 0;
+      border-top: 100px solid #0098A6;
+      border-right: 260px solid transparent;
     }
-    .lh-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+    /* Smaller olive/lime triangle overlapping */
+    .lh-header .tri-olive {
+      position: absolute;
+      top: 0; left: 0;
+      width: 0; height: 0;
+      border-top: 65px solid #8B9A2E;
+      border-right: 170px solid transparent;
     }
-    .lh-brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
+    /* Company name + tagline on the right side */
+    .lh-header .brand {
+      position: absolute;
+      top: 18px;
+      right: 40px;
+      text-align: right;
     }
-    .lh-brand img { width: 52px; height: 52px; }
-    .lh-brand-text h1 {
-      font-size: 28px; font-weight: 800;
-      letter-spacing: 3px; line-height: 1;
+    .lh-header .brand-logo {
+      width: 44px; height: 44px;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 12px;
     }
-    .lh-brand-text span {
-      font-size: 9px; letter-spacing: 5px;
-      text-transform: uppercase; opacity: 0.7;
+    .lh-header .brand h1 {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      color: #1E3A5F;
+      line-height: 1;
+      display: inline-block;
+      vertical-align: middle;
     }
-    .lh-contact {
-      text-align: right; font-size: 11px;
-      opacity: 0.85; line-height: 1.7;
+    .lh-header .brand .tagline {
+      display: block;
+      font-size: 8px;
+      letter-spacing: 3.5px;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-top: 4px;
     }
 
-    /* ─── CONTENT ─── */
+    /* ─── WATERMARK: Faded NexaCore logos in background ─── */
+    .watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.03;
+      font-size: 120px;
+      font-weight: 900;
+      letter-spacing: 12px;
+      color: #0098A6;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ─── CONTENT AREA ─── */
     .content {
-      padding: 36px 48px;
-      flex: 1;
+      padding: 20px 48px 24px;
+      position: relative;
+      z-index: 1;
+      min-height: calc(297mm - 100px - 60px);
     }
     .doc-title-bar {
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      border-bottom: 2px solid #0098A6;
-      padding-bottom: 12px;
-      margin-bottom: 24px;
+      border-bottom: 2.5px solid #0098A6;
+      padding-bottom: 10px;
+      margin-bottom: 22px;
     }
     .doc-title-bar h2 {
-      font-size: 20px; font-weight: 700;
+      font-size: 19px; font-weight: 700;
       color: #1E3A5F;
     }
     .doc-title-bar .doc-date {
-      font-size: 12px; color: #718096;
+      font-size: 11px; color: #718096;
     }
 
     /* Headings */
     .doc-heading {
       color: #1E3A5F;
-      margin: 22px 0 10px;
+      margin: 20px 0 8px;
       padding-bottom: 4px;
     }
     h2.doc-heading {
-      font-size: 16px;
+      font-size: 15px;
       border-bottom: 2px solid #0098A6;
-      padding-bottom: 6px;
+      padding-bottom: 5px;
     }
-    h3.doc-heading { font-size: 14px; color: #0098A6; }
-    h4.doc-heading { font-size: 13px; color: #4a5568; }
+    h3.doc-heading { font-size: 13.5px; color: #0098A6; }
+    h4.doc-heading { font-size: 12.5px; color: #4a5568; }
 
     /* Paragraphs */
     .doc-para {
-      margin-bottom: 12px;
-      color: #4a5568;
+      margin-bottom: 10px;
+      color: #374151;
       text-align: justify;
+      line-height: 1.65;
     }
 
     /* Tables */
     .doc-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 16px 0 20px;
-      font-size: 12.5px;
+      margin: 14px 0 18px;
+      font-size: 12px;
     }
     .doc-table th {
-      background: #1E3A5F;
+      background: #0098A6;
       color: white;
-      padding: 10px 14px;
+      padding: 9px 12px;
       text-align: left;
       font-weight: 600;
-      font-size: 11px;
+      font-size: 10.5px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .doc-table td {
-      padding: 10px 14px;
-      border-bottom: 1px solid #e2e8f0;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e5e7eb;
+      color: #374151;
     }
-    .doc-table tbody tr:nth-child(even) { background: #f7fafc; }
+    .doc-table tbody tr:nth-child(even) { background: #f9fafb; }
+    .doc-table tbody tr:hover { background: #f0fdf4; }
 
     /* Lists */
     .doc-list {
-      margin: 10px 0 16px;
-      padding-left: 22px;
+      margin: 8px 0 14px;
+      padding-left: 20px;
     }
     .doc-list li {
-      margin-bottom: 6px;
-      color: #4a5568;
+      margin-bottom: 5px;
+      color: #374151;
+      line-height: 1.5;
+    }
+    .doc-list li::marker {
+      color: #0098A6;
     }
 
-    /* ─── LETTERHEAD FOOTER ─── */
-    .letterhead-footer {
-      background: linear-gradient(135deg, #0098A6, #1E3A5F);
-      color: white;
-      padding: 18px 48px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
+    /* ─── FOOTER: Matching letterhead PDF ─── */
+    .lh-footer {
       position: relative;
+      padding: 0;
       flex-shrink: 0;
     }
-    .letterhead-footer::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #1E3A5F, #0098A6, #CDDC39);
+    .lh-footer .footer-content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 28px;
+      padding: 12px 48px;
+      font-size: 10px;
+      color: #4b5563;
     }
-    .lf-items { display: flex; gap: 24px; opacity: 0.85; }
-    .lf-copy { opacity: 0.6; font-size: 10px; }
+    .lh-footer .footer-content span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    /* Colored gradient bar at very bottom */
+    .lh-footer .footer-bar {
+      height: 6px;
+      background: linear-gradient(90deg, #8B9A2E 0%, #0098A6 50%, #1E3A5F 100%);
+    }
 
     @media print {
       body { background: white; padding: 0; }
       .page { box-shadow: none; min-height: auto; }
-      .letterhead-header, .letterhead-footer, .doc-table th, .doc-title-bar {
+      .lh-header .tri-teal,
+      .lh-header .tri-olive,
+      .doc-table th,
+      .doc-title-bar,
+      .lh-footer .footer-bar {
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
@@ -329,24 +374,22 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
 </head>
 <body>
   <div class="page">
-    <div class="letterhead-header">
-      <div class="lh-top">
-        <div class="lh-brand">
-          <img src="https://www.nexacore-innovations.com/nexacore-logo.png"
-               alt="NexaCore" onerror="this.style.display='none'">
-          <div class="lh-brand-text">
-            <h1>NEXACORE</h1>
-            <span>I N N O V A T I O N S</span>
-          </div>
-        </div>
-        <div class="lh-contact">
-          projects@nexacore-innovations.com<br>
-          +233 209 628 907<br>
-          www.nexacore-innovations.com
-        </div>
+    <!-- Header with diagonal triangles -->
+    <div class="lh-header">
+      <div class="tri-teal"></div>
+      <div class="tri-olive"></div>
+      <div class="brand">
+        <h1>NEXACORE</h1>
+        <img src="https://www.nexacore-innovations.com/nexacore-logo.png"
+             alt="" class="brand-logo" onerror="this.style.display='none'">
+        <span class="tagline">Engineering Global Innovation with Excellence</span>
       </div>
     </div>
 
+    <!-- Faded watermark -->
+    <div class="watermark">NEXACORE</div>
+
+    <!-- Main content -->
     <div class="content">
       <div class="doc-title-bar">
         <h2>${docTitle || 'Document'}</h2>
@@ -355,14 +398,15 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       ${body}
     </div>
 
-    <div class="letterhead-footer">
-      <div class="lf-items">
+    <!-- Footer with contact info + colored bar -->
+    <div class="lh-footer">
+      <div class="footer-content">
         <span>projects@nexacore-innovations.com</span>
         <span>+233 209 628 907</span>
         <span>www.nexacore-innovations.com</span>
         <span>Accra, Ghana</span>
       </div>
-      <div class="lf-copy">&copy; ${new Date().getFullYear()} NexaCore Innovations</div>
+      <div class="footer-bar"></div>
     </div>
   </div>
 

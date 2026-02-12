@@ -16,10 +16,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc =
 // ── Layout constants (A4 portrait = 210 × 297 mm) ──
 /** Safe content area inside the letterhead margins */
 export const LETTERHEAD = {
-  MARGIN_LEFT: 16,
-  MARGIN_RIGHT: 16,
-  CONTENT_TOP: 48,      // below header triangles + logo
-  CONTENT_BOTTOM: 32,   // above footer contact info + bar
+  MARGIN_LEFT: 18,
+  MARGIN_RIGHT: 18,
+  CONTENT_TOP: 46,      // below header triangles + logo
+  CONTENT_BOTTOM: 30,   // above footer contact info + bar
 } as const;
 
 // ── Cached letterhead image ─────────────────────────

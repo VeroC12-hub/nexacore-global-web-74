@@ -289,7 +289,6 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
 
       // Define colors matching company branding
       const tealColor: [number, number, number] = [0, 152, 166]; // #0098A6
-      const limeColor: [number, number, number] = [205, 220, 57]; // #CDDC39
       const navyColor: [number, number, number] = [30, 58, 95]; // #1E3A5F
 
       // Add letterhead to cover page
@@ -299,14 +298,14 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
       doc.setFontSize(16);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-      doc.text('Task Management Report', 14, yPos);
+      doc.text('Task Management Report', LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 6;
 
       // Add tagline
       doc.setFontSize(8);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(100, 100, 100);
-      doc.text('Engineering Global Innovation with Excellence', 14, yPos);
+      doc.text('Engineering Global Innovation with Excellence', LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 8;
 
       // Add report info with styling
@@ -319,18 +318,18 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      })}`, 14, yPos);
+      })}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 4;
-      doc.text(`Report Type: ${includeStatistics ? 'Comprehensive with Statistics' : 'Task List Only'}`, 14, yPos);
+      doc.text(`Report Type: ${includeStatistics ? 'Comprehensive with Statistics' : 'Task List Only'}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 4;
-      doc.text(`Tasks: ${stats.total} | Layout: ${viewMode === 'compact' && tasksToExport.length > 1 ? 'Compact' : 'Detailed'}`, 14, yPos);
+      doc.text(`Tasks: ${stats.total} | Layout: ${viewMode === 'compact' && tasksToExport.length > 1 ? 'Compact' : 'Detailed'}`, LETTERHEAD.MARGIN_LEFT, yPos);
       yPos += 10;
 
       // Choose between compact and detailed view
       if (viewMode === 'compact' && tasksToExport.length > 1) {
         // COMPACT VIEW - All tasks in grouped table
         doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.rect(14, yPos - 4, pageWidth - 28, 10, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
@@ -355,7 +354,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
           head: [['Task', 'Description', 'Assignee', 'Project', 'Status', 'Priority', 'Due Date', 'Est.', 'Act.']],
           body: compactTableData,
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -397,7 +396,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
 
         // Task header with number and professional styling
         doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
-        doc.rect(14, yPos, pageWidth - 28, 10, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(255, 255, 255);
@@ -458,7 +457,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
           startY: yPos,
           body: detailsData as any,
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           styles: {
             fontSize: 9,
             cellPadding: 3,
@@ -476,7 +475,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
               fontSize: 8
             },
             1: {
-              cellWidth: pageWidth - 73,
+              cellWidth: pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 45,
               textColor: [40, 40, 40],
               valign: 'top'
             }
@@ -503,7 +502,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
         if (index < tasksToExport.length - 1) {
           doc.setDrawColor(tealColor[0], tealColor[1], tealColor[2]);
           doc.setLineWidth(0.5);
-          doc.line(14, yPos, pageWidth - 14, yPos);
+          doc.line(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_RIGHT, yPos);
           yPos += 12;
         }
         });
@@ -518,11 +517,11 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
         yPos = LETTERHEAD.CONTENT_TOP;
         // Summary section with background
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('SUMMARY STATISTICS', 16, yPos + 2);
+        doc.text('SUMMARY STATISTICS', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         // Statistics table with company colors
@@ -540,7 +539,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
           head: [statsTableData[0]],
           body: statsTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -559,11 +558,11 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
 
         // Priority breakdown section
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('PRIORITY BREAKDOWN', 16, yPos + 2);
+        doc.text('PRIORITY BREAKDOWN', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const priorityTableData = [
@@ -579,7 +578,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
           head: [priorityTableData[0]],
           body: priorityTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -598,11 +597,11 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
 
         // Hours tracking section
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('HOURS TRACKING', 16, yPos + 2);
+        doc.text('HOURS TRACKING', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const hoursTableData = [
@@ -617,7 +616,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
           head: [hoursTableData[0]],
           body: hoursTableData.slice(1),
           theme: 'grid',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
@@ -645,11 +644,11 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
         }
 
         doc.setFillColor(245, 250, 252);
-        doc.rect(14, yPos - 4, pageWidth - 28, 9, 'F');
+        doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 4, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 9, 'F');
         doc.setFontSize(11);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
-        doc.text('QUICK REFERENCE SUMMARY', 16, yPos + 2);
+        doc.text('QUICK REFERENCE SUMMARY', LETTERHEAD.MARGIN_LEFT, yPos + 2);
         yPos += 11;
 
         const taskTableData = tasksToExport.map(task => [
@@ -666,7 +665,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
           head: [['Task', 'Project', 'Assignee', 'Status', 'Priority', 'Due Date']],
           body: taskTableData,
           theme: 'striped',
-          margin: { top: LETTERHEAD.CONTENT_TOP, right: 14, bottom: LETTERHEAD.CONTENT_BOTTOM, left: 14 },
+          margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           headStyles: {
             fillColor: tealColor,
             textColor: [255, 255, 255],
