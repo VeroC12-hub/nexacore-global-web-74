@@ -41,19 +41,47 @@ export async function getLetterheadImage(): Promise<string | null> {
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
 
-      // Render at 3× scale for crisp output when used in A4 PDFs
-      const scale = 3;
-      const viewport = page.getViewport({ scale });
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext('2d');
+      // Target A4 dimensions at high resolution (300dpi equivalent for print)
+      // A4 is 210mm x 297mm. Ratio ~0.707.
+      // We'll use a high pixel count for crisp quality.
+      const A4_WIDTH_PX = 2480;
+      const A4_HEIGHT_PX = 3508;
+
+      // 1. Render PDF page to its natural size first
+      const naturalViewport = page.getViewport({ scale: 1.0 });
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = naturalViewport.width;
+      tempCanvas.height = naturalViewport.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      if (!tempCtx) return null;
+
+      await page.render({ canvasContext: tempCtx, viewport: naturalViewport }).promise;
+
+      // 2. Create the final A4-aspect-ratio canvas
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = A4_WIDTH_PX;
+      finalCanvas.height = A4_HEIGHT_PX;
+      const ctx = finalCanvas.getContext('2d');
       if (!ctx) return null;
 
-      await page.render({ canvasContext: ctx, viewport }).promise;
+      // 3. Calculate "cover" scaling
+      // We want the image to fill the A4 canvas completely, cropping excess if needed.
+      const scaleX = A4_WIDTH_PX / naturalViewport.width;
+      const scaleY = A4_HEIGHT_PX / naturalViewport.height;
+      const scale = Math.max(scaleX, scaleY); // "cover" uses the larger scale
+
+      const scaledWidth = naturalViewport.width * scale;
+      const scaledHeight = naturalViewport.height * scale;
+
+      // 4. Center align (crop equally from sides or top/bottom)
+      const x = (A4_WIDTH_PX - scaledWidth) / 2;
+      const y = (A4_HEIGHT_PX - scaledHeight) / 2;
+
+      // Draw temp canvas onto final canvas with calculated transform
+      ctx.drawImage(tempCanvas, x, y, scaledWidth, scaledHeight);
 
       // Convert to JPEG (good balance of quality vs size)
-      cachedLetterhead = canvas.toDataURL('image/jpeg', 0.92);
+      cachedLetterhead = finalCanvas.toDataURL('image/jpeg', 0.90);
       return cachedLetterhead;
     } catch (e) {
       console.warn('Could not load letterhead PDF, falling back to plain pages:', e);
