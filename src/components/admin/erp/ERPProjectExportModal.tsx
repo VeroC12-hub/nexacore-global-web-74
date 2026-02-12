@@ -275,7 +275,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      let yPos = LETTERHEAD.CONTENT_TOP;
+      let yPos: number = LETTERHEAD.CONTENT_TOP;
 
       const tealColor: [number, number, number] = [0, 152, 166];
       const navyColor: [number, number, number] = [30, 58, 95];
@@ -345,18 +345,18 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           alternateRowStyles: { fillColor: [250, 252, 254] },
           styles: {
             fontSize: 7,
-            cellPadding: 2.5,
+            cellPadding: 1.5,
             lineColor: [200, 210, 220],
             lineWidth: 0.3,
             overflow: 'linebreak'
           },
           columnStyles: {
-            0: { cellWidth: 38 },
-            1: { cellWidth: 32 },
-            2: { cellWidth: 22 },
-            3: { cellWidth: 18 },
-            4: { cellWidth: 16 },
-            5: { cellWidth: 22 },
+            0: { cellWidth: 42 },
+            1: { cellWidth: 36 },
+            2: { cellWidth: 20 },
+            3: { cellWidth: 16 },
+            4: { cellWidth: 14 },
+            5: { cellWidth: 20 },
             6: { cellWidth: 26 }
           }
         });
@@ -807,8 +807,8 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
                         {project.title}
                       </Label>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded ${project.priority === 'high' ? 'bg-red-100 text-red-700' :
-                          project.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-gray-100 text-gray-700'
+                        project.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-gray-100 text-gray-700'
                         }`}>
                         {formatPriority(project.priority)}
                       </span>

@@ -365,21 +365,21 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
           alternateRowStyles: { fillColor: [250, 252, 254] },
           styles: {
             fontSize: 7,
-            cellPadding: 2.5,
+            cellPadding: 1.5,
             lineColor: [200, 210, 220],
             lineWidth: 0.3,
             overflow: 'linebreak'
           },
           columnStyles: {
-            0: { cellWidth: 28 },  // Task
-            1: { cellWidth: 34 },  // Description
-            2: { cellWidth: 20 },  // Assignee
-            3: { cellWidth: 20 },  // Project
-            4: { cellWidth: 16 },  // Status
-            5: { cellWidth: 14 },  // Priority
+            0: { cellWidth: 32 },  // Task
+            1: { cellWidth: 40 },  // Description
+            2: { cellWidth: 18 },  // Assignee
+            3: { cellWidth: 18 },  // Project
+            4: { cellWidth: 14 },  // Status
+            5: { cellWidth: 12 },  // Priority
             6: { cellWidth: 18 },  // Due Date
-            7: { cellWidth: 12 },  // Est.
-            8: { cellWidth: 12 }   // Act.
+            7: { cellWidth: 11 },  // Est.
+            8: { cellWidth: 11 }   // Act.
           },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
@@ -669,12 +669,12 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
             overflow: 'linebreak'
           },
           columnStyles: {
-            0: { cellWidth: 44 },  // Task
-            1: { cellWidth: 30 },  // Project
-            2: { cellWidth: 30 },  // Assignee
-            3: { cellWidth: 24 },  // Status
-            4: { cellWidth: 20 },  // Priority
-            5: { cellWidth: 26 }   // Due Date
+            0: { cellWidth: 50 },  // Task
+            1: { cellWidth: 28 },  // Project
+            2: { cellWidth: 28 },  // Assignee
+            3: { cellWidth: 20 },  // Status
+            4: { cellWidth: 18 },  // Priority
+            5: { cellWidth: 30 }   // Due Date
           },
           willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
         });
@@ -877,9 +877,9 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
                         {task.title}
                       </Label>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded ${task.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                          task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                            task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-gray-100 text-gray-700'
+                        task.priority === 'high' ? 'bg-orange-100 text-orange-700' :
+                          task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-700'
                         }`}>
                         {formatPriority(task.priority)}
                       </span>
