@@ -243,7 +243,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
 
     .page {
       width: 210mm;
-      min-height: 297mm;
+      height: 297mm; /* Strict height for pagination */
       margin: 0 auto 20px;
       ${bgStyle}
       box-shadow: 0 4px 24px rgba(0,0,0,0.15);
@@ -253,6 +253,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       flex-direction: column;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
+      page-break-after: always;
     }
 
     /* Content area matches pdfLetterhead.ts: top 46mm, sides 18mm, bottom 30mm */
@@ -260,7 +261,8 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       padding: 46mm 18mm 30mm;
       position: relative;
       z-index: 1;
-      flex: 1;
+      width: 100%;
+      height: 100%;
     }
 
     .doc-title-bar {
@@ -353,33 +355,101 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
     strong { font-weight: 700; }
     em { font-style: italic; }
 
+    /* Utility */
+    #source-content { display: none; }
+
     @media print {
       body { background: white; padding: 0; margin: 0; }
       .page {
         box-shadow: none;
-        min-height: auto;
-        width: 100%;
         margin: 0;
+        width: 210mm;
+        height: 297mm;
         page-break-after: always;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        break-after: page;
       }
       .no-print { display: none !important; }
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="content">
-      <div class="doc-title-bar">
-        <h2>${escapeHtml(docTitle || 'Document')}</h2>
-        <span class="doc-date">${escapeHtml(docDate)}</span>
-      </div>
-      ${body}
+  <!-- Hidden source content -->
+  <div id="source-content">
+    <div class="doc-title-bar">
+      <h2>${escapeHtml(docTitle || 'Document')}</h2>
+      <span class="doc-date">${escapeHtml(docDate)}</span>
     </div>
+    ${body}
   </div>
 
+  <!-- Container for paginated pages -->
+  <div id="pages-container"></div>
+
+  <!-- Pagination Script -->
   <script>
+    (function() {
+      const source = document.getElementById('source-content');
+      const container = document.getElementById('pages-container');
+      const MAX_PAGE_H = 10000; // Will be limited by .page height via overflow check
+
+      // Template for a new page
+      function createPage() {
+        const page = document.createElement('div');
+        page.className = 'page';
+        const content = document.createElement('div');
+        content.className = 'content';
+        page.appendChild(content);
+        return { page, content };
+      }
+
+      // Initialize first page
+      let currentPageObj = createPage();
+      container.appendChild(currentPageObj.page);
+      
+      // Move children one by one
+      const children = Array.from(source.children);
+      
+      children.forEach((child, index) => {
+        // Append to current page to test height
+        currentPageObj.content.appendChild(child);
+
+        // Check for overflow
+        // We compare scrollHeight to clientHeight of the page container
+        // But the .content div has padding, so we check if the child pushes content beyond limit.
+        // Better check: does the page trigger overflow?
+        // Note: .page has fixed height 297mm. .content has height 100%. 
+        // If content overflows, scrollHeight > clientHeight.
+        
+        if (currentPageObj.page.scrollHeight > currentPageObj.page.clientHeight + 1) { // +1 for pixel rounding safety
+           // Allow title bar (index 0) to stay if it's the only thing, otherwise move it?
+           // Actually, if a single element is HUGE, we can't do much without splitting it.
+           // Assuming blocks are reasonably sized.
+           
+           if (currentPageObj.content.children.length > 1) {
+             // Move this child to a new page
+             currentPageObj.content.removeChild(child);
+             
+             currentPageObj = createPage();
+             container.appendChild(currentPageObj.page);
+             currentPageObj.content.appendChild(child);
+           } else {
+             // Single element is too big. Let it clip/overflow or print as is?
+             // For now, let it stay, but warn? 
+             // Ideally we'd split text nodes, but that's complex.
+             console.warn('Element too tall for page:', child);
+             
+             // Force new page for NEXT element
+             currentPageObj = createPage();
+             container.appendChild(currentPageObj.page);
+           }
+        }
+      });
+
+      // Cleanup
+      source.remove();
+    })();
+
+    // Print button logic
     const btn = document.createElement('button');
     btn.innerHTML = '&#x1F5A8; Print / Save as PDF';
     btn.className = 'no-print';
