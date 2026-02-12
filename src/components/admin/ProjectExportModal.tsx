@@ -525,7 +525,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           ];
 
           const halfWidth = (pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT) / 2;
-          const labelColWidth = 32;
+          const labelColWidth = 35;
           const valueColWidth = halfWidth - labelColWidth;
 
           autoTable(doc, {

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { generateInvoicePDF } from '@/utils/invoicePDFGenerator';
 
 interface Invoice {
   id: string;
@@ -164,11 +165,27 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
     // TODO: Implement email invoice functionality
   };
 
-  const handleDownload = () => {
-    if (onDownload && invoice) {
-      onDownload(invoice.id);
-    } else {
-      toast.info('PDF download feature coming soon!');
+  const handleDownload = async () => {
+    if (!invoice) return;
+    try {
+      toast.info('Generating PDF...');
+      await generateInvoicePDF(
+        {
+          ...invoice,
+          project_title: project?.title,
+          service_type: project?.service_type,
+        },
+        lineItems.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total: item.total,
+        })),
+      );
+      toast.success('Invoice PDF downloaded!');
+    } catch (error) {
+      console.error('Error generating invoice PDF:', error);
+      toast.error('Failed to generate PDF');
     }
   };
 

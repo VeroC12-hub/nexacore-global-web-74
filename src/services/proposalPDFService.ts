@@ -8,6 +8,7 @@ import autoTable from 'jspdf-autotable';
 import type { Proposal } from '@/types/proposal';
 import { format } from 'date-fns';
 import { getLetterheadImage, addLetterheadToPage, LETTERHEAD } from '@/utils/pdfLetterhead';
+import { parseContent, renderContentToPDF } from '@/utils/pdfContentRenderer';
 
 // Extend jsPDF type to include autotable
 declare module 'jspdf' {
@@ -129,17 +130,17 @@ export class ProposalPDFGenerator {
 
     // Client information box
     this.doc.setFillColor(...COLORS.mediumGray);
-    this.doc.rect(LETTERHEAD.MARGIN_LEFT, this.yPos, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 45, 'F');
+    this.doc.rect(LETTERHEAD.MARGIN_LEFT, this.yPos, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 50, 'F');
 
     this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...this.brandColors.navy);
-    this.doc.text('PREPARED FOR:', LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 10);
+    this.doc.text('PREPARED FOR:', LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 8);
 
-    this.doc.setFontSize(14);
+    this.doc.setFontSize(12);
     this.doc.setFont('helvetica', 'bold');
     this.doc.setTextColor(...COLORS.textGray);
-    this.doc.text(this.proposal.client_name, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 20);
+    this.doc.text(this.proposal.client_name, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 18);
 
     if (this.proposal.client_company) {
       this.doc.setFontSize(11);
@@ -149,9 +150,9 @@ export class ProposalPDFGenerator {
 
     this.doc.setFontSize(10);
     this.doc.setFont('helvetica', 'normal');
-    this.doc.text(this.proposal.client_email, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 36);
+    this.doc.text(this.proposal.client_email, LETTERHEAD.MARGIN_LEFT + 2, this.yPos + 38);
 
-    this.yPos += 60;
+    this.yPos += 55;
 
     // Proposal title (centered, large)
     this.doc.setFontSize(18);
@@ -386,7 +387,7 @@ export class ProposalPDFGenerator {
       body: tableData,
       theme: 'grid',
       margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
-      willDrawPage: this.getDidDrawPage(),
+      willDrawPage: this.getWillDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -402,7 +403,7 @@ export class ProposalPDFGenerator {
       },
       columnStyles: {
         0: { cellWidth: 10 },
-        1: { cellWidth: 45 },
+        1: { cellWidth: 44 },
         2: { cellWidth: 65 },
         3: { cellWidth: 25 },
         4: { cellWidth: 30 }
@@ -480,7 +481,7 @@ export class ProposalPDFGenerator {
       body: tableData,
       theme: 'grid',
       margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
-      willDrawPage: this.getDidDrawPage(),
+      willDrawPage: this.getWillDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -496,7 +497,7 @@ export class ProposalPDFGenerator {
       },
       columnStyles: {
         0: { cellWidth: 35 },
-        1: { cellWidth: 45 },
+        1: { cellWidth: 44 },
         2: { cellWidth: 20 },
         3: { cellWidth: 25 },
         4: { cellWidth: 50 }
@@ -536,7 +537,7 @@ export class ProposalPDFGenerator {
       body: tableData,
       theme: 'grid',
       margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
-      willDrawPage: this.getDidDrawPage(),
+      willDrawPage: this.getWillDrawPage(),
       headStyles: {
         fillColor: this.brandColors.teal,
         textColor: COLORS.white,
@@ -553,7 +554,7 @@ export class ProposalPDFGenerator {
       columnStyles: {
         0: { cellWidth: 10 },
         1: { cellWidth: 40 },
-        2: { cellWidth: 50 },
+        2: { cellWidth: 49 },
         3: { cellWidth: 30 },
         4: { cellWidth: 45 }
       }
@@ -607,7 +608,7 @@ export class ProposalPDFGenerator {
       body: pricingData,
       theme: 'grid',
       margin: { top: LETTERHEAD.CONTENT_TOP, left: LETTERHEAD.MARGIN_LEFT, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM },
-      willDrawPage: this.getDidDrawPage(),
+      willDrawPage: this.getWillDrawPage(),
       styles: {
         fontSize: 10,
         cellPadding: 4,
@@ -621,7 +622,7 @@ export class ProposalPDFGenerator {
           fillColor: COLORS.mediumGray
         },
         1: {
-          cellWidth: 115,
+          cellWidth: 114,
           fontSize: 11
         }
       }
@@ -670,18 +671,26 @@ export class ProposalPDFGenerator {
   }
 
   private addParagraph(text: string, leftMargin: number = LETTERHEAD.MARGIN_LEFT + 2): void {
-    this.doc.setFontSize(10);
-    this.doc.setFont('helvetica', 'normal');
-    this.doc.setTextColor(...COLORS.textGray);
+    const blocks = parseContent(text);
+    if (blocks.length > 0) {
+      // Use the structured content renderer for rich text (handles markdown, lists, tables, etc.)
+      this.yPos = renderContentToPDF(this.doc, blocks, this.yPos, this.letterheadImg);
+      this.yPos += 2;
+    } else {
+      // Fallback for empty/whitespace content
+      this.doc.setFontSize(10);
+      this.doc.setFont('helvetica', 'normal');
+      this.doc.setTextColor(...COLORS.textGray);
 
-    const lines = this.doc.splitTextToSize(text, this.pageWidth - leftMargin - LETTERHEAD.MARGIN_RIGHT);
-    lines.forEach((line: string) => {
-      this.checkPageBreak();
-      this.doc.text(line, leftMargin, this.yPos);
-      this.yPos += 6;
-    });
+      const lines = this.doc.splitTextToSize(text, this.pageWidth - leftMargin - LETTERHEAD.MARGIN_RIGHT);
+      lines.forEach((line: string) => {
+        this.checkPageBreak();
+        this.doc.text(line, leftMargin, this.yPos);
+        this.yPos += 6;
+      });
 
-    this.yPos += 4;
+      this.yPos += 4;
+    }
   }
 
   private addBulletList(items: string[]): void {
@@ -714,8 +723,8 @@ export class ProposalPDFGenerator {
     }
   }
 
-  /** Get the didDrawPage callback for autoTable that adds letterhead to new pages */
-  private getDidDrawPage() {
+  /** Get the willDrawPage callback for autoTable that adds letterhead before table content */
+  private getWillDrawPage() {
     return () => {
       addLetterheadToPage(this.doc, this.letterheadImg);
     };

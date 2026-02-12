@@ -14,12 +14,67 @@ interface ParsedBlock {
   rows?: string[][];
   items?: string[];
   level?: number;
+  listType?: 'ordered' | 'unordered';
 }
 
-/**
- * Parses raw pasted text into structured blocks.
- * Detects: headings, tables (tab/pipe/comma separated), bullet/numbered lists, paragraphs.
- */
+// ── HTML escaping ──
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Inline markdown → HTML ──
+function renderInline(text: string): string {
+  let safe = escapeHtml(text);
+  // **bold** or __bold__
+  safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  safe = safe.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  // *italic* or _italic_ (but not inside ** or __)
+  safe = safe.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+  safe = safe.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+  return safe;
+}
+
+// ── Content parser ──
+function isBulletItem(line: string): boolean {
+  return /^\s*[-*•]\s+/.test(line);
+}
+
+function isNumberedItem(line: string): boolean {
+  return /^\s*\d+[.\)]\s+/.test(line);
+}
+
+function isListItem(line: string): boolean {
+  return isBulletItem(line) || isNumberedItem(line);
+}
+
+function isTableLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return false;
+  if (trimmed.includes('|') && trimmed.split('|').filter(c => c.trim()).length >= 2) return true;
+  if (trimmed.includes('\t') && trimmed.split('\t').length >= 2) return true;
+  return false;
+}
+
+function isHeadingLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (/^#{1,3}\s+/.test(trimmed)) return true;
+  // ALL-CAPS headings
+  if (
+    trimmed === trimmed.toUpperCase() &&
+    trimmed.length > 2 &&
+    trimmed.length < 80 &&
+    /[A-Z]/.test(trimmed) &&
+    !/[|,\t]/.test(trimmed)
+  ) return true;
+  // Numbered section headings like "1. Executive Summary" or "2.3 Events"
+  if (/^\d+(\.\d+)*\.?\s+[A-Z]/.test(trimmed) && trimmed.length < 80) return true;
+  return false;
+}
+
 function parseContent(raw: string): ParsedBlock[] {
   const lines = raw.split('\n');
   const blocks: ParsedBlock[] = [];
@@ -27,51 +82,42 @@ function parseContent(raw: string): ParsedBlock[] {
 
   while (i < lines.length) {
     const line = lines[i].trimEnd();
-
-    // Skip empty lines
     if (line.trim() === '') { i++; continue; }
 
-    // Detect heading: all-caps line, line with # prefix, or short bold-looking line
-    if (
-      /^#{1,3}\s+/.test(line) ||
-      (line === line.toUpperCase() && line.length > 2 && line.length < 80 && /[A-Z]/.test(line) && !/[|,\t]/.test(line))
-    ) {
-      const level = line.startsWith('###') ? 3 : line.startsWith('##') ? 2 : line.startsWith('#') ? 1 : 1;
-      const text = line.replace(/^#{1,3}\s*/, '').trim();
+    // Heading
+    if (isHeadingLine(line)) {
+      const trimmed = line.trim();
+      let level = 2;
+      let text = trimmed;
+      if (trimmed.startsWith('###')) { level = 3; text = trimmed.replace(/^###\s*/, ''); }
+      else if (trimmed.startsWith('##')) { level = 2; text = trimmed.replace(/^##\s*/, ''); }
+      else if (trimmed.startsWith('#')) { level = 1; text = trimmed.replace(/^#\s*/, ''); }
+      else if (/^\d+\.\s+/.test(trimmed)) { level = 1; text = trimmed; }
+      else if (/^\d+\.\d+/.test(trimmed)) { level = 2; text = trimmed; }
+      else { level = 1; } // ALL-CAPS
       blocks.push({ type: 'heading', content: text, level });
       i++;
       continue;
     }
 
-    // Detect table: lines containing tabs or pipes (at least 2 columns)
-    const isTableLine = (l: string) => {
-      const trimmed = l.trim();
-      if (!trimmed) return false;
-      // Pipe-delimited
-      if (trimmed.includes('|') && trimmed.split('|').filter(c => c.trim()).length >= 2) return true;
-      // Tab-delimited
-      if (trimmed.includes('\t') && trimmed.split('\t').length >= 2) return true;
-      return false;
-    };
-
+    // Table
     if (isTableLine(line)) {
       const tableRows: string[][] = [];
-      while (i < lines.length && (isTableLine(lines[i]) || lines[i].trim() === '' || /^[\s\-|:]+$/.test(lines[i].trim()))) {
-        const currentLine = lines[i].trim();
-        // Skip markdown table separator lines (---|---|---)
-        if (/^[\s\-|:]+$/.test(currentLine) && currentLine.includes('-')) { i++; continue; }
-        if (currentLine === '') { i++; continue; }
+      while (i < lines.length) {
+        const cur = lines[i].trim();
+        if (cur === '') { i++; continue; }
+        if (/^[\s\-|:]+$/.test(cur) && cur.includes('-')) { i++; continue; }
+        if (!isTableLine(lines[i])) break;
 
         let cells: string[];
-        if (currentLine.includes('|')) {
-          cells = currentLine.split('|').map(c => c.trim()).filter((c, idx, arr) => {
-            // Filter out empty first/last from |col1|col2|
+        if (cur.includes('|')) {
+          cells = cur.split('|').map(c => c.trim()).filter((c, idx, arr) => {
             if (idx === 0 && c === '') return false;
             if (idx === arr.length - 1 && c === '') return false;
             return true;
           });
         } else {
-          cells = currentLine.split('\t').map(c => c.trim());
+          cells = cur.split('\t').map(c => c.trim());
         }
         if (cells.length >= 2) tableRows.push(cells);
         i++;
@@ -82,33 +128,51 @@ function parseContent(raw: string): ParsedBlock[] {
       continue;
     }
 
-    // Detect list: lines starting with -, *, •, or numbered (1. 2. etc)
-    const isListItem = (l: string) => /^\s*[-*•]\s+/.test(l) || /^\s*\d+[\.\)]\s+/.test(l);
-
+    // List
     if (isListItem(line)) {
       const items: string[] = [];
-      while (i < lines.length && (isListItem(lines[i]) || (lines[i].trim() !== '' && /^\s{2,}/.test(lines[i]) && items.length > 0))) {
-        const itemText = lines[i].replace(/^\s*[-*•]\s+/, '').replace(/^\s*\d+[\.\)]\s+/, '').trim();
+      const firstIsNumbered = isNumberedItem(line);
+      while (i < lines.length) {
+        if (lines[i].trim() === '') { i++; break; }
         if (isListItem(lines[i])) {
+          const itemText = lines[i]
+            .replace(/^\s*[-*•]\s+/, '')
+            .replace(/^\s*\d+[.\)]\s+/, '')
+            .trim();
           items.push(itemText);
-        } else {
-          // Continuation of previous item
+          i++;
+        } else if (/^\s{2,}/.test(lines[i]) && items.length > 0) {
           items[items.length - 1] += ' ' + lines[i].trim();
+          i++;
+        } else {
+          break;
         }
-        i++;
       }
-      blocks.push({ type: 'list', content: '', items });
+      if (items.length > 0) {
+        blocks.push({
+          type: 'list',
+          content: '',
+          items,
+          listType: firstIsNumbered ? 'ordered' : 'unordered',
+        });
+      }
       continue;
     }
 
-    // Otherwise it's a paragraph - collect consecutive non-empty lines
-    let para = line;
+    // Paragraph
+    let para = line.trim();
     i++;
-    while (i < lines.length && lines[i].trim() !== '' && !isTableLine(lines[i]) && !isListItem(lines[i]) && !/^#{1,3}\s+/.test(lines[i]) && !(lines[i] === lines[i].toUpperCase() && lines[i].length > 2 && lines[i].length < 80 && /[A-Z]/.test(lines[i]))) {
+    while (
+      i < lines.length &&
+      lines[i].trim() !== '' &&
+      !isTableLine(lines[i]) &&
+      !isListItem(lines[i]) &&
+      !isHeadingLine(lines[i])
+    ) {
       para += ' ' + lines[i].trim();
       i++;
     }
-    blocks.push({ type: 'paragraph', content: para.trim() });
+    blocks.push({ type: 'paragraph', content: para });
   }
 
   return blocks;
@@ -119,24 +183,25 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
 
   for (const block of blocks) {
     switch (block.type) {
-      case 'heading':
+      case 'heading': {
         const tag = block.level === 1 ? 'h2' : block.level === 2 ? 'h3' : 'h4';
-        body += `<${tag} class="doc-heading">${block.content}</${tag}>\n`;
+        body += `<${tag} class="doc-heading">${escapeHtml(block.content)}</${tag}>\n`;
         break;
+      }
 
       case 'paragraph':
-        body += `<p class="doc-para">${block.content}</p>\n`;
+        body += `<p class="doc-para">${renderInline(block.content)}</p>\n`;
         break;
 
       case 'table':
         body += '<table class="doc-table">\n';
         if (block.rows && block.rows.length > 0) {
           body += '  <thead><tr>';
-          block.rows[0].forEach(cell => { body += `<th>${cell}</th>`; });
+          block.rows[0].forEach(cell => { body += `<th>${escapeHtml(cell)}</th>`; });
           body += '</tr></thead>\n  <tbody>\n';
           for (let r = 1; r < block.rows.length; r++) {
             body += '    <tr>';
-            block.rows[r].forEach(cell => { body += `<td>${cell}</td>`; });
+            block.rows[r].forEach(cell => { body += `<td>${escapeHtml(cell)}</td>`; });
             body += '</tr>\n';
           }
           body += '  </tbody>\n';
@@ -144,17 +209,18 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
         body += '</table>\n';
         break;
 
-      case 'list':
-        body += '<ul class="doc-list">\n';
-        block.items?.forEach(item => { body += `  <li>${item}</li>\n`; });
-        body += '</ul>\n';
+      case 'list': {
+        const tag = block.listType === 'ordered' ? 'ol' : 'ul';
+        body += `<${tag} class="doc-list">\n`;
+        block.items?.forEach(item => { body += `  <li>${renderInline(item)}</li>\n`; });
+        body += `</${tag}>\n`;
         break;
+      }
     }
   }
 
-  // Use actual letterhead PDF image as background if available
   const bgStyle = letterheadDataUrl
-    ? `background-image: url('${letterheadDataUrl}'); background-size: 100% 100%; background-repeat: no-repeat;`
+    ? `background-image: url('${letterheadDataUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;`
     : 'background: white;';
 
   return `<!DOCTYPE html>
@@ -162,7 +228,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${docTitle || 'Document'} - NexaCore Innovations</title>
+  <title>${escapeHtml(docTitle || 'Document')} - NexaCore Innovations</title>
   <style>
     @page { size: A4; margin: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -175,7 +241,6 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       font-size: 13px;
     }
 
-    /* ─── PAGE: Uses actual letterhead PDF as background ─── */
     .page {
       width: 210mm;
       min-height: 297mm;
@@ -190,14 +255,14 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       print-color-adjust: exact;
     }
 
-    /* ─── CONTENT AREA: positioned within letterhead safe margins ─── */
-    /* Top ~46mm below header, bottom ~30mm above footer, sides ~18mm */
+    /* Content area matches pdfLetterhead.ts: top 46mm, sides 18mm, bottom 30mm */
     .content {
-      padding: 44mm 20mm 32mm;
+      padding: 46mm 18mm 30mm;
       position: relative;
       z-index: 1;
       flex: 1;
     }
+
     .doc-title-bar {
       display: flex;
       justify-content: space-between;
@@ -236,43 +301,57 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       line-height: 1.65;
     }
 
-    /* Tables */
+    /* Tables — full grid borders for professional look */
     .doc-table {
       width: 100%;
       border-collapse: collapse;
       margin: 14px 0 18px;
       font-size: 12px;
+      border: 1px solid #d1d5db;
     }
     .doc-table th {
       background: #0098A6;
       color: white;
-      padding: 9px 12px;
+      padding: 10px 14px;
       text-align: left;
       font-weight: 600;
       font-size: 10.5px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      border: 1px solid #0098A6;
     }
     .doc-table td {
-      padding: 8px 12px;
-      border-bottom: 1px solid #e5e7eb;
+      padding: 10px 14px;
+      border: 1px solid #e5e7eb;
       color: #374151;
     }
     .doc-table tbody tr:nth-child(even) { background: rgba(249, 250, 251, 0.85); }
 
-    /* Lists */
+    /* Lists — improved spacing and indentation */
     .doc-list {
-      margin: 8px 0 14px;
-      padding-left: 20px;
+      margin: 10px 0 16px;
+      padding-left: 36px;
     }
     .doc-list li {
-      margin-bottom: 5px;
+      margin-bottom: 8px;
       color: #374151;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     .doc-list li::marker {
       color: #0098A6;
+      font-weight: 600;
     }
+    ol.doc-list {
+      list-style-type: decimal;
+    }
+    ol.doc-list li::marker {
+      color: #0098A6;
+      font-weight: 700;
+    }
+
+    /* Inline formatting */
+    strong { font-weight: 700; }
+    em { font-style: italic; }
 
     @media print {
       body { background: white; padding: 0; margin: 0; }
@@ -293,8 +372,8 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
   <div class="page">
     <div class="content">
       <div class="doc-title-bar">
-        <h2>${docTitle || 'Document'}</h2>
-        <span class="doc-date">${docDate}</span>
+        <h2>${escapeHtml(docTitle || 'Document')}</h2>
+        <span class="doc-date">${escapeHtml(docDate)}</span>
       </div>
       ${body}
     </div>
@@ -320,7 +399,6 @@ export const LetterheadDocumentCreator: React.FC = () => {
   const [letterheadImg, setLetterheadImg] = useState<string | null>(null);
   const previewRef = useRef<HTMLIFrameElement>(null);
 
-  // Pre-load the actual letterhead PDF as a background image
   useEffect(() => {
     getLetterheadImage().then(img => {
       if (img) setLetterheadImg(img);
@@ -336,7 +414,6 @@ export const LetterheadDocumentCreator: React.FC = () => {
     setParsedBlocks(blocks);
     setShowPreview(true);
 
-    // Render into iframe
     setTimeout(() => {
       if (previewRef.current) {
         const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
@@ -436,7 +513,7 @@ export const LetterheadDocumentCreator: React.FC = () => {
               </div>
               <Textarea
                 id="content"
-                placeholder={`Paste anything here — the system will automatically detect and format:\n\n• Tables (tab-separated, pipe-separated, or CSV)\n• Bullet and numbered lists\n• Headings (ALL CAPS lines or # Markdown headings)\n• Paragraphs\n\nExample table:\nItem\tQty\tPrice\nWidget A\t10\t$50\nWidget B\t5\t$120`}
+                placeholder={`Paste anything here — the system will automatically detect and format:\n\n• Tables (tab-separated, pipe-separated, or CSV)\n• Bullet and numbered lists\n• Headings (ALL CAPS lines, # Markdown, or numbered like "1. Section")\n• **Bold** and *italic* text\n• Paragraphs\n\nExample table:\nItem\tQty\tPrice\nWidget A\t10\t$50\nWidget B\t5\t$120`}
                 value={rawContent}
                 onChange={e => setRawContent(e.target.value)}
                 className="mt-1 min-h-[300px] font-mono text-sm"
@@ -453,15 +530,15 @@ export const LetterheadDocumentCreator: React.FC = () => {
             <div className="bg-gray-50 rounded-lg p-4 text-xs text-gray-500 space-y-1">
               <p className="font-semibold text-gray-700">Tips for best results:</p>
               <p>- Use <strong>tabs</strong> or <strong>pipes (|)</strong> between columns for tables</p>
-              <p>- Write headings in <strong>ALL CAPS</strong> or use <strong># Heading</strong> format</p>
+              <p>- Write headings in <strong>ALL CAPS</strong>, use <strong># Heading</strong>, or numbered like <strong>1. Section Title</strong></p>
               <p>- Start list items with <strong>-</strong>, <strong>*</strong>, or <strong>1.</strong></p>
+              <p>- Use <strong>**bold**</strong> and <strong>*italic*</strong> for emphasis</p>
               <p>- Separate sections with a blank line</p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {/* Action buttons */}
           <div className="flex gap-3">
             <Button onClick={handlePrint} className="gap-2 bg-gradient-to-r from-[#1E3A5F] to-[#0098A6] hover:opacity-90">
               <Printer className="h-4 w-4" />
@@ -477,7 +554,6 @@ export const LetterheadDocumentCreator: React.FC = () => {
             </Button>
           </div>
 
-          {/* Preview iframe */}
           <Card className="overflow-hidden">
             <CardContent className="p-0">
               <iframe
@@ -489,7 +565,6 @@ export const LetterheadDocumentCreator: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Parsed blocks summary */}
           <Card>
             <CardHeader className="py-3">
               <CardTitle className="text-sm text-gray-500">

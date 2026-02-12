@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { getLetterheadImage, addLetterheadToPage, newLetterheadPage, LETTERHEAD } from '@/utils/pdfLetterhead';
-import { parseContent, renderContentToPDF } from '@/utils/pdfContentRenderer';
+import { parseContent, renderContentToPDF, NAVY } from '@/utils/pdfContentRenderer';
 
 interface ERPTask {
   id: string;
@@ -412,7 +412,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
         yPos += titleLines.length * 5.5 + 4;
 
         // ── Metadata table (compact, NO description) ──
-        const labelW = 40;
+        const labelW = 35;
         const valW = (pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - labelW * 2 - 4) / 2;
         const metadataRows = [
           [

@@ -32,6 +32,7 @@ import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { projectCreationService } from '@/services/projectCreationService';
+import { generateQuotePDF } from '@/utils/quotePDFGenerator';
 
 interface Quote {
   id: string;
@@ -382,18 +383,15 @@ const QuoteReview = () => {
 
   const downloadPDF = async () => {
     if (!quote) return;
-    
+
     setDownloadingPdf(true);
-    
+
     try {
-      const pdfUrl = `/api/quotes/${quote.id}/pdf`;
-      console.log('Opening PDF:', pdfUrl);
-      
-      window.open(pdfUrl, '_blank', 'width=1000,height=800,scrollbars=yes,resizable=yes');
-      toast.success('PDF opened in new tab - use browser print to save as PDF');
-      
+      toast.info('Generating PDF...');
+      await generateQuotePDF(quote, quoteRequest);
+      toast.success('Quote PDF downloaded!');
     } catch (error) {
-      console.error('Error opening PDF:', error);
+      console.error('Error generating PDF:', error);
       toast.error('Failed to generate PDF');
     } finally {
       setDownloadingPdf(false);
@@ -401,15 +399,8 @@ const QuoteReview = () => {
   };
 
   const previewPDF = async () => {
-    if (!quote) return;
-    
-    try {
-      const pdfUrl = `/api/quotes/${quote.id}/pdf`;
-      window.open(pdfUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
-    } catch (error) {
-      console.error('Error opening PDF preview:', error);
-      toast.error('Failed to open preview');
-    }
+    // Same as download for now (client-side generation)
+    await downloadPDF();
   };
 
   const getStatusColor = (status: string) => {

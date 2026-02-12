@@ -433,7 +433,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           ];
 
           const halfWidth = (pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT) / 2;
-          const labelColWidth = 30;
+          const labelColWidth = 35;
           const valueColWidth = halfWidth - labelColWidth;
 
           autoTable(doc, {
