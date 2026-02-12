@@ -9,7 +9,8 @@ import { FileDown, FileSpreadsheet, FileText, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getLetterheadImage, addLetterheadToPage, LETTERHEAD } from '@/utils/pdfLetterhead';
+import { getLetterheadImage, addLetterheadToPage, newLetterheadPage, LETTERHEAD } from '@/utils/pdfLetterhead';
+import { parseContent, renderContentToPDF } from '@/utils/pdfContentRenderer';
 
 interface Project {
   id: string;
@@ -456,87 +457,76 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
           doc.text(projectHeader, pageWidth / 2, yPos + 6, { align: 'center' });
           yPos += 14;
 
-          // Project Details Table with professional grid layout
+          // Project Details Table - compact 2-column-pair layout (4 columns: label, value, label, value)
+          const remainingBudget = (project.budget || 0) - (project.spent_amount || 0);
+          const hoursVariance = (project.actual_hours || 0) - (project.estimated_hours || 0);
+          const labelStyle = { fontStyle: 'bold', fillColor: [240, 245, 248] as [number, number, number] };
+
+          // Title row spans all 4 columns
+          const titleRow = [
+            { content: 'PROJECT', styles: labelStyle },
+            { content: project.title, colSpan: 3, styles: { fontStyle: 'bold', fontSize: 11 } }
+          ];
+
           const detailsData = [
+            titleRow,
             [
-              { content: 'PROJECT NAME', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: project.title, styles: { fontStyle: 'bold', fontSize: 11 } }
+              { content: 'CLIENT', styles: labelStyle },
+              { content: `${project.client_name || 'Unknown'} (${project.client_email || 'N/A'})`, colSpan: 3 }
             ],
             [
-              { content: 'DESCRIPTION', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: project.description || 'No description provided' }
-            ],
-            [
-              { content: 'CLIENT', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: `${project.client_name || 'Unknown'} (${project.client_email || 'N/A'})` }
-            ],
-            [
-              { content: 'SERVICE TYPE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: project.service_type }
-            ],
-            [
-              { content: 'STATUS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'SERVICE TYPE', styles: labelStyle },
+              { content: project.service_type },
+              { content: 'STATUS', styles: labelStyle },
               { content: formatStatus(project.status) }
             ],
             [
-              { content: 'PRIORITY', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: formatPriority(project.priority) }
-            ],
-            [
-              { content: 'PROGRESS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'PRIORITY', styles: labelStyle },
+              { content: formatPriority(project.priority) },
+              { content: 'PROGRESS', styles: labelStyle },
               { content: `${project.completion_percentage}%` }
             ],
             [
-              { content: 'BUDGET', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: `$${(project.budget || 0).toLocaleString()}` }
-            ],
-            [
-              { content: 'SPENT AMOUNT', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'BUDGET', styles: labelStyle },
+              { content: `$${(project.budget || 0).toLocaleString()}` },
+              { content: 'SPENT', styles: labelStyle },
               { content: `$${(project.spent_amount || 0).toLocaleString()}` }
             ],
             [
-              { content: 'REMAINING BUDGET', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'REMAINING', styles: labelStyle },
               {
-                content: `$${((project.budget || 0) - (project.spent_amount || 0)).toLocaleString()}`,
-                styles: {
-                  textColor: (project.budget || 0) - (project.spent_amount || 0) < 0 ? [220, 38, 38] : [21, 128, 61]
-                }
-              }
+                content: `$${remainingBudget.toLocaleString()}`,
+                styles: { textColor: remainingBudget < 0 ? [220, 38, 38] : [21, 128, 61] }
+              },
+              { content: 'TEAM SIZE', styles: labelStyle },
+              { content: `${project.team_members?.length || 0} members` }
             ],
             [
-              { content: 'START DATE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: formatDate(project.start_date) }
-            ],
-            [
-              { content: 'END DATE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'START DATE', styles: labelStyle },
+              { content: formatDate(project.start_date) },
+              { content: 'END DATE', styles: labelStyle },
               { content: formatDate(project.end_date) }
             ],
             [
-              { content: 'DEADLINE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: formatDate(project.deadline || project.estimated_completion) }
+              { content: 'DEADLINE', styles: labelStyle },
+              { content: formatDate(project.deadline || project.estimated_completion) },
+              { content: 'EST. HOURS', styles: labelStyle },
+              { content: `${project.estimated_hours || 0} hrs` }
             ],
             [
-              { content: 'ESTIMATED HOURS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: `${project.estimated_hours || 0} hours` }
-            ],
-            [
-              { content: 'ACTUAL HOURS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: `${project.actual_hours || 0} hours` }
-            ],
-            [
-              { content: 'HOURS VARIANCE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'ACTUAL HOURS', styles: labelStyle },
+              { content: `${project.actual_hours || 0} hrs` },
+              { content: 'VARIANCE', styles: labelStyle },
               {
-                content: `${(project.actual_hours || 0) - (project.estimated_hours || 0)} hours`,
-                styles: {
-                  textColor: (project.actual_hours || 0) > (project.estimated_hours || 0) ? [220, 38, 38] : [21, 128, 61]
-                }
+                content: `${hoursVariance} hrs`,
+                styles: { textColor: hoursVariance > 0 ? [220, 38, 38] : [21, 128, 61] }
               }
-            ],
-            [
-              { content: 'TEAM SIZE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: `${project.team_members?.length || 0} members` }
             ]
           ];
+
+          const halfWidth = (pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT) / 2;
+          const labelColWidth = 32;
+          const valueColWidth = halfWidth - labelColWidth;
 
           autoTable(doc, {
             startY: yPos,
@@ -544,37 +534,41 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
             theme: 'grid',
             margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
             styles: {
-              fontSize: 9,
-              cellPadding: 3,
+              fontSize: 8,
+              cellPadding: 2.5,
               lineColor: [200, 210, 220],
               lineWidth: 0.3,
               overflow: 'linebreak'
             },
             columnStyles: {
-              0: {
-                cellWidth: 45,
-                fontStyle: 'bold',
-                textColor: [30, 58, 95],
-                halign: 'right',
-                valign: 'top',
-                fontSize: 8
-              },
-              1: {
-                cellWidth: pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 45,
-                textColor: [40, 40, 40],
-                valign: 'top'
-              }
-            },
-            didParseCell: function(data) {
-              // Ensure text wraps properly in description cells
-              if (data.row.index === 1 && data.column.index === 1) {
-                data.cell.styles.cellPadding = { top: 3, right: 3, bottom: 3, left: 3 };
-              }
+              0: { cellWidth: labelColWidth, fontStyle: 'bold', textColor: [30, 58, 95], halign: 'right', fontSize: 7 },
+              1: { cellWidth: valueColWidth, textColor: [40, 40, 40] },
+              2: { cellWidth: labelColWidth, fontStyle: 'bold', textColor: [30, 58, 95], halign: 'right', fontSize: 7 },
+              3: { cellWidth: valueColWidth, textColor: [40, 40, 40] }
             },
             willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
           });
 
-          yPos = (doc as any).lastAutoTable.finalY + 12;
+          yPos = (doc as any).lastAutoTable.finalY + 6;
+
+          // ── Description: parse and render with proper formatting ──
+          if (project.description && project.description.trim()) {
+            if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 20) {
+              yPos = newLetterheadPage(doc, letterheadImg);
+            }
+            doc.setFillColor(245, 250, 252);
+            doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 2, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 8, 'F');
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30, 58, 95);
+            doc.text('DESCRIPTION', LETTERHEAD.MARGIN_LEFT + 2, yPos + 3);
+            yPos += 10;
+
+            const blocks = parseContent(project.description);
+            yPos = renderContentToPDF(doc, blocks, yPos, letterheadImg);
+          }
+
+          yPos += 6;
 
           // Ensure we're not too close to bottom before adding separator
           if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 60 && index < projectsToExport.length - 1) {

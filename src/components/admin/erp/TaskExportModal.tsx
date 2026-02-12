@@ -9,7 +9,8 @@ import { FileDown, FileSpreadsheet, FileText, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getLetterheadImage, addLetterheadToPage, LETTERHEAD } from '@/utils/pdfLetterhead';
+import { getLetterheadImage, addLetterheadToPage, newLetterheadPage, LETTERHEAD } from '@/utils/pdfLetterhead';
+import { parseContent, renderContentToPDF } from '@/utils/pdfContentRenderer';
 
 interface ERPTask {
   id: string;
@@ -387,14 +388,12 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
       } else {
         // DETAILED VIEW - Individual sections for each task
         tasksToExport.forEach((task, index) => {
-        // Check if we need a new page (reserve more space for content)
-        if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 80) {
-          doc.addPage();
-          addLetterheadToPage(doc, letterheadImg);
-          yPos = LETTERHEAD.CONTENT_TOP;
+        // Start each task on a new page (except the first which uses the cover page)
+        if (index > 0) {
+          yPos = newLetterheadPage(doc, letterheadImg);
         }
 
-        // Task header with number and professional styling
+        // ── Task header banner ──
         doc.setFillColor(tealColor[0], tealColor[1], tealColor[2]);
         doc.rect(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 10, 'F');
         doc.setFontSize(11);
@@ -404,107 +403,98 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
         doc.text(taskHeader, pageWidth / 2, yPos + 6, { align: 'center' });
         yPos += 14;
 
-        // Task Details Table with professional grid layout
-        const detailsData = [
+        // ── Task title (standalone, prominent) ──
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+        const titleLines = doc.splitTextToSize(task.title, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT);
+        doc.text(titleLines, LETTERHEAD.MARGIN_LEFT, yPos);
+        yPos += titleLines.length * 5.5 + 4;
+
+        // ── Metadata table (compact, NO description) ──
+        const labelW = 40;
+        const valW = (pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - labelW * 2 - 4) / 2;
+        const metadataRows = [
           [
-            { content: 'TASK NAME', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: task.title, styles: { fontStyle: 'bold', fontSize: 11 } }
+            { content: 'ASSIGNED TO', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+            { content: task.assignee || 'Unassigned' },
+            { content: 'PROJECT', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+            { content: task.project_title || 'N/A' },
           ],
           [
-            { content: 'DESCRIPTION', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: task.description || 'No description provided' }
+            { content: 'STATUS', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+            { content: formatStatus(task.status) },
+            { content: 'PRIORITY', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+            { content: formatPriority(task.priority) },
           ],
           [
-            { content: 'ASSIGNED TO', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: task.assignee || 'Unassigned' }
+            { content: 'DUE DATE', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+            { content: formatDate(task.due_date) },
+            { content: 'CREATED', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+            { content: formatDate(task.created_at) },
           ],
           [
-            { content: 'PROJECT', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: task.project_title || 'Not assigned to a project' }
+            { content: 'ESTIMATED', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+            { content: task.estimated_hours + ' hrs' },
+            { content: 'ACTUAL', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
+            { content: task.actual_hours + ' hrs' },
           ],
           [
-            { content: 'STATUS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: formatStatus(task.status) }
-          ],
-          [
-            { content: 'PRIORITY', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: formatPriority(task.priority) }
-          ],
-          [
-            { content: 'DUE DATE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: formatDate(task.due_date) }
-          ],
-          [
-            { content: 'ESTIMATED HOURS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: task.estimated_hours.toString() + ' hours' }
-          ],
-          [
-            { content: 'ACTUAL HOURS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-            { content: task.actual_hours.toString() + ' hours' }
-          ],
-          [
-            { content: 'VARIANCE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+            { content: 'VARIANCE', styles: { fontStyle: 'bold' as const, fillColor: [240, 245, 248] } },
             {
-              content: `${task.actual_hours - task.estimated_hours} hours`,
+              content: `${task.actual_hours - task.estimated_hours} hrs`,
               styles: {
-                textColor: task.actual_hours > task.estimated_hours ? [220, 38, 38] : [21, 128, 61]
-              }
-            }
-          ]
+                textColor: task.actual_hours > task.estimated_hours ? [220, 38, 38] as [number, number, number] : [21, 128, 61] as [number, number, number],
+                fontStyle: 'bold' as const,
+              },
+            },
+            { content: '', styles: { fillColor: [255, 255, 255] } },
+            { content: '' },
+          ],
         ];
 
         autoTable(doc, {
           startY: yPos,
-          body: detailsData as any,
+          body: metadataRows as any,
           theme: 'grid',
           margin: { top: LETTERHEAD.CONTENT_TOP, right: LETTERHEAD.MARGIN_RIGHT, bottom: LETTERHEAD.CONTENT_BOTTOM, left: LETTERHEAD.MARGIN_LEFT },
           styles: {
-            fontSize: 9,
-            cellPadding: 3,
-            lineColor: [200, 210, 220],
-            lineWidth: 0.3,
-            overflow: 'linebreak'
+            fontSize: 8.5,
+            cellPadding: 2.5,
+            lineColor: [210, 218, 225],
+            lineWidth: 0.25,
           },
           columnStyles: {
-            0: {
-              cellWidth: 45,
-              fontStyle: 'bold',
-              textColor: [30, 58, 95],
-              halign: 'right',
-              valign: 'top',
-              fontSize: 8
-            },
-            1: {
-              cellWidth: pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 45,
-              textColor: [40, 40, 40],
-              valign: 'top'
-            }
+            0: { cellWidth: labelW, fontStyle: 'bold', textColor: NAVY, halign: 'right', fontSize: 7.5 },
+            1: { cellWidth: valW, textColor: [40, 40, 40] },
+            2: { cellWidth: labelW, fontStyle: 'bold', textColor: NAVY, halign: 'right', fontSize: 7.5 },
+            3: { cellWidth: valW, textColor: [40, 40, 40] },
           },
-          didParseCell: function(data) {
-            // Ensure text wraps properly in description cells
-            if (data.row.index === 1 && data.column.index === 1) {
-              data.cell.styles.cellPadding = { top: 3, right: 3, bottom: 3, left: 3 };
-            }
-          },
-          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); }
+          willDrawPage: () => { addLetterheadToPage(doc, letterheadImg); },
         });
 
-        yPos = (doc as any).lastAutoTable.finalY + 12;
+        yPos = (doc as any).lastAutoTable.finalY + 6;
 
-        // Ensure we're not too close to bottom before adding separator
-        if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 10 && index < tasksToExport.length - 1) {
-          doc.addPage();
-          addLetterheadToPage(doc, letterheadImg);
-          yPos = LETTERHEAD.CONTENT_TOP;
+        // ── Description: parse and render with proper formatting ──
+        if (task.description && task.description.trim()) {
+          // Section header for description
+          if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 20) {
+            yPos = newLetterheadPage(doc, letterheadImg);
+          }
+          doc.setFillColor(245, 250, 252);
+          doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 2, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 8, 'F');
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(navyColor[0], navyColor[1], navyColor[2]);
+          doc.text('DESCRIPTION', LETTERHEAD.MARGIN_LEFT + 2, yPos + 3);
+          yPos += 10;
+
+          // Parse description into structured blocks and render
+          const blocks = parseContent(task.description);
+          yPos = renderContentToPDF(doc, blocks, yPos, letterheadImg);
         }
 
-        // Add separator line between tasks (except for the last task)
-        if (index < tasksToExport.length - 1) {
-          doc.setDrawColor(tealColor[0], tealColor[1], tealColor[2]);
-          doc.setLineWidth(0.5);
-          doc.line(LETTERHEAD.MARGIN_LEFT, yPos, pageWidth - LETTERHEAD.MARGIN_RIGHT, yPos);
-          yPos += 12;
-        }
+        yPos += 6;
         });
       }
 

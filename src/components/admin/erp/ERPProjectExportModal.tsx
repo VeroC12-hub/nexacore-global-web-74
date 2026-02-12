@@ -9,7 +9,8 @@ import { FileDown, FileSpreadsheet, FileText, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { getLetterheadImage, addLetterheadToPage, LETTERHEAD } from '@/utils/pdfLetterhead';
+import { getLetterheadImage, addLetterheadToPage, LETTERHEAD, newLetterheadPage } from '@/utils/pdfLetterhead';
+import { parseContent, renderContentToPDF } from '@/utils/pdfContentRenderer';
 
 interface ERPProject {
   id: string;
@@ -378,65 +379,62 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           doc.text(projectHeader, pageWidth / 2, yPos + 6, { align: 'center' });
           yPos += 14;
 
+          // Project name row (full width, spans all 4 columns)
+          const nameRow = [
+            { content: 'PROJECT NAME', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] as [number, number, number] } },
+            { content: project.title, colSpan: 3, styles: { fontStyle: 'bold', fontSize: 11 } }
+          ];
+
+          // 2-column-pair layout: label1 | value1 | label2 | value2
+          const labelStyle = { fontStyle: 'bold' as const, fillColor: [240, 245, 248] as [number, number, number] };
+          const remaining = (project.budget || 0) - (project.actual_cost || 0);
+
           const detailsData = [
+            nameRow,
             [
-              { content: 'PROJECT NAME', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: project.title, styles: { fontStyle: 'bold', fontSize: 11 } }
-            ],
-            [
-              { content: 'DESCRIPTION', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: project.description || 'No description provided' }
-            ],
-            [
-              { content: 'DEPARTMENT', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: getDepartmentLabel(project.department) }
-            ],
-            [
-              { content: 'PROJECT TYPE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'DEPARTMENT', styles: labelStyle },
+              { content: getDepartmentLabel(project.department) },
+              { content: 'PROJECT TYPE', styles: labelStyle },
               { content: project.project_type || 'N/A' }
             ],
             [
-              { content: 'STATUS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: formatStatus(project.status) }
-            ],
-            [
-              { content: 'PRIORITY', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'STATUS', styles: labelStyle },
+              { content: formatStatus(project.status) },
+              { content: 'PRIORITY', styles: labelStyle },
               { content: formatPriority(project.priority) }
             ],
             [
-              { content: 'PROGRESS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: `${project.progress}%` }
+              { content: 'PROGRESS', styles: labelStyle },
+              { content: `${project.progress}%` },
+              { content: 'ACTIVE', styles: labelStyle },
+              { content: project.is_active ? 'Active' : 'Inactive' }
             ],
             [
-              { content: 'BUDGET', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: `$${(project.budget || 0).toLocaleString()}` }
-            ],
-            [
-              { content: 'SPENT AMOUNT', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'BUDGET', styles: labelStyle },
+              { content: `$${(project.budget || 0).toLocaleString()}` },
+              { content: 'SPENT', styles: labelStyle },
               { content: `$${(project.actual_cost || 0).toLocaleString()}` }
             ],
             [
-              { content: 'REMAINING BUDGET', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+              { content: 'REMAINING', styles: labelStyle },
               {
-                content: `$${((project.budget || 0) - (project.actual_cost || 0)).toLocaleString()}`,
-                styles: {
-                  textColor: (project.budget || 0) - (project.actual_cost || 0) < 0 ? [220, 38, 38] : [21, 128, 61]
-                }
-              }
-            ],
-            [
-              { content: 'START DATE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
+                content: `$${remaining.toLocaleString()}`,
+                styles: { textColor: remaining < 0 ? [220, 38, 38] : [21, 128, 61] }
+              },
+              { content: 'START DATE', styles: labelStyle },
               { content: formatDate(project.start_date) }
             ],
             [
-              { content: 'END DATE', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: formatDate(project.end_date) }
-            ],
-            [
-              { content: 'ACTIVE STATUS', styles: { fontStyle: 'bold', fillColor: [240, 245, 248] } },
-              { content: project.is_active ? 'Active' : 'Inactive' }
+              { content: 'END DATE', styles: labelStyle },
+              { content: formatDate(project.end_date) },
+              { content: '', styles: labelStyle },
+              { content: '' }
             ]
           ];
+
+          const halfWidth = (pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT) / 2;
+          const labelColWidth = 30;
+          const valueColWidth = halfWidth - labelColWidth;
 
           autoTable(doc, {
             startY: yPos,
@@ -452,23 +450,33 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
               overflow: 'linebreak'
             },
             columnStyles: {
-              0: {
-                cellWidth: 45,
-                fontStyle: 'bold',
-                textColor: [30, 58, 95],
-                halign: 'right',
-                valign: 'top',
-                fontSize: 8
-              },
-              1: {
-                cellWidth: pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 45,
-                textColor: [40, 40, 40],
-                valign: 'top'
-              }
+              0: { cellWidth: labelColWidth, fontStyle: 'bold', textColor: [30, 58, 95], halign: 'right', valign: 'top', fontSize: 8 },
+              1: { cellWidth: valueColWidth, textColor: [40, 40, 40], valign: 'top' },
+              2: { cellWidth: labelColWidth, fontStyle: 'bold', textColor: [30, 58, 95], halign: 'right', valign: 'top', fontSize: 8 },
+              3: { cellWidth: valueColWidth, textColor: [40, 40, 40], valign: 'top' }
             }
           });
 
-          yPos = (doc as any).lastAutoTable.finalY + 12;
+          yPos = (doc as any).lastAutoTable.finalY + 8;
+
+          // ── Description: parse and render with proper formatting ──
+          if (project.description && project.description.trim()) {
+            if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM - 20) {
+              yPos = newLetterheadPage(doc, letterheadImg);
+            }
+            doc.setFillColor(245, 250, 252);
+            doc.rect(LETTERHEAD.MARGIN_LEFT, yPos - 2, pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT, 8, 'F');
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(30, 58, 95);
+            doc.text('DESCRIPTION', LETTERHEAD.MARGIN_LEFT + 2, yPos + 3);
+            yPos += 10;
+
+            const blocks = parseContent(project.description);
+            yPos = renderContentToPDF(doc, blocks, yPos, letterheadImg);
+          }
+
+          yPos += 4;
 
           if (yPos > pageHeight - LETTERHEAD.CONTENT_BOTTOM && index < projectsToExport.length - 1) {
             doc.addPage();

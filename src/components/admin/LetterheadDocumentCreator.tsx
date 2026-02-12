@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileText, Printer, Eye, ClipboardPaste, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { getLetterheadImage } from '@/utils/pdfLetterhead';
 
 interface ParsedBlock {
   type: 'heading' | 'paragraph' | 'table' | 'list';
@@ -113,7 +114,7 @@ function parseContent(raw: string): ParsedBlock[] {
   return blocks;
 }
 
-function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: string): string {
+function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: string, letterheadDataUrl: string | null): string {
   let body = '';
 
   for (const block of blocks) {
@@ -151,6 +152,11 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
     }
   }
 
+  // Use actual letterhead PDF image as background if available
+  const bgStyle = letterheadDataUrl
+    ? `background-image: url('${letterheadDataUrl}'); background-size: 100% 100%; background-repeat: no-repeat;`
+    : 'background: white;';
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -168,91 +174,29 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       line-height: 1.6;
       font-size: 13px;
     }
+
+    /* ─── PAGE: Uses actual letterhead PDF as background ─── */
     .page {
-      max-width: 210mm;
+      width: 210mm;
       min-height: 297mm;
-      margin: 0 auto;
-      background: white;
+      margin: 0 auto 20px;
+      ${bgStyle}
       box-shadow: 0 4px 24px rgba(0,0,0,0.15);
       position: relative;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
-    /* ─── HEADER: Diagonal triangles matching letterhead PDF ─── */
-    .lh-header {
-      position: relative;
-      height: 100px;
-      overflow: hidden;
-    }
-    /* Large teal triangle from top-left */
-    .lh-header .tri-teal {
-      position: absolute;
-      top: 0; left: 0;
-      width: 0; height: 0;
-      border-top: 100px solid #0098A6;
-      border-right: 260px solid transparent;
-    }
-    /* Smaller olive/lime triangle overlapping */
-    .lh-header .tri-olive {
-      position: absolute;
-      top: 0; left: 0;
-      width: 0; height: 0;
-      border-top: 65px solid #8B9A2E;
-      border-right: 170px solid transparent;
-    }
-    /* Company name + tagline on the right side */
-    .lh-header .brand {
-      position: absolute;
-      top: 18px;
-      right: 40px;
-      text-align: right;
-    }
-    .lh-header .brand-logo {
-      width: 44px; height: 44px;
-      display: inline-block;
-      vertical-align: middle;
-      margin-left: 12px;
-    }
-    .lh-header .brand h1 {
-      font-size: 26px;
-      font-weight: 800;
-      letter-spacing: 4px;
-      color: #1E3A5F;
-      line-height: 1;
-      display: inline-block;
-      vertical-align: middle;
-    }
-    .lh-header .brand .tagline {
-      display: block;
-      font-size: 8px;
-      letter-spacing: 3.5px;
-      text-transform: uppercase;
-      color: #6b7280;
-      margin-top: 4px;
-    }
-
-    /* ─── WATERMARK: Faded NexaCore logos in background ─── */
-    .watermark {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      opacity: 0.03;
-      font-size: 120px;
-      font-weight: 900;
-      letter-spacing: 12px;
-      color: #0098A6;
-      white-space: nowrap;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ─── CONTENT AREA ─── */
+    /* ─── CONTENT AREA: positioned within letterhead safe margins ─── */
+    /* Top ~46mm below header, bottom ~30mm above footer, sides ~18mm */
     .content {
-      padding: 20px 48px 24px;
+      padding: 44mm 20mm 32mm;
       position: relative;
       z-index: 1;
-      min-height: calc(297mm - 100px - 60px);
+      flex: 1;
     }
     .doc-title-bar {
       display: flex;
@@ -273,7 +217,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
     /* Headings */
     .doc-heading {
       color: #1E3A5F;
-      margin: 20px 0 8px;
+      margin: 18px 0 8px;
       padding-bottom: 4px;
     }
     h2.doc-heading {
@@ -314,8 +258,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       border-bottom: 1px solid #e5e7eb;
       color: #374151;
     }
-    .doc-table tbody tr:nth-child(even) { background: #f9fafb; }
-    .doc-table tbody tr:hover { background: #f0fdf4; }
+    .doc-table tbody tr:nth-child(even) { background: rgba(249, 250, 251, 0.85); }
 
     /* Lists */
     .doc-list {
@@ -331,40 +274,14 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       color: #0098A6;
     }
 
-    /* ─── FOOTER: Matching letterhead PDF ─── */
-    .lh-footer {
-      position: relative;
-      padding: 0;
-      flex-shrink: 0;
-    }
-    .lh-footer .footer-content {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 28px;
-      padding: 12px 48px;
-      font-size: 10px;
-      color: #4b5563;
-    }
-    .lh-footer .footer-content span {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    /* Colored gradient bar at very bottom */
-    .lh-footer .footer-bar {
-      height: 6px;
-      background: linear-gradient(90deg, #8B9A2E 0%, #0098A6 50%, #1E3A5F 100%);
-    }
-
     @media print {
-      body { background: white; padding: 0; }
-      .page { box-shadow: none; min-height: auto; }
-      .lh-header .tri-teal,
-      .lh-header .tri-olive,
-      .doc-table th,
-      .doc-title-bar,
-      .lh-footer .footer-bar {
+      body { background: white; padding: 0; margin: 0; }
+      .page {
+        box-shadow: none;
+        min-height: auto;
+        width: 100%;
+        margin: 0;
+        page-break-after: always;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
@@ -374,39 +291,12 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
 </head>
 <body>
   <div class="page">
-    <!-- Header with diagonal triangles -->
-    <div class="lh-header">
-      <div class="tri-teal"></div>
-      <div class="tri-olive"></div>
-      <div class="brand">
-        <h1>NEXACORE</h1>
-        <img src="https://www.nexacore-innovations.com/nexacore-logo.png"
-             alt="" class="brand-logo" onerror="this.style.display='none'">
-        <span class="tagline">Engineering Global Innovation with Excellence</span>
-      </div>
-    </div>
-
-    <!-- Faded watermark -->
-    <div class="watermark">NEXACORE</div>
-
-    <!-- Main content -->
     <div class="content">
       <div class="doc-title-bar">
         <h2>${docTitle || 'Document'}</h2>
         <span class="doc-date">${docDate}</span>
       </div>
       ${body}
-    </div>
-
-    <!-- Footer with contact info + colored bar -->
-    <div class="lh-footer">
-      <div class="footer-content">
-        <span>projects@nexacore-innovations.com</span>
-        <span>+233 209 628 907</span>
-        <span>www.nexacore-innovations.com</span>
-        <span>Accra, Ghana</span>
-      </div>
-      <div class="footer-bar"></div>
     </div>
   </div>
 
@@ -427,7 +317,15 @@ export const LetterheadDocumentCreator: React.FC = () => {
   const [docTitle, setDocTitle] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [parsedBlocks, setParsedBlocks] = useState<ParsedBlock[]>([]);
+  const [letterheadImg, setLetterheadImg] = useState<string | null>(null);
   const previewRef = useRef<HTMLIFrameElement>(null);
+
+  // Pre-load the actual letterhead PDF as a background image
+  useEffect(() => {
+    getLetterheadImage().then(img => {
+      if (img) setLetterheadImg(img);
+    });
+  }, []);
 
   const handleParse = () => {
     if (!rawContent.trim()) {
@@ -442,7 +340,7 @@ export const LetterheadDocumentCreator: React.FC = () => {
     setTimeout(() => {
       if (previewRef.current) {
         const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-        const html = renderBlocksToHTML(blocks, docTitle || 'Document', dateStr);
+        const html = renderBlocksToHTML(blocks, docTitle || 'Document', dateStr, letterheadImg);
         const doc = previewRef.current.contentDocument;
         if (doc) {
           doc.open();
@@ -463,7 +361,7 @@ export const LetterheadDocumentCreator: React.FC = () => {
 
   const handleOpenInNewTab = () => {
     const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-    const html = renderBlocksToHTML(parsedBlocks, docTitle || 'Document', dateStr);
+    const html = renderBlocksToHTML(parsedBlocks, docTitle || 'Document', dateStr, letterheadImg);
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
