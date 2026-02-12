@@ -56,12 +56,12 @@ async function fetchProfile(authUser: User): Promise<EnhancedUser> {
     const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
 
     if (error || !data) {
-      return buildUser(authUser, 'admin');
+      return buildUser(authUser, 'client');
     }
 
-    return buildUser(authUser, (data.role || 'admin') as UserRole, data);
+    return buildUser(authUser, (data.role || 'client') as UserRole, data);
   } catch {
-    return buildUser(authUser, 'admin');
+    return buildUser(authUser, 'client');
   }
 }
 

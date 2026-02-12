@@ -107,7 +107,7 @@ export function useERPTasks({
     {
       page,
       pageSize,
-      select: '*',
+      select: '*, profiles:profiles!erp_tasks_assigned_to_fkey(full_name), erp_projects:erp_projects!erp_tasks_erp_project_id_fkey(title)',
       filters: (query) => {
         let filtered = query;
 
@@ -155,8 +155,9 @@ export function useERPTimeEntries({
       pageSize,
       select: `
         *,
-        profiles!user_id (full_name, email),
-        erp_projects!project_id (title)
+        profiles:profiles!erp_time_entries_user_id_fkey(full_name, email),
+        erp_projects:erp_projects!erp_time_entries_erp_project_id_fkey(title),
+        erp_tasks:erp_tasks!erp_time_entries_erp_task_id_fkey(title)
       `,
       filters: (query) => {
         let filtered = query;
@@ -185,7 +186,7 @@ export function useERPStaffRoles(options?: { enabled?: boolean }) {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email, full_name, phone, role, status, created_at')
-        .in('role', ['admin', 'staff', 'project_manager'])
+        .in('role', ['admin', 'project_manager', 'operations_manager', 'developer'])
         .order('full_name', { ascending: true });
 
       if (error) throw error;

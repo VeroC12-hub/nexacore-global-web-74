@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,8 @@ import { Task, TimeEntry, ProjectAnalytics, TaskAnalytics, ActivityItem } from '
 interface StaffDashboardProps {
   className?: string;
 }
+
+const LetterheadDocumentCreator = lazy(() => import('@/components/admin/LetterheadDocumentCreator'));
 
 export function StaffDashboard({ className }: StaffDashboardProps) {
   const { user, hasPermission } = useEnhancedAuth();
@@ -226,6 +228,10 @@ export function StaffDashboard({ className }: StaffDashboardProps) {
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Reports</span>
+            </TabsTrigger>
+            <TabsTrigger value="letterhead" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              <span className="hidden sm:inline">Letterhead</span>
             </TabsTrigger>
           </TabsList>
 
@@ -490,6 +496,13 @@ export function StaffDashboard({ className }: StaffDashboardProps) {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Letterhead Tab */}
+          <TabsContent value="letterhead">
+            <Suspense fallback={<div className="flex justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>}>
+              <LetterheadDocumentCreator />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </div>

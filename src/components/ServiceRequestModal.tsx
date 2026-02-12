@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { toast } from 'sonner';
 
 interface ServiceRequestModalProps {
@@ -16,7 +16,7 @@ interface ServiceRequestModalProps {
 }
 
 const ServiceRequestModal = ({ isOpen, onClose, onSuccess }: ServiceRequestModalProps) => {
-  const { user } = useAuth();
+  const { user } = useEnhancedAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useERPTasks } from '@/hooks/queries/useERPQueries';
 import { ERPTasksTab } from './ERPTasksTab';
 import { DashboardSkeleton } from '../LoadingSkeletons';
@@ -6,6 +6,31 @@ import { Pagination } from '../Pagination';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+
+// Map DB status values to what the component expects
+const STATUS_MAP: Record<string, string> = {
+  'pending': 'todo',
+  'new': 'todo',
+  'blocked': 'todo',
+  'cancelled': 'todo',
+  'in_progress': 'in_progress',
+  'review': 'review',
+  'testing': 'review',
+  'completed': 'completed',
+};
+
+function transformTask(task: any) {
+  return {
+    ...task,
+    assignee: task.profiles?.full_name || 'Unassigned',
+    project_id: task.erp_project_id || '',
+    project_title: task.erp_projects?.title || 'N/A',
+    status: STATUS_MAP[task.status] || task.status,
+    due_date: task.due_date || '',
+    estimated_hours: task.estimated_hours || 0,
+    actual_hours: task.actual_hours || 0,
+  };
+}
 
 interface ERPTasksTabWithDataProps {
   searchTerm: string;
@@ -76,7 +101,8 @@ export function ERPTasksTabWithData(props: ERPTasksTabWithDataProps) {
     return <DashboardSkeleton />;
   }
 
-  const tasks = tasksData?.data || [];
+  const rawTasks = tasksData?.data || [];
+  const tasks = rawTasks.map(transformTask);
   const totalCount = tasksData?.count || 0;
   const totalPages = tasksData?.totalPages || 1;
 

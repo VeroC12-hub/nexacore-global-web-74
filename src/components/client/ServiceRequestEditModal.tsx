@@ -19,7 +19,6 @@ interface ServiceRequest {
   title: string;
   description: string;
   request_type: string;
-  category: string;
   status: string;
   priority: string;
   budget_estimate: number;
@@ -45,7 +44,6 @@ export const ServiceRequestEditModal: React.FC<ServiceRequestEditModalProps> = (
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
     priority: 'medium',
     budget_estimate: 0,
     requested_completion: new Date(),
@@ -58,7 +56,6 @@ export const ServiceRequestEditModal: React.FC<ServiceRequestEditModalProps> = (
       setFormData({
         title: serviceRequest.title || '',
         description: serviceRequest.description || '',
-        category: serviceRequest.category || '',
         priority: serviceRequest.priority || 'medium',
         budget_estimate: serviceRequest.budget_estimate || 0,
         requested_completion: serviceRequest.requested_completion
@@ -84,11 +81,6 @@ export const ServiceRequestEditModal: React.FC<ServiceRequestEditModalProps> = (
       newErrors.description = 'Description is required';
     } else if (formData.description.trim().length < 20) {
       newErrors.description = 'Description must be at least 20 characters';
-    }
-
-    // Validate category
-    if (!formData.category) {
-      newErrors.category = 'Category is required';
     }
 
     // Validate budget estimate
@@ -136,7 +128,6 @@ export const ServiceRequestEditModal: React.FC<ServiceRequestEditModalProps> = (
         .update({
           title: formData.title.trim(),
           description: formData.description.trim(),
-          category: formData.category,
           priority: formData.priority,
           budget_estimate: formData.budget_estimate,
           requested_completion: format(formData.requested_completion, 'yyyy-MM-dd'),
@@ -238,33 +229,6 @@ export const ServiceRequestEditModal: React.FC<ServiceRequestEditModalProps> = (
               <p className="text-xs text-muted-foreground">
                 Minimum 20 characters. Include all relevant details.
               </p>
-            </div>
-
-            {/* Category (Editable) */}
-            <div className="space-y-2">
-              <Label htmlFor="category">
-                Category <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
-              >
-                <SelectTrigger id="category" className={errors.category ? 'border-red-500' : ''}>
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CAD Design">CAD Design</SelectItem>
-                  <SelectItem value="Software Development">Software Development</SelectItem>
-                  <SelectItem value="AI/ML Solutions">AI/ML Solutions</SelectItem>
-                  <SelectItem value="Blockchain">Blockchain</SelectItem>
-                  <SelectItem value="Digital Services">Digital Services</SelectItem>
-                  <SelectItem value="Consulting">Consulting</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.category && (
-                <p className="text-xs text-red-500">{errors.category}</p>
-              )}
             </div>
 
             {/* Priority (Editable) */}

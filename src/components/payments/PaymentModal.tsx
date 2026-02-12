@@ -255,16 +255,16 @@ export function PaymentModal({ isOpen, onClose, invoice, onPaymentSuccess }: Pay
           payment_method: selectedMethod,
           status: 'pending_verification', // Manual payments start as pending
           transaction_id: contactForm.transactionId || contactForm.transactionHash || `manual_${Date.now()}`,
-          payment_details: {
+          provider_response: {
             contact_info: {
               name: contactForm.fullName,
               email: contactForm.email,
               phone: contactForm.phone
             },
             ...(selectedMethod === 'mobile_money' && { transaction_id: contactForm.transactionId }),
-            ...(selectedMethod === 'crypto' && { 
+            ...(selectedMethod === 'crypto' && {
               transaction_hash: contactForm.transactionHash,
-              cryptocurrency: contactForm.cryptocurrency 
+              cryptocurrency: contactForm.cryptocurrency
             })
           }
         };
@@ -279,7 +279,7 @@ export function PaymentModal({ isOpen, onClose, invoice, onPaymentSuccess }: Pay
         const { error: invoiceError } = await supabase
           .from('invoices')
           .update({ 
-            status: 'pending_payment',
+            status: 'sent',
             payment_method: selectedMethod
           })
           .eq('id', invoice.id);

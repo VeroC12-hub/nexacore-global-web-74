@@ -667,9 +667,8 @@ const ClientPortal: React.FC = () => {
           title: contactForm.subject,
           description: contactForm.message,
           request_type: 'support',
-          category: 'General Support',
           priority: contactForm.priority,
-          status: 'pending'
+          status: 'submitted'
         });
 
       if (error) throw error;
@@ -1771,7 +1770,9 @@ const ClientPortal: React.FC = () => {
                   </div>
                 </div>
 
-                {invoices.map((invoice) => (
+                {invoices
+                  .filter(i => filterStatus === 'all' || i.status === filterStatus)
+                  .map((invoice) => (
                   <InvoicePaymentCard
                     key={invoice.id}
                     invoice={invoice}
@@ -1787,8 +1788,8 @@ const ClientPortal: React.FC = () => {
                     className="w-full"
                   />
                 ))}
-                
-                {invoices.length === 0 && (
+
+                {invoices.filter(i => filterStatus === 'all' || i.status === filterStatus).length === 0 && (
                   <Card className="p-8">
                     <div className="text-center">
                       <CreditCard className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
@@ -1833,10 +1834,6 @@ const ClientPortal: React.FC = () => {
                     <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{request.description}</p>
                     
                     <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Category:</span>
-                        <span>{request.category}</span>
-                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Type:</span>
                         <span>{request.request_type}</span>
@@ -1927,10 +1924,10 @@ const ClientPortal: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">Company</label>
-                    <Input 
-                      value={profile?.company || ''} 
-                      placeholder="Enter your company name"
+                    <label className="block text-sm font-medium mb-2">Location</label>
+                    <Input
+                      value={profile?.location || ''}
+                      placeholder="Your location"
                       readOnly
                       className="bg-muted/50"
                     />

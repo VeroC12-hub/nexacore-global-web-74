@@ -51,6 +51,7 @@ const AdminQuoteRequestsTab = lazy(() => import('@/components/admin/AdminQuoteRe
 const AdminProposalsTab = lazy(() => import('@/components/admin/AdminProposalsTab').then(m => ({ default: m.AdminProposalsTab })));
 const AdminAnalytics = lazy(() => import('@/components/analytics/AdminAnalytics'));
 const AdminERPTab = lazy(() => import('@/components/admin/AdminERPTab').then(m => ({ default: m.AdminERPTab })));
+const LetterheadDocumentCreator = lazy(() => import('@/components/admin/LetterheadDocumentCreator'));
 
 // Import ErrorBoundary and loading components immediately (not lazy)
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -81,7 +82,7 @@ export const ModernAdminDashboard: React.FC = () => {
   const { permissions, loading: permissionsLoading } = useRolePermissions();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'proposals' | 'projects' | 'portfolio' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'proposals' | 'projects' | 'portfolio' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp' | 'letterhead'>('overview');
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalProjects: 0,
@@ -216,6 +217,7 @@ export const ModernAdminDashboard: React.FC = () => {
     { id: 'files', label: 'Files', icon: <FolderOpen className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'messages', label: 'Messages', icon: <MessageSquare className="h-5 w-5" />, count: stats.unreadMessages, requiresPermission: null },
     { id: 'workflows', label: 'Workflows', icon: <Workflow className="h-5 w-5" />, count: stats.activeWorkflows, requiresPermission: 'canManageWorkflows' },
+    { id: 'letterhead', label: 'Letterhead', icon: <FileText className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'erp', label: 'ERP', icon: <Activity className="h-5 w-5" />, count: null, requiresPermission: 'canAccessSystemSettings' },
     { id: 'settings', label: 'Settings', icon: <Settings className="h-5 w-5" />, count: null, requiresPermission: 'canAccessSystemSettings' },
   ];
@@ -334,6 +336,14 @@ export const ModernAdminDashboard: React.FC = () => {
           <ErrorBoundary>
             <Suspense fallback={<DashboardSkeleton />}>
               <AdminSettingsTab />
+            </Suspense>
+          </ErrorBoundary>
+        );
+      case 'letterhead':
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <LetterheadDocumentCreator />
             </Suspense>
           </ErrorBoundary>
         );

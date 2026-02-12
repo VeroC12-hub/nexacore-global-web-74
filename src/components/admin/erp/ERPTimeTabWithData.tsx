@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useERPTimeEntries } from '@/hooks/queries/useERPQueries';
 import { ERPTimeTab } from './ERPTimeTab';
 import { DashboardSkeleton } from '../LoadingSkeletons';
@@ -17,6 +17,22 @@ interface ERPTimeTabWithDataProps {
   onStartTimer: (projectId: string, taskId?: string) => void;
   onStopTimer: (entryId: string) => void;
   onDeleteTimeEntry: (entry: any) => void;
+}
+
+// Transform DB shape to what ERPTimeTab component expects
+function transformTimeEntry(entry: any) {
+  return {
+    ...entry,
+    user_name: entry.profiles?.full_name || 'Unknown',
+    project_title: entry.erp_projects?.title || 'N/A',
+    task_title: entry.erp_tasks?.title || '',
+    rate: entry.hourly_rate || 0,
+    project_id: entry.erp_project_id || '',
+    task_id: entry.erp_task_id || '',
+    start_time: entry.date || entry.created_at,
+    end_time: null,
+    status: (entry.status === 'approved' || entry.status === 'submitted' || entry.status === 'invoiced') ? 'completed' : 'active',
+  };
 }
 
 export function ERPTimeTabWithData(props: ERPTimeTabWithDataProps) {
@@ -69,9 +85,18 @@ export function ERPTimeTabWithData(props: ERPTimeTabWithDataProps) {
     return <DashboardSkeleton />;
   }
 
-  const timeEntries = timeEntriesData?.data || [];
+  const rawEntries = timeEntriesData?.data || [];
+  const timeEntries = rawEntries.map(transformTimeEntry);
   const totalCount = timeEntriesData?.count || 0;
   const totalPages = timeEntriesData?.totalPages || 1;
+
+  // Extract unique projects for the projects prop
+  const projects = useMemo(() => {
+    const seen = new Set<string>();
+    return rawEntries
+      .filter((e: any) => e.erp_project_id && !seen.has(e.erp_project_id) && seen.add(e.erp_project_id))
+      .map((e: any) => ({ id: e.erp_project_id, title: e.erp_projects?.title || 'Unknown' }));
+  }, [rawEntries]);
 
   return (
     <div>
@@ -90,7 +115,7 @@ export function ERPTimeTabWithData(props: ERPTimeTabWithDataProps) {
         onRefresh={refetch}
         searchTerm=""
         setSearchTerm={() => {}}
-        projects={[]}
+        projects={projects}
       />
       
       {totalCount > 0 && (

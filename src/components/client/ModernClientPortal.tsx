@@ -113,13 +113,18 @@ export const ModernClientPortal: React.FC = () => {
 
       if (invoicesError) throw invoicesError;
 
-      // Load messages
-      const { data: messagesData, error: messagesError } = await (supabase as any)
-        .from('project_messages')
-        .select('*')
-        .eq('client_id', user.id);
+      // Load messages through user's projects
+      const projectIds = projectsData?.map(p => p.id) || [];
+      let messagesData: any[] = [];
+      if (projectIds.length > 0) {
+        const { data: msgs, error: messagesError } = await supabase
+          .from('project_messages')
+          .select('*')
+          .in('project_id', projectIds);
 
-      if (messagesError) throw messagesError;
+        if (messagesError) throw messagesError;
+        messagesData = msgs || [];
+      }
 
       const processedProjects = projectsData?.map(project => ({
         ...project,
@@ -134,7 +139,7 @@ export const ModernClientPortal: React.FC = () => {
       setProjects(processedProjects);
       setStats({
         totalProjects: processedProjects.length,
-        activeProjects: processedProjects.filter(p => p.status === 'active').length,
+        activeProjects: processedProjects.filter(p => p.status === 'in_progress' || p.status === 'active').length,
         completedProjects: processedProjects.filter(p => p.status === 'completed').length,
         totalSpent,
         pendingInvoices,
