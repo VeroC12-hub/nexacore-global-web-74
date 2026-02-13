@@ -49,7 +49,8 @@ interface InvoiceData {
 export async function generateInvoicePDF(
   invoice: InvoiceData,
   lineItems: InvoiceLineItem[],
-): Promise<void> {
+  action: 'save' | 'print' | 'blob' = 'save'
+): Promise<string | void> {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.width;
   const contentWidth = pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT;
@@ -309,7 +310,17 @@ export async function generateInvoicePDF(
   doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
   doc.text('Thank you for your business!', leftM + contentWidth / 2, y, { align: 'center' });
 
-  // Save
+  // Save or Return
   const filename = `NexaCore_Invoice_${invoice.invoice_number}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-  doc.save(filename);
+
+  if (action === 'save') {
+    doc.save(filename);
+  } else if (action === 'print') {
+    doc.autoPrint();
+    const blob = doc.output('blob');
+    return URL.createObjectURL(blob);
+  } else if (action === 'blob') {
+    const blob = doc.output('blob');
+    return URL.createObjectURL(blob);
+  }
 }

@@ -155,9 +155,32 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-    toast.success('Opening print dialog...');
+  const handlePrint = async () => {
+    if (!invoice) return;
+    try {
+      toast.info('Preparing print document...');
+      const url = await generateInvoicePDF(
+        {
+          ...invoice,
+          project_title: project?.title,
+          service_type: project?.service_type,
+        },
+        lineItems.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total: item.total,
+        })),
+        'print'
+      );
+
+      if (url && typeof url === 'string') {
+        window.open(url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error generating print document:', error);
+      toast.error('Failed to prepare document for printing');
+    }
   };
 
   const handleEmail = () => {
