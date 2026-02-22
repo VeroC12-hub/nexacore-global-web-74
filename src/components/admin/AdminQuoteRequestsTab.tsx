@@ -24,7 +24,13 @@ import {
   Plus,
   Save,
   FileText,
-  ExternalLink
+  DollarSign,
+  User,
+  Mail,
+  Building2,
+  Phone,
+  MapPin,
+  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -69,6 +75,7 @@ const AdminQuoteRequestsTab = () => {
   const [deletingSelected, setDeletingSelected] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<QuoteRequest | null>(null);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
+  const [previewingQuote, setPreviewingQuote] = useState<Quote | null>(null);
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
   const [showProblematicOnly, setShowProblematicOnly] = useState(false);
   
@@ -1032,14 +1039,14 @@ Database is now optimized!`,
                     </Button>
                   )}
 
-                  {/* Preview Quote Button — shows client view in a new tab */}
+                  {/* Preview Quote Button — opens in-page dialog */}
                   {relatedQuote && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(`/quote/${relatedQuote.id}?preview=true`, '_blank')}
+                      onClick={() => setPreviewingQuote(relatedQuote)}
                     >
-                      <ExternalLink className="h-4 w-4 mr-2" />
+                      <Eye className="h-4 w-4 mr-2" />
                       Preview Quote
                     </Button>
                   )}
@@ -1099,6 +1106,157 @@ Database is now optimized!`,
           </CardContent>
         </Card>
       )}
+
+      {/* ── Quote Preview Dialog ── */}
+      {(() => {
+        const pq = previewingQuote;
+        if (!pq) return null;
+        const pr = quoteRequests.find(r => r.id === pq.quote_request_id) ?? null;
+        const deliverables: string[] = Array.isArray(pq.deliverables)
+          ? pq.deliverables
+          : typeof pq.deliverables === 'string' && pq.deliverables
+            ? (pq.deliverables as string).split('\n').filter(Boolean)
+            : [];
+        const statusColors: Record<string, string> = {
+          sent: 'bg-blue-100 text-blue-800 border-blue-200',
+          approved: 'bg-green-100 text-green-800 border-green-200',
+          declined: 'bg-red-100 text-red-800 border-red-200',
+          revision_requested: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+          draft: 'bg-gray-100 text-gray-800 border-gray-200',
+        };
+        const statusColor = statusColors[pq.status] ?? 'bg-gray-100 text-gray-800 border-gray-200';
+
+        return (
+          <Dialog open={true} onOpenChange={(open) => { if (!open) setPreviewingQuote(null); }}>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
+              {/* Header bar */}
+              <div className="bg-gradient-to-r from-[#1E3A5F] to-[#0098A6] text-white px-6 py-4 rounded-t-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-widest text-teal-200 mb-0.5">Admin Preview</p>
+                    <h2 className="text-2xl font-bold tracking-tight">QUOTATION</h2>
+                  </div>
+                  <Badge className={`${statusColor} border text-sm font-semibold px-3 py-1`}>
+                    {pq.status.replace('_', ' ').toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="px-6 py-5 space-y-5">
+                {/* Client info + price side by side */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Client info */}
+                  <div className="md:col-span-2 rounded-lg border bg-gray-50 p-4 space-y-2">
+                    <p className="text-xs font-bold uppercase tracking-widest text-[#0098A6] mb-2">Prepared For</p>
+                    {pr ? (
+                      <>
+                        <div className="flex items-center gap-2 font-semibold text-[#1E3A5F] text-base">
+                          <User className="h-4 w-4 text-[#0098A6]" />
+                          {pr.full_name}
+                        </div>
+                        {pr.company && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Building2 className="h-3.5 w-3.5 text-gray-400" />
+                            {pr.company}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Mail className="h-3.5 w-3.5 text-gray-400" />
+                          {pr.email}
+                        </div>
+                        {pr.phone && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Phone className="h-3.5 w-3.5 text-gray-400" />
+                            {pr.phone}
+                          </div>
+                        )}
+                        {pr.country && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                            {pr.country}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">{pq.client_email}</p>
+                    )}
+                  </div>
+
+                  {/* Price summary */}
+                  <div className="rounded-lg border bg-gradient-to-br from-blue-50 to-teal-50 border-blue-200 p-4 flex flex-col items-center justify-center text-center">
+                    <DollarSign className="h-6 w-6 text-[#0098A6] mb-1" />
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Investment</p>
+                    <p className="text-3xl font-bold text-[#1E3A5F] mt-1">
+                      {pq.currency}{pq.price.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">{pq.service_type || pr?.service_type}</p>
+                    {pq.expires_at && (
+                      <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        Valid until {new Date(pq.expires_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Quote meta row */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  {[
+                    { label: 'Service', value: pq.service_type || pr?.service_type || '—' },
+                    { label: 'Timeline', value: pq.timeline || '—' },
+                    { label: 'Issued', value: new Date(pq.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) },
+                    { label: 'Status', value: pq.status.replace('_', ' ') },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded border bg-white p-3">
+                      <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">{label}</p>
+                      <p className="font-semibold text-gray-800 capitalize">{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Scope */}
+                {pq.scope && (
+                  <div>
+                    <h3 className="font-bold text-[#1E3A5F] text-sm uppercase tracking-wide border-b border-[#0098A6] pb-1 mb-3">Project Scope</h3>
+                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border">
+                      {pq.scope}
+                    </p>
+                  </div>
+                )}
+
+                {/* Deliverables */}
+                {deliverables.length > 0 && (
+                  <div>
+                    <h3 className="font-bold text-[#1E3A5F] text-sm uppercase tracking-wide border-b border-[#0098A6] pb-1 mb-3">Deliverables</h3>
+                    <ul className="space-y-1.5">
+                      {deliverables.map((d, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                          {d}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Terms */}
+                {pq.terms && (
+                  <div>
+                    <h3 className="font-bold text-[#1E3A5F] text-sm uppercase tracking-wide border-b border-[#0098A6] pb-1 mb-3">Terms & Conditions</h3>
+                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border">
+                      {pq.terms}
+                    </p>
+                  </div>
+                )}
+
+                <p className="text-center text-xs text-gray-400 pt-2 italic">
+                  This is an admin preview — the client sees this exact layout at their quote link.
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
     </div>
   );
 };
