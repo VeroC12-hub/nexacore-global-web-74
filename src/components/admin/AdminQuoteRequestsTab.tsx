@@ -33,6 +33,106 @@ import {
   Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { parseContent, ParsedBlock } from '@/utils/pdfContentRenderer';
+
+// ── Inline markdown → safe HTML (bold / italic only) ──────────────────────────
+function inlineHtml(text: string): string {
+  // Escape HTML entities first
+  let s = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  // **bold** / __bold__
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  // *italic* / _italic_
+  s = s.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+  s = s.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+  return s;
+}
+
+// ── React renderer for parsed content blocks ──────────────────────────────────
+function RichContent({ raw }: { raw: string }) {
+  if (!raw?.trim()) return null;
+  const blocks = parseContent(raw);
+  return (
+    <div className="space-y-2 text-sm text-gray-700">
+      {blocks.map((block, i) => {
+        switch (block.type) {
+          case 'heading': {
+            const Tag = block.level === 1 ? 'h3' : block.level === 2 ? 'h4' : 'h5';
+            const cls =
+              block.level === 1
+                ? 'font-bold text-[#1E3A5F] text-base mt-3 mb-1 border-b border-[#0098A6] pb-0.5'
+                : block.level === 2
+                ? 'font-semibold text-[#0098A6] text-sm mt-2 mb-0.5'
+                : 'font-semibold text-gray-600 text-sm mt-1';
+            return <Tag key={i} className={cls}>{block.content}</Tag>;
+          }
+          case 'paragraph':
+            return (
+              <p
+                key={i}
+                className="leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: inlineHtml(block.content) }}
+              />
+            );
+          case 'table':
+            if (!block.rows || block.rows.length === 0) return null;
+            return (
+              <div key={i} className="overflow-x-auto my-2">
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr>
+                      {block.rows[0].map((cell, ci) => (
+                        <th
+                          key={ci}
+                          className="bg-[#0098A6] text-white font-semibold px-3 py-2 text-left border border-[#0098A6]"
+                        >
+                          {cell}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {block.rows.slice(1).map((row, ri) => (
+                      <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        {row.map((cell, ci) => (
+                          <td
+                            key={ci}
+                            className="px-3 py-2 border border-gray-200"
+                            dangerouslySetInnerHTML={{ __html: inlineHtml(cell) }}
+                          />
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          case 'list': {
+            const Tag = block.listType === 'ordered' ? 'ol' : 'ul';
+            return (
+              <Tag
+                key={i}
+                className={`pl-5 space-y-1 ${block.listType === 'ordered' ? 'list-decimal' : 'list-disc'} marker:text-[#0098A6] marker:font-bold`}
+              >
+                {block.items?.map((item, ii) => (
+                  <li
+                    key={ii}
+                    dangerouslySetInnerHTML={{ __html: inlineHtml(item) }}
+                  />
+                ))}
+              </Tag>
+            );
+          }
+          default:
+            return null;
+        }
+      })}
+    </div>
+  );
+}
 
 interface QuoteRequest {
   id: string;
@@ -1218,9 +1318,9 @@ Database is now optimized!`,
                 {pq.scope && (
                   <div>
                     <h3 className="font-bold text-[#1E3A5F] text-sm uppercase tracking-wide border-b border-[#0098A6] pb-1 mb-3">Project Scope</h3>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border">
-                      {pq.scope}
-                    </p>
+                    <div className="bg-gray-50 rounded-lg p-4 border">
+                      <RichContent raw={pq.scope} />
+                    </div>
                   </div>
                 )}
 
@@ -1228,14 +1328,9 @@ Database is now optimized!`,
                 {deliverables.length > 0 && (
                   <div>
                     <h3 className="font-bold text-[#1E3A5F] text-sm uppercase tracking-wide border-b border-[#0098A6] pb-1 mb-3">Deliverables</h3>
-                    <ul className="space-y-1.5">
-                      {deliverables.map((d, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
-                          {d}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="bg-gray-50 rounded-lg p-4 border">
+                      <RichContent raw={deliverables.map(d => `- ${d}`).join('\n')} />
+                    </div>
                   </div>
                 )}
 
@@ -1243,9 +1338,9 @@ Database is now optimized!`,
                 {pq.terms && (
                   <div>
                     <h3 className="font-bold text-[#1E3A5F] text-sm uppercase tracking-wide border-b border-[#0098A6] pb-1 mb-3">Terms & Conditions</h3>
-                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border">
-                      {pq.terms}
-                    </p>
+                    <div className="bg-gray-50 rounded-lg p-4 border">
+                      <RichContent raw={pq.terms} />
+                    </div>
                   </div>
                 )}
 

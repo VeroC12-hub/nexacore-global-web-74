@@ -33,6 +33,84 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { projectCreationService } from '@/services/projectCreationService';
 import { generateQuotePDF } from '@/utils/quotePDFGenerator';
+import { parseContent } from '@/utils/pdfContentRenderer';
+
+// ── Inline markdown → safe HTML ──────────────────────────────────────────────
+function inlineHtml(text: string): string {
+  let s = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/__(.+?)__/g, '<strong>$1</strong>');
+  s = s.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, '<em>$1</em>');
+  s = s.replace(/(?<!_)_(?!_)(.+?)(?<!_)_(?!_)/g, '<em>$1</em>');
+  return s;
+}
+
+// ── React rich-text renderer ──────────────────────────────────────────────────
+function RichContent({ raw }: { raw: string }) {
+  if (!raw?.trim()) return null;
+  const blocks = parseContent(raw);
+  return (
+    <div className="space-y-2 text-gray-700 text-sm leading-relaxed">
+      {blocks.map((block, i) => {
+        switch (block.type) {
+          case 'heading': {
+            const cls =
+              block.level === 1
+                ? 'font-bold text-[#1E3A5F] text-base mt-3 mb-1 border-b border-[#0098A6] pb-0.5'
+                : block.level === 2
+                ? 'font-semibold text-[#0098A6] text-sm mt-2 mb-0.5'
+                : 'font-semibold text-gray-600 text-sm mt-1';
+            return <p key={i} className={cls}>{block.content}</p>;
+          }
+          case 'paragraph':
+            return (
+              <p key={i} className="leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: inlineHtml(block.content) }} />
+            );
+          case 'table':
+            if (!block.rows?.length) return null;
+            return (
+              <div key={i} className="overflow-x-auto my-2">
+                <table className="w-full border-collapse text-xs">
+                  <thead>
+                    <tr>
+                      {block.rows[0].map((cell, ci) => (
+                        <th key={ci} className="bg-[#0098A6] text-white font-semibold px-3 py-2 text-left border border-[#0098A6]">
+                          {cell}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {block.rows.slice(1).map((row, ri) => (
+                      <tr key={ri} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        {row.map((cell, ci) => (
+                          <td key={ci} className="px-3 py-2 border border-gray-200"
+                            dangerouslySetInnerHTML={{ __html: inlineHtml(cell) }} />
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          case 'list': {
+            const Tag = block.listType === 'ordered' ? 'ol' : 'ul';
+            return (
+              <Tag key={i}
+                className={`pl-5 space-y-1 ${block.listType === 'ordered' ? 'list-decimal' : 'list-disc'} marker:text-[#0098A6] marker:font-bold`}>
+                {block.items?.map((item, ii) => (
+                  <li key={ii} dangerouslySetInnerHTML={{ __html: inlineHtml(item) }} />
+                ))}
+              </Tag>
+            );
+          }
+          default: return null;
+        }
+      })}
+    </div>
+  );
+}
 
 interface Quote {
   id: string;
@@ -698,7 +776,7 @@ const QuoteReview = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-500">Project Scope</label>
                     <div className="mt-1 bg-gray-50 p-4 rounded-lg">
-                      <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{quote.scope}</p>
+                      <RichContent raw={quote.scope} />
                     </div>
                   </div>
                   
@@ -715,24 +793,19 @@ const QuoteReview = () => {
               {quote.deliverables && quote.deliverables.length > 0 && (
                 <Card className="p-6">
                   <h3 className="text-xl font-bold mb-4">Project Deliverables</h3>
-                  <ul className="space-y-2">
-                    {quote.deliverables.map((deliverable, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
-                        <span className="text-gray-700">{deliverable}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <RichContent raw={quote.deliverables.map((d: string) => `- ${d}`).join('\n')} />
                 </Card>
               )}
 
               {/* Terms & Conditions */}
-              <Card className="p-6">
-                <h3 className="text-xl font-bold mb-4">Terms & Conditions</h3>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{quote.terms}</p>
-                </div>
-              </Card>
+              {quote.terms && (
+                <Card className="p-6">
+                  <h3 className="text-xl font-bold mb-4">Terms & Conditions</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <RichContent raw={quote.terms} />
+                  </div>
+                </Card>
+              )}
             </div>
 
             {/* Sidebar */}
