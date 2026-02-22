@@ -18,6 +18,8 @@ export interface PortfolioProject {
   tags?: string[];
   thumbnail_url?: string;
   files?: PortfolioFile[];
+  portfolio_files?: PortfolioFile[]; // Matches Supabase relation
+  created_at: string;
 }
 
 export interface PortfolioFile {

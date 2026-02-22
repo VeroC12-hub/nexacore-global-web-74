@@ -8,13 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { 
-  Download, 
-  FileText, 
-  Image, 
-  Share2, 
-  Mail, 
-  Link2, 
+import {
+  Download,
+  FileText,
+  Image,
+  Share2,
+  Mail,
+  Link2,
   Printer,
   FileDown,
   Presentation,
@@ -31,6 +31,7 @@ import {
   Tag,
   Star
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { PortfolioFilters } from './AdvancedPortfolioSearch';
 
 interface PortfolioExportProps {
@@ -40,11 +41,11 @@ interface PortfolioExportProps {
   className?: string;
 }
 
-export default function PortfolioExport({ 
-  filters, 
-  projectCount, 
-  onClose, 
-  className = "" 
+export default function PortfolioExport({
+  filters,
+  projectCount,
+  onClose,
+  className = ""
 }: PortfolioExportProps) {
   const [exportFormat, setExportFormat] = useState<'pdf' | 'powerpoint' | 'web' | 'excel'>('pdf');
   const [includeImages, setIncludeImages] = useState(true);
@@ -91,46 +92,29 @@ export default function PortfolioExport({
 
   const handleExport = async () => {
     setExporting(true);
-    
+
     try {
-      // Simulate export process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const exportData = {
-        format: exportFormat,
-        filters,
-        options: {
+      if (exportFormat === 'pdf') {
+        const { generatePortfolioPDF } = await import('@/utils/portfolioPDFGenerator');
+
+        await generatePortfolioPDF(filters, {
           includeImages,
           includeMetrics,
           includeFiles,
           includeTeamInfo,
-        },
-        metadata: {
           title: customTitle,
           description: customDescription,
-          exportDate: new Date().toISOString(),
-          projectCount
-        }
-      };
+        });
 
-      // In a real implementation, this would generate and download the file
-      console.log('Export data:', exportData);
-      
-      // Simulate file download
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
-        type: 'application/json' 
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `portfolio-export-${Date.now()}.${exportFormat === 'excel' ? 'xlsx' : exportFormat}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+        toast.success('Portfolio PDF generated successfully!');
+      } else {
+        // Fallback for other formats (not implemented yet)
+        toast.info(`Export to ${exportFormat.toUpperCase()} is coming soon.`);
+      }
 
     } catch (error) {
       console.error('Export failed:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate export');
     } finally {
       setExporting(false);
     }
@@ -219,22 +203,19 @@ export default function PortfolioExport({
                   { value: 'web', label: 'Web Page', icon: Globe },
                   { value: 'excel', label: 'Excel Spreadsheet', icon: FileDown }
                 ].map((format) => (
-                  <div 
+                  <div
                     key={format.value}
-                    className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                      exportFormat === format.value 
-                        ? 'border-blue-500 bg-blue-50' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`border rounded-lg p-4 cursor-pointer transition-colors ${exportFormat === format.value
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
                     onClick={() => setExportFormat(format.value as any)}
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`p-2 rounded ${
-                        exportFormat === format.value ? 'bg-blue-100' : 'bg-gray-100'
-                      }`}>
-                        <format.icon className={`h-5 w-5 ${
-                          exportFormat === format.value ? 'text-blue-600' : 'text-gray-600'
-                        }`} />
+                      <div className={`p-2 rounded ${exportFormat === format.value ? 'bg-blue-100' : 'bg-gray-100'
+                        }`}>
+                        <format.icon className={`h-5 w-5 ${exportFormat === format.value ? 'text-blue-600' : 'text-gray-600'
+                          }`} />
                       </div>
                       <div className="flex-1">
                         <div className="font-medium">{format.label}</div>
@@ -242,11 +223,10 @@ export default function PortfolioExport({
                           {getFormatDescription(format.value)}
                         </div>
                       </div>
-                      <div className={`w-4 h-4 rounded-full border-2 ${
-                        exportFormat === format.value 
-                          ? 'border-blue-500 bg-blue-500' 
-                          : 'border-gray-300'
-                      }`}>
+                      <div className={`w-4 h-4 rounded-full border-2 ${exportFormat === format.value
+                        ? 'border-blue-500 bg-blue-500'
+                        : 'border-gray-300'
+                        }`}>
                         {exportFormat === format.value && (
                           <Check className="h-3 w-3 text-white" />
                         )}
@@ -266,8 +246,8 @@ export default function PortfolioExport({
 
               <div className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="includeImages" 
+                  <Checkbox
+                    id="includeImages"
                     checked={includeImages}
                     onCheckedChange={(checked) => setIncludeImages(checked === true)}
                   />
@@ -278,8 +258,8 @@ export default function PortfolioExport({
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="includeMetrics" 
+                  <Checkbox
+                    id="includeMetrics"
                     checked={includeMetrics}
                     onCheckedChange={(checked) => setIncludeMetrics(checked === true)}
                   />
@@ -290,8 +270,8 @@ export default function PortfolioExport({
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="includeFiles" 
+                  <Checkbox
+                    id="includeFiles"
                     checked={includeFiles}
                     onCheckedChange={(checked) => setIncludeFiles(checked === true)}
                   />
@@ -302,8 +282,8 @@ export default function PortfolioExport({
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="includeTeamInfo" 
+                  <Checkbox
+                    id="includeTeamInfo"
                     checked={includeTeamInfo}
                     onCheckedChange={(checked) => setIncludeTeamInfo(checked === true)}
                   />
@@ -319,7 +299,7 @@ export default function PortfolioExport({
               {/* Customization */}
               <div className="space-y-3">
                 <Label className="font-medium">Customization</Label>
-                
+
                 <div>
                   <Label htmlFor="customTitle" className="text-sm">Title</Label>
                   <Input
@@ -409,9 +389,9 @@ export default function PortfolioExport({
                       {urlCopied ? 'URL copied to clipboard!' : 'Shareable URL generated'}
                     </span>
                   </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     onClick={handleCopyUrl}
                     className="text-green-600 border-green-300"
                   >
@@ -431,7 +411,7 @@ export default function PortfolioExport({
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            
+
             <div className="flex space-x-2">
               {shareMethod === 'link' && (
                 <Button variant="outline" onClick={handleCopyUrl}>
@@ -439,7 +419,7 @@ export default function PortfolioExport({
                   Generate Link
                 </Button>
               )}
-              
+
               <Button onClick={handleShare} disabled={exporting}>
                 {exporting ? (
                   <>

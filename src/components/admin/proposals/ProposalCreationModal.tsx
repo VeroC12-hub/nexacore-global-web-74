@@ -192,7 +192,7 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email, phone, location')
-        .eq('role', 'member')
+        .eq('role', 'client')
         .order('full_name');
 
       if (error) throw error;
@@ -427,7 +427,7 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
           </Select>
           {clients.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              No clients with 'member' role found. Clients are users registered with the 'member' role.
+              No clients found. Clients are users registered with the 'client' role in their profile.
             </p>
           )}
         </div>
@@ -950,18 +950,16 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
             {STEPS.map((step) => (
               <div
                 key={step.id}
-                className={`flex flex-col items-center ${
-                  step.id === currentStep ? 'text-blue-600 font-medium' : ''
-                } ${step.id < currentStep ? 'text-green-600' : ''}`}
+                className={`flex flex-col items-center ${step.id === currentStep ? 'text-blue-600 font-medium' : ''
+                  } ${step.id < currentStep ? 'text-green-600' : ''}`}
               >
                 <div
-                  className={`rounded-full p-2 ${
-                    step.id === currentStep
+                  className={`rounded-full p-2 ${step.id === currentStep
                       ? 'bg-blue-100'
                       : step.id < currentStep
-                      ? 'bg-green-100'
-                      : 'bg-gray-100'
-                  }`}
+                        ? 'bg-green-100'
+                        : 'bg-gray-100'
+                    }`}
                 >
                   {step.icon}
                 </div>
