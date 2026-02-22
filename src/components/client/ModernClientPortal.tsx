@@ -143,23 +143,37 @@ export const ModernClientPortal: React.FC = () => {
     const safetyTimer = setTimeout(() => setLoading(false), 10000);
 
     try {
+      // Force-refresh the Supabase session before queries.
+      // On mobile, the React auth state may be set but the Supabase client's
+      // internal token might not be loaded from storage yet — causing all
+      // queries to run as anonymous and RLS to return empty rows.
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id ?? user.id;
+
+      if (!session) {
+        // No valid session — data will be empty, exit early
+        clearTimeout(safetyTimer);
+        setLoading(false);
+        return;
+      }
+
       // Run projects + invoices in parallel for speed
       const [projectsResult, invoicesResult] = await Promise.all([
         supabase
           .from('projects')
           .select('*')
-          .eq('client_id', user.id)
+          .eq('client_id', userId)
           .order('created_at', { ascending: false }),
         supabase
           .from('invoices')
           .select('*')
-          .eq('client_id', user.id)
+          .eq('client_id', userId)
           .order('created_at', { ascending: false }),
       ]);
 
       const projectsData = projectsResult.data || [];
       const invoicesData = invoicesResult.data || [];
-      const projectIds = projectsData.map(p => p.id);
+      const projectIds = projectsData.map((p: any) => p.id);
 
       // Build a project title lookup for messages/files display
       const projectTitleMap: Record<string, string> = {};

@@ -126,11 +126,23 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       if (mountedRef.current) setLoading(false);
     }, 12000);
 
-    // ONLY source of getSession — no other provider calls this
+    // ONLY source of getSession — no other provider calls this.
+    // On mobile, getSession() may return a session from storage but the
+    // Supabase client's internal auth state might not be fully initialised yet.
+    // Calling setSession() explicitly ensures the client's HTTP layer has the
+    // correct Authorization header before any DB queries are made.
     supabase.auth.getSession()
       .then(async ({ data: { session } }) => {
         if (!mountedRef.current) return;
         if (session?.user) {
+          // Explicitly re-set the session so the Supabase client's internal
+          // state is guaranteed to be populated (critical for mobile).
+          if (session.access_token && session.refresh_token) {
+            await supabase.auth.setSession({
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+            }).catch(() => { /* ignore — best effort */ });
+          }
           const enhanced = await fetchProfile(session.user);
           if (mountedRef.current) {
             setUser(enhanced);
