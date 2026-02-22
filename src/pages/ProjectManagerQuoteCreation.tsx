@@ -17,7 +17,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { getQuotePDFUrl } from '@/utils/urlHelpers';
+import { generateQuotePDF } from '@/utils/quotePDFGenerator';
 
 interface QuoteRequest {
   id: string;
@@ -551,25 +551,36 @@ This action cannot be undone. Continue?`;
 
   const previewQuote = async () => {
     if (!quoteRequest) return;
-
     try {
-      if (!savedQuoteId) {
-        const savedQuote = await saveDraft();
-        if (!savedQuote) {
-          toast.error('Please save the quote first');
-          return;
-        }
+      // Save first so we have a real ID
+      let quoteId = savedQuoteId;
+      if (!quoteId) {
+        const saved = await saveDraft();
+        if (!saved) { toast.error('Please fill in required fields first'); return; }
+        quoteId = saved.id;
       }
 
-      const pdfUrl = getQuotePDFUrl(savedQuoteId!);
-      console.log('Opening PDF preview:', pdfUrl);
-      
-      window.open(pdfUrl, '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-      
-      toast.success('PDF preview opened in new window');
+      const expirationCalc = validateAndCalculateExpiration(quoteData.expires_in_days);
+      const quoteObj = {
+        id: quoteId!,
+        price: quoteData.price,
+        currency: quoteData.currency,
+        scope: quoteData.scope,
+        timeline: quoteData.timeline,
+        deliverables: quoteData.deliverables.filter(d => d.trim()),
+        terms: quoteData.terms,
+        status: 'draft',
+        created_at: new Date().toISOString(),
+        expires_at: expirationCalc.isoString,
+        service_type: quoteRequest.service_type,
+      };
+
+      toast.info('Generating PDF...');
+      await generateQuotePDF(quoteObj, quoteRequest);
+      toast.success('Quote PDF downloaded — no new window needed!');
     } catch (error) {
-      console.error('Error opening PDF preview:', error);
-      toast.error('Failed to generate preview. Please save the quote first.');
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF. Please try again.');
     }
   };
 
