@@ -45,7 +45,7 @@ interface QuoteRequestData {
 
 // ── Helpers ─────────────────────────────────────────
 
-/** Draw a filled section-header banner and return the y after it. */
+/** Draw a filled navy section-header banner, return y after it. */
 function drawSectionBanner(
   doc: jsPDF,
   label: string,
@@ -63,27 +63,25 @@ function drawSectionBanner(
   return y + bannerH + 4;
 }
 
-/** Draw a small uppercase label in teal then a value line in dark gray. Returns next y. */
-function drawLabelValue(
+/** Render a teal micro-label then a value in dark-gray. Returns next y. */
+function drawMetaRow(
   doc: jsPDF,
   label: string,
   value: string,
   x: number,
   y: number,
-  maxWidth: number,
+  align: 'left' | 'right' = 'right',
 ): number {
-  doc.setFontSize(7.5);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
-  doc.text(label.toUpperCase(), x, y);
-  y += 3.5;
-
+  doc.text(label.toUpperCase(), x, y, { align });
+  y += 4;
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(TEXT_GRAY[0], TEXT_GRAY[1], TEXT_GRAY[2]);
-  const lines: string[] = doc.splitTextToSize(value, maxWidth);
-  doc.text(lines, x, y);
-  return y + lines.length * 4 + 1.5;
+  doc.text(value, x, y, { align });
+  return y + 5.5;
 }
 
 // ── Core builder (shared by save + preview) ─────────
@@ -102,135 +100,97 @@ async function buildQuoteDoc(
   const letterheadImg = await getLetterheadImage();
   addLetterheadToPage(doc, letterheadImg);
 
-  let y = LETTERHEAD.CONTENT_TOP;
+  // ── First safe baseline ──────────────────────────
+  // CONTENT_TOP = 46mm is the top edge of the safe zone.
+  // jsPDF y = baseline. 18pt cap-height ≈ 4.6mm → baseline at 52 puts
+  // cap tops at ~47.4mm, safely below the letterhead header graphic.
+  let y = LETTERHEAD.CONTENT_TOP + 6; // 52mm
 
-  // ── Document Title Row ───────────────────────────
-  // Left: "QUOTATION" large navy
-  doc.setFontSize(22);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
-  doc.text('QUOTATION', leftM, y);
-
-  // Right: quote ID + dates stacked
   const shortId = quote.id.slice(-8).toUpperCase();
   const issueDate = format(new Date(quote.created_at), 'dd MMM yyyy');
   const validDate = quote.expires_at
     ? format(new Date(quote.expires_at), 'dd MMM yyyy')
     : null;
 
-  doc.setFontSize(7.5);
+  // ── Left: "QUOTATION" title ──────────────────────
+  doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
-  doc.text('QUOTE REF', rightEdge, y - 5, { align: 'right' });
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(TEXT_GRAY[0], TEXT_GRAY[1], TEXT_GRAY[2]);
-  doc.setFontSize(9);
-  doc.text(`#${shortId}`, rightEdge, y - 1, { align: 'right' });
+  doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
+  doc.text('QUOTATION', leftM, y);
 
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
-  doc.text('DATE ISSUED', rightEdge, y + 4, { align: 'right' });
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(TEXT_GRAY[0], TEXT_GRAY[1], TEXT_GRAY[2]);
-  doc.setFontSize(9);
-  doc.text(issueDate, rightEdge, y + 8, { align: 'right' });
-
+  // ── Right: stacked meta, all flowing downward from same start y ──
+  let metaY = y;
+  metaY = drawMetaRow(doc, 'Quote Ref', `#${shortId}`, rightEdge, metaY, 'right');
+  metaY = drawMetaRow(doc, 'Date Issued', issueDate, rightEdge, metaY, 'right');
   if (validDate) {
-    doc.setFontSize(7.5);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
-    doc.text('VALID UNTIL', rightEdge, y + 13, { align: 'right' });
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(TEXT_GRAY[0], TEXT_GRAY[1], TEXT_GRAY[2]);
-    doc.setFontSize(9);
-    doc.text(validDate, rightEdge, y + 17, { align: 'right' });
+    metaY = drawMetaRow(doc, 'Valid Until', validDate, rightEdge, metaY, 'right');
   }
 
-  y += 6;
-
-  // Full-width teal rule
+  // ── Teal rule — drawn AFTER all header content ───
+  // Sits 5mm below whichever side is taller.
+  y = Math.max(y + 8, metaY + 2);
   doc.setDrawColor(TEAL[0], TEAL[1], TEAL[2]);
   doc.setLineWidth(0.8);
   doc.line(leftM, y, rightEdge, y);
-  y += 8;
+  y += 9;
 
-  // ── Two-Column Client / Company Info ─────────────
-  const colWidth = contentWidth * 0.5 - 4;
+  // ── Two-Column: Prepared For / From ─────────────
   const colRight = leftM + contentWidth * 0.55;
 
-  // "Prepared For" column
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(TEAL[0], TEAL[1], TEAL[2]);
   doc.text('PREPARED FOR', leftM, y);
-
-  // "From" column
   doc.text('FROM', colRight, y);
+  y += 5;
 
-  y += 4;
-
-  // Client details (left)
+  // Left — client
   let leftY = y;
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
   doc.text(request?.full_name || 'Client', leftM, leftY);
-  leftY += 5;
+  leftY += 5.5;
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(TEXT_GRAY[0], TEXT_GRAY[1], TEXT_GRAY[2]);
+  if (request?.company) { doc.text(request.company, leftM, leftY); leftY += 4.5; }
+  if (request?.email)   { doc.text(request.email,   leftM, leftY); leftY += 4.5; }
+  if (request?.phone)   { doc.text(request.phone,   leftM, leftY); leftY += 4.5; }
+  if (request?.country) { doc.text(request.country, leftM, leftY); leftY += 4.5; }
 
-  if (request?.company) {
-    doc.text(request.company, leftM, leftY);
-    leftY += 4;
-  }
-  doc.text(request?.email || '', leftM, leftY);
-  leftY += 4;
-  if (request?.phone) {
-    doc.text(request.phone, leftM, leftY);
-    leftY += 4;
-  }
-  if (request?.country) {
-    doc.text(request.country, leftM, leftY);
-    leftY += 4;
-  }
-
-  // NexaCore details (right)
+  // Right — NexaCore
   let rightY = y;
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]);
   doc.text('NexaCore Innovations', colRight, rightY);
-  rightY += 5;
+  rightY += 5.5;
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(TEXT_GRAY[0], TEXT_GRAY[1], TEXT_GRAY[2]);
-  doc.text('Accra, Ghana', colRight, rightY);
-  rightY += 4;
-  doc.text('nexacoreinnovations.com', colRight, rightY);
-  rightY += 4;
-  doc.text('info@nexacoreinnovations.com', colRight, rightY);
-  rightY += 4;
+  doc.text('Accra, Ghana',                 colRight, rightY); rightY += 4.5;
+  doc.text('nexacoreinnovations.com',      colRight, rightY); rightY += 4.5;
+  doc.text('info@nexacoreinnovations.com', colRight, rightY); rightY += 4.5;
 
-  y = Math.max(leftY, rightY) + 8;
+  y = Math.max(leftY, rightY) + 5;
 
-  // Light separator
+  // Thin separator
   doc.setDrawColor(220, 225, 230);
   doc.setLineWidth(0.3);
-  doc.line(leftM, y - 4, rightEdge, y - 4);
+  doc.line(leftM, y - 2, rightEdge, y - 2);
 
   // ── Quote Summary Table ──────────────────────────
   const detailRows: string[][] = [
-    ['Service Type', quote.service_type || request?.service_type || 'N/A'],
-    ['Total Investment', `${quote.currency} ${quote.price.toLocaleString()}`],
-    ['Project Timeline', quote.timeline || 'To be determined'],
-    ['Date Issued', issueDate],
+    ['Service Type',      quote.service_type || request?.service_type || 'N/A'],
+    ['Total Investment',  `${quote.currency} ${quote.price.toLocaleString()}`],
+    ['Project Timeline',  quote.timeline || 'To be determined'],
+    ['Date Issued',       issueDate],
   ];
-  if (validDate) detailRows.push(['Valid Until', validDate]);
-  if (request?.tier) detailRows.push(['Service Tier', request.tier]);
+  if (validDate)      detailRows.push(['Valid Until',   validDate]);
+  if (request?.tier)  detailRows.push(['Service Tier',  request.tier]);
 
   autoTable(doc, {
     startY: y,
@@ -238,7 +198,7 @@ async function buildQuoteDoc(
     theme: 'plain',
     margin: { left: leftM, right: LETTERHEAD.MARGIN_RIGHT },
     tableWidth: contentWidth,
-    styles: { fontSize: 9, cellPadding: { top: 3, bottom: 3, left: 4, right: 4 } },
+    styles: { fontSize: 9, cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 } },
     columnStyles: {
       0: { fontStyle: 'bold', textColor: NAVY, cellWidth: 42, fillColor: [245, 247, 250] },
       1: { textColor: [55, 65, 81] },
@@ -253,31 +213,25 @@ async function buildQuoteDoc(
 
   // ── Body Sections ────────────────────────────────
 
-  // Project Scope
   if (quote.scope) {
     if (y + 20 > maxY) y = newLetterheadPage(doc, letterheadImg);
     y = drawSectionBanner(doc, 'Project Scope', leftM, contentWidth, y);
-    const scopeBlocks = parseContent(quote.scope);
-    y = renderContentToPDF(doc, scopeBlocks, y, letterheadImg);
+    y = renderContentToPDF(doc, parseContent(quote.scope), y, letterheadImg);
     y += 6;
   }
 
-  // Deliverables
   if (quote.deliverables && quote.deliverables.length > 0) {
     if (y + 20 > maxY) y = newLetterheadPage(doc, letterheadImg);
     y = drawSectionBanner(doc, 'Deliverables', leftM, contentWidth, y);
     const bulletText = quote.deliverables.filter(d => d.trim()).map(d => `- ${d}`).join('\n');
-    const delBlocks = parseContent(bulletText);
-    y = renderContentToPDF(doc, delBlocks, y, letterheadImg);
+    y = renderContentToPDF(doc, parseContent(bulletText), y, letterheadImg);
     y += 6;
   }
 
-  // Terms & Conditions
   if (quote.terms) {
     if (y + 20 > maxY) y = newLetterheadPage(doc, letterheadImg);
     y = drawSectionBanner(doc, 'Terms & Conditions', leftM, contentWidth, y);
-    const termsBlocks = parseContent(quote.terms);
-    y = renderContentToPDF(doc, termsBlocks, y, letterheadImg);
+    y = renderContentToPDF(doc, parseContent(quote.terms), y, letterheadImg);
     y += 6;
   }
 
@@ -293,23 +247,21 @@ async function buildQuoteDoc(
     leftM, y,
     { maxWidth: contentWidth },
   );
-  y += 10;
+  y += 12;
 
   const sigW = contentWidth * 0.38;
 
-  // Client sig
   doc.setDrawColor(170, 175, 185);
   doc.setLineWidth(0.4);
   doc.line(leftM, y, leftM + sigW, y);
   doc.setFontSize(8);
   doc.setTextColor(130, 135, 145);
-  doc.text('Client Signature', leftM, y + 4);
+  doc.text('Client Signature', leftM, y + 4.5);
   doc.text('Date: ______________________', leftM, y + 9);
 
-  // NexaCore sig
   const sigRightX = rightEdge - sigW;
   doc.line(sigRightX, y, rightEdge, y);
-  doc.text('Authorised Signatory — NexaCore', sigRightX, y + 4);
+  doc.text('Authorised Signatory — NexaCore', sigRightX, y + 4.5);
   doc.text('Date: ______________________', sigRightX, y + 9);
 
   y += 18;
