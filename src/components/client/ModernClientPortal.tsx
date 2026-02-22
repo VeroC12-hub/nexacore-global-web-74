@@ -53,6 +53,43 @@ interface Project {
   deadline: string | null;
 }
 
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  title: string;
+  description?: string;
+  amount: number;
+  total_amount: number;
+  tax_amount?: number;
+  status: string;
+  due_date?: string;
+  created_at: string;
+  project_id?: string;
+}
+
+interface ProjectMessage {
+  id: string;
+  project_id: string;
+  sender_id: string;
+  message: string;
+  message_type: string;
+  is_internal: boolean;
+  created_at: string;
+  project_title?: string;
+}
+
+interface ProjectFile {
+  id: string;
+  project_id: string;
+  file_name: string;
+  file_path: string;
+  file_type?: string;
+  file_size?: number;
+  category: string;
+  created_at: string;
+  project_title?: string;
+}
+
 interface ClientStats {
   totalProjects: number;
   activeProjects: number;
@@ -76,6 +113,9 @@ export const ModernClientPortal: React.FC = () => {
   const [activeView, setActiveView] = useState<'overview' | 'services' | 'projects' | 'invoices' | 'messages' | 'files' | 'settings'>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [messages, setMessages] = useState<ProjectMessage[]>([]);
+  const [files, setFiles] = useState<ProjectFile[]>([]);
   const [stats, setStats] = useState<ClientStats>({
     totalProjects: 0,
     activeProjects: 0,
@@ -98,61 +138,93 @@ export const ModernClientPortal: React.FC = () => {
     }
 
     setLoading(true);
+
+    // Safety: never show loading spinner forever on slow mobile connections
+    const safetyTimer = setTimeout(() => setLoading(false), 10000);
+
     try {
-      // Load projects
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('client_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (projectsError) throw projectsError;
-
-      // Load invoices
-      const { data: invoicesData, error: invoicesError } = await supabase
-        .from('invoices')
-        .select('*')
-        .eq('client_id', user.id);
-
-      if (invoicesError) throw invoicesError;
-
-      // Load messages through user's projects
-      const projectIds = projectsData?.map(p => p.id) || [];
-      let messagesData: any[] = [];
-      if (projectIds.length > 0) {
-        const { data: msgs, error: messagesError } = await supabase
-          .from('project_messages')
+      // Run projects + invoices in parallel for speed
+      const [projectsResult, invoicesResult] = await Promise.all([
+        supabase
+          .from('projects')
           .select('*')
-          .in('project_id', projectIds);
+          .eq('client_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('invoices')
+          .select('*')
+          .eq('client_id', user.id)
+          .order('created_at', { ascending: false }),
+      ]);
 
-        if (messagesError) throw messagesError;
-        messagesData = msgs || [];
+      const projectsData = projectsResult.data || [];
+      const invoicesData = invoicesResult.data || [];
+      const projectIds = projectsData.map(p => p.id);
+
+      // Build a project title lookup for messages/files display
+      const projectTitleMap: Record<string, string> = {};
+      projectsData.forEach(p => { projectTitleMap[p.id] = p.title; });
+
+      // Load messages + files in parallel (only if there are projects)
+      let messagesData: any[] = [];
+      let filesData: any[] = [];
+      if (projectIds.length > 0) {
+        const [msgsResult, filesResult] = await Promise.all([
+          supabase
+            .from('project_messages')
+            .select('*')
+            .in('project_id', projectIds)
+            .eq('is_internal', false)
+            .order('created_at', { ascending: false })
+            .limit(50),
+          supabase
+            .from('project_files')
+            .select('*')
+            .in('project_id', projectIds)
+            .order('created_at', { ascending: false }),
+        ]);
+        messagesData = msgsResult.data || [];
+        filesData = filesResult.data || [];
       }
 
-      const processedProjects = projectsData?.map(project => ({
+      const processedProjects = projectsData.map(project => ({
         ...project,
-        progress: project.spent_amount && project.budget 
-          ? Math.round((project.spent_amount / project.budget) * 100)
-          : 0
-      })) || [];
+        progress: project.spent_amount && project.budget
+          ? Math.min(100, Math.round((project.spent_amount / project.budget) * 100))
+          : 0,
+      }));
 
-      const totalSpent = invoicesData?.reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0) || 0;
-      const pendingInvoices = invoicesData?.filter(invoice => invoice.status === 'pending').length || 0;
+      const processedMessages: ProjectMessage[] = messagesData.map(m => ({
+        ...m,
+        project_title: projectTitleMap[m.project_id] || 'Unknown Project',
+      }));
+
+      const processedFiles: ProjectFile[] = filesData.map(f => ({
+        ...f,
+        project_title: projectTitleMap[f.project_id] || 'Unknown Project',
+      }));
+
+      const totalSpent = invoicesData.reduce((sum, inv) => sum + (inv.total_amount || inv.amount || 0), 0);
+      const pendingInvoices = invoicesData.filter(inv => inv.status === 'pending').length;
 
       setProjects(processedProjects);
+      setInvoices(invoicesData as Invoice[]);
+      setMessages(processedMessages);
+      setFiles(processedFiles);
       setStats({
         totalProjects: processedProjects.length,
         activeProjects: processedProjects.filter(p => p.status === 'in_progress' || p.status === 'active').length,
         completedProjects: processedProjects.filter(p => p.status === 'completed').length,
         totalSpent,
         pendingInvoices,
-        unreadMessages: messagesData?.length || 0
+        unreadMessages: messagesData.length,
       });
 
     } catch (error) {
       console.error('Error loading client data:', error);
-      toast.error('Failed to load your dashboard data');
+      toast.error('Failed to load dashboard data. Please refresh.');
     } finally {
+      clearTimeout(safetyTimer);
       setLoading(false);
     }
   }, [user]);
@@ -481,53 +553,201 @@ export const ModernClientPortal: React.FC = () => {
     </div>
   );
 
+  const getInvoiceStatusColor = (status: string) => {
+    switch (status) {
+      case 'paid': return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'overdue': return 'bg-red-100 text-red-800 border-red-200';
+      case 'cancelled': return 'bg-gray-100 text-gray-600 border-gray-200';
+      default: return 'bg-blue-100 text-blue-800 border-blue-200';
+    }
+  };
+
+  const formatBytes = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const renderInvoicesView = () => (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Invoices & Payments</h2>
-        <Button onClick={() => setShowPaymentForm(true)} className="bg-green-600 hover:bg-green-700">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-bold">Invoices & Payments</h2>
+          <p className="text-sm text-muted-foreground">{invoices.length} invoice{invoices.length !== 1 ? 's' : ''} total</p>
+        </div>
+        <Button onClick={() => setShowPaymentForm(true)} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
           <CreditCard className="mr-2 h-4 w-4" />
           Make Payment
         </Button>
       </div>
-      <Card>
-        <CardContent className="p-6 text-center">
-          <CreditCard className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium mb-2">Invoice Management</h3>
-          <p className="text-gray-600 mb-4">View and manage your invoices and payments</p>
-          <Button onClick={() => setShowPaymentForm(true)}>Access Payment Portal</Button>
-        </CardContent>
-      </Card>
+
+      {invoices.length === 0 ? (
+        <Card>
+          <CardContent className="p-10 text-center">
+            <CreditCard className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-1">No invoices yet</h3>
+            <p className="text-sm text-gray-500">Invoices from your projects will appear here.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {invoices.map((invoice) => (
+            <Card key={invoice.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-mono text-muted-foreground">{invoice.invoice_number}</span>
+                      <Badge className={`text-xs border ${getInvoiceStatusColor(invoice.status)} capitalize`}>
+                        {invoice.status}
+                      </Badge>
+                    </div>
+                    <p className="font-semibold text-gray-900 mt-1 truncate">{invoice.title}</p>
+                    {invoice.description && (
+                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{invoice.description}</p>
+                    )}
+                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(invoice.created_at).toLocaleDateString()}
+                      </span>
+                      {invoice.due_date && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Due {new Date(invoice.due_date).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
+                    <p className="text-lg font-bold text-gray-900">
+                      ${(invoice.total_amount || invoice.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    {invoice.status === 'pending' && (
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-xs h-7"
+                        onClick={() => {
+                          setSelectedInvoice({
+                            id: invoice.id,
+                            invoice_number: invoice.invoice_number,
+                            total_amount: invoice.total_amount || invoice.amount,
+                            title: invoice.title,
+                          });
+                          setShowPaymentForm(true);
+                        }}
+                      >
+                        Pay Now
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 
   const renderMessagesView = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Messages & Communication</h2>
-      <Card>
-        <CardContent className="p-6 text-center">
-          <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium mb-2">Team Communication</h3>
-          <p className="text-gray-600 mb-4">Stay in touch with your project team</p>
-          <p className="text-sm text-gray-500">{stats.unreadMessages} unread messages</p>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-xl font-bold">Messages & Communication</h2>
+        <p className="text-sm text-muted-foreground">{messages.length} message{messages.length !== 1 ? 's' : ''} from your projects</p>
+      </div>
+
+      {messages.length === 0 ? (
+        <Card>
+          <CardContent className="p-10 text-center">
+            <MessageSquare className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-1">No messages yet</h3>
+            <p className="text-sm text-gray-500">Messages from your project team will appear here.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {messages.map((msg) => (
+            <Card key={msg.id} className="hover:shadow-sm transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-medium text-primary">{msg.project_title}</span>
+                      <Badge variant="outline" className="text-xs capitalize">{msg.message_type}</Badge>
+                    </div>
+                    <p className="text-sm text-gray-800 mt-1">{msg.message}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new Date(msg.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 
   const renderFilesView = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Project Files</h2>
-      <Card>
-        <CardContent className="p-6 text-center">
-          <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium mb-2">File Repository</h3>
-          <p className="text-gray-600 mb-4">Access your project files and documents</p>
-          <Button variant="outline">Browse Files</Button>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-xl font-bold">Project Files</h2>
+        <p className="text-sm text-muted-foreground">{files.length} file{files.length !== 1 ? 's' : ''} across your projects</p>
+      </div>
+
+      {files.length === 0 ? (
+        <Card>
+          <CardContent className="p-10 text-center">
+            <FileText className="mx-auto h-12 w-12 text-gray-300 mb-4" />
+            <h3 className="text-lg font-medium text-gray-700 mb-1">No files yet</h3>
+            <p className="text-sm text-gray-500">Files shared on your projects will appear here.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {files.map((file) => (
+            <Card key={file.id} className="hover:shadow-sm transition-shadow">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 truncate">{file.file_name}</p>
+                    <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5 flex-wrap">
+                      <span className="text-primary font-medium">{file.project_title}</span>
+                      <Badge variant="outline" className="text-xs capitalize">{file.category}</Badge>
+                      {file.file_size && <span>{formatBytes(file.file_size)}</span>}
+                      <span>{new Date(file.created_at).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                  <a
+                    href={file.file_path}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-shrink-0"
+                  >
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1">
+                      <Download className="h-3 w-3" />
+                      <span className="hidden sm:inline">Download</span>
+                    </Button>
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
+
 
   const SidebarContent = () => (
     <>
