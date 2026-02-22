@@ -1,7 +1,7 @@
 // Enhanced QuoteReview.tsx with improved error handling and automatic project creation
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -134,6 +134,8 @@ const formatDate = (dateString: string | null | undefined): string => {
 const QuoteReview = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
   
   const [quote, setQuote] = useState<Quote | null>(null);
   const [quoteRequest, setQuoteRequest] = useState<QuoteRequest | null>(null);
@@ -519,6 +521,17 @@ const QuoteReview = () => {
       <section className="pt-24 pb-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           
+          {/* Admin Preview Banner */}
+          {isPreview && (
+            <div className="mb-6 px-4 py-3 bg-amber-50 border border-amber-300 rounded-lg flex items-center gap-3">
+              <Eye className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Admin Preview Mode</p>
+                <p className="text-xs text-amber-700">This is exactly what your client sees. The approve/decline section is hidden in this view.</p>
+              </div>
+            </div>
+          )}
+
           {/* Debug Info Panel (only show when there are issues) */}
           {debugInfo && (debugInfo.includes('Error') || debugInfo.includes('Warning') || debugInfo.includes('failed')) && (
             <Card className="mb-6 p-4 bg-yellow-50 border-yellow-200">
@@ -795,7 +808,7 @@ const QuoteReview = () => {
               </Card>
 
               {/* Response Actions */}
-              {canRespond && (
+              {canRespond && !isPreview && (
                 <Card className="p-6">
                   <h3 className="text-lg font-bold mb-4">Your Response</h3>
                   
@@ -887,7 +900,7 @@ const QuoteReview = () => {
                 </Card>
               )}
 
-              {!canRespond && quote.status !== 'approved' && quote.status !== 'declined' && (
+              {!canRespond && !isPreview && quote.status !== 'approved' && quote.status !== 'declined' && (
                 <Card className="p-6 bg-gray-50">
                   <div className="text-center">
                     <AlertTriangle className="w-8 h-8 text-gray-400 mx-auto mb-2" />

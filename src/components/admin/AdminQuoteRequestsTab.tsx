@@ -10,12 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Eye, 
-  MessageSquare, 
-  CheckCircle, 
-  Database, 
-  RefreshCw, 
+import {
+  Eye,
+  MessageSquare,
+  CheckCircle,
+  Database,
+  RefreshCw,
   AlertTriangle,
   Trash2,
   Filter,
@@ -23,7 +23,8 @@ import {
   Edit,
   Plus,
   Save,
-  FileText
+  FileText,
+  ExternalLink
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -1028,6 +1029,18 @@ Database is now optimized!`,
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit Quote
+                    </Button>
+                  )}
+
+                  {/* Preview Quote Button — shows client view in a new tab */}
+                  {relatedQuote && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`/quote/${relatedQuote.id}?preview=true`, '_blank')}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Preview Quote
                     </Button>
                   )}
 
