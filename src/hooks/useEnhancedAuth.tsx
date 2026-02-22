@@ -40,7 +40,12 @@ function buildUser(authUser: User, role: UserRole, profileData?: any): EnhancedU
   };
 }
 
-// Fetch profile with a hard 4-second timeout so it never hangs
+// ERP roles that can be returned from fetchProfile
+const ERP_ROLES: string[] = ['admin', 'project_manager', 'operations_manager', 'developer', 'support', 'client'];
+
+// Fetch profile with a hard 4-second timeout so it never hangs.
+// Also checks erp_staff_roles as a fallback when profiles.role is not an ERP role
+// (e.g. default 'member' role set by the handle_new_user trigger).
 async function fetchProfile(authUser: User): Promise<EnhancedUser> {
   try {
     const profilePromise = supabase
@@ -55,11 +60,38 @@ async function fetchProfile(authUser: User): Promise<EnhancedUser> {
 
     const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
 
+    const profileRole = data?.role as string | undefined;
+    const isErpRole = profileRole && ERP_ROLES.includes(profileRole);
+
+    // If profile fetch failed OR role is not an ERP role (e.g. 'member', 'organizer'),
+    // also check erp_staff_roles to determine the actual ERP role.
+    if (!isErpRole) {
+      try {
+        const { data: staffData } = await supabase
+          .from('erp_staff_roles')
+          .select('role, department, position, hourly_rate')
+          .eq('user_id', authUser.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (staffData?.role && ERP_ROLES.includes(staffData.role)) {
+          return buildUser(authUser, staffData.role as UserRole, {
+            ...data,
+            department: staffData.department,
+            position: staffData.position,
+            hourly_rate: staffData.hourly_rate,
+          });
+        }
+      } catch {
+        // erp_staff_roles check failed — fall through to profile role
+      }
+    }
+
     if (error || !data) {
       return buildUser(authUser, 'client');
     }
 
-    return buildUser(authUser, (data.role || 'client') as UserRole, data);
+    return buildUser(authUser, (isErpRole ? profileRole! : 'client') as UserRole, data);
   } catch {
     return buildUser(authUser, 'client');
   }
@@ -147,12 +179,12 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       });
 
       subscription = data?.subscription;
-    } catch {}
+    } catch { }
 
     return () => {
       mountedRef.current = false;
       clearTimeout(safetyTimer);
-      try { subscription?.unsubscribe(); } catch {}
+      try { subscription?.unsubscribe(); } catch { }
     };
   }, []);
 
@@ -193,7 +225,7 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
     setLoading(false);
     try {
       await supabase.auth.signOut();
-    } catch {}
+    } catch { }
   };
 
   const hasPermission = (permission: Permission): boolean => {
@@ -307,6 +339,6 @@ export function useTenant() {
   const { user } = useEnhancedAuth();
   return {
     tenantId: user?.tenant_id || null,
-    setTenantContext: async () => {}
+    setTenantContext: async () => { }
   };
 }
