@@ -43,44 +43,51 @@ function buildUser(authUser: User, role: UserRole, profileData?: any): EnhancedU
 // ERP roles that can be returned from fetchProfile
 const ERP_ROLES: string[] = ['admin', 'project_manager', 'operations_manager', 'developer', 'support', 'client'];
 
-// Fetch profile with an 8-second timeout (generous for mobile networks).
-// Runs profiles + erp_staff_roles queries in parallel to avoid stacking delays.
-// Falls back to 'client' role if anything fails so the app never hangs.
+// Fetch profile with an 8-second timeout.
+// After running the fix migration (20260222100000_fix_auth_rls_and_roles.sql),
+// profiles.role is kept in sync with erp_staff_roles, so one query is enough.
+// Falls back to erp_staff_roles if the profile role isn't an ERP role.
 async function fetchProfile(authUser: User): Promise<EnhancedUser> {
   try {
-    // Run both queries simultaneously
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
     );
 
-    const [profileResult, staffResult] = await Promise.race([
-      Promise.all([
-        supabase.from('profiles').select('*').eq('id', authUser.id).single(),
+    const profileResult = await Promise.race([
+      supabase.from('profiles').select('*').eq('id', authUser.id).single(),
+      timeout,
+    ]);
+
+    const profileData = profileResult.data;
+    const profileRole = profileData?.role as string | undefined;
+
+    // If profile has a valid ERP role, use it directly (fast path)
+    if (profileRole && ERP_ROLES.includes(profileRole)) {
+      return buildUser(authUser, profileRole as UserRole, profileData);
+    }
+
+    // Fallback: check erp_staff_roles (covers case where profile.role isn't synced yet)
+    try {
+      const staffResult = await Promise.race([
         supabase.from('erp_staff_roles')
           .select('role, department, position, hourly_rate')
           .eq('user_id', authUser.id)
           .eq('is_active', true)
           .maybeSingle(),
-      ]),
-      timeout,
-    ]);
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Staff role timeout')), 4000)),
+      ]);
 
-    const profileData = profileResult.data;
-    const staffData = staffResult.data;
-
-    // Prefer the ERP staff role (more specific) over the generic profile role
-    if (staffData?.role && ERP_ROLES.includes(staffData.role)) {
-      return buildUser(authUser, staffData.role as UserRole, {
-        ...profileData,
-        department: staffData.department,
-        position: staffData.position,
-        hourly_rate: staffData.hourly_rate,
-      });
-    }
-
-    const profileRole = profileData?.role as string | undefined;
-    if (profileRole && ERP_ROLES.includes(profileRole)) {
-      return buildUser(authUser, profileRole as UserRole, profileData);
+      const staffData = staffResult.data;
+      if (staffData?.role && ERP_ROLES.includes(staffData.role)) {
+        return buildUser(authUser, staffData.role as UserRole, {
+          ...profileData,
+          department: staffData.department,
+          position: staffData.position,
+          hourly_rate: staffData.hourly_rate,
+        });
+      }
+    } catch {
+      // erp_staff_roles unavailable — use profile as-is
     }
 
     return buildUser(authUser, 'client', profileData ?? undefined);

@@ -39,7 +39,12 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce',
+    // Use 'implicit' instead of 'pkce':
+    // PKCE stores a code verifier in sessionStorage before the auth redirect.
+    // On mobile, the browser can clear sessionStorage between the redirect
+    // and the callback (background tab, low memory, ITP), breaking the login.
+    // Email/password login works fine with both flows; implicit is simpler.
+    flowType: 'implicit',
   },
   global: {
     headers: {
