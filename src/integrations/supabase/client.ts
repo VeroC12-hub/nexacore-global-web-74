@@ -5,20 +5,45 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Safe storage wrapper — falls back gracefully when localStorage is
+// unavailable (iOS Safari private mode, storage quota exceeded, etc.)
+// Without this, accessing window.localStorage directly throws a
+// SecurityError on iOS private mode, silently breaking auth persistence.
+const safeStorage = {
+  getItem(key: string): string | null {
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      try { return window.sessionStorage.getItem(key); } catch { return null; }
+    }
+  },
+  setItem(key: string, value: string): void {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch {
+      try { window.sessionStorage.setItem(key, value); } catch { /* ignore */ }
+    }
+  },
+  removeItem(key: string): void {
+    try { window.localStorage.removeItem(key); } catch { /* ignore */ }
+    try { window.sessionStorage.removeItem(key); } catch { /* ignore */ }
+  },
+};
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: safeStorage,
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    flowType: 'pkce'
+    flowType: 'pkce',
   },
   global: {
     headers: {
-      'apikey': SUPABASE_PUBLISHABLE_KEY
-    }
-  }
+      'apikey': SUPABASE_PUBLISHABLE_KEY,
+    },
+  },
 });

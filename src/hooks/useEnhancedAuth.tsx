@@ -43,55 +43,47 @@ function buildUser(authUser: User, role: UserRole, profileData?: any): EnhancedU
 // ERP roles that can be returned from fetchProfile
 const ERP_ROLES: string[] = ['admin', 'project_manager', 'operations_manager', 'developer', 'support', 'client'];
 
-// Fetch profile with a hard 4-second timeout so it never hangs.
-// Also checks erp_staff_roles as a fallback when profiles.role is not an ERP role
-// (e.g. default 'member' role set by the handle_new_user trigger).
+// Fetch profile with an 8-second timeout (generous for mobile networks).
+// Runs profiles + erp_staff_roles queries in parallel to avoid stacking delays.
+// Falls back to 'client' role if anything fails so the app never hangs.
 async function fetchProfile(authUser: User): Promise<EnhancedUser> {
   try {
-    const profilePromise = supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', authUser.id)
-      .single();
-
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Profile fetch timeout')), 4000)
+    // Run both queries simultaneously
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
     );
 
-    const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
-
-    const profileRole = data?.role as string | undefined;
-    const isErpRole = profileRole && ERP_ROLES.includes(profileRole);
-
-    // If profile fetch failed OR role is not an ERP role (e.g. 'member', 'organizer'),
-    // also check erp_staff_roles to determine the actual ERP role.
-    if (!isErpRole) {
-      try {
-        const { data: staffData } = await supabase
-          .from('erp_staff_roles')
+    const [profileResult, staffResult] = await Promise.race([
+      Promise.all([
+        supabase.from('profiles').select('*').eq('id', authUser.id).single(),
+        supabase.from('erp_staff_roles')
           .select('role, department, position, hourly_rate')
           .eq('user_id', authUser.id)
           .eq('is_active', true)
-          .maybeSingle();
+          .maybeSingle(),
+      ]),
+      timeout,
+    ]);
 
-        if (staffData?.role && ERP_ROLES.includes(staffData.role)) {
-          return buildUser(authUser, staffData.role as UserRole, {
-            ...data,
-            department: staffData.department,
-            position: staffData.position,
-            hourly_rate: staffData.hourly_rate,
-          });
-        }
-      } catch {
-        // erp_staff_roles check failed — fall through to profile role
-      }
+    const profileData = profileResult.data;
+    const staffData = staffResult.data;
+
+    // Prefer the ERP staff role (more specific) over the generic profile role
+    if (staffData?.role && ERP_ROLES.includes(staffData.role)) {
+      return buildUser(authUser, staffData.role as UserRole, {
+        ...profileData,
+        department: staffData.department,
+        position: staffData.position,
+        hourly_rate: staffData.hourly_rate,
+      });
     }
 
-    if (error || !data) {
-      return buildUser(authUser, 'client');
+    const profileRole = profileData?.role as string | undefined;
+    if (profileRole && ERP_ROLES.includes(profileRole)) {
+      return buildUser(authUser, profileRole as UserRole, profileData);
     }
 
-    return buildUser(authUser, (isErpRole ? profileRole! : 'client') as UserRole, data);
+    return buildUser(authUser, 'client', profileData ?? undefined);
   } catch {
     return buildUser(authUser, 'client');
   }
@@ -121,10 +113,11 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
     mountedRef.current = true;
     let subscription: any = null;
 
-    // Hard safety: loading MUST become false within 5 seconds no matter what
+    // Hard safety: loading MUST become false within 12 seconds no matter what.
+    // Raised from 5s to accommodate the 8s fetchProfile timeout + network overhead.
     const safetyTimer = setTimeout(() => {
       if (mountedRef.current) setLoading(false);
-    }, 5000);
+    }, 12000);
 
     // ONLY source of getSession — no other provider calls this
     supabase.auth.getSession()
