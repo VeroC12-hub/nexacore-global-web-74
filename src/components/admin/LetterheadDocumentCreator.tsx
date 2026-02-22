@@ -197,11 +197,11 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
         body += '<table class="doc-table">\n';
         if (block.rows && block.rows.length > 0) {
           body += '  <thead><tr>';
-          block.rows[0].forEach(cell => { body += `<th>${escapeHtml(cell)}</th>`; });
+          block.rows[0].forEach(cell => { body += `<th>${renderInline(cell)}</th>`; });
           body += '</tr></thead>\n  <tbody>\n';
           for (let r = 1; r < block.rows.length; r++) {
             body += '    <tr>';
-            block.rows[r].forEach(cell => { body += `<td>${escapeHtml(cell)}</td>`; });
+            block.rows[r].forEach(cell => { body += `<td>${renderInline(cell)}</td>`; });
             body += '</tr>\n';
           }
           body += '  </tbody>\n';
@@ -232,130 +232,160 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
   <style>
     @page { size: A4; margin: 0; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
-      color: #2d3748;
-      background: #d0d5dc;
-      padding: 20px;
-      line-height: 1.6;
-      font-size: 13px;
+      color: #374151;
+      background: #c8cdd6;
+      padding: 24px;
+      line-height: 1.7;
+      font-size: 13.5px;
     }
 
+    /* ── Page shell ── */
     .page {
       width: 210mm;
-      height: 297mm; /* Strict height for pagination */
-      margin: 0 auto 20px;
+      min-height: 297mm;
+      height: 297mm;
+      margin: 0 auto 28px;
       ${bgStyle}
-      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+      box-shadow: 0 6px 32px rgba(0,0,0,0.18);
       position: relative;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
       page-break-after: always;
     }
 
-    /* Content area matches pdfLetterhead.ts: top 46mm, sides 18mm, bottom 30mm */
+    /* Content sits inside the letterhead safe zone */
     .content {
-      padding: 46mm 18mm 30mm;
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      height: 100%;
+      position: absolute;
+      top: 46mm;
+      left: 18mm;
+      right: 18mm;
+      bottom: 30mm;
+      overflow: hidden;
     }
 
+    /* ── Document title bar ── */
     .doc-title-bar {
       display: flex;
       justify-content: space-between;
-      align-items: flex-end;
-      border-bottom: 2.5px solid #0098A6;
+      align-items: flex-start;
+      margin-bottom: 16px;
       padding-bottom: 10px;
-      margin-bottom: 22px;
+      border-bottom: 3px solid #0098A6;
     }
-    .doc-title-bar h2 {
-      font-size: 19px; font-weight: 700;
+    .doc-title-name {
+      font-size: 20px;
+      font-weight: 800;
       color: #1E3A5F;
+      letter-spacing: -0.3px;
+      line-height: 1.15;
     }
-    .doc-title-bar .doc-date {
-      font-size: 11px; color: #718096;
+    .doc-title-label {
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #0098A6;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .doc-title-meta {
+      text-align: right;
+      padding-top: 2px;
+    }
+    .doc-title-date {
+      font-size: 11px;
+      color: #4b5563;
+      font-weight: 500;
+    }
+    .doc-title-company {
+      font-size: 9.5px;
+      color: #0098A6;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      margin-top: 3px;
     }
 
-    /* Headings */
-    .doc-heading {
-      color: #1E3A5F;
-      margin: 18px 0 8px;
-      padding-bottom: 4px;
-    }
+    /* ── Body headings ── */
     h2.doc-heading {
-      font-size: 15px;
-      border-bottom: 2px solid #0098A6;
-      padding-bottom: 5px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #1E3A5F;
+      border-left: 4px solid #0098A6;
+      padding-left: 9px;
+      margin: 20px 0 7px;
+      line-height: 1.3;
     }
-    h3.doc-heading { font-size: 13.5px; color: #0098A6; }
-    h4.doc-heading { font-size: 12.5px; color: #4a5568; }
+    h3.doc-heading {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0098A6;
+      margin: 14px 0 5px;
+      padding-left: 2px;
+      line-height: 1.3;
+    }
+    h4.doc-heading {
+      font-size: 12px;
+      font-weight: 600;
+      font-style: italic;
+      color: #4b5563;
+      margin: 10px 0 4px;
+    }
 
-    /* Paragraphs */
+    /* ── Paragraphs ── */
     .doc-para {
-      margin-bottom: 10px;
+      margin-bottom: 11px;
       color: #374151;
       text-align: justify;
-      line-height: 1.65;
+      line-height: 1.7;
     }
 
-    /* Tables — full grid borders for professional look */
+    /* ── Tables ── */
     .doc-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 14px 0 18px;
+      margin: 12px 0 16px;
       font-size: 12px;
-      border: 1px solid #d1d5db;
+      border: 1.5px solid #d1d5db;
     }
     .doc-table th {
       background: #0098A6;
       color: white;
-      padding: 10px 14px;
+      padding: 9px 13px;
       text-align: left;
       font-weight: 600;
-      font-size: 10.5px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border: 1px solid #0098A6;
+      font-size: 11px;
+      border: 1px solid #007f8c;
     }
     .doc-table td {
-      padding: 10px 14px;
+      padding: 8px 13px;
       border: 1px solid #e5e7eb;
       color: #374151;
+      vertical-align: top;
     }
-    .doc-table tbody tr:nth-child(even) { background: rgba(249, 250, 251, 0.85); }
+    .doc-table tbody tr:nth-child(even) { background: #f9fafb; }
+    .doc-table tbody tr:hover { background: #f0f9fa; }
 
-    /* Lists — improved spacing and indentation */
+    /* ── Lists ── */
     .doc-list {
-      margin: 10px 0 16px;
-      padding-left: 36px;
+      margin: 8px 0 14px;
+      padding-left: 34px;
     }
     .doc-list li {
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       color: #374151;
-      line-height: 1.6;
+      line-height: 1.65;
     }
-    .doc-list li::marker {
-      color: #0098A6;
-      font-weight: 600;
-    }
-    ol.doc-list {
-      list-style-type: decimal;
-    }
-    ol.doc-list li::marker {
-      color: #0098A6;
-      font-weight: 700;
-    }
+    .doc-list li::marker { color: #0098A6; font-weight: 700; }
+    ol.doc-list { list-style-type: decimal; }
 
-    /* Inline formatting */
-    strong { font-weight: 700; }
+    /* ── Inline ── */
+    strong { font-weight: 700; color: #1f2937; }
     em { font-style: italic; }
 
-    /* Utility */
+    /* ── Utility ── */
     #source-content { display: none; }
 
     @media print {
@@ -376,8 +406,14 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
   <!-- Hidden source content -->
   <div id="source-content">
     <div class="doc-title-bar">
-      <h2>${escapeHtml(docTitle || 'Document')}</h2>
-      <span class="doc-date">${escapeHtml(docDate)}</span>
+      <div>
+        <div class="doc-title-name">${escapeHtml(docTitle || 'Document')}</div>
+        <div class="doc-title-label">NexaCore Innovations</div>
+      </div>
+      <div class="doc-title-meta">
+        <div class="doc-title-date">${escapeHtml(docDate)}</div>
+        <div class="doc-title-company">nexacoreinnovations.com</div>
+      </div>
     </div>
     ${body}
   </div>
@@ -390,9 +426,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
     (function() {
       const source = document.getElementById('source-content');
       const container = document.getElementById('pages-container');
-      const MAX_PAGE_H = 10000; // Will be limited by .page height via overflow check
 
-      // Template for a new page
       function createPage() {
         const page = document.createElement('div');
         page.className = 'page';
@@ -402,50 +436,54 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
         return { page, content };
       }
 
-      // Initialize first page
-      let currentPageObj = createPage();
-      container.appendChild(currentPageObj.page);
-      
-      // Move children one by one
+      function overflows(pageEl) {
+        return pageEl.scrollHeight > pageEl.clientHeight + 2;
+      }
+
+      function isHeading(el) {
+        return /^H[2-4]$/.test(el.nodeName || '');
+      }
+
+      let cur = createPage();
+      container.appendChild(cur.page);
+
       const children = Array.from(source.children);
-      
-      children.forEach((child, index) => {
-        // Append to current page to test height
-        currentPageObj.content.appendChild(child);
+      let i = 0;
 
-        // Check for overflow
-        // We compare scrollHeight to clientHeight of the page container
-        // But the .content div has padding, so we check if the child pushes content beyond limit.
-        // Better check: does the page trigger overflow?
-        // Note: .page has fixed height 297mm. .content has height 100%. 
-        // If content overflows, scrollHeight > clientHeight.
-        
-        if (currentPageObj.page.scrollHeight > currentPageObj.page.clientHeight + 1) { // +1 for pixel rounding safety
-           // Allow title bar (index 0) to stay if it's the only thing, otherwise move it?
-           // Actually, if a single element is HUGE, we can't do much without splitting it.
-           // Assuming blocks are reasonably sized.
-           
-           if (currentPageObj.content.children.length > 1) {
-             // Move this child to a new page
-             currentPageObj.content.removeChild(child);
-             
-             currentPageObj = createPage();
-             container.appendChild(currentPageObj.page);
-             currentPageObj.content.appendChild(child);
-           } else {
-             // Single element is too big. Let it clip/overflow or print as is?
-             // For now, let it stay, but warn? 
-             // Ideally we'd split text nodes, but that's complex.
-             console.warn('Element too tall for page:', child);
-             
-             // Force new page for NEXT element
-             currentPageObj = createPage();
-             container.appendChild(currentPageObj.page);
-           }
+      while (i < children.length) {
+        const child = children[i];
+        cur.content.appendChild(child);
+
+        if (overflows(cur.page)) {
+          if (cur.content.children.length > 1) {
+            // Move overflowing element to a fresh page
+            cur.content.removeChild(child);
+            cur = createPage();
+            container.appendChild(cur.page);
+            cur.content.appendChild(child);
+          } else {
+            // Single element too tall — leave it, start new page for next
+            cur = createPage();
+            container.appendChild(cur.page);
+          }
+        } else if (isHeading(child) && children[i + 1]) {
+          // Anti-orphan: test if the next element fits after this heading.
+          // If it doesn't, move the heading to the next page now.
+          const next = children[i + 1];
+          cur.content.appendChild(next);
+          const wouldOrphan = overflows(cur.page);
+          cur.content.removeChild(next);
+          if (wouldOrphan) {
+            cur.content.removeChild(child);
+            cur = createPage();
+            container.appendChild(cur.page);
+            cur.content.appendChild(child);
+          }
         }
-      });
 
-      // Cleanup
+        i++;
+      }
+
       source.remove();
     })();
 
