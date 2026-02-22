@@ -86,12 +86,12 @@ function drawLabelValue(
   return y + lines.length * 4 + 1.5;
 }
 
-// ── Generator ───────────────────────────────────────
+// ── Core builder (shared by save + preview) ─────────
 
-export async function generateQuotePDF(
+async function buildQuoteDoc(
   quote: QuoteData,
   request?: QuoteRequestData | null,
-): Promise<void> {
+): Promise<jsPDF> {
   const doc = new jsPDF('p', 'mm', 'a4');
   const pageWidth = doc.internal.pageSize.width;
   const contentWidth = pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT;
@@ -327,8 +327,27 @@ export async function generateQuotePDF(
     );
   }
 
-  // ── Save ─────────────────────────────────────────
+  return doc;
+}
+
+// ── Public API ───────────────────────────────────────
+
+/** Download the quote as a PDF file. */
+export async function generateQuotePDF(
+  quote: QuoteData,
+  request?: QuoteRequestData | null,
+): Promise<void> {
+  const doc = await buildQuoteDoc(quote, request);
   const clientName = (request?.full_name || 'Client').replace(/\s+/g, '_');
   const filename = `NexaCore_Quote_${clientName}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
   doc.save(filename);
+}
+
+/** Return the quote as a data URL string (for iframe preview). */
+export async function getQuotePDFDataUrl(
+  quote: QuoteData,
+  request?: QuoteRequestData | null,
+): Promise<string> {
+  const doc = await buildQuoteDoc(quote, request);
+  return doc.output('datauristring');
 }

@@ -31,9 +31,13 @@ import {
   Phone,
   MapPin,
   Calendar,
+  Download,
+  ArrowLeft,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { parseContent, ParsedBlock } from '@/utils/pdfContentRenderer';
+import { generateQuotePDF, getQuotePDFDataUrl } from '@/utils/quotePDFGenerator';
 
 // ── Inline markdown → safe HTML (bold / italic only) ──────────────────────────
 function inlineHtml(text: string): string {
@@ -176,6 +180,8 @@ const AdminQuoteRequestsTab = () => {
   const [selectedRequest, setSelectedRequest] = useState<QuoteRequest | null>(null);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [previewingQuote, setPreviewingQuote] = useState<Quote | null>(null);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
   const [showProblematicOnly, setShowProblematicOnly] = useState(false);
   
@@ -1227,7 +1233,7 @@ Database is now optimized!`,
         const statusColor = statusColors[pq.status] ?? 'bg-gray-100 text-gray-800 border-gray-200';
 
         return (
-          <Dialog open={true} onOpenChange={(open) => { if (!open) setPreviewingQuote(null); }}>
+          <Dialog open={true} onOpenChange={(open) => { if (!open) { setPreviewingQuote(null); setPdfPreviewUrl(null); } }}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto p-0">
               {/* Header bar */}
               <div className="bg-gradient-to-r from-[#1E3A5F] to-[#0098A6] text-white px-6 py-4 rounded-t-lg">
@@ -1236,13 +1242,67 @@ Database is now optimized!`,
                     <p className="text-xs font-semibold uppercase tracking-widest text-teal-200 mb-0.5">Admin Preview</p>
                     <h2 className="text-2xl font-bold tracking-tight">QUOTATION</h2>
                   </div>
-                  <Badge className={`${statusColor} border text-sm font-semibold px-3 py-1`}>
-                    {pq.status.replace('_', ' ').toUpperCase()}
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <Badge className={`${statusColor} border text-sm font-semibold px-3 py-1`}>
+                      {pq.status.replace('_', ' ').toUpperCase()}
+                    </Badge>
+                    {/* PDF preview / download buttons */}
+                    {!pdfPreviewUrl ? (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                        disabled={generatingPdf}
+                        onClick={async () => {
+                          setGeneratingPdf(true);
+                          try {
+                            const url = await getQuotePDFDataUrl(
+                              { id: pq.id, price: pq.price, currency: pq.currency, scope: pq.scope, timeline: pq.timeline, deliverables: Array.isArray(pq.deliverables) ? pq.deliverables : [], terms: pq.terms || '', status: pq.status, created_at: pq.created_at, expires_at: pq.expires_at || null, service_type: pq.service_type },
+                              pr ? { full_name: pr.full_name, email: pr.email, phone: pr.phone, company: pr.company, country: pr.country, service_type: pr.service_type, description: pr.description, tier: pr.tier } : null
+                            );
+                            setPdfPreviewUrl(url);
+                          } catch { toast.error('Failed to generate PDF preview'); }
+                          finally { setGeneratingPdf(false); }
+                        }}
+                      >
+                        {generatingPdf ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
+                        {generatingPdf ? 'Generating…' : 'PDF Preview'}
+                      </Button>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                          onClick={() => setPdfPreviewUrl(null)}>
+                          <ArrowLeft className="h-4 w-4 mr-1" /> Details
+                        </Button>
+                        <Button size="sm" variant="secondary" className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                          onClick={async () => {
+                            try {
+                              await generateQuotePDF(
+                                { id: pq.id, price: pq.price, currency: pq.currency, scope: pq.scope, timeline: pq.timeline, deliverables: Array.isArray(pq.deliverables) ? pq.deliverables : [], terms: pq.terms || '', status: pq.status, created_at: pq.created_at, expires_at: pq.expires_at || null, service_type: pq.service_type },
+                                pr ? { full_name: pr.full_name, email: pr.email, phone: pr.phone, company: pr.company, country: pr.country, service_type: pr.service_type, description: pr.description, tier: pr.tier } : null
+                              );
+                            } catch { toast.error('Download failed'); }
+                          }}>
+                          <Download className="h-4 w-4 mr-1" /> Download
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="px-6 py-5 space-y-5">
+              {/* PDF iframe preview */}
+              {pdfPreviewUrl && (
+                <iframe
+                  src={pdfPreviewUrl}
+                  className="w-full border-0 rounded-b-lg"
+                  style={{ height: '75vh' }}
+                  title="Quote PDF Preview"
+                />
+              )}
+
+              {/* Detail view — hidden when PDF preview is shown */}
+              <div className={`px-6 py-5 space-y-5 ${pdfPreviewUrl ? 'hidden' : ''}`}>
                 {/* Client info + price side by side */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Client info */}
