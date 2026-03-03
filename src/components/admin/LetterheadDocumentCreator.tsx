@@ -39,12 +39,17 @@ function renderInline(text: string): string {
 }
 
 // ── Content parser ──
+
+// Broad set of bullet characters
+const BULLET_CHARS = '\\-–—*•▪▸●○◦·►✓✔➤➢▶';
+
 function isBulletItem(line: string): boolean {
-  return /^\s*[-*•]\s+/.test(line);
+  return new RegExp(`^\\s*[${BULLET_CHARS}]\\s+`).test(line);
 }
 
 function isNumberedItem(line: string): boolean {
-  return /^\s*\d+[.\)]\s+/.test(line);
+  // 1. or 1) or (1)
+  return /^\s*(\d+[.)]\s+|\(\d+\)\s+)/.test(line);
 }
 
 function isListItem(line: string): boolean {
@@ -54,15 +59,23 @@ function isListItem(line: string): boolean {
 function isTableLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
+  // Pipe-separated
   if (trimmed.includes('|') && trimmed.split('|').filter(c => c.trim()).length >= 2) return true;
-  if (trimmed.includes('\t') && trimmed.split('\t').length >= 2) return true;
+  // Tab-separated
+  if (trimmed.includes('\t') && trimmed.split('\t').filter(c => c.trim()).length >= 2) return true;
+  // Space-aligned columns: 3+ non-empty segments separated by 2+ spaces, each segment ≤ 35 chars
+  const spaceParts = trimmed.split(/\s{2,}/).filter(Boolean);
+  if (spaceParts.length >= 3 && spaceParts.every(p => p.length <= 35) && trimmed.length > 18) return true;
   return false;
 }
 
 function isHeadingLine(line: string): boolean {
   const trimmed = line.trim();
+  // Markdown headings
   if (/^#{1,3}\s+/.test(trimmed)) return true;
-  // ALL-CAPS headings
+  // Entire line is bold markdown: **text** or __text__
+  if (/^(\*\*|__)(.+?)(\*\*|__)$/.test(trimmed)) return true;
+  // ALL-CAPS headings (letters present, no table chars, no sentence punctuation mid-line)
   if (
     trimmed === trimmed.toUpperCase() &&
     trimmed.length > 2 &&
@@ -72,6 +85,8 @@ function isHeadingLine(line: string): boolean {
   ) return true;
   // Numbered section headings like "1. Executive Summary" or "2.3 Events"
   if (/^\d+(\.\d+)*\.?\s+[A-Z]/.test(trimmed) && trimmed.length < 80) return true;
+  // Short label line ending with colon: "Overview:", "Key Points:", "Summary:"
+  if (/^[A-Z][^.!?\n]{2,55}:$/.test(trimmed)) return true;
   return false;
 }
 
@@ -116,8 +131,11 @@ function parseContent(raw: string): ParsedBlock[] {
             if (idx === arr.length - 1 && c === '') return false;
             return true;
           });
+        } else if (cur.includes('\t')) {
+          cells = cur.split('\t').map(c => c.trim()).filter(Boolean);
         } else {
-          cells = cur.split('\t').map(c => c.trim());
+          // Space-aligned: split on 2+ spaces
+          cells = cur.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
         }
         if (cells.length >= 2) tableRows.push(cells);
         i++;
@@ -136,8 +154,8 @@ function parseContent(raw: string): ParsedBlock[] {
         if (lines[i].trim() === '') { i++; break; }
         if (isListItem(lines[i])) {
           const itemText = lines[i]
-            .replace(/^\s*[-*•]\s+/, '')
-            .replace(/^\s*\d+[.\)]\s+/, '')
+            .replace(new RegExp(`^\\s*[${BULLET_CHARS}]\\s+`), '')
+            .replace(/^\s*(\d+[.)]\s+|\(\d+\)\s+)/, '')
             .trim();
           items.push(itemText);
           i++;
@@ -185,7 +203,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
     switch (block.type) {
       case 'heading': {
         const tag = block.level === 1 ? 'h2' : block.level === 2 ? 'h3' : 'h4';
-        body += `<${tag} class="doc-heading">${escapeHtml(block.content)}</${tag}>\n`;
+        body += `<${tag} class="doc-heading">${renderInline(block.content)}</${tag}>\n`;
         break;
       }
 
@@ -634,7 +652,7 @@ export const LetterheadDocumentCreator: React.FC = () => {
               </div>
               <Textarea
                 id="content"
-                placeholder={`Paste anything here — the system will automatically detect and format:\n\n• Tables (tab-separated, pipe-separated, or CSV)\n• Bullet and numbered lists\n• Headings (ALL CAPS lines, # Markdown, or numbered like "1. Section")\n• **Bold** and *italic* text\n• Paragraphs\n\nExample table:\nItem\tQty\tPrice\nWidget A\t10\t$50\nWidget B\t5\t$120`}
+                placeholder={`Paste anything here — auto-detected:\n\n• Tables: tab / pipe (|) / 2+ space aligned\n• Lists: -, •, –, ►, ✓, *, 1., (1)\n• Headings: ALL CAPS, # Markdown, "1. Section", "Label:", **Bold line**\n• **Bold** and *italic* inline\n• Regular paragraphs\n\nExample:\nSALES SUMMARY\n\nProduct\t\tQty\t\tRevenue\nWidget A\t10\t\t$500\nWidget B\t5\t\t$300\n\nKey Points:\n• Revenue up 20%\n• New clients: 3`}
                 value={rawContent}
                 onChange={e => setRawContent(e.target.value)}
                 className="mt-1 min-h-[300px] font-mono text-sm"
@@ -650,10 +668,11 @@ export const LetterheadDocumentCreator: React.FC = () => {
 
             <div className="bg-gray-50 rounded-lg p-4 text-xs text-gray-500 space-y-1">
               <p className="font-semibold text-gray-700">Tips for best results:</p>
-              <p>- Use <strong>tabs</strong> or <strong>pipes (|)</strong> between columns for tables</p>
-              <p>- Write headings in <strong>ALL CAPS</strong>, use <strong># Heading</strong>, or numbered like <strong>1. Section Title</strong></p>
-              <p>- Start list items with <strong>-</strong>, <strong>*</strong>, or <strong>1.</strong></p>
-              <p>- Use <strong>**bold**</strong> and <strong>*italic*</strong> for emphasis</p>
+              <p>- Use <strong>tabs</strong>, <strong>pipes (|)</strong>, or <strong>2+ spaces</strong> between columns for tables</p>
+              <p>- Write headings in <strong>ALL CAPS</strong>, use <strong># Heading</strong>, numbered like <strong>1. Section Title</strong>, or end a short line with <strong>:</strong></p>
+              <p>- Start list items with <strong>-</strong>, <strong>•</strong>, <strong>–</strong>, <strong>►</strong>, <strong>✓</strong>, <strong>*</strong>, or <strong>1.</strong></p>
+              <p>- A line that is entirely <strong>**bold**</strong> is treated as a heading</p>
+              <p>- Use <strong>**bold**</strong> and <strong>*italic*</strong> for emphasis within text</p>
               <p>- Separate sections with a blank line</p>
             </div>
           </CardContent>
