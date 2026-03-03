@@ -173,7 +173,7 @@ const Services = () => {
         { name: 'Quality Assurance', description: 'Comprehensive testing and quality control processes' },
         { name: 'Technical Documentation', description: 'Professional documentation and user manuals' }
       ]
-    }
+    },
   ];
 
   const technologies = [

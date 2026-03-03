@@ -20,6 +20,7 @@ import AIMLServices from "./pages/services/AIMLServices";
 import CADServices from "./pages/services/CADServices";
 import BlockchainServices from "./pages/services/BlockchainServices";
 import EngineeringTechnical from "./pages/services/EngineeringTechnical";
+import GhanaDigitalHub from "./pages/GhanaDigitalHub";
 import NotFound from "./pages/NotFound";
 import BookConsultation from "./pages/BookConsultation";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -67,6 +68,7 @@ const App = () => {
                 <Route path="/privacy" element={<Privacy />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/book-consultation" element={<BookConsultation />} />
+                <Route path="/ghana-digital-hub" element={<GhanaDigitalHub />} />
                 
                 {/* AUTH ROUTES */}
                 <Route path="/auth" element={<Auth />} />

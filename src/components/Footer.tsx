@@ -23,7 +23,8 @@ const Footer = () => {
     { name: 'Portfolio', path: '/portfolio', external: false },
     { name: 'Team', path: '/team', external: false },
     { name: 'Contact', path: '/contact', external: false },
-    { name: 'Blog', path: 'https://nexacoreinn.blogspot.com/', external: true }
+    { name: 'Blog', path: 'https://nexacoreinn.blogspot.com/', external: true },
+    { name: 'Ghana Digital Hub', path: '/ghana-digital-hub', external: false }
   ];
 
   // Service items with exact mapping to Services page sections

@@ -100,9 +100,14 @@ const About = () => {
               businesses and institutions today.
             </p>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Today, we serve clients across continents, from startups to universities, delivering solutions 
-              that drive innovation, efficiency, and growth. Our diverse, internationally-minded team brings 
+              Today, we serve clients across continents, from startups to universities, delivering solutions
+              that drive innovation, efficiency, and growth. Our diverse, internationally-minded team brings
               unique perspectives to every project, ensuring culturally aware and globally relevant outcomes.
+            </p>
+            <p className="text-lg text-muted-foreground leading-relaxed">
+              In collaboration with <strong className="text-foreground">Autodesk</strong>, NexaCore has submitted
+              a formal proposal to the Government of Ghana to position the country as a West African hub for
+              digital engineering and design — a capacity-building strategy for professionals, universities, and public institutions.
             </p>
           </div>
           <div className="relative">
@@ -123,9 +128,10 @@ const About = () => {
             <Target className="w-12 h-12 text-primary mb-6" />
             <h3 className="text-2xl font-bold mb-4 text-gradient-primary">Our Mission</h3>
             <p className="text-muted-foreground leading-relaxed">
-              To empower organizations worldwide with innovative technical solutions that drive growth, 
-              efficiency, and success. We strive to be the bridge between cutting-edge technology and 
-              practical business needs, delivering excellence in every project we undertake.
+              To empower organizations worldwide with innovative technical solutions that drive growth,
+              efficiency, and success. We strive to be the bridge between cutting-edge technology and
+              practical business needs — and to build Ghana's capacity as a leading digital engineering
+              nation, delivering excellence in every project we undertake.
             </p>
           </Card>
           <Card className="card-gradient p-8">

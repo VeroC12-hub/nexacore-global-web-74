@@ -264,7 +264,7 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       left: 18mm;
       right: 18mm;
       bottom: 30mm;
-      overflow: hidden;
+      overflow: visible;
     }
 
     /* ── Document title bar ── */
@@ -433,11 +433,16 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
         const content = document.createElement('div');
         content.className = 'content';
         page.appendChild(content);
+        container.appendChild(page);
         return { page, content };
       }
 
-      function overflows(pageEl) {
-        return pageEl.scrollHeight > pageEl.clientHeight + 2;
+      // Reliable overflow check: compares last child's bottom against content area's bottom
+      function overflows(contentEl) {
+        if (!contentEl.lastElementChild) return false;
+        const cRect = contentEl.getBoundingClientRect();
+        const eRect = contentEl.lastElementChild.getBoundingClientRect();
+        return eRect.bottom > cRect.bottom + 2;
       }
 
       function isHeading(el) {
@@ -445,8 +450,6 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       }
 
       let cur = createPage();
-      container.appendChild(cur.page);
-
       const children = Array.from(source.children);
       let i = 0;
 
@@ -454,29 +457,24 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
         const child = children[i];
         cur.content.appendChild(child);
 
-        if (overflows(cur.page)) {
+        if (overflows(cur.content)) {
           if (cur.content.children.length > 1) {
-            // Move overflowing element to a fresh page
+            // Element doesn't fit — move it to a fresh page
             cur.content.removeChild(child);
             cur = createPage();
-            container.appendChild(cur.page);
             cur.content.appendChild(child);
-          } else {
-            // Single element too tall — leave it, start new page for next
-            cur = createPage();
-            container.appendChild(cur.page);
           }
+          // else: element alone is taller than the page — leave it, continue
         } else if (isHeading(child) && children[i + 1]) {
-          // Anti-orphan: test if the next element fits after this heading.
-          // If it doesn't, move the heading to the next page now.
+          // Anti-orphan: check that the next element also fits after this heading
           const next = children[i + 1];
           cur.content.appendChild(next);
-          const wouldOrphan = overflows(cur.page);
+          const wouldOrphan = overflows(cur.content);
           cur.content.removeChild(next);
           if (wouldOrphan) {
+            // Push the heading to the next page so it's not stranded
             cur.content.removeChild(child);
             cur = createPage();
-            container.appendChild(cur.page);
             cur.content.appendChild(child);
           }
         }
@@ -485,11 +483,15 @@ function renderBlocksToHTML(blocks: ParsedBlock[], docTitle: string, docDate: st
       }
 
       source.remove();
+
+      // Tell the parent iframe to resize to fit all pages
+      const totalH = document.body.scrollHeight + 80;
+      try { window.parent.postMessage({ type: 'lh-resize', height: totalH }, '*'); } catch(e) {}
     })();
 
-    // Print button logic
+    // Floating print button
     const btn = document.createElement('button');
-    btn.innerHTML = '&#x1F5A8; Print / Save as PDF';
+    btn.innerHTML = '&#x1F5A8;&nbsp; Print / Save as PDF';
     btn.className = 'no-print';
     btn.style.cssText = 'position:fixed;top:20px;right:20px;background:linear-gradient(135deg,#0098A6,#1E3A5F);color:#fff;border:none;padding:12px 28px;border-radius:25px;cursor:pointer;font-weight:600;z-index:1000;box-shadow:0 4px 15px rgba(0,152,166,0.3);font-size:14px;';
     btn.onclick = () => window.print();
@@ -506,6 +508,17 @@ export const LetterheadDocumentCreator: React.FC = () => {
   const [parsedBlocks, setParsedBlocks] = useState<ParsedBlock[]>([]);
   const [letterheadImg, setLetterheadImg] = useState<string | null>(null);
   const previewRef = useRef<HTMLIFrameElement>(null);
+
+  // Auto-resize iframe when the generated document reports its full height
+  useEffect(() => {
+    const handler = (e: MessageEvent) => {
+      if (e.data?.type === 'lh-resize' && previewRef.current) {
+        previewRef.current.style.height = `${e.data.height}px`;
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
 
   useEffect(() => {
     getLetterheadImage().then(img => {
@@ -667,7 +680,7 @@ export const LetterheadDocumentCreator: React.FC = () => {
               <iframe
                 ref={previewRef}
                 className="w-full border-0"
-                style={{ height: '900px' }}
+                style={{ height: '1200px', transition: 'height 0.3s ease' }}
                 title="Letterhead Preview"
               />
             </CardContent>

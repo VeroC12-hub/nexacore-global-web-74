@@ -48,7 +48,10 @@ const Index = () => {
         'graphic design services',
         'data analytics consulting',
         'tech innovation hub Ghana',
-        'global engineering solutions'
+        'global engineering solutions',
+        'Autodesk partner Ghana',
+        'digital engineering training Ghana',
+        'West Africa digital design hub'
       ]
     },
     enableTracking: true 
@@ -162,8 +165,8 @@ const Index = () => {
       {/* SEO Meta Tags */}
       <SEO
         title="NexaCore Innovations - Global Technology Solutions & Services"
-        description="Leading provider of CAD design, software development, AI/ML, blockchain, and digital solutions. We deliver world-class technical, creative, and digital services to clients worldwide."
-        keywords="CAD design Ghana, software development Africa, web development, mobile app development, AI ML services, blockchain solutions, 3D modeling, engineering services, graphic design, data analytics, Ghana tech company"
+        description="Leading provider of CAD design, software development, AI/ML, blockchain, and digital solutions. Autodesk partner leading Ghana's digital engineering capacity-building initiative. Delivering world-class technical, creative, and digital services worldwide."
+        keywords="CAD design Ghana, software development Africa, web development, mobile app development, AI ML services, blockchain solutions, 3D modeling, engineering services, graphic design, data analytics, Ghana tech company, Autodesk partner Ghana, digital engineering hub West Africa"
         url="https://nexacore-innovations.com"
       />
       {/* Structured Data for Google */}
@@ -487,6 +490,68 @@ const Index = () => {
             >
               Client Portal
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Ghana Digital Hub Initiative Banner */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-success/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 flex-wrap">
+                <Badge className="bg-primary/10 text-primary border-primary/20">NexaCore Innovations</Badge>
+                <span className="text-muted-foreground font-medium">×</span>
+                <Badge className="bg-success/10 text-success border-success/20">Autodesk</Badge>
+              </div>
+              <h2 className="text-3xl lg:text-4xl font-bold">
+                Positioning <span className="text-gradient-primary">Ghana</span> as a Regional Hub for{' '}
+                <span className="text-gradient-hero">Digital Engineering & Design</span>
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                NexaCore Innovations, in collaboration with Autodesk, has submitted a formal proposal
+                to the Government of Ghana to strengthen the nation's digital engineering capacity —
+                supporting professional bodies, universities, and hosting international design competitions in Ghana.
+              </p>
+              <ul className="space-y-3">
+                {[
+                  'Upskilling for Ghana Institution of Engineering & Ghana Institute of Architects',
+                  'Internationally recognized certifications for universities',
+                  'Hosting international digital design competitions in Ghana'
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+                    <span className="text-foreground text-sm">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/ghana-digital-hub">
+                <Button className="btn-hero group">
+                  Read the Proposal
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </Link>
+            </div>
+            <Card className="card-gradient p-10 text-center space-y-6">
+              <Globe className="w-16 h-16 text-primary mx-auto" />
+              <h3 className="text-2xl font-bold text-gradient-primary">A National Positioning Strategy</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                This is not merely a software initiative — it is a capacity-building strategy
+                to make Ghana the West African leader in modern digital design and infrastructure delivery.
+              </p>
+              <div className="grid grid-cols-3 gap-4 pt-4">
+                {[
+                  { label: 'Professional Bodies', value: '2+' },
+                  { label: 'Universities', value: 'Nationwide' },
+                  { label: 'Competition Hosting', value: 'International' }
+                ].map((stat, i) => (
+                  <div key={i} className="text-center">
+                    <div className="text-lg font-bold text-gradient-primary">{stat.value}</div>
+                    <div className="text-xs text-muted-foreground">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </div>
       </section>
