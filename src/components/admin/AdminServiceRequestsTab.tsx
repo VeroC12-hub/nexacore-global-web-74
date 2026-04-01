@@ -18,6 +18,7 @@ interface ServiceRequest {
   requested_completion: string;
   created_at: string;
   client_id: string;
+  client_name?: string;
 }
 
 interface AdminServiceRequestsTabProps {
@@ -36,11 +37,15 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
     try {
       const { data, error } = await supabase
         .from('service_requests')
-        .select('*')
+        .select('*, profiles!service_requests_client_id_fkey(full_name, email)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRequests(data || []);
+      const requests = (data || []).map((req: any) => ({
+        ...req,
+        client_name: req.profiles?.full_name || req.profiles?.email || null,
+      }));
+      setRequests(requests);
     } catch (error) {
       console.error('Error loading service requests:', error);
       toast.error('Failed to load service requests');
@@ -150,8 +155,10 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm text-muted-foreground">
-                      Client ID: {request.client_id}
+                    <div className="text-sm font-medium">
+                      {request.client_name || (
+                        <span className="text-muted-foreground italic">Unknown client</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>

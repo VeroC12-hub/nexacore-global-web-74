@@ -598,11 +598,6 @@ export function ERPOverviewTab({
               >
                 <Bell className="h-4 w-4 mr-2" />
                 {notificationCount} Alert{notificationCount !== 1 ? 's' : ''}
-                {notificationCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {notificationCount}
-                  </span>
-                )}
               </Button>
               
               {/* Notification Dropdown */}

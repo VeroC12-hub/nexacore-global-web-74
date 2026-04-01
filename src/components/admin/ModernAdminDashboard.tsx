@@ -32,8 +32,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { toast } from 'sonner';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 
 // Lazy-load admin components for better performance
 const AdminProjectsTab = lazy(() => import('@/components/admin/AdminProjectsTab').then(m => ({ default: m.AdminProjectsTab })));
@@ -95,10 +93,17 @@ export const ModernAdminDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const mainContentRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadDashboardStats();
   }, []);
+
+  useEffect(() => {
+    if (mainContentRef.current) {
+      mainContentRef.current.scrollTop = 0;
+    }
+  }, [activeView]);
 
   const loadDashboardStats = async () => {
     setLoading(true);
@@ -111,9 +116,9 @@ export const ModernAdminDashboard: React.FC = () => {
         messagesResult
       ] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact' }),
-        supabase.from('projects').select('id, budget', { count: 'exact' }),
+        supabase.from('projects').select('id', { count: 'exact' }).eq('status', 'in_progress'),
         supabase.from('invoices').select('id, total_amount', { count: 'exact' }),
-        supabase.from('workflow_instances').select('id', { count: 'exact' }),
+        supabase.from('workflow_instances').select('id', { count: 'exact' }).eq('status', 'active'),
         supabase.from('project_messages').select('id', { count: 'exact' })
       ]);
 
@@ -504,12 +509,11 @@ export const ModernAdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
 
       {/* Mobile Menu Button - Like Navbar */}
       <button
         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className={`lg:hidden fixed top-20 left-4 z-[60] flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-full shadow-2xl border-2 border-white hover:scale-105 transition-all active:scale-95 ${!mobileMenuOpen ? 'animate-pulse' : ''}`}
+        className={`lg:hidden fixed top-4 left-4 z-[60] flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-full shadow-2xl border-2 border-white hover:scale-105 transition-all active:scale-95 ${!mobileMenuOpen ? 'animate-pulse' : ''}`}
         aria-label="Toggle Menu"
       >
         {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -524,10 +528,10 @@ export const ModernAdminDashboard: React.FC = () => {
         />
       )}
 
-      <div className="flex pt-16 min-h-screen">
+      <div className="flex min-h-screen">
         {/* Sidebar */}
         <div className={`
-          fixed lg:static top-16 lg:top-0 bottom-0 left-0 z-[50]
+          fixed lg:static top-0 bottom-0 left-0 z-[50]
           w-64 sm:w-64 lg:w-64
           bg-white shadow-sm border-r border-gray-200 flex flex-col
           overflow-y-auto overflow-x-hidden
@@ -628,7 +632,7 @@ export const ModernAdminDashboard: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 w-full overflow-x-hidden overflow-y-auto">
+        <div ref={mainContentRef} className="flex-1 w-full overflow-x-hidden overflow-y-auto">
           <div className="p-4 md:p-6 w-full max-w-full">
             {loading || permissionsLoading ? (
               <div className="flex items-center justify-center h-64">
@@ -640,7 +644,6 @@ export const ModernAdminDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 

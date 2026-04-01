@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -45,16 +46,46 @@ interface RecentActivity {
 
 const EnhancedProjectManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [quickStats, setQuickStats] = useState<QuickStats>({
+    totalProjects: 0,
+    activeProjects: 0,
+    completedThisMonth: 0,
+    overdueProjects: 0,
+    teamUtilization: 0,
+    budgetUtilization: 0
+  });
 
-  // Mock data - replace with actual API calls
-  const quickStats: QuickStats = {
-    totalProjects: 45,
-    activeProjects: 12,
-    completedThisMonth: 8,
-    overdueProjects: 3,
-    teamUtilization: 89.4,
-    budgetUtilization: 74.2
-  };
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, status, end_date');
+      if (error || !data) return;
+
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const total = data.length;
+      const active = data.filter(p => p.status === 'in_progress').length;
+      const completedThisMonth = data.filter(p => {
+        return p.status === 'completed' && new Date(p.end_date) >= startOfMonth;
+      }).length;
+      const overdue = data.filter(p => {
+        return p.status !== 'completed' && p.status !== 'cancelled' &&
+               p.end_date && new Date(p.end_date) < now;
+      }).length;
+
+      setQuickStats({
+        totalProjects: total,
+        activeProjects: active,
+        completedThisMonth,
+        overdueProjects: overdue,
+        teamUtilization: 0,
+        budgetUtilization: 0
+      });
+    };
+    fetchStats();
+  }, []);
 
   const recentActivity: RecentActivity[] = [
     {

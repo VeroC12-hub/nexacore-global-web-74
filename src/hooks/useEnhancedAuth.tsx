@@ -61,12 +61,14 @@ async function fetchProfile(authUser: User): Promise<EnhancedUser> {
     const profileData = profileResult.data;
     const profileRole = profileData?.role as string | undefined;
 
-    // If profile has a valid ERP role, use it directly (fast path)
-    if (profileRole && ERP_ROLES.includes(profileRole)) {
+    // Fast path: only for privileged roles — never short-circuit on 'client'
+    // because profiles.role can be stale while erp_staff_roles has a higher role.
+    const PRIVILEGED_ROLES = ERP_ROLES.filter(r => r !== 'client');
+    if (profileRole && PRIVILEGED_ROLES.includes(profileRole)) {
       return buildUser(authUser, profileRole as UserRole, profileData);
     }
 
-    // Fallback: check erp_staff_roles (covers case where profile.role isn't synced yet)
+    // Always check erp_staff_roles — covers stale profiles.role and first-time setup
     try {
       const staffResult = await Promise.race([
         supabase.from('erp_staff_roles')

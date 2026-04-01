@@ -29,10 +29,18 @@ interface Project {
   created_at: string;
 }
 
+interface Invoice {
+  id: string;
+  total_amount: number;
+  status: string;
+  created_at: string;
+}
+
 const AdminAnalytics = () => {
   const [quoteRequests, setQuoteRequests] = useState<QuoteRequest[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,31 +49,22 @@ const AdminAnalytics = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch quote requests
-      const { data: quoteRequestData, error: qrError } = await supabase
-        .from('quote_requests')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const [quoteRequestRes, quoteRes, projectRes, invoiceRes] = await Promise.all([
+        supabase.from('quote_requests').select('*').order('created_at', { ascending: false }),
+        supabase.from('quotes').select('*').order('created_at', { ascending: false }),
+        supabase.from('projects').select('*').order('created_at', { ascending: false }),
+        supabase.from('invoices').select('id, total_amount, status, created_at').order('created_at', { ascending: false }),
+      ]);
 
-      // Fetch quotes
-      const { data: quoteData, error: qError } = await supabase
-        .from('quotes')
-        .select('*')
-        .order('created_at', { ascending: false });
+      if (quoteRequestRes.error) throw quoteRequestRes.error;
+      if (quoteRes.error) throw quoteRes.error;
+      if (projectRes.error) throw projectRes.error;
+      if (invoiceRes.error) throw invoiceRes.error;
 
-      // Fetch projects
-      const { data: projectData, error: pError } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (qrError) throw qrError;
-      if (qError) throw qError;
-      if (pError) throw pError;
-
-      setQuoteRequests(quoteRequestData || []);
-      setQuotes(quoteData || []);
-      setProjects(projectData || []);
+      setQuoteRequests(quoteRequestRes.data || []);
+      setQuotes(quoteRes.data || []);
+      setProjects(projectRes.data || []);
+      setInvoices(invoiceRes.data || []);
     } catch (error) {
       console.error('Error fetching analytics data:', error);
     } finally {
@@ -97,30 +96,26 @@ const AdminAnalytics = () => {
     }
   ];
 
-  // Revenue trends (last 6 months)
+  // Revenue trends (last 6 months) — based on invoices
   const revenueData = () => {
     const months = [];
     const now = new Date();
-    
+
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthName = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
-      
-      const revenue = quotes
-        .filter(quote => {
-          const quoteDate = new Date(quote.created_at);
-          return quoteDate.getMonth() === date.getMonth() && 
-                 quoteDate.getFullYear() === date.getFullYear() &&
-                 quote.status === 'approved';
-        })
-        .reduce((sum, quote) => sum + quote.price, 0);
 
-      months.push({
-        month: monthName,
-        revenue: revenue
-      });
+      const revenue = invoices
+        .filter(inv => {
+          const invDate = new Date(inv.created_at);
+          return invDate.getMonth() === date.getMonth() &&
+                 invDate.getFullYear() === date.getFullYear();
+        })
+        .reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+
+      months.push({ month: monthName, revenue });
     }
-    
+
     return months;
   };
 
@@ -152,9 +147,7 @@ const AdminAnalytics = () => {
     return <div className="p-6">Loading analytics...</div>;
   }
 
-  const totalRevenue = quotes
-    .filter(q => q.status === 'approved')
-    .reduce((sum, q) => sum + q.price, 0);
+  const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
 
   const conversionRate = quoteRequests.length > 0 
     ? ((quotes.filter(q => q.status === 'approved').length / quoteRequests.length) * 100).toFixed(1)
@@ -194,7 +187,7 @@ const AdminAnalytics = () => {
               <TrendingUp className="h-5 w-5 text-emerald-500" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
-                <p className="text-2xl font-bold">{projects.filter(p => p.status === 'active').length}</p>
+                <p className="text-2xl font-bold">{projects.filter(p => p.status === 'in_progress').length}</p>
               </div>
             </div>
           </CardContent>

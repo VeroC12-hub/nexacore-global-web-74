@@ -12,6 +12,7 @@ interface Invoice {
   id: string;
   invoice_number: string;
   client_id: string;
+  client_name?: string;
   amount: number;
   currency: string;
   status: string;
@@ -37,11 +38,15 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
     try {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*')
+        .select('*, profiles!invoices_client_id_fkey(full_name, email)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setInvoices(data || []);
+      const invoices = (data || []).map((inv: any) => ({
+        ...inv,
+        client_name: inv.profiles?.full_name || inv.profiles?.email || null,
+      }));
+      setInvoices(invoices);
     } catch (error) {
       console.error('Error loading invoices:', error);
       toast.error('Failed to load invoices');
@@ -140,8 +145,10 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
                   <TableCell>
-                    <div className="text-sm text-muted-foreground">
-                      Client ID: {invoice.client_id}
+                    <div className="text-sm font-medium">
+                      {invoice.client_name || (
+                        <span className="text-muted-foreground italic">Unknown client</span>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
