@@ -147,11 +147,6 @@ export function AdminERPTab() {
     }
     return {
       ...statsData,
-      totalTasks: 150, // Mock data - will be real in Phase 2
-      completedTasks: 95,
-      pendingTasks: 55,
-      teamMembers: 12,
-      avgProjectDuration: 45,
     };
   }, [statsData]);
 
@@ -411,45 +406,7 @@ export function AdminERPTab() {
 
     } catch (error) {
       console.error('Error loading chart data:', error);
-      // Fallback to mock data if database queries fail
-      setDepartmentData([
-        { name: 'Development', value: 20, completed: 12, pending: 8, total: 20 },
-        { name: 'Design', value: 12, completed: 8, pending: 4, total: 12 },
-        { name: 'Marketing', value: 9, completed: 6, pending: 3, total: 9 },
-        { name: 'Sales', value: 6, completed: 4, pending: 2, total: 6 }
-      ]);
-
-      setStatusData([
-        { name: 'Completed', value: 35 },
-        { name: 'In Progress', value: 45 },
-        { name: 'Pending', value: 15 },
-        { name: 'On Hold', value: 5 }
-      ]);
-
-      setPerformanceData([
-        { name: 'Jan', value: 78, productivity: 78, quality: 85 },
-        { name: 'Feb', value: 82, productivity: 82, quality: 88 },
-        { name: 'Mar', value: 79, productivity: 79, quality: 86 },
-        { name: 'Apr', value: 85, productivity: 85, quality: 90 },
-        { name: 'May', value: 88, productivity: 88, quality: 92 },
-        { name: 'Jun', value: 91, productivity: 91, quality: 94 }
-      ]);
-
-      setTimelineData([
-        { name: 'Jan', value: 45000, allocated: 50000, spent: 45000 },
-        { name: 'Feb', value: 55000, allocated: 60000, spent: 55000 },
-        { name: 'Mar', value: 65000, allocated: 70000, spent: 65000 },
-        { name: 'Apr', value: 60000, allocated: 65000, spent: 60000 },
-        { name: 'May', value: 70000, allocated: 75000, spent: 70000 },
-        { name: 'Jun', value: 75000, allocated: 80000, spent: 75000 }
-      ]);
-
-      setBudgetData([
-        { name: 'Development', value: 150000 },
-        { name: 'Design', value: 80000 },
-        { name: 'Marketing', value: 120000 },
-        { name: 'Operations', value: 100000 }
-      ]);
+      // Leave charts empty rather than showing fabricated data
     }
   };
 

@@ -91,113 +91,56 @@ const ProjectTimelineView: React.FC = () => {
 
   const fetchProjects = async () => {
     try {
-      // Mock data for demonstration
-      const mockProjects: Project[] = [
-        {
-          id: '1',
-          title: 'E-commerce Platform Redesign',
-          start_date: '2024-09-01',
-          end_date: '2024-12-31',
-          progress: 65,
-          status: 'in_progress',
-          priority: 'high',
-          milestones: [
-            { id: 'm1', title: 'Design Phase Complete', date: '2024-10-15', status: 'completed', project_id: '1' },
-            { id: 'm2', title: 'Frontend Development Complete', date: '2024-11-30', status: 'pending', project_id: '1' },
-            { id: 'm3', title: 'Testing Phase Complete', date: '2024-12-15', status: 'pending', project_id: '1' }
-          ],
-          tasks: [
-            {
-              id: 't1',
-              title: 'User Research & Analysis',
-              project_id: '1',
-              start_date: '2024-09-01',
-              end_date: '2024-09-15',
-              progress: 100,
-              assigned_to: 'Alice Smith',
-              dependencies: [],
-              priority: 'high',
-              status: 'completed'
-            },
-            {
-              id: 't2',
-              title: 'UI/UX Design',
-              project_id: '1',
-              start_date: '2024-09-16',
-              end_date: '2024-10-15',
-              progress: 100,
-              assigned_to: 'Carol White',
-              dependencies: ['t1'],
-              priority: 'high',
-              status: 'completed'
-            },
-            {
-              id: 't3',
-              title: 'Frontend Development',
-              project_id: '1',
-              start_date: '2024-10-01',
-              end_date: '2024-11-30',
-              progress: 70,
-              assigned_to: 'Alice Smith',
-              dependencies: ['t2'],
-              priority: 'high',
-              status: 'in_progress'
-            },
-            {
-              id: 't4',
-              title: 'Backend API Development',
-              project_id: '1',
-              start_date: '2024-10-15',
-              end_date: '2024-11-15',
-              progress: 45,
-              assigned_to: 'Bob Johnson',
-              dependencies: ['t2'],
-              priority: 'medium',
-              status: 'in_progress'
-            }
-          ]
-        },
-        {
-          id: '2',
-          title: 'Mobile App Development',
-          start_date: '2024-10-01',
-          end_date: '2025-03-31',
-          progress: 25,
-          status: 'planning',
-          priority: 'medium',
-          milestones: [
-            { id: 'm4', title: 'App Store Approval', date: '2025-03-15', status: 'pending', project_id: '2' }
-          ],
-          tasks: [
-            {
-              id: 't5',
-              title: 'Requirements Gathering',
-              project_id: '2',
-              start_date: '2024-10-01',
-              end_date: '2024-10-15',
-              progress: 80,
-              assigned_to: 'Jane Smith',
-              dependencies: [],
-              priority: 'high',
-              status: 'in_progress'
-            },
-            {
-              id: 't6',
-              title: 'iOS Development',
-              project_id: '2',
-              start_date: '2024-11-01',
-              end_date: '2025-02-15',
-              progress: 0,
-              assigned_to: 'David Brown',
-              dependencies: ['t5'],
-              priority: 'medium',
-              status: 'not_started'
-            }
-          ]
-        }
-      ];
+      const { data: projectData, error: projectError } = await supabase
+        .from('projects')
+        .select('id, title, status, priority, progress, start_date, end_date')
+        .order('created_at', { ascending: false });
 
-      setProjects(mockProjects);
+      if (projectError) throw projectError;
+
+      const projectIds = (projectData || []).map((p: any) => p.id);
+
+      // Fetch tasks for these projects from erp_tasks
+      let tasksByProject: Record<string, Task[]> = {};
+      if (projectIds.length > 0) {
+        const { data: taskData } = await supabase
+          .from('erp_tasks')
+          .select('id, title, erp_project_id, status, priority, estimated_hours, actual_hours, due_date, created_at, assigned_to:profiles(full_name)')
+          .in('erp_project_id', projectIds);
+
+        (taskData || []).forEach((t: any) => {
+          const pid = t.erp_project_id;
+          if (!tasksByProject[pid]) tasksByProject[pid] = [];
+          const createdDate = t.created_at ? t.created_at.split('T')[0] : new Date().toISOString().split('T')[0];
+          const dueDate = t.due_date || createdDate;
+          tasksByProject[pid].push({
+            id: t.id,
+            title: t.title,
+            project_id: pid,
+            start_date: createdDate,
+            end_date: dueDate,
+            progress: t.status === 'completed' ? 100 : t.status === 'in_progress' ? 50 : 0,
+            assigned_to: t.assigned_to?.full_name || undefined,
+            dependencies: [],
+            priority: t.priority || 'medium',
+            status: t.status === 'completed' ? 'completed' : t.status === 'in_progress' ? 'in_progress' : 'not_started',
+          });
+        });
+      }
+
+      const mapped: Project[] = (projectData || []).map((p: any) => ({
+        id: p.id,
+        title: p.title,
+        start_date: p.start_date || new Date().toISOString().split('T')[0],
+        end_date: p.end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        progress: p.progress || 0,
+        status: p.status || 'planning',
+        priority: p.priority || 'medium',
+        tasks: tasksByProject[p.id] || [],
+        milestones: [],
+      }));
+
+      setProjects(mapped);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching projects:', error);

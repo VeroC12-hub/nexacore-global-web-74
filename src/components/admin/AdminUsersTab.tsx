@@ -166,44 +166,9 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
     setCurrentPage(1); // Reset to first page
   }, []);
 
-  const loadUserActivity = async (userId: string) => {
-    try {
-      // This would typically come from an audit log table
-      const mockActivity: UserActivity[] = [
-        {
-          id: '1',
-          user_id: userId,
-          action: 'login',
-          description: 'User logged in',
-          ip_address: '192.168.1.100',
-          user_agent: 'Chrome 91.0',
-          created_at: new Date(Date.now() - 3600000).toISOString()
-        },
-        {
-          id: '2',
-          user_id: userId,
-          action: 'profile_update',
-          description: 'Updated profile information',
-          ip_address: '192.168.1.100',
-          user_agent: 'Chrome 91.0',
-          created_at: new Date(Date.now() - 7200000).toISOString()
-        },
-        {
-          id: '3',
-          user_id: userId,
-          action: 'password_change',
-          description: 'Changed password',
-          ip_address: '192.168.1.100',
-          user_agent: 'Chrome 91.0',
-          created_at: new Date(Date.now() - 86400000).toISOString()
-        }
-      ];
-      
-      setUserActivity(mockActivity);
-    } catch (error) {
-      console.error('Error loading user activity:', error);
-      toast.error('Failed to load user activity');
-    }
+  const loadUserActivity = async (_userId: string) => {
+    // No audit log table exists — show empty state
+    setUserActivity([]);
   };
 
   // Users are now server-side filtered and paginated via React Query

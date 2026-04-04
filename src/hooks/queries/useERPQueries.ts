@@ -7,19 +7,34 @@ export function useERPStats() {
   return useQuery({
     queryKey: ['erp', 'stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('erp_projects')
-        .select('id, status, budget, actual_cost', { count: 'exact' });
+      const [projectsRes, tasksRes, membersRes] = await Promise.all([
+        supabase.from('erp_projects').select('id, status, budget, actual_cost, start_date, end_date'),
+        supabase.from('erp_tasks').select('id, status'),
+        supabase.from('profiles').select('id').in('role', ['admin', 'project_manager', 'operations_manager', 'developer', 'support']),
+      ]);
 
-      if (error) throw error;
+      const projectList = projectsRes.data as any[] || [];
+      const taskList = tasksRes.data as any[] || [];
+      const memberList = membersRes.data as any[] || [];
 
-      // Calculate stats from projects
-      const projectList = data as any[] || [];
       const total = projectList.length;
-      const active = projectList.filter(p => p.status === 'active' || p.status === 'in_progress').length;
+      const active = projectList.filter(p => p.status === 'in_progress').length;
       const completed = projectList.filter(p => p.status === 'completed').length;
       const totalBudget = projectList.reduce((sum, p) => sum + (p.budget || 0), 0);
       const totalSpent = projectList.reduce((sum, p) => sum + (p.actual_cost || 0), 0);
+
+      const totalTasks = taskList.length;
+      const completedTasks = taskList.filter(t => t.status === 'completed').length;
+      const pendingTasks = taskList.filter(t => t.status !== 'completed').length;
+
+      // Average project duration in days (completed projects only)
+      const completedWithDates = projectList.filter(p => p.status === 'completed' && p.start_date && p.end_date);
+      const avgProjectDuration = completedWithDates.length > 0
+        ? Math.round(completedWithDates.reduce((sum, p) => {
+            const days = (new Date(p.end_date).getTime() - new Date(p.start_date).getTime()) / (1000 * 60 * 60 * 24);
+            return sum + days;
+          }, 0) / completedWithDates.length)
+        : 0;
 
       return {
         totalProjects: total,
@@ -28,9 +43,14 @@ export function useERPStats() {
         totalBudget,
         totalSpent,
         budgetUtilization: totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0,
+        totalTasks,
+        completedTasks,
+        pendingTasks,
+        teamMembers: memberList.length,
+        avgProjectDuration,
       };
     },
-    staleTime: 1000 * 60 * 2, // 2 minutes - stats should be relatively fresh
+    staleTime: 1000 * 60 * 2,
   });
 }
 

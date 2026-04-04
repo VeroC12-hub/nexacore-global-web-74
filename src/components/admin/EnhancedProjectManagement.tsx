@@ -48,6 +48,7 @@ interface RecentActivity {
 const EnhancedProjectManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [quickStats, setQuickStats] = useState<QuickStats>({
     totalProjects: 0,
     activeProjects: 0,
@@ -101,40 +102,39 @@ const EnhancedProjectManagement: React.FC = () => {
     fetchStats();
   }, []);
 
-  const recentActivity: RecentActivity[] = [
-    {
-      id: '1',
-      type: 'project_completed',
-      message: 'E-commerce Platform Phase 1 completed',
-      timestamp: '2 hours ago',
-      user: 'Alice Smith',
-      project: 'E-commerce Platform'
-    },
-    {
-      id: '2',
-      type: 'milestone_reached',
-      message: 'UI Design milestone reached',
-      timestamp: '4 hours ago',
-      user: 'Carol White',
-      project: 'Mobile App'
-    },
-    {
-      id: '3',
-      type: 'budget_alert',
-      message: 'Project budget at 85% utilization',
-      timestamp: '6 hours ago',
-      user: 'System',
-      project: 'API Integration'
-    },
-    {
-      id: '4',
-      type: 'task_assigned',
-      message: 'Frontend testing task assigned',
-      timestamp: '1 day ago',
-      user: 'Bob Johnson',
-      project: 'E-commerce Platform'
-    }
-  ];
+  useEffect(() => {
+    const fetchRecentActivity = async () => {
+      // Derive recent activity from the 5 most-recently-updated projects
+      const { data } = await supabase
+        .from('projects')
+        .select('id, title, status, progress, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(5);
+
+      if (!data) return;
+      const now = Date.now();
+      const activities: RecentActivity[] = data.map((p: any) => {
+        const age = now - new Date(p.updated_at).getTime();
+        const hours = Math.floor(age / 3600000);
+        const timestamp = hours < 1 ? 'Just now' : hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
+        const type: RecentActivity['type'] =
+          p.status === 'completed' ? 'project_completed' :
+          p.progress >= 50 ? 'milestone_reached' : 'task_assigned';
+        return {
+          id: p.id,
+          type,
+          message: p.status === 'completed'
+            ? `${p.title} marked as completed`
+            : `${p.title} updated (${p.progress || 0}% complete)`,
+          timestamp,
+          user: '',
+          project: p.title,
+        };
+      });
+      setRecentActivity(activities);
+    };
+    fetchRecentActivity();
+  }, []);
 
   const getActivityIcon = (type: string) => {
     switch (type) {
