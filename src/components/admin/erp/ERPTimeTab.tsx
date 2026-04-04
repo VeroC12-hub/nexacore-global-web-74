@@ -128,7 +128,8 @@ export function ERPTimeTab({
 
   // Chart data
   const dailyHours = timeEntries.reduce((acc: any, entry) => {
-    const date = entry.start_time ? new Date(entry.start_time).toISOString().split('T')[0] : entry.created_at.split('T')[0];
+    const rawDate = entry.start_time || entry.created_at;
+    const date = rawDate ? new Date(rawDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
     if (!acc[date]) {
       acc[date] = { date, billable: 0, nonBillable: 0 };
     }
@@ -265,7 +266,7 @@ export function ERPTimeTab({
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, hours }) => `${name}: ${(hours as number).toFixed(1)}h`}
+                  label={({ name, hours }) => `${name || 'Unknown'}: ${((hours as number) || 0).toFixed(1)}h`}
                   outerRadius={80}
                   fill="#8884d8"
                   dataKey="hours"
@@ -416,7 +417,7 @@ export function ERPTimeTab({
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            {entry.start_time ? new Date(entry.start_time).toLocaleDateString() : new Date(entry.created_at).toLocaleDateString()}
+                            {new Date(entry.start_time || entry.created_at || Date.now()).toLocaleDateString()}
                           </div>
                         </TableCell>
                         <TableCell>

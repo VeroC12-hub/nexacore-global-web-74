@@ -25,6 +25,7 @@ import {
 import ProjectKanbanBoard from './ProjectKanbanBoard';
 import ProjectTimelineView from './ProjectTimelineView';
 import ProjectAnalyticsDashboard from './ProjectAnalyticsDashboard';
+import { CreateProjectModal } from './CreateProjectModal';
 
 interface QuickStats {
   totalProjects: number;
@@ -46,6 +47,7 @@ interface RecentActivity {
 
 const EnhancedProjectManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [quickStats, setQuickStats] = useState<QuickStats>({
     totalProjects: 0,
     activeProjects: 0,
@@ -168,7 +170,7 @@ const EnhancedProjectManagement: React.FC = () => {
             <Settings className="w-4 h-4 mr-2" />
             Settings
           </Button>
-          <Button>
+          <Button onClick={() => setShowCreateModal(true)}>
             <Zap className="w-4 h-4 mr-2" />
             New Project
           </Button>
@@ -402,7 +404,7 @@ const EnhancedProjectManagement: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Button className="h-20 flex-col gap-2">
+                <Button className="h-20 flex-col gap-2" onClick={() => setShowCreateModal(true)}>
                   <Target className="w-5 h-5" />
                   New Project
                 </Button>
@@ -435,6 +437,23 @@ const EnhancedProjectManagement: React.FC = () => {
           <ProjectAnalyticsDashboard />
         </TabsContent>
       </Tabs>
+
+      <CreateProjectModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={() => {
+          setShowCreateModal(false);
+          // Re-trigger stats refresh
+          const fetchStats = async () => {
+            const { data } = await supabase.from('projects').select('id, status, end_date');
+            if (data) {
+              const now = new Date();
+              setQuickStats(prev => ({ ...prev, totalProjects: data.length, activeProjects: data.filter(p => p.status === 'in_progress').length }));
+            }
+          };
+          fetchStats();
+        }}
+      />
     </div>
   );
 };

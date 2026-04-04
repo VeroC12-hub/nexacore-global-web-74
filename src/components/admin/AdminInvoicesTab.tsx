@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye, Edit, Trash2, Plus, Download } from 'lucide-react';
 import { CreateInvoiceModal } from './CreateInvoiceModal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 
 interface Invoice {
@@ -29,6 +30,7 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null);
 
   useEffect(() => {
     loadInvoices();
@@ -177,7 +179,7 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
                   <TableCell>{new Date(invoice.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => setViewingInvoice(invoice)}>
                         <Eye className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" size="sm">
@@ -216,6 +218,38 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
             setIsCreateModalOpen(false);
           }}
         />
+
+        {/* Invoice Detail Dialog */}
+        <Dialog open={!!viewingInvoice} onOpenChange={(open) => !open && setViewingInvoice(null)}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Invoice {viewingInvoice?.invoice_number}</DialogTitle>
+              <DialogDescription>Full invoice details</DialogDescription>
+            </DialogHeader>
+            {viewingInvoice && (
+              <div className="space-y-3 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <span className="text-muted-foreground">Client</span>
+                  <span className="font-medium">{viewingInvoice.client_name || viewingInvoice.client_id}</span>
+                  <span className="text-muted-foreground">Amount</span>
+                  <span className="font-medium">{viewingInvoice.currency} {(viewingInvoice.amount || 0).toLocaleString()}</span>
+                  <span className="text-muted-foreground">Status</span>
+                  <Badge className={getStatusColor(viewingInvoice.status)}>{viewingInvoice.status}</Badge>
+                  <span className="text-muted-foreground">Due Date</span>
+                  <span>{viewingInvoice.due_date ? new Date(viewingInvoice.due_date).toLocaleDateString() : '—'}</span>
+                  <span className="text-muted-foreground">Created</span>
+                  <span>{new Date(viewingInvoice.created_at).toLocaleDateString()}</span>
+                </div>
+                {viewingInvoice.description && (
+                  <div>
+                    <p className="text-muted-foreground mb-1">Description</p>
+                    <p className="bg-muted rounded p-2">{viewingInvoice.description}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

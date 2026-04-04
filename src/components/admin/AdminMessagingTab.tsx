@@ -217,7 +217,7 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-2xl font-bold">Messaging & CRM</CardTitle>
-        <Button onClick={() => setIsComposeModalOpen(true)}>
+        <Button onClick={() => { setSelectedMessage(null); setIsComposeModalOpen(true); }}>
           <MessageSquare className="h-4 w-4 mr-2" />
           Compose Message
         </Button>

@@ -124,56 +124,47 @@ const ProjectKanbanBoard: React.FC = () => {
 
   const fetchProjects = async () => {
     try {
-      // Mock data for now - replace with actual Supabase query
-      const mockProjects: Project[] = [
-        {
-          id: '1',
-          title: 'E-commerce Platform Redesign',
-          description: 'Complete redesign of the main e-commerce platform',
-          status: 'in_progress',
-          priority: 'high',
-          progress: 65,
-          budget: 50000,
-          actual_cost: 32000,
-          start_date: '2024-09-01',
-          end_date: '2024-12-31',
-          client_name: 'TechCorp Ltd',
-          assigned_manager: 'John Doe',
-          team_members: [
-            { id: '1', name: 'Alice Smith', role: 'Frontend Dev' },
-            { id: '2', name: 'Bob Johnson', role: 'Backend Dev' },
-            { id: '3', name: 'Carol White', role: 'Designer' }
-          ],
-          tasks_count: 45,
-          completed_tasks: 29,
-          messages_count: 128,
-          files_count: 23
-        },
-        {
-          id: '2',
-          title: 'Mobile App Development',
-          description: 'Native iOS and Android app development',
-          status: 'planning',
-          priority: 'medium',
-          progress: 15,
-          budget: 75000,
-          actual_cost: 8000,
-          start_date: '2024-10-01',
-          end_date: '2025-03-31',
-          client_name: 'StartupCo',
-          assigned_manager: 'Jane Smith',
-          team_members: [
-            { id: '4', name: 'David Brown', role: 'iOS Dev' },
-            { id: '5', name: 'Eva Green', role: 'Android Dev' }
-          ],
-          tasks_count: 32,
-          completed_tasks: 5,
-          messages_count: 45,
-          files_count: 12
-        }
-      ];
+      const { data, error } = await supabase
+        .from('projects')
+        .select('id, title, description, status, priority, progress, budget, actual_cost, start_date, end_date, client_id, metadata')
+        .order('created_at', { ascending: false });
 
-      setProjects(mockProjects);
+      if (error) throw error;
+
+      // Look up client names via profiles
+      const clientIds = [...new Set((data || []).map((p: any) => p.client_id).filter(Boolean))];
+      const profilesMap: Record<string, string> = {};
+      if (clientIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', clientIds);
+        (profilesData || []).forEach((p: any) => {
+          profilesMap[p.id] = p.full_name || p.email || 'Unknown';
+        });
+      }
+
+      const mapped: Project[] = (data || []).map((p: any) => ({
+        id: p.id,
+        title: p.title || 'Untitled Project',
+        description: p.description || '',
+        status: p.status || 'planning',
+        priority: p.priority || 'medium',
+        progress: p.progress || 0,
+        budget: p.budget || 0,
+        actual_cost: p.actual_cost || 0,
+        start_date: p.start_date || '',
+        end_date: p.end_date || '',
+        client_name: profilesMap[p.client_id] || null,
+        assigned_manager: p.metadata?.assigned_manager || null,
+        team_members: [],
+        tasks_count: p.metadata?.tasks_count || 0,
+        completed_tasks: p.metadata?.completed_tasks || 0,
+        messages_count: 0,
+        files_count: 0,
+      }));
+
+      setProjects(mapped);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -198,12 +189,12 @@ const ProjectKanbanBoard: React.FC = () => {
 
     try {
       // Update project status in database
-      // const { error } = await supabase
-      //   .from('erp_projects')
-      //   .update({ status: newStatus })
-      //   .eq('id', draggedProject.id);
+      const { error } = await supabase
+        .from('projects')
+        .update({ status: newStatus })
+        .eq('id', draggedProject.id);
 
-      // if (error) throw error;
+      if (error) throw error;
 
       // Update local state
       setProjects(prev =>

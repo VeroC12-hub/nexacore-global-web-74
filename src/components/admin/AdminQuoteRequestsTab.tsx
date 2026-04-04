@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   Eye,
@@ -177,6 +177,7 @@ const AdminQuoteRequestsTab = () => {
   const [loading, setLoading] = useState(true);
   const [cleaningUp, setCleaningUp] = useState(false);
   const [deletingSelected, setDeletingSelected] = useState(false);
+  const [showCleanupConfirm, setShowCleanupConfirm] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<QuoteRequest | null>(null);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [previewingQuote, setPreviewingQuote] = useState<Quote | null>(null);
@@ -257,6 +258,9 @@ const AdminQuoteRequestsTab = () => {
 
   // Helper function to check if quote is problematic
   const isQuoteProblematic = (quote: Quote) => {
+    // NEVER mark approved quotes as problematic — they are legally significant documents
+    if (quote.status === 'approved') return false;
+
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
     
@@ -495,24 +499,19 @@ BY CONDITION: ${breakdown.active} active, ${breakdown.expired} expired, ${breakd
   // Bulk database cleanup (existing functionality)
   const performDatabaseCleanup = async () => {
     const problematicQuotes = getProblematicQuotes();
-    
+
     if (problematicQuotes.length === 0) {
       toast.success('Database is clean! No problematic quotes found.');
       return;
     }
 
-    const confirmMessage = `BULK DATABASE CLEANUP
+    // Show React confirmation dialog instead of window.confirm
+    setShowCleanupConfirm(true);
+  };
 
-This will delete ALL ${problematicQuotes.length} problematic quotes automatically.
-
-For more control, use "Select & Delete" to choose specific quotes.
-
-Continue with bulk cleanup?`;
-
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
+  const confirmDatabaseCleanup = async () => {
+    setShowCleanupConfirm(false);
+    const problematicQuotes = getProblematicQuotes();
     setCleaningUp(true);
     try {
       const problematicIds = problematicQuotes.map(q => q.id);
@@ -1412,6 +1411,31 @@ Database is now optimized!`,
           </Dialog>
         );
       })()}
+
+      {/* Bulk Cleanup confirmation dialog */}
+      <Dialog open={showCleanupConfirm} onOpenChange={setShowCleanupConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-5 w-5" />
+              Confirm Bulk Cleanup
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently delete <strong>{getProblematicQuotes().length} problematic quote(s)</strong>
+              &nbsp;(expired, draft-only, or incomplete). Approved quotes are always excluded.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCleanupConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDatabaseCleanup} disabled={cleaningUp}>
+              {cleaningUp ? 'Deleting...' : 'Delete Problematic Quotes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

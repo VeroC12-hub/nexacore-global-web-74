@@ -361,7 +361,10 @@ export const AdminProposalsTab: React.FC = () => {
                                   <Send className="h-4 w-4 mr-2" />
                                   Send to Client
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => {
+                                  setSelectedProposal(proposal);
+                                  setShowCreateModal(true);
+                                }}>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit
                                 </DropdownMenuItem>
@@ -384,51 +387,6 @@ export const AdminProposalsTab: React.FC = () => {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Phase Progress Info */}
-      <Card className="border-2 border-dashed border-green-200 bg-green-50">
-        <CardHeader>
-          <CardTitle className="text-green-900 flex items-center gap-2">
-            <CheckCircle className="h-5 w-5" />
-            Phase 3: PDF Generation Complete ✓
-          </CardTitle>
-          <CardDescription className="text-green-700">
-            Professional NexaCore-branded PDFs with complete proposal content
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 text-sm">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>✓ Create proposals with 8-step wizard</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>✓ View, filter, and search proposals</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>✓ Generate NexaCore-branded PDFs</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>✓ Preview PDF before downloading</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <span>✓ Download professional proposals</span>
-            </div>
-            <div className="flex items-center gap-2 text-yellow-600">
-              <Clock className="h-4 w-4" />
-              <span>Phase 4: Version Control (Next)</span>
-            </div>
-            <div className="flex items-center gap-2 text-gray-500">
-              <Clock className="h-4 w-4" />
-              <span>Phases 5-7: Client portal, emails, testing</span>
-            </div>
-          </div>
         </CardContent>
       </Card>
 
