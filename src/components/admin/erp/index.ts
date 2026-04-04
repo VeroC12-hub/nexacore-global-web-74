@@ -20,6 +20,7 @@ export { TimeEntryFormModal } from './TimeEntryFormModal';
 export { ActiveTimerWidget } from './ActiveTimerWidget';
 export { TimeEntryApproval } from './TimeEntryApproval';
 export { TimeEntryExport } from './TimeEntryExport';
+export { ERPSeedModal } from './ERPSeedModal';
 
 // Types that are shared across ERP components
 export interface ERPProject {

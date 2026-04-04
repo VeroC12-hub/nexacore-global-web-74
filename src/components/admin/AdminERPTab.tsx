@@ -25,6 +25,7 @@ import {
   TaskExportModal,
   ERPProjectExportModal,
   TimeEntryFormModal
+  ERPSeedModal,
 } from './erp';
 
 // Additional types needed
@@ -198,6 +199,9 @@ export function AdminERPTab() {
   // Time entry modal states
   const [selectedTimeEntry, setSelectedTimeEntry] = useState<TimeEntry | null>(null);
   const [isTimeEntryFormOpen, setIsTimeEntryFormOpen] = useState(false);
+
+  // Seed modal
+  const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
 
   // Helper function to map staff roles to suggested project roles
   const mapStaffRoleToProjectRole = (staffRole: string): string => {
@@ -949,6 +953,14 @@ export function AdminERPTab() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
+            onClick={() => setIsSeedModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <UserPlus className="h-4 w-4" />
+            Seed Staff Projects
+          </Button>
+          <Button
+            variant="outline"
             onClick={() => {
               toast.loading('Refreshing data...');
               refetchStats();
@@ -1201,6 +1213,15 @@ export function AdminERPTab() {
           // Time entries auto-refresh in ERPTimeTabWithData via React Query
         }}
         timeEntry={selectedTimeEntry}
+      />
+
+      {/* Seed Staff Projects Modal */}
+      <ERPSeedModal
+        open={isSeedModalOpen}
+        onOpenChange={setIsSeedModalOpen}
+        onSeeded={() => {
+          refetchStats();
+        }}
       />
     </div>
   );
