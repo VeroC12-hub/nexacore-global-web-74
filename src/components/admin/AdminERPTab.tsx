@@ -24,7 +24,7 @@ import {
   TaskViewModal,
   TaskExportModal,
   ERPProjectExportModal,
-  TimeEntryFormModal
+  TimeEntryFormModal,
   ERPSeedModal,
 } from './erp';
 
