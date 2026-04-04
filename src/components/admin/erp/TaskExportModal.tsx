@@ -151,7 +151,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
       tasksToExport.forEach(task => {
         const row = [
           `"${task.title.replace(/"/g, '""')}"`,
-          `"${task.description.replace(/"/g, '""')}"`,
+          `"${(task.description || '').replace(/"/g, '""')}"`,
           formatStatus(task.status),
           formatPriority(task.priority),
           `"${task.assignee || 'Unassigned'}"`,

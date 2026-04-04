@@ -251,7 +251,7 @@ export function AdminERPTab() {
       'staff': 'contributor'
     };
 
-    const normalizedRole = staffRole.toLowerCase().trim().replace(/\s+/g, '_');
+    const normalizedRole = (staffRole || '').toLowerCase().trim().replace(/\s+/g, '_');
 
     if (roleMapping[normalizedRole]) {
       return roleMapping[normalizedRole];

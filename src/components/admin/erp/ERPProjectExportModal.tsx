@@ -68,7 +68,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
       'hr': 'Human Resources',
       'marketing': 'Marketing & Sales'
     };
-    return labels[department] || department.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return labels[department] || (department || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown';
   };
 
   const getStatistics = () => {
@@ -107,7 +107,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
   };
 
   const formatStatus = (status: string) => {
-    return status.replace('_', ' ').toUpperCase();
+    return (status || 'unknown').replace('_', ' ').toUpperCase();
   };
 
   const formatPriority = (priority: string) => {

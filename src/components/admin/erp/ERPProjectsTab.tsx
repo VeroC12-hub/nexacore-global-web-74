@@ -88,7 +88,7 @@ export function ERPProjectsTab({
       'hr': 'Human Resources',
       'marketing': 'Marketing & Sales'
     };
-    return labels[department] || department.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return labels[department] || (department || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown';
   };
 
   const getStatusColor = (status: string) => {
@@ -293,12 +293,12 @@ export function ERPProjectsTab({
                     </TableCell>
                     <TableCell>
                       <Badge className={getStatusColor(project.status)}>
-                        {project.status.replace('_', ' ').toUpperCase()}
+                        {(project.status || 'unknown').replace('_', ' ').toUpperCase()}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Badge className={getPriorityColor(project.priority)}>
-                        {project.priority.toUpperCase()}
+                        {(project.priority || 'medium').toUpperCase()}
                       </Badge>
                     </TableCell>
                     <TableCell>

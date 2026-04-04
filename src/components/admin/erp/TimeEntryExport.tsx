@@ -86,7 +86,7 @@ export function TimeEntryExport({ timeEntries, projects, users }: TimeEntryExpor
             projectTotal += amount;
             projectHours += entry.hours;
 
-            csvContent += `"${entry.date || entry.created_at.split('T')[0]}","${entry.user_name}","${entry.task_title || 'N/A'}","${entry.description.replace(/"/g, '""')}",${entry.hours},${entry.rate},${amount.toFixed(2)},"${entry.status}"\n`;
+            csvContent += `"${entry.date || entry.created_at.split('T')[0]}","${entry.user_name}","${entry.task_title || 'N/A'}","${(entry.description || '').replace(/"/g, '""')}",${entry.hours},${entry.rate},${amount.toFixed(2)},"${entry.status}"\n`;
           });
 
           csvContent += `\n"SUBTOTAL:","","","",${projectHours.toFixed(2)},"","$${projectTotal.toFixed(2)}",""\n`;
@@ -103,7 +103,7 @@ export function TimeEntryExport({ timeEntries, projects, users }: TimeEntryExpor
 
         filtered.forEach(entry => {
           const amount = entry.hours * entry.rate;
-          csvContent += `"${entry.date || entry.created_at.split('T')[0]}","${entry.user_name}","${entry.project_title}","${entry.task_title || 'N/A'}","${entry.description.replace(/"/g, '""')}",${entry.hours},${entry.rate},${amount.toFixed(2)},"${entry.billable ? 'Yes' : 'No'}","${entry.status}"\n`;
+          csvContent += `"${entry.date || entry.created_at.split('T')[0]}","${entry.user_name}","${entry.project_title}","${entry.task_title || 'N/A'}","${(entry.description || '').replace(/"/g, '""')}",${entry.hours},${entry.rate},${amount.toFixed(2)},"${entry.billable ? 'Yes' : 'No'}","${entry.status}"\n`;
         });
 
         // Totals

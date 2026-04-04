@@ -297,12 +297,12 @@ export function ERPTasksTab({
                       </TableCell>
                       <TableCell>
                         <Badge className={getStatusColor(task.status)}>
-                          {task.status.replace('_', ' ').toUpperCase()}
+                          {(task.status || 'unknown').replace('_', ' ').toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge className={getPriorityColor(task.priority)}>
-                          {task.priority.toUpperCase()}
+                          {(task.priority || 'medium').toUpperCase()}
                         </Badge>
                       </TableCell>
                       <TableCell>

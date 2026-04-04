@@ -125,10 +125,10 @@ export function TaskViewModal({ isOpen, onClose, task, onEdit }: TaskViewModalPr
             </div>
             <div className="flex items-center gap-2">
               <Badge className={getStatusColor(task.status)}>
-                {task.status.replace('_', ' ').toUpperCase()}
+                {(task.status || 'unknown').replace('_', ' ').toUpperCase()}
               </Badge>
               <Badge className={getPriorityColor(task.priority)}>
-                {task.priority.toUpperCase()} PRIORITY
+                {(task.priority || 'medium').toUpperCase()} PRIORITY
               </Badge>
               {isOverdue && (
                 <Badge className="bg-red-100 text-red-800 border-red-200">

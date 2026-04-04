@@ -57,7 +57,7 @@ export function ProjectViewModal({ isOpen, onClose, project, onEdit }: ProjectVi
       'hr': 'Human Resources',
       'marketing': 'Marketing & Sales'
     };
-    return labels[department] || department.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return labels[department] || (department || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown';
   };
 
   const getProjectTypeLabel = (type: string) => {
@@ -68,7 +68,7 @@ export function ProjectViewModal({ isOpen, onClose, project, onEdit }: ProjectVi
       'training': 'Training/Certification',
       'maintenance': 'Maintenance & Support'
     };
-    return labels[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return labels[type] || (type || '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown';
   };
 
   const getStatusColor = (status: string) => {
@@ -124,10 +124,10 @@ export function ProjectViewModal({ isOpen, onClose, project, onEdit }: ProjectVi
             </span>
             <div className="flex items-center gap-2">
               <Badge className={getStatusColor(project.status)}>
-                {project.status.replace('_', ' ').toUpperCase()}
+                {(project.status || 'unknown').replace('_', ' ').toUpperCase()}
               </Badge>
               <Badge className={getPriorityColor(project.priority)}>
-                {project.priority.toUpperCase()}
+                {(project.priority || 'medium').toUpperCase()}
               </Badge>
             </div>
           </DialogTitle>
