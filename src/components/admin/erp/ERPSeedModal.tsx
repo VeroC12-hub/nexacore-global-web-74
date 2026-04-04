@@ -206,7 +206,7 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
           priority: task.priority,
           estimated_hours: task.estimated_hours,
           actual_hours: 0,
-          status: 'todo',
+          status: 'new',
           progress: 0,
           assigned_to: staff.id,
           erp_project_id: project.id,
