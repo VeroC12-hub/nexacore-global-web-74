@@ -121,11 +121,11 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
     mountedRef.current = true;
     let subscription: any = null;
 
-    // Hard safety: loading MUST become false within 12 seconds no matter what.
-    // Raised from 5s to accommodate the 8s fetchProfile timeout + network overhead.
+    // Hard safety: loading MUST become false within 20 seconds no matter what.
+    // Covers 8s fetchProfile timeout × 2 attempts + 1.5s retry delay + overhead.
     const safetyTimer = setTimeout(() => {
       if (mountedRef.current) setLoading(false);
-    }, 12000);
+    }, 20000);
 
     // ONLY source of getSession — no other provider calls this.
     // On mobile, getSession() may return a session from storage but the
@@ -148,7 +148,17 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
           try {
             enhanced = await fetchProfile(session.user);
           } catch {
-            // Profile fetch failed — send to auth rather than guessing a role
+            // First attempt failed. On page refresh, the Supabase client's
+            // auth headers may not be applied before the first DB query fires
+            // (race with setSession above). Wait briefly and retry once before
+            // giving up — this handles the "refresh signs you out" case.
+            await new Promise(r => setTimeout(r, 1500));
+            if (!mountedRef.current) return;
+            try {
+              enhanced = await fetchProfile(session.user);
+            } catch {
+              // Both attempts failed — no valid profile; redirect to auth.
+            }
           }
           if (mountedRef.current) {
             setUser(enhanced);
