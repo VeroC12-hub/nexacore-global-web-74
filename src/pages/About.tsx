@@ -104,11 +104,6 @@ const About = () => {
               that drive innovation, efficiency, and growth. Our diverse, internationally-minded team brings
               unique perspectives to every project, ensuring culturally aware and globally relevant outcomes.
             </p>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              In collaboration with <strong className="text-foreground">Autodesk</strong>, NexaCore has submitted
-              a formal proposal to the Government of Ghana to position the country as a West African hub for
-              digital engineering and design — a capacity-building strategy for professionals, universities, and public institutions.
-            </p>
           </div>
           <div className="relative">
             <img 
