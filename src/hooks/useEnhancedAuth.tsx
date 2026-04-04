@@ -44,60 +44,56 @@ function buildUser(authUser: User, role: UserRole, profileData?: any): EnhancedU
 const ERP_ROLES: string[] = ['admin', 'project_manager', 'operations_manager', 'developer', 'support', 'client'];
 
 // Fetch profile with an 8-second timeout.
-// After running the fix migration (20260222100000_fix_auth_rls_and_roles.sql),
-// profiles.role is kept in sync with erp_staff_roles, so one query is enough.
-// Falls back to erp_staff_roles if the profile role isn't an ERP role.
-// fallbackRole: used when the fetch fails so we don't downgrade an authenticated user.
-async function fetchProfile(authUser: User, fallbackRole: UserRole = 'client'): Promise<EnhancedUser> {
-  try {
-    const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
-    );
+// THROWS on network/timeout errors — callers must handle.
+// Only returns 'client' when the DB confirms the user has no elevated role.
+// Never silently downgrades an admin to client on a transient failure.
+async function fetchProfile(authUser: User): Promise<EnhancedUser> {
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+  );
 
-    const profileResult = await Promise.race([
-      supabase.from('profiles').select('*').eq('id', authUser.id).single(),
-      timeout,
-    ]);
+  // Throws if timeout fires first or Supabase returns an error
+  const { data: profileData, error: profileError } = await Promise.race([
+    supabase.from('profiles').select('*').eq('id', authUser.id).single(),
+    timeout,
+  ]) as any;
 
-    const profileData = profileResult.data;
-    const profileRole = profileData?.role as string | undefined;
+  if (profileError) throw profileError;
 
-    // Fast path: only for privileged roles — never short-circuit on 'client'
-    // because profiles.role can be stale while erp_staff_roles has a higher role.
-    const PRIVILEGED_ROLES = ERP_ROLES.filter(r => r !== 'client');
-    if (profileRole && PRIVILEGED_ROLES.includes(profileRole)) {
-      return buildUser(authUser, profileRole as UserRole, profileData);
-    }
+  const profileRole = profileData?.role as string | undefined;
 
-    // Always check erp_staff_roles — covers stale profiles.role and first-time setup
-    try {
-      const staffResult = await Promise.race([
-        supabase.from('erp_staff_roles')
-          .select('role, department, position, hourly_rate')
-          .eq('user_id', authUser.id)
-          .eq('is_active', true)
-          .maybeSingle(),
-        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Staff role timeout')), 4000)),
-      ]);
-
-      const staffData = staffResult.data;
-      if (staffData?.role && ERP_ROLES.includes(staffData.role)) {
-        return buildUser(authUser, staffData.role as UserRole, {
-          ...profileData,
-          department: staffData.department,
-          position: staffData.position,
-          hourly_rate: staffData.hourly_rate,
-        });
-      }
-    } catch {
-      // erp_staff_roles unavailable — use profile as-is
-    }
-
-    return buildUser(authUser, 'client', profileData ?? undefined);
-  } catch {
-    // Preserve the known role on error so a network hiccup doesn't downgrade an admin to client
-    return buildUser(authUser, fallbackRole);
+  // Fast path: only for privileged roles — never short-circuit on 'client'
+  // because profiles.role can be stale while erp_staff_roles has a higher role.
+  const PRIVILEGED_ROLES = ERP_ROLES.filter(r => r !== 'client');
+  if (profileRole && PRIVILEGED_ROLES.includes(profileRole)) {
+    return buildUser(authUser, profileRole as UserRole, profileData);
   }
+
+  // Always check erp_staff_roles — covers stale profiles.role and first-time setup
+  try {
+    const { data: staffData } = await Promise.race([
+      supabase.from('erp_staff_roles')
+        .select('role, department, position, hourly_rate')
+        .eq('user_id', authUser.id)
+        .eq('is_active', true)
+        .maybeSingle(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Staff role timeout')), 4000)),
+    ]) as any;
+
+    if (staffData?.role && ERP_ROLES.includes(staffData.role)) {
+      return buildUser(authUser, staffData.role as UserRole, {
+        ...profileData,
+        department: staffData.department,
+        position: staffData.position,
+        hourly_rate: staffData.hourly_rate,
+      });
+    }
+  } catch {
+    // erp_staff_roles unavailable — use profile role only
+  }
+
+  // User has no elevated role in either table — they are a genuine client
+  return buildUser(authUser, 'client', profileData ?? undefined);
 }
 
 export function EnhancedAuthProvider({ children }: { children: React.ReactNode }) {
@@ -110,13 +106,14 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const enhanced = await fetchProfile(session.user, user?.role ?? 'client');
+        // On failure, keep the existing user state — don't clear a valid session
+        const enhanced = await fetchProfile(session.user);
         if (mountedRef.current) setUser(enhanced);
       } else {
         if (mountedRef.current) setUser(null);
       }
     } catch {
-      if (mountedRef.current) setUser(null);
+      // fetchProfile failed — leave user as-is rather than signing them out
     }
   };
 
@@ -147,7 +144,12 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
               refresh_token: session.refresh_token,
             }).catch(() => { /* ignore — best effort */ });
           }
-          const enhanced = await fetchProfile(session.user, user?.role ?? 'client');
+          let enhanced: EnhancedUser | null = null;
+          try {
+            enhanced = await fetchProfile(session.user);
+          } catch {
+            // Profile fetch failed — send to auth rather than guessing a role
+          }
           if (mountedRef.current) {
             setUser(enhanced);
             setLoading(false);
@@ -187,7 +189,12 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
 
         // Handle SIGNED_IN only if not already handled by signIn function
         if (event === 'SIGNED_IN' && session?.user) {
-          const enhanced = await fetchProfile(session.user, user?.role ?? 'client');
+          let enhanced: EnhancedUser | null = null;
+          try {
+            enhanced = await fetchProfile(session.user);
+          } catch {
+            // Profile fetch failed — send to auth rather than guessing a role
+          }
           if (mountedRef.current) {
             setUser(enhanced);
             setLoading(false);
@@ -219,10 +226,18 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       }
 
       if (data.user) {
-        const enhanced = await fetchProfile(data.user);
-        if (mountedRef.current) {
-          setUser(enhanced);
-          setLoading(false);
+        try {
+          const enhanced = await fetchProfile(data.user);
+          if (mountedRef.current) {
+            setUser(enhanced);
+            setLoading(false);
+          }
+        } catch {
+          // Profile fetch failed after valid credentials — don't guess a role,
+          // return an error so the user can retry
+          if (mountedRef.current) setLoading(false);
+          signingInRef.current = false;
+          return { error: 'Signed in but could not load your profile. Please try again.' };
         }
       } else {
         setLoading(false);
