@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useERPStats, useERPStaffRoles, useERPProjects } from '@/hooks/queries/useERPQueries';
+import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { DashboardSkeleton } from './LoadingSkeletons';
 
 // Import the new modular components and types
@@ -105,6 +106,8 @@ import {
 } from 'lucide-react';
 
 export function AdminERPTab() {
+  const { isAdmin } = useEnhancedAuth();
+
   // React Query hooks - Progressive loading (stats only on mount)
   const { data: statsData, isLoading: statsLoading, refetch: refetchStats } = useERPStats();
   const { data: staffRolesData, refetch: refetchStaffRoles } = useERPStaffRoles({
@@ -951,14 +954,16 @@ export function AdminERPTab() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setIsSeedModalOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <UserPlus className="h-4 w-4" />
-            Seed Staff Projects
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={() => setIsSeedModalOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <UserPlus className="h-4 w-4" />
+              Seed Staff Projects
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => {
