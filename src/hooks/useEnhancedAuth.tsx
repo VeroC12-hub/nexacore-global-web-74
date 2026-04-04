@@ -100,7 +100,8 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<EnhancedUser | null>(null);
   const [loading, setLoading] = useState(true);
   const mountedRef = useRef(true);
-  const signingInRef = useRef(false); // Prevents listener from duplicating signIn work
+  const signingInRef = useRef(false);     // Prevents listener from duplicating signIn work
+  const initialLoadDoneRef = useRef(false); // Set true once getSession() completes
 
   const refreshUser = async () => {
     try {
@@ -124,7 +125,10 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
     // Hard safety: loading MUST become false within 20 seconds no matter what.
     // Covers 8s fetchProfile timeout × 2 attempts + 1.5s retry delay + overhead.
     const safetyTimer = setTimeout(() => {
-      if (mountedRef.current) setLoading(false);
+      if (mountedRef.current) {
+        setLoading(false);
+        initialLoadDoneRef.current = true;
+      }
     }, 20000);
 
     // ONLY source of getSession — no other provider calls this.
@@ -163,16 +167,19 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
           if (mountedRef.current) {
             setUser(enhanced);
             setLoading(false);
+            initialLoadDoneRef.current = true;
           }
         } else {
           setUser(null);
           setLoading(false);
+          initialLoadDoneRef.current = true;
         }
       })
       .catch(() => {
         if (mountedRef.current) {
           setUser(null);
           setLoading(false);
+          initialLoadDoneRef.current = true;
         }
       });
 
@@ -212,15 +219,21 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
           return;
         }
 
-        // Handle SIGNED_IN only if not already handled by signIn function
+        // Handle SIGNED_IN only after the initial getSession() load is done.
+        // On page refresh, Supabase fires SIGNED_IN while getSession() is still
+        // running — handling it concurrently races with the initial load and
+        // can temporarily set user=null, causing a flash of the auth page.
         if (event === 'SIGNED_IN' && session?.user) {
+          if (!initialLoadDoneRef.current) return; // Let initial load handle it
           let enhanced: EnhancedUser | null = null;
           try {
             enhanced = await fetchProfile(session.user);
           } catch {
-            // Profile fetch failed — send to auth rather than guessing a role
+            // Profile fetch failed — keep existing user state rather than
+            // clearing it; the session is valid, only the DB query failed.
+            return;
           }
-          if (mountedRef.current) {
+          if (mountedRef.current && enhanced) {
             setUser(enhanced);
             setLoading(false);
           }
