@@ -7,6 +7,24 @@ import { initializeEnvironment } from './utils/environment.ts'
 // Initialize environment and enforce correct domain for NexaCore Innovations
 initializeEnvironment();
 
+// Global handler for chunk-load errors (stale deployment — user has old index.html
+// cached but Vercel already replaced the asset hashes).
+// Reloads once to fetch fresh index.html. A sessionStorage guard prevents loops.
+window.addEventListener('error', (event) => {
+  const msg = event.message || '';
+  if (
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('ChunkLoadError') ||
+    msg.includes('MIME type of "text/html"')
+  ) {
+    const key = 'chunk_error_reload';
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      window.location.reload();
+    }
+  }
+});
+
 // Safe root element check
 const rootElement = document.getElementById('root');
 if (!rootElement) {

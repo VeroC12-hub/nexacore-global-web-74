@@ -12,24 +12,59 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  isChunkError: boolean;
+}
+
+// Detects Vite/Rollup chunk-load failures that happen when a new Vercel
+// deployment replaces old asset hashes and the user still has the old
+// index.html cached. These errors look like:
+//   "Failed to fetch dynamically imported module: .../assets/Foo-ABC123.js"
+//   "Expected a JavaScript-or-Wasm module script but the server responded
+//    with a MIME type of text/html"
+function isChunkLoadError(error: Error): boolean {
+  const msg = error?.message || '';
+  return (
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('ChunkLoadError') ||
+    msg.includes('Importing a module script failed') ||
+    msg.includes('MIME type of "text/html"')
+  );
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, isChunkError: false };
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    const chunkErr = isChunkLoadError(error);
+    // If it's a chunk error, trigger a reload immediately via side-effect
+    // in componentDidCatch to avoid blocking the render cycle here.
+    return { hasError: true, error, isChunkError: chunkErr };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    if (isChunkLoadError(error)) {
+      // Hard reload fetches fresh index.html with updated chunk URLs.
+      // Guard against infinite reload loops: only reload once per session
+      // for this error type using sessionStorage.
+      const reloadKey = 'chunk_error_reload';
+      const alreadyReloaded = sessionStorage.getItem(reloadKey);
+      if (!alreadyReloaded) {
+        sessionStorage.setItem(reloadKey, '1');
+        window.location.reload();
+        return;
+      }
+      // If we already tried a reload and still failing, fall through to
+      // show the error UI so the user isn't stuck in a reload loop.
+    }
     console.error('ErrorBoundary caught error:', error, errorInfo);
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null });
+    sessionStorage.removeItem('chunk_error_reload');
+    this.setState({ hasError: false, error: null, isChunkError: false });
     this.props.onReset?.();
   };
 
@@ -37,6 +72,19 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
+      }
+
+      // While reload is in progress (isChunkError && not yet reloaded twice)
+      // render nothing — the page is about to reload anyway.
+      if (this.state.isChunkError) {
+        return (
+          <div className="flex items-center justify-center p-8">
+            <div className="text-center text-muted-foreground">
+              <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-2" />
+              <p className="text-sm">Loading updated version...</p>
+            </div>
+          </div>
+        );
       }
 
       return (
