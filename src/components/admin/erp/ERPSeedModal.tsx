@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, CheckCircle, AlertTriangle, Users, FolderOpen } from 'lucide-react';
+import { Loader2, CheckCircle, AlertTriangle, Users, FolderOpen, Mail, Trash2, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -18,6 +18,7 @@ interface SeedResult {
   staff: StaffProfile;
   projectTitle: string;
   taskCount: number;
+  emailSent: boolean;
   success: boolean;
   error?: string;
 }
@@ -28,12 +29,14 @@ interface ERPSeedModalProps {
   onSeeded: () => void;
 }
 
-// Role-specific project + task templates
-const ROLE_TEMPLATES: Record<string, { project: { title: string; description: string; department: string; project_type: string }; tasks: { title: string; description: string; priority: 'low' | 'medium' | 'high' | 'urgent'; estimated_hours: number }[] }> = {
+const ROLE_TEMPLATES: Record<string, {
+  project: { title: string; description: string; department: string; project_type: string };
+  tasks: { title: string; description: string; priority: 'low' | 'medium' | 'high' | 'urgent'; estimated_hours: number }[];
+}> = {
   admin: {
     project: {
       title: 'Administration & System Management',
-      description: 'Oversee platform administration, user management, compliance, and operational reporting.',
+      description: 'Oversee platform administration, user management, compliance, and operational reporting for NexaCore Innovations.',
       department: 'Administration',
       project_type: 'internal',
     },
@@ -48,7 +51,7 @@ const ROLE_TEMPLATES: Record<string, { project: { title: string; description: st
   project_manager: {
     project: {
       title: 'Project Portfolio Management',
-      description: 'Manage the full project lifecycle — planning, execution, client liaison, and delivery tracking.',
+      description: 'Manage the full project lifecycle — planning, execution, client liaison, and delivery tracking across the NexaCore portfolio.',
       department: 'Project Management',
       project_type: 'client',
     },
@@ -63,7 +66,7 @@ const ROLE_TEMPLATES: Record<string, { project: { title: string; description: st
   operations_manager: {
     project: {
       title: 'Operations Optimization Initiative',
-      description: 'Drive operational efficiency through process analysis, KPI monitoring, and workflow improvements.',
+      description: 'Drive operational efficiency through process analysis, KPI monitoring, and workflow improvements across NexaCore.',
       department: 'Operations',
       project_type: 'internal',
     },
@@ -78,7 +81,7 @@ const ROLE_TEMPLATES: Record<string, { project: { title: string; description: st
   developer: {
     project: {
       title: 'Platform Development & Maintenance',
-      description: 'Design, develop, test, and maintain platform features, bug fixes, and technical infrastructure.',
+      description: 'Design, develop, test, and maintain NexaCore platform features, bug fixes, and technical infrastructure.',
       department: 'Engineering',
       project_type: 'internal',
     },
@@ -93,7 +96,7 @@ const ROLE_TEMPLATES: Record<string, { project: { title: string; description: st
   support: {
     project: {
       title: 'Customer Support & Issue Resolution',
-      description: 'Handle client support tickets, onboarding, and documentation to maintain high satisfaction.',
+      description: 'Handle client support tickets, onboarding assistance, and documentation to maintain high satisfaction levels.',
       department: 'Support',
       project_type: 'client',
     },
@@ -108,19 +111,21 @@ const ROLE_TEMPLATES: Record<string, { project: { title: string; description: st
 };
 
 const ROLE_COLORS: Record<string, string> = {
-  admin: 'bg-red-100 text-red-700',
-  project_manager: 'bg-blue-100 text-blue-700',
-  operations_manager: 'bg-purple-100 text-purple-700',
-  developer: 'bg-green-100 text-green-700',
-  support: 'bg-orange-100 text-orange-700',
+  admin: 'bg-red-100 text-red-700 border-red-200',
+  project_manager: 'bg-blue-100 text-blue-700 border-blue-200',
+  operations_manager: 'bg-purple-100 text-purple-700 border-purple-200',
+  developer: 'bg-green-100 text-green-700 border-green-200',
+  support: 'bg-orange-100 text-orange-700 border-orange-200',
 };
 
+type Phase = 'preview' | 'clearing' | 'seeding' | 'emailing' | 'done';
+
 export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps) {
-  const [phase, setPhase] = useState<'preview' | 'seeding' | 'done'>('preview');
+  const [phase, setPhase] = useState<Phase>('preview');
   const [staffList, setStaffList] = useState<StaffProfile[]>([]);
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [results, setResults] = useState<SeedResult[]>([]);
-  const [currentlySeedingName, setCurrentlySeedingName] = useState('');
+  const [statusLine, setStatusLine] = useState('');
 
   const loadStaff = async () => {
     setLoadingStaff(true);
@@ -132,7 +137,7 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
         .order('role');
       if (error) throw error;
       setStaffList(data || []);
-    } catch (err) {
+    } catch {
       toast.error('Failed to load staff profiles');
     } finally {
       setLoadingStaff(false);
@@ -140,24 +145,38 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
   };
 
   React.useEffect(() => {
-    if (open && phase === 'preview') {
-      loadStaff();
-    }
+    if (open && phase === 'preview') loadStaff();
   }, [open]);
 
   const handleSeed = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const oneMonth = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    // ── Step 1: Clear all existing ERP projects (cascades to tasks via FK) ──
+    setPhase('clearing');
+    setStatusLine('Removing all existing ERP projects and tasks…');
+
+    try {
+      // Delete tasks first (FK may not cascade)
+      await supabase.from('erp_tasks').delete().not('id', 'is', null);
+      await supabase.from('erp_projects').delete().not('id', 'is', null);
+    } catch (err: any) {
+      toast.error(`Clear failed: ${err?.message}`);
+      setPhase('preview');
+      return;
+    }
+
+    // ── Step 2: Seed projects and tasks ──
     setPhase('seeding');
     const seedResults: SeedResult[] = [];
-    const today = new Date().toISOString().split('T')[0];
-    const threeMonths = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const emailPayloads: any[] = [];
 
     for (const staff of staffList) {
       const role = staff.role || 'support';
       const template = ROLE_TEMPLATES[role] || ROLE_TEMPLATES['support'];
-      setCurrentlySeedingName(staff.full_name || staff.email || 'Unknown');
+      setStatusLine(`Creating project for ${staff.full_name || staff.email || 'Staff'}…`);
 
       try {
-        // Create the ERP project
         const { data: project, error: projError } = await supabase
           .from('erp_projects')
           .insert({
@@ -170,7 +189,7 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
             priority: 'medium',
             progress: 0,
             start_date: today,
-            end_date: threeMonths,
+            end_date: oneMonth,
             budget: 0,
             actual_cost: 0,
             estimated_hours: template.tasks.reduce((s, t) => s + t.estimated_hours, 0),
@@ -181,7 +200,6 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
 
         if (projError) throw projError;
 
-        // Create tasks for this project
         const taskInserts = template.tasks.map(task => ({
           title: task.title,
           description: task.description,
@@ -192,39 +210,60 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
           progress: 0,
           assigned_to: staff.id,
           erp_project_id: project.id,
-          due_date: threeMonths,
+          due_date: oneMonth,
         }));
 
         const { error: taskError } = await supabase.from('erp_tasks').insert(taskInserts);
         if (taskError) throw taskError;
 
-        seedResults.push({
+        seedResults.push({ staff, projectTitle: template.project.title, taskCount: template.tasks.length, emailSent: false, success: true });
+
+        // Build email payload
+        emailPayloads.push({
           staff,
-          projectTitle: template.project.title,
-          taskCount: template.tasks.length,
-          success: true,
+          project: {
+            id: project.id,
+            title: `${template.project.title} — ${staff.full_name || staff.email || 'Staff'}`,
+            description: template.project.description,
+            department: template.project.department,
+            start_date: today,
+            end_date: oneMonth,
+          },
+          tasks: template.tasks.map(t => ({ ...t, due_date: oneMonth })),
         });
       } catch (err: any) {
-        seedResults.push({
-          staff,
-          projectTitle: template.project.title,
-          taskCount: 0,
-          success: false,
-          error: err?.message || 'Unknown error',
-        });
+        seedResults.push({ staff, projectTitle: template.project.title, taskCount: 0, emailSent: false, success: false, error: err?.message || 'Unknown error' });
       }
     }
 
     setResults(seedResults);
-    setPhase('done');
 
-    const succeeded = seedResults.filter(r => r.success).length;
-    const failed = seedResults.filter(r => !r.success).length;
-    if (failed === 0) {
-      toast.success(`Seeded ${succeeded} ERP projects with tasks for all staff`);
-    } else {
-      toast.warning(`Seeded ${succeeded} projects — ${failed} failed`);
+    // ── Step 3: Send emails ──
+    setPhase('emailing');
+    setStatusLine('Sending project assignment emails…');
+
+    try {
+      const resp = await fetch('/api/admin/send-project-emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payloads: emailPayloads }),
+      });
+
+      if (resp.ok) {
+        const { results: emailResults } = await resp.json();
+        // Merge email status into seedResults
+        setResults(prev => prev.map(r => {
+          const match = (emailResults as any[]).find((e: any) => e.email === r.staff.email);
+          return match ? { ...r, emailSent: match.success } : r;
+        }));
+      }
+    } catch {
+      // Email failure is non-fatal — projects were created successfully
     }
+
+    setPhase('done');
+    const succeeded = seedResults.filter(r => r.success).length;
+    toast.success(`Seeded ${succeeded} projects · emails dispatched`);
     onSeeded();
   };
 
@@ -232,11 +271,22 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
     setPhase('preview');
     setResults([]);
     setStaffList([]);
+    setStatusLine('');
     onOpenChange(false);
   };
 
+  const isProcessing = phase === 'clearing' || phase === 'seeding' || phase === 'emailing';
+
+  const phaseLabel: Record<Phase, string> = {
+    preview: '',
+    clearing: 'Clearing existing data…',
+    seeding: statusLine,
+    emailing: 'Sending emails…',
+    done: '',
+  };
+
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={isProcessing ? undefined : handleClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -244,43 +294,49 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
             Seed ERP Projects for Staff
           </DialogTitle>
           <DialogDescription>
-            Creates one ERP project and 5 role-appropriate tasks per staff member based on their assigned role.
+            Clears all existing ERP projects, creates one 1-month project + 5 tasks per staff member, then sends each person a project assignment email from <strong>admin@nexacore-innovations.com</strong>.
           </DialogDescription>
         </DialogHeader>
 
+        {/* PREVIEW */}
         {phase === 'preview' && (
           <>
             {loadingStaff ? (
               <div className="flex items-center justify-center py-10 gap-3 text-muted-foreground">
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Loading staff profiles...
+                Loading staff profiles…
               </div>
             ) : staffList.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 gap-2 text-muted-foreground">
                 <AlertTriangle className="w-6 h-6 text-yellow-500" />
                 <p>No staff found with recognised ERP roles.</p>
-                <p className="text-xs">Roles looked up: admin, project_manager, operations_manager, developer, support</p>
+                <p className="text-xs">Roles: admin, project_manager, operations_manager, developer, support</p>
               </div>
             ) : (
-              <ScrollArea className="max-h-80">
+              <ScrollArea className="max-h-72">
                 <div className="space-y-2 pr-2">
                   {staffList.map(staff => {
                     const role = staff.role || 'support';
                     const template = ROLE_TEMPLATES[role] || ROLE_TEMPLATES['support'];
                     return (
                       <div key={staff.id} className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
-                        <div>
-                          <div className="font-medium text-sm">{staff.full_name || '(No name)'}</div>
-                          <div className="text-xs text-muted-foreground">{staff.email}</div>
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm truncate">{staff.full_name || '(No name)'}</div>
+                          <div className="text-xs text-muted-foreground truncate">{staff.email}</div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                           <Badge className={ROLE_COLORS[role] || 'bg-gray-100 text-gray-700'} variant="outline">
-                            {role.replace('_', ' ')}
+                            {role.replace(/_/g, ' ')}
                           </Badge>
                           <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <FolderOpen className="w-3 h-3" />
                             {template.tasks.length} tasks
                           </div>
+                          {staff.email && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Mail className="w-3 h-3" />
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -288,42 +344,63 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
                 </div>
               </ScrollArea>
             )}
-            <div className="text-xs text-muted-foreground bg-yellow-50 border border-yellow-200 rounded p-3">
-              <strong>Note:</strong> This will create {staffList.length} new ERP project{staffList.length !== 1 ? 's' : ''} and {staffList.length * 5} tasks. It does not remove existing data. Run this only once.
+
+            <div className="text-xs text-muted-foreground bg-amber-50 border border-amber-200 rounded p-3 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-amber-700">
+                <Trash2 className="w-3.5 h-3.5" />
+                This will first delete ALL existing ERP projects and tasks, then create fresh ones.
+              </div>
+              <div>Creates {staffList.length} project{staffList.length !== 1 ? 's' : ''} · {staffList.length * 5} tasks · {staffList.filter(s => s.email).length} emails will be sent.</div>
             </div>
           </>
         )}
 
-        {phase === 'seeding' && (
-          <div className="flex flex-col items-center justify-center py-10 gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        {/* PROCESSING */}
+        {isProcessing && (
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            {phase === 'clearing' && <Trash2 className="w-8 h-8 text-red-400 animate-pulse" />}
+            {phase === 'seeding' && <RefreshCw className="w-8 h-8 text-primary animate-spin" />}
+            {phase === 'emailing' && <Mail className="w-8 h-8 text-blue-500 animate-pulse" />}
             <div className="text-center">
-              <p className="font-medium">Seeding ERP data...</p>
-              <p className="text-sm text-muted-foreground mt-1">Creating project for {currentlySeedingName}</p>
+              <p className="font-medium">
+                {phase === 'clearing' && 'Clearing existing data…'}
+                {phase === 'seeding' && 'Seeding projects and tasks…'}
+                {phase === 'emailing' && 'Sending email notifications…'}
+              </p>
+              {statusLine && phase === 'seeding' && (
+                <p className="text-sm text-muted-foreground mt-1">{statusLine}</p>
+              )}
             </div>
           </div>
         )}
 
+        {/* DONE */}
         {phase === 'done' && (
           <ScrollArea className="max-h-80">
             <div className="space-y-2 pr-2">
               {results.map((result, i) => (
                 <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     {result.success
                       ? <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                       : <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
                     }
-                    <div>
-                      <div className="font-medium text-sm">{result.staff.full_name || result.staff.email}</div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm truncate">{result.staff.full_name || result.staff.email}</div>
                       {result.success
-                        ? <div className="text-xs text-muted-foreground">{result.projectTitle} · {result.taskCount} tasks created</div>
-                        : <div className="text-xs text-red-500">{result.error}</div>
+                        ? <div className="text-xs text-muted-foreground flex items-center gap-2">
+                            <span>{result.taskCount} tasks created</span>
+                            {result.emailSent
+                              ? <span className="flex items-center gap-1 text-green-600"><Mail className="w-3 h-3" />Email sent</span>
+                              : <span className="flex items-center gap-1 text-amber-600"><Mail className="w-3 h-3" />Email pending</span>
+                            }
+                          </div>
+                        : <div className="text-xs text-red-500 truncate">{result.error}</div>
                       }
                     </div>
                   </div>
-                  <Badge className={ROLE_COLORS[result.staff.role || ''] || ''} variant="outline">
-                    {(result.staff.role || '').replace('_', ' ')}
+                  <Badge className={ROLE_COLORS[result.staff.role || ''] || 'bg-gray-100 text-gray-600'} variant="outline">
+                    {(result.staff.role || '').replace(/_/g, ' ')}
                   </Badge>
                 </div>
               ))}
@@ -335,17 +412,18 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
           {phase === 'preview' && (
             <>
               <Button variant="outline" onClick={handleClose}>Cancel</Button>
-              <Button onClick={handleSeed} disabled={loadingStaff || staffList.length === 0}>
-                Seed {staffList.length} Staff Members
+              <Button
+                onClick={handleSeed}
+                disabled={loadingStaff || staffList.length === 0}
+                className="gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear & Reseed {staffList.length} Members
               </Button>
             </>
           )}
-          {phase === 'seeding' && (
-            <Button variant="outline" disabled>Seeding...</Button>
-          )}
-          {phase === 'done' && (
-            <Button onClick={handleClose}>Done</Button>
-          )}
+          {isProcessing && <Button variant="outline" disabled>Processing…</Button>}
+          {phase === 'done' && <Button onClick={handleClose}>Done</Button>}
         </DialogFooter>
       </DialogContent>
     </Dialog>
