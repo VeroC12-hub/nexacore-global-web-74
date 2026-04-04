@@ -185,8 +185,23 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
         if (signingInRef.current && event === 'SIGNED_IN') return;
 
         if (event === 'SIGNED_OUT') {
-          setUser(null);
-          setLoading(false);
+          // Don't immediately trust SIGNED_OUT — Supabase can fire this
+          // transiently during token rotation (tab comes back from idle and
+          // the refresh races with the state change event). Verify the session
+          // is actually gone before clearing the user.
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          if (!mountedRef.current) return;
+          if (currentSession?.user) {
+            // Session is still alive — the SIGNED_OUT was a false positive.
+            // Re-establish user from the live session.
+            try {
+              const enhanced = await fetchProfile(currentSession.user);
+              if (mountedRef.current) setUser(enhanced);
+            } catch { /* keep existing user state */ }
+          } else {
+            setUser(null);
+            setLoading(false);
+          }
           return;
         }
 
@@ -215,10 +230,40 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       subscription = data?.subscription;
     } catch { }
 
+    // When the tab comes back into focus after being hidden (idle, screen lock,
+    // switching apps), proactively call getSession(). This forces Supabase to
+    // refresh an expired access token before the page tries to make DB queries,
+    // preventing the "signed out after idle" redirect.
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!mountedRef.current) return;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!mountedRef.current) return;
+        if (session?.user) {
+          // Session is alive — if user state was incorrectly cleared (false
+          // SIGNED_OUT while tab was hidden), restore it now.
+          setUser(current => {
+            if (current !== null) return current; // Already set — no change needed
+            return current; // null — will be restored below via fetchProfile
+          });
+          // Check current user via functional updater result won't work inline,
+          // so read from a ref instead — use a simple approach: always try to
+          // restore if the session is valid. fetchProfile is idempotent.
+          try {
+            const enhanced = await fetchProfile(session.user);
+            if (mountedRef.current) setUser(enhanced);
+          } catch { /* leave as-is */ }
+        }
+      } catch { /* ignore visibility refresh errors */ }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       mountedRef.current = false;
       clearTimeout(safetyTimer);
       try { subscription?.unsubscribe(); } catch { }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
