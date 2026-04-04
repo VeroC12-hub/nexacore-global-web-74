@@ -111,9 +111,9 @@ export function ERPTimeTab({
   }));
 
   const filteredEntries = timeEntries.filter(entry => {
-    const matchesSearch = entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.project_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         entry.user_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (entry.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (entry.project_title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (entry.user_name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesUser = userFilter === 'all' || entry.user_id === userFilter;
 
     return matchesSearch && matchesUser;
@@ -341,9 +341,11 @@ export function ERPTimeTab({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Users</SelectItem>
-                    {Array.from(new Set(timeEntries.map(e => e.user_name))).map(userName => (
-                      <SelectItem key={userName} value={userName}>{userName}</SelectItem>
-                    ))}
+                    {Array.from(new Set(timeEntries.map(e => e.user_id).filter(Boolean))).map(userId => {
+                      const entry = timeEntries.find(e => e.user_id === userId);
+                      const label = entry?.user_name || userId;
+                      return <SelectItem key={userId} value={userId}>{label}</SelectItem>;
+                    })}
                   </SelectContent>
                 </Select>
               </div>

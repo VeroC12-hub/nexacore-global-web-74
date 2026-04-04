@@ -96,7 +96,7 @@ export const CreateWorkflowModal: React.FC<CreateWorkflowModalProps> = ({
       const { data, error } = await supabase
         .from('projects')
         .select('id, title, status')
-        .eq('status', 'active')
+        .eq('status', 'in_progress')
         .order('title');
 
       if (error) throw error;

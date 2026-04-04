@@ -81,7 +81,23 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setMessages(data || []);
+
+      // sender_id references auth.users — look up display names via profiles separately
+      const senderIds = [...new Set((data || []).map((m: any) => m.sender_id).filter(Boolean))];
+      const profilesMap: Record<string, any> = {};
+      if (senderIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', senderIds);
+        (profilesData || []).forEach((p: any) => { profilesMap[p.id] = p; });
+      }
+
+      const messagesWithSenders = (data || []).map((m: any) => ({
+        ...m,
+        sender_profile: profilesMap[m.sender_id] || null,
+      }));
+      setMessages(messagesWithSenders);
     } catch (error) {
       console.error('Error loading messages:', error);
       toast.error('Failed to load messages');
@@ -189,7 +205,8 @@ export function AdminMessagingTab({ onStatsUpdate }: AdminMessagingTabProps) {
   };
 
   const isUnread = (message: ProjectMessage) => {
-    return !message.read_by;
+    if (!message.read_by) return true;
+    return Object.keys(message.read_by as object).length === 0;
   };
 
   if (loading) {

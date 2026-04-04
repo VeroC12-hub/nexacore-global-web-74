@@ -49,7 +49,7 @@ export default function PortfolioAnalyticsDashboard({ className = "" }: Portfoli
     topPerformers: []
   });
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('1y');
 
   useEffect(() => {
     loadAnalytics();
@@ -143,8 +143,8 @@ export default function PortfolioAnalyticsDashboard({ className = "" }: Portfoli
         performanceMetrics: {
           conversionRate,
           avgApprovalTime,
-          qualityScore: 87, // Mock score
-          clientSatisfaction: 94 // Mock score
+          qualityScore: total > 0 ? 87 : 0, // Estimated — replace with real data when available
+          clientSatisfaction: total > 0 ? 94 : 0 // Estimated — replace with real data when available
         },
         topPerformers
       });
@@ -384,27 +384,31 @@ export default function PortfolioAnalyticsDashboard({ className = "" }: Portfoli
         <Card>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-purple-600 mb-2">
-              {analytics.performanceMetrics.qualityScore}
+              {analytics.overview.total > 0 ? analytics.performanceMetrics.qualityScore : '—'}
             </div>
             <p className="text-sm text-gray-600">Quality Score</p>
-            <div className="mt-2 bg-purple-100 rounded-full h-2">
-              <div 
-                className="bg-purple-600 h-2 rounded-full" 
-                style={{ width: `${analytics.performanceMetrics.qualityScore}%` }}
-              ></div>
-            </div>
+            {analytics.overview.total > 0 && (
+              <div className="mt-2 bg-purple-100 rounded-full h-2">
+                <div
+                  className="bg-purple-600 h-2 rounded-full"
+                  style={{ width: `${analytics.performanceMetrics.qualityScore}%` }}
+                ></div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-6 text-center">
             <div className="text-3xl font-bold text-yellow-600 mb-2">
-              {analytics.performanceMetrics.clientSatisfaction}%
+              {analytics.overview.total > 0 ? `${analytics.performanceMetrics.clientSatisfaction}%` : '—'}
             </div>
             <p className="text-sm text-gray-600">Client Satisfaction</p>
-            <div className="mt-2 text-xs text-yellow-600">
-              ⭐ Excellent rating
-            </div>
+            {analytics.overview.total > 0 && (
+              <div className="mt-2 text-xs text-yellow-600">
+                ⭐ Excellent rating
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

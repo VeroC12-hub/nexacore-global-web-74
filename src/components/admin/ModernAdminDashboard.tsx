@@ -118,7 +118,7 @@ export const ModernAdminDashboard: React.FC = () => {
         supabase.from('profiles').select('id', { count: 'exact' }),
         supabase.from('projects').select('id', { count: 'exact' }).eq('status', 'in_progress'),
         supabase.from('invoices').select('id, total_amount', { count: 'exact' }),
-        supabase.from('workflow_instances').select('id', { count: 'exact' }).eq('status', 'active'),
+        supabase.from('workflow_instances').select('id', { count: 'exact' }).eq('status', 'in_progress'),
         supabase.from('project_messages').select('id', { count: 'exact' })
       ]);
 

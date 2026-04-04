@@ -50,7 +50,7 @@ interface User {
   full_name: string;
   phone?: string;
   role: 'super_admin' | 'admin' | 'manager' | 'staff' | 'client' | 'user';
-  status: 'active' | 'inactive' | 'suspended' | 'pending';
+  status: 'approved' | 'inactive' | 'suspended' | 'pending';
   created_at: string;
   updated_at: string;
   last_sign_in_at?: string;
@@ -140,7 +140,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
     full_name: '',
     phone: '',
     role: 'user' as User['role'],
-    status: 'active' as User['status'],
+    status: 'approved' as User['status'],
     bio: '',
     company: '',
     position: '',
@@ -364,7 +364,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
       switch (action) {
         case 'activate':
           await Promise.all(selectedUsers.map(userId => 
-            handleUpdateUserStatus(userId, 'active')
+            handleUpdateUserStatus(userId, 'approved')
           ));
           break;
         case 'deactivate':
@@ -398,7 +398,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
       full_name: '',
       phone: '',
       role: 'user',
-      status: 'active',
+      status: 'approved',
       bio: '',
       company: '',
       position: '',
@@ -468,7 +468,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-500/20 text-green-400 border-green-500/30';
+      case 'approved': return 'bg-green-500/20 text-green-400 border-green-500/30';
       case 'inactive': return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
       case 'suspended': return 'bg-red-500/20 text-red-400 border-red-500/30';
       case 'pending': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
@@ -533,7 +533,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Active Users</p>
                 <p className="text-2xl font-bold">
-                  {users.filter(u => u.status === 'active').length}
+                  {users.filter(u => u.status === 'approved').length}
                 </p>
               </div>
             </div>
@@ -613,7 +613,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
                   <SelectItem value="suspended">Suspended</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
@@ -819,7 +819,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="approved">Approved</SelectItem>
                               <SelectItem value="inactive">Inactive</SelectItem>
                               <SelectItem value="suspended">Suspended</SelectItem>
                             </SelectContent>
@@ -954,7 +954,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="inactive">Inactive</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                     </SelectContent>
@@ -1128,7 +1128,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="inactive">Inactive</SelectItem>
                       <SelectItem value="suspended">Suspended</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
@@ -1307,8 +1307,10 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
                           <p className="text-sm text-muted-foreground">Projects</p>
                         </div>
                         <div className="text-center p-4 bg-muted/20 rounded">
-                          <p className="text-2xl font-bold text-green-400">{selectedUser.login_count || 0}</p>
-                          <p className="text-sm text-muted-foreground">Logins</p>
+                          <p className="text-2xl font-bold text-green-400">
+                            {selectedUser.last_sign_in_at ? '✓' : '0'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">Ever Logged In</p>
                         </div>
                       </div>
                       
@@ -1493,7 +1495,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
                         variant="outline"
                         className="w-full justify-start"
                         onClick={() => handleUpdateUserStatus(selectedUser.id, 
-                          selectedUser.status === 'suspended' ? 'active' : 'suspended'
+                          selectedUser.status === 'suspended' ? 'approved' : 'suspended'
                         )}
                       >
                         {selectedUser.status === 'suspended' ? (

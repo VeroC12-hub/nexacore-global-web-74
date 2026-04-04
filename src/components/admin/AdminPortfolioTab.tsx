@@ -93,7 +93,7 @@ export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabPr
   const stats = useMemo(() => {
     return {
       total: totalCount,
-      pending: projects.filter(p => p.submission_status === 'pending_review').length,
+      pending: projects.filter(p => p.submission_status === 'pending_review' || !p.submission_status).length,
       approved: projects.filter(p => p.submission_status === 'approved').length,
       rejected: projects.filter(p => p.submission_status === 'rejected').length,
       featured: projects.filter(p => p.is_featured).length,
@@ -431,7 +431,7 @@ export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabPr
                             Review
                           </Button>
 
-                          {project.submission_status === 'pending_review' && (
+                          {project.submission_status !== 'approved' && project.submission_status !== 'rejected' && (
                             <>
                               <Button
                                 size="sm"
@@ -440,6 +440,13 @@ export default function AdminPortfolioTab({ onStatsUpdate }: AdminPortfolioTabPr
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleReject(project)}
+                              >
+                                Reject
                               </Button>
                             </>
                           )}

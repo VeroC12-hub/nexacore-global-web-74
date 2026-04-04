@@ -38,13 +38,25 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
     try {
       const { data, error } = await supabase
         .from('invoices')
-        .select('*, profiles!invoices_client_id_fkey(full_name, email)')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // client_id references auth.users — look up display names via profiles separately
+      const clientIds = [...new Set((data || []).map((inv: any) => inv.client_id).filter(Boolean))];
+      const profilesMap: Record<string, any> = {};
+      if (clientIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', clientIds);
+        (profilesData || []).forEach((p: any) => { profilesMap[p.id] = p; });
+      }
+
       const invoices = (data || []).map((inv: any) => ({
         ...inv,
-        client_name: inv.profiles?.full_name || inv.profiles?.email || null,
+        client_name: profilesMap[inv.client_id]?.full_name || profilesMap[inv.client_id]?.email || null,
       }));
       setInvoices(invoices);
     } catch (error) {

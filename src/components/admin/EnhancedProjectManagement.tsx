@@ -75,13 +75,25 @@ const EnhancedProjectManagement: React.FC = () => {
                p.end_date && new Date(p.end_date) < now;
       }).length;
 
+      // Compute budget utilization from erp_projects
+      let budgetUtilization = 0;
+      const { data: erpData } = await supabase
+        .from('erp_projects')
+        .select('budget, actual_cost')
+        .eq('is_active', true);
+      if (erpData && erpData.length > 0) {
+        const totalBudget = erpData.reduce((sum: number, p: any) => sum + (p.budget || 0), 0);
+        const totalSpent = erpData.reduce((sum: number, p: any) => sum + (p.actual_cost || 0), 0);
+        budgetUtilization = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+      }
+
       setQuickStats({
         totalProjects: total,
         activeProjects: active,
         completedThisMonth,
         overdueProjects: overdue,
         teamUtilization: 0,
-        budgetUtilization: 0
+        budgetUtilization
       });
     };
     fetchStats();
