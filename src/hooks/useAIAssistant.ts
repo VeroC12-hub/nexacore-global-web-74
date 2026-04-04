@@ -32,6 +32,17 @@ export function useAIAssistant(options?: {
     }
   }, [user?.id]);
 
+  const makeLocalConversation = (): AIConversation => ({
+    id: sessionIdRef.current,
+    user_id: user?.id || null,
+    session_id: sessionIdRef.current,
+    title: 'Chat',
+    context: { userRole: userRole || 'visitor', currentPage: window.location.pathname },
+    total_messages: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  } as unknown as AIConversation);
+
   const loadOrCreateConversation = async () => {
     if (isLoadingConversation.current) return;
     isLoadingConversation.current = true;
@@ -82,18 +93,21 @@ export function useAIAssistant(options?: {
           .single();
 
         if (createError) {
-          console.error('Error creating conversation:', createError);
-          // If it's a duplicate key error, try to fetch the existing one
-          if (createError.code === '23505') {
+          // RLS or permission error — fall back to an in-memory conversation
+          // so the chat still works without DB persistence.
+          if (createError.code === '42501' || createError.code === 'PGRST116') {
+            conv = makeLocalConversation();
+          } else if (createError.code === '23505') {
+            // Duplicate key — fetch the existing row
             const { data: retryData } = await supabase
               .from('ai_conversations')
               .select('*')
               .eq('session_id', sessionIdRef.current)
               .single();
-
-            if (retryData) {
-              conv = retryData as unknown as AIConversation;
-            }
+            conv = retryData ? (retryData as unknown as AIConversation) : makeLocalConversation();
+          } else {
+            console.error('Error creating conversation:', createError);
+            conv = makeLocalConversation();
           }
         } else {
           conv = data as unknown as AIConversation;
@@ -102,12 +116,14 @@ export function useAIAssistant(options?: {
 
       setConversation(conv);
 
-      // Load messages if conversation exists
-      if (conv) {
+      // Load messages only if conversation is persisted (has a real UUID, not our session key)
+      if (conv && conv.id !== sessionIdRef.current) {
         await loadMessages(conv.id);
       }
     } catch (err) {
       console.error('Error loading conversation:', err);
+      // Always give the chat a local conversation so it can still function
+      setConversation(makeLocalConversation());
     } finally {
       isLoadingConversation.current = false;
     }
@@ -168,6 +184,10 @@ export function useAIAssistant(options?: {
     }
   };
 
+  // A local conversation is one we created as an in-memory fallback (id === session key)
+  const isLocalConversation = (conv: AIConversation | null) =>
+    conv?.id === sessionIdRef.current;
+
   const sendMessage = useCallback(async (messageText: string) => {
     if (!messageText.trim() || !conversation) return;
 
@@ -175,31 +195,38 @@ export function useAIAssistant(options?: {
     setError(null);
     setIsTyping(true);
 
+    const localOnly = isLocalConversation(conversation);
+
     try {
-      // Create user message
-      const userMessage = {
+      // Build local user message for optimistic state update
+      const localUserMsg: AIMessage = {
+        id: `local_${Date.now()}`,
         conversation_id: conversation.id,
         role: 'user',
         content: messageText,
         content_type: 'text',
-      };
+        created_at: new Date().toISOString(),
+      } as unknown as AIMessage;
 
-      // Insert user message to DB
-      const { data: savedUserMessage, error: userMsgError } = await supabase
-        .from('ai_messages')
-        .insert([userMessage])
-        .select()
-        .single();
+      if (localOnly) {
+        // In-memory only — skip DB writes
+        setMessages(prev => [...prev, localUserMsg]);
+      } else {
+        // Insert user message to DB
+        const { data: savedUserMessage, error: userMsgError } = await supabase
+          .from('ai_messages')
+          .insert([{
+            conversation_id: conversation.id,
+            role: 'user',
+            content: messageText,
+            content_type: 'text',
+          }])
+          .select()
+          .single();
 
-      if (userMsgError) throw userMsgError;
-
-      // Update local state
-      setMessages(prev => [...prev, savedUserMessage as unknown as AIMessage]);
-
-      // Search knowledge base for context (disabled for now - needs OpenAI key)
-      // const knowledgeResults = await searchKnowledge(messageText);
-      // const retrievedKnowledge = knowledgeResults.map(k => `${k.title}: ${k.content}`);
-      const retrievedKnowledge: string[] = [];
+        if (userMsgError) throw userMsgError;
+        setMessages(prev => [...prev, savedUserMessage as unknown as AIMessage]);
+      }
 
       // Prepare chat history (last 10 messages)
       const history = messages.slice(-10).map(m => ({
@@ -207,15 +234,15 @@ export function useAIAssistant(options?: {
         content: m.content
       }));
 
-      // Build request
-      const chatRequest: ChatRequest = {
+      // Build request (kept for typing; not sent to a server endpoint here)
+      const _chatRequest: ChatRequest = {
         message: messageText,
         conversationId: conversation.id,
         context: {
           userId: user?.id,
           userRole: userRole || 'visitor',
           currentPage: window.location.pathname,
-          retrievedKnowledge
+          retrievedKnowledge: []
         },
         history
       };
@@ -225,50 +252,60 @@ export function useAIAssistant(options?: {
       const aiResponse = await getAIResponse(messageText, history);
       const responseTime = Date.now() - startTime;
 
-      // Log which AI source was used
       console.log(`🤖 AI Response from: ${aiResponse.source === 'claude' ? 'Claude API ☁️' : 'Local AI 🤖'}`);
 
-      // Create assistant message
-      const assistantMessage = {
-        conversation_id: conversation.id,
-        role: 'assistant',
-        content: aiResponse.message,
-        content_type: 'text',
-        model_used: aiResponse.source === 'claude' ? (aiResponse.metadata?.model || 'claude-3-5-sonnet-20241022') : 'local-ai-v1',
-        tokens_used: aiResponse.metadata?.tokensUsed || 0,
-        response_time_ms: responseTime,
-        retrieved_knowledge: [] as string[],
-      };
+      if (localOnly) {
+        // In-memory only — add assistant reply directly to state
+        const localAssistantMsg: AIMessage = {
+          id: `local_${Date.now() + 1}`,
+          conversation_id: conversation.id,
+          role: 'assistant',
+          content: aiResponse.message,
+          content_type: 'text',
+          model_used: aiResponse.source === 'claude' ? (aiResponse.metadata?.model || 'claude-3-5-sonnet-20241022') : 'local-ai-v1',
+          created_at: new Date().toISOString(),
+        } as unknown as AIMessage;
+        setMessages(prev => [...prev, localAssistantMsg]);
+      } else {
+        // Save assistant message to DB
+        const { data: savedAssistantMessage, error: assistantMsgError } = await supabase
+          .from('ai_messages')
+          .insert([{
+            conversation_id: conversation.id,
+            role: 'assistant',
+            content: aiResponse.message,
+            content_type: 'text',
+            model_used: aiResponse.source === 'claude' ? (aiResponse.metadata?.model || 'claude-3-5-sonnet-20241022') : 'local-ai-v1',
+            tokens_used: aiResponse.metadata?.tokensUsed || 0,
+            response_time_ms: responseTime,
+            retrieved_knowledge: [] as string[],
+          }])
+          .select()
+          .single();
 
-      // Save assistant message to DB
-      const { data: savedAssistantMessage, error: assistantMsgError } = await supabase
-        .from('ai_messages')
-        .insert([assistantMessage])
-        .select()
-        .single();
-
-      if (assistantMsgError) throw assistantMsgError;
-
-      // Update local state
-      setMessages(prev => [...prev, savedAssistantMessage as unknown as AIMessage]);
-
-      // Update conversation title if first message
-      if (messages.length === 0) {
-        const title = messageText.slice(0, 50) + (messageText.length > 50 ? '...' : '');
-        await supabase
-          .from('ai_conversations')
-          .update({ title })
-          .eq('id', conversation.id);
+        if (assistantMsgError) throw assistantMsgError;
+        setMessages(prev => [...prev, savedAssistantMessage as unknown as AIMessage]);
       }
 
-      // Track common question
-      try {
-        await supabase.rpc('increment_common_question', {
-          q_text: messageText,
-          q_category: 'general'
-        });
-      } catch (err) {
-        console.error('Error tracking common question:', err);
+      if (!localOnly) {
+        // Update conversation title if first message
+        if (messages.length === 0) {
+          const title = messageText.slice(0, 50) + (messageText.length > 50 ? '...' : '');
+          await supabase
+            .from('ai_conversations')
+            .update({ title })
+            .eq('id', conversation.id);
+        }
+
+        // Track common question
+        try {
+          await supabase.rpc('increment_common_question', {
+            q_text: messageText,
+            q_category: 'general'
+          });
+        } catch (err) {
+          console.error('Error tracking common question:', err);
+        }
       }
 
     } catch (err: any) {
