@@ -47,7 +47,8 @@ const ERP_ROLES: string[] = ['admin', 'project_manager', 'operations_manager', '
 // After running the fix migration (20260222100000_fix_auth_rls_and_roles.sql),
 // profiles.role is kept in sync with erp_staff_roles, so one query is enough.
 // Falls back to erp_staff_roles if the profile role isn't an ERP role.
-async function fetchProfile(authUser: User): Promise<EnhancedUser> {
+// fallbackRole: used when the fetch fails so we don't downgrade an authenticated user.
+async function fetchProfile(authUser: User, fallbackRole: UserRole = 'client'): Promise<EnhancedUser> {
   try {
     const timeout = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
@@ -94,7 +95,8 @@ async function fetchProfile(authUser: User): Promise<EnhancedUser> {
 
     return buildUser(authUser, 'client', profileData ?? undefined);
   } catch {
-    return buildUser(authUser, 'client');
+    // Preserve the known role on error so a network hiccup doesn't downgrade an admin to client
+    return buildUser(authUser, fallbackRole);
   }
 }
 
@@ -108,7 +110,7 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const enhanced = await fetchProfile(session.user);
+        const enhanced = await fetchProfile(session.user, user?.role ?? 'client');
         if (mountedRef.current) setUser(enhanced);
       } else {
         if (mountedRef.current) setUser(null);
@@ -145,7 +147,7 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
               refresh_token: session.refresh_token,
             }).catch(() => { /* ignore — best effort */ });
           }
-          const enhanced = await fetchProfile(session.user);
+          const enhanced = await fetchProfile(session.user, user?.role ?? 'client');
           if (mountedRef.current) {
             setUser(enhanced);
             setLoading(false);
@@ -176,15 +178,16 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
           return;
         }
 
-        if (event === 'TOKEN_REFRESHED' && session?.user) {
-          const enhanced = await fetchProfile(session.user);
-          if (mountedRef.current) setUser(enhanced);
+        if (event === 'TOKEN_REFRESHED') {
+          // Token refresh doesn't change the user's role or profile.
+          // Re-fetching here can downgrade an admin to 'client' if the
+          // network is slow when returning from idle. Skip the re-fetch.
           return;
         }
 
         // Handle SIGNED_IN only if not already handled by signIn function
         if (event === 'SIGNED_IN' && session?.user) {
-          const enhanced = await fetchProfile(session.user);
+          const enhanced = await fetchProfile(session.user, user?.role ?? 'client');
           if (mountedRef.current) {
             setUser(enhanced);
             setLoading(false);
