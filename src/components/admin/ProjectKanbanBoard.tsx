@@ -126,7 +126,7 @@ const ProjectKanbanBoard: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, title, description, status, priority, progress, budget, actual_cost, start_date, end_date, client_id, metadata')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
