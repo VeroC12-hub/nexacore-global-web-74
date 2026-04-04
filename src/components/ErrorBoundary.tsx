@@ -47,8 +47,7 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     if (isChunkLoadError(error)) {
       // Hard reload fetches fresh index.html with updated chunk URLs.
-      // Guard against infinite reload loops: only reload once per session
-      // for this error type using sessionStorage.
+      // The guard key is also set in main.tsx; check both to avoid double reload.
       const reloadKey = 'chunk_error_reload';
       const alreadyReloaded = sessionStorage.getItem(reloadKey);
       if (!alreadyReloaded) {
@@ -56,8 +55,9 @@ export class ErrorBoundary extends Component<Props, State> {
         window.location.reload();
         return;
       }
-      // If we already tried a reload and still failing, fall through to
-      // show the error UI so the user isn't stuck in a reload loop.
+      // Already reloaded once and still failing — clear the guard so the
+      // next navigation attempt gets another chance, then show the error UI.
+      sessionStorage.removeItem(reloadKey);
     }
     console.error('ErrorBoundary caught error:', error, errorInfo);
   }
