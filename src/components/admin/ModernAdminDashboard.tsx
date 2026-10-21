@@ -82,7 +82,7 @@ export const ModernAdminDashboard: React.FC = () => {
   const { permissions, loading: permissionsLoading } = useRolePermissions();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'proposals' | 'projects' | 'portfolio' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp' | 'letterhead'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'analytics' | 'business' | 'quotes' | 'proposals' | 'projects' | 'portfolio' | 'invoices' | 'requests' | 'users' | 'team' | 'files' | 'messages' | 'workflows' | 'settings' | 'erp' | 'letterhead' | 'growth'>('overview');
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalProjects: 0,

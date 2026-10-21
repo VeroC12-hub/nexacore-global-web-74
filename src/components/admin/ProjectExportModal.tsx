@@ -343,7 +343,7 @@ export function ProjectExportModal({ isOpen, onClose, projects, filteredProjects
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
       addLetterheadToPage(doc, letterheadImg);
-      let yPos = LETTERHEAD.CONTENT_TOP;
+      let yPos: number = LETTERHEAD.CONTENT_TOP;
 
       // Define colors matching company branding
       const tealColor: [number, number, number] = [0, 152, 166]; // #0098A6

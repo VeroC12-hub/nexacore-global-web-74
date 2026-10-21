@@ -286,7 +286,7 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
-      let yPos = LETTERHEAD.CONTENT_TOP;
+      let yPos: number = LETTERHEAD.CONTENT_TOP;
 
       // Define colors matching company branding
       const tealColor: [number, number, number] = [0, 152, 166]; // #0098A6

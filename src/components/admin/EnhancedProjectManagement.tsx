@@ -80,7 +80,7 @@ const EnhancedProjectManagement: React.FC = () => {
 
       // Compute budget utilization from erp_projects
       let budgetUtilization = 0;
-      const { data: erpData } = await supabase
+      const { data: erpData } = await (supabase as any)
         .from('erp_projects')
         .select('budget, actual_cost')
         .eq('is_active', true);

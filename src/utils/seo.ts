@@ -498,7 +498,7 @@ export const trackSEOMetrics = () => {
           new PerformanceObserver((list) => {
             let clsScore = 0;
             list.getEntries().forEach((entry) => {
-              if (!entry.hadRecentInput) {
+              if (!(entry as any).hadRecentInput) {
                 clsScore += (entry as any).value;
               }
             });

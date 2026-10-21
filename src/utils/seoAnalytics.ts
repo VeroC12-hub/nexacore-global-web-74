@@ -101,7 +101,7 @@ export const initializeGA4 = (measurementId: string) => {
   // Initialize gtag
   window.dataLayer = window.dataLayer || [];
   function gtag(...args: any[]) {
-    window.dataLayer.push(args);
+    window.dataLayer!.push(args);
   }
   (window as any).gtag = gtag;
 
@@ -395,13 +395,3 @@ export const initializeSEOTracking = (config: {
   console.log('SEO tracking initialized successfully');
 };
 
-// Export all utilities
-export {
-  initializeGA4,
-  initializeSearchConsole,
-  trackSEOEvent,
-  trackPagePerformance,
-  trackUserEngagement,
-  monitorTechnicalSEO,
-  generateSEOReport
-};

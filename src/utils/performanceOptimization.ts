@@ -36,7 +36,7 @@ export const PERFORMANCE_CONFIG = {
 export const preloadCriticalResources = () => {
   if (typeof window === 'undefined') return;
 
-  const criticalResources = [
+  const criticalResources: { href: string; as: string; type?: string; crossorigin?: boolean }[] = [
     // Critical images
     { href: '/hero-main.jpg', as: 'image', type: 'image/jpeg' },
     { href: '/og-image.png', as: 'image', type: 'image/png' },
@@ -344,13 +344,3 @@ export const initializePerformanceOptimizations = () => {
   }
 };
 
-// Export performance utilities
-export {
-  preloadCriticalResources,
-  prefetchExternalResources,
-  createLazyLoader,
-  trackWebVitals,
-  addResourceHints,
-  optimizeImages,
-  monitorPerformance
-};

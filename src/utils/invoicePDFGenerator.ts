@@ -62,7 +62,7 @@ export async function generateInvoicePDF(
   const letterheadImg = await getLetterheadImage();
   addLetterheadToPage(doc, letterheadImg);
 
-  let y = LETTERHEAD.CONTENT_TOP;
+  let y: number = LETTERHEAD.CONTENT_TOP;
 
   // ── Title Section ──
   doc.setFontSize(20);

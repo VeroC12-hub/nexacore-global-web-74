@@ -46,7 +46,7 @@ export const generateImageSEO = (
   ...args: string[]
 ): ImageSEOData => {
   const altTextGenerator = ALT_TEXT_TEMPLATES[category];
-  const alt = altTextGenerator(...args);
+  const alt = (altTextGenerator as (...a: string[]) => string)(...args);
   
   return {
     src,
@@ -272,7 +272,7 @@ export const generateImageSitemapData = () => {
 export const trackImagePerformance = () => {
   if (typeof window !== 'undefined' && 'PerformanceObserver' in window) {
     const imageObserver = new PerformanceObserver((list) => {
-      list.getEntries().forEach((entry) => {
+      (list.getEntries() as PerformanceResourceTiming[]).forEach((entry) => {
         if (entry.initiatorType === 'img') {
           console.log(`Image loaded: ${entry.name} in ${entry.duration}ms`);
           
