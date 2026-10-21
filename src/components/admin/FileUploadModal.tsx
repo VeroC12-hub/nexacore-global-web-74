@@ -34,7 +34,11 @@ interface FileUploadModalProps {
   projects: Array<{ id: string; title: string }>;
 }
 
-interface FileWithMetadata extends File {
+interface FileWithMetadata {
+  file: File;
+  name: string;
+  size: number;
+  type: string;
   id: string;
   category: string;
   accessLevel: string;
@@ -79,7 +83,10 @@ export function FileUploadModal({ isOpen, onClose, onSuccess, projects }: FileUp
 
   const handleFiles = (newFiles: File[]) => {
     const filesWithMetadata: FileWithMetadata[] = newFiles.map((file) => ({
-      ...file,
+      file,
+      name: file.name,
+      size: file.size,
+      type: file.type,
       id: Math.random().toString(36).substr(2, 9),
       category: getFileCategory(file),
       accessLevel: 'client',
@@ -134,13 +141,21 @@ export function FileUploadModal({ isOpen, onClose, onSuccess, projects }: FileUp
         // Create a unique file path
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${file.id}.${fileExt}`;
-        const filePath = `project-files/${selectedProject}/${fileName}`;
+        const filePath = `${selectedProject}/${fileName}`;
 
-        // Simulate upload progress (in real implementation, you'd use Supabase storage)
-        for (let progress = 0; progress <= 100; progress += 20) {
-          updateFileMetadata(file.id, 'uploadProgress', progress);
-          await new Promise(resolve => setTimeout(resolve, 200));
+        // Store the bytes in the private project-files bucket
+        updateFileMetadata(file.id, 'uploadProgress', 30);
+        const { error: storageError } = await supabase.storage
+          .from('project-files')
+          .upload(filePath, file.file, { contentType: file.type || undefined });
+        if (storageError) {
+          throw new Error(
+            /bucket not found/i.test(storageError.message)
+              ? 'File storage is not set up yet (run migration 20261021000000_project_files_storage.sql)'
+              : storageError.message
+          );
         }
+        updateFileMetadata(file.id, 'uploadProgress', 100);
 
         // Insert file record into database
         const { data: { user } } = await supabase.auth.getUser();

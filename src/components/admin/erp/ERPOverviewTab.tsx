@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -135,9 +137,46 @@ export function ERPOverviewTab({
   performanceData, 
   budgetData, 
   timelineData,
-  searchableData,
+  searchableData: searchableDataProp,
   onQuickAction
 }: ERPOverviewTabProps) {
+  // Live feed: newest ERP tasks/projects, and open tasks ordered by due date
+  const [liveTasks, setLiveTasks] = useState<any[]>([]);
+  const [liveProjects, setLiveProjects] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadFeed = async () => {
+      const [tasksRes, projectsRes] = await Promise.all([
+        (supabase as any)
+          .from('erp_tasks')
+          .select('*, profiles:profiles!erp_tasks_assigned_to_fkey(full_name), erp_projects:erp_projects!erp_tasks_erp_project_id_fkey(title)')
+          .order('created_at', { ascending: false })
+          .limit(100),
+        (supabase as any)
+          .from('erp_projects')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20)
+      ]);
+      if (!tasksRes.error) setLiveTasks(tasksRes.data || []);
+      if (!projectsRes.error) setLiveProjects(projectsRes.data || []);
+    };
+    loadFeed();
+  }, []);
+
+
+  // The parent passes empty projects/tasks, so search falls back to the live lists
+  const searchableData: SearchableData = React.useMemo(() => ({
+    ...searchableDataProp,
+    projects: searchableDataProp.projects.length ? searchableDataProp.projects : liveProjects,
+    tasks: searchableDataProp.tasks.length ? searchableDataProp.tasks : liveTasks.map(t => ({
+      ...t,
+      project_id: t.erp_project_id,
+      project_title: t.erp_projects?.title,
+      assignee: t.profiles?.full_name || ''
+    }))
+  }), [searchableDataProp, liveProjects, liveTasks]);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMetric, setSelectedMetric] = useState('all');
   const [timeFilter, setTimeFilter] = useState('today');
@@ -464,18 +503,42 @@ export function ERPOverviewTab({
   ];
 
   const recentActivity = [
-    { id: 1, type: 'project', title: 'Residential Building Design project updated', user: 'John Doe', time: '5 min ago', status: 'completed' },
-    { id: 2, type: 'task', title: 'Structural calculations task assigned', user: 'Jane Smith', time: '12 min ago', status: 'active' },
-    { id: 3, type: 'payment', title: 'Invoice #1234 paid', user: 'Client Corp', time: '1 hour ago', status: 'success' },
-    { id: 4, type: 'team', title: 'New team member joined', user: 'Mike Wilson', time: '2 hours ago', status: 'info' }
-  ];
+    ...liveTasks.map(t => ({
+      id: `task-${t.id}`,
+      type: 'task',
+      title: t.title,
+      user: t.profiles?.full_name || 'Unassigned',
+      at: t.updated_at || t.created_at,
+      status: t.status === 'completed' ? 'completed' : 'active'
+    })),
+    ...liveProjects.map(p => ({
+      id: `project-${p.id}`,
+      type: 'project',
+      title: p.title,
+      user: p.department || 'Project',
+      at: p.updated_at || p.created_at,
+      status: p.status === 'completed' ? 'completed' : 'active'
+    }))
+  ]
+    .filter(a => a.at)
+    .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+    .slice(0, 4)
+    .map(a => ({ ...a, time: formatDistanceToNow(new Date(a.at), { addSuffix: true }) }));
 
-  const upcomingTasks = [
-    { id: 1, title: 'Complete CAD Drawing Review', project: 'Office Complex', due: '2 hours', priority: 'high' },
-    { id: 2, title: 'Client Presentation', project: 'Bridge Design', due: '4 hours', priority: 'urgent' },
-    { id: 3, title: 'Site Survey Analysis', project: 'Highway Project', due: '1 day', priority: 'medium' },
-    { id: 4, title: 'Budget Planning Meeting', project: 'Q4 Strategy', due: '2 days', priority: 'low' }
-  ];
+  const upcomingTasks = liveTasks
+    .filter(t => t.due_date && !['completed', 'cancelled'].includes(t.status))
+    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
+    .slice(0, 4)
+    .map(t => {
+      const due = new Date(t.due_date);
+      return {
+        id: t.id,
+        title: t.title,
+        project: t.erp_projects?.title || 'No project',
+        due: due < new Date() ? `overdue (${formatDistanceToNow(due)})` : formatDistanceToNow(due),
+        priority: t.priority || 'medium'
+      };
+    });
 
   return (
     <div className="space-y-6">
@@ -889,6 +952,9 @@ export function ERPOverviewTab({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {recentActivity.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-6">No ERP activity yet</p>
+              )}
               {recentActivity.map((activity) => (
                 <div 
                   key={activity.id} 
@@ -953,6 +1019,9 @@ export function ERPOverviewTab({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {upcomingTasks.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-6">No open tasks with due dates</p>
+              )}
               {upcomingTasks.map((task) => (
                 <div 
                   key={task.id} 
@@ -974,7 +1043,7 @@ export function ERPOverviewTab({
                     <div className="flex items-center gap-3">
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3 text-gray-400" />
-                        <p className="text-xs text-gray-500">Due in {task.due}</p>
+                        <p className="text-xs text-gray-500">{task.due.startsWith('overdue') ? task.due : `Due in ${task.due}`}</p>
                       </div>
                       <div className={`w-2 h-2 rounded-full ${
                         task.priority === 'urgent' ? 'bg-red-500' :

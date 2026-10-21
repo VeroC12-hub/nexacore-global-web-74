@@ -94,12 +94,16 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
     if (!confirm('Are you sure you want to delete this file?')) return;
 
     try {
+      const file = files.find(f => f.id === fileId);
       const { error } = await supabase
         .from('project_files')
         .delete()
         .eq('id', fileId);
 
       if (error) throw error;
+      if (file?.file_path) {
+        await supabase.storage.from('project-files').remove([file.file_path]);
+      }
 
       toast.success('File deleted successfully');
       loadFiles();
@@ -112,10 +116,14 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
 
   const handleDownloadFile = async (file: ProjectFile) => {
     try {
-      // In a real implementation, you would download the file from storage
-      toast.info('File download feature coming soon!');
-    } catch (error) {
-      toast.error('Failed to download file');
+      const { data, error } = await supabase.storage
+        .from('project-files')
+        .createSignedUrl(file.file_path, 60, { download: file.file_name });
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank', 'noopener');
+    } catch (error: any) {
+      console.error('Error downloading file:', error);
+      toast.error(error.message || 'Failed to download file');
     }
   };
 

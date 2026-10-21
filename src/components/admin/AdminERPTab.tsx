@@ -581,7 +581,7 @@ export function AdminERPTab() {
         .insert({
           title: `${task.title} (Copy)`,
           description: task.description,
-          status: 'todo',
+          status: 'new',
           priority: task.priority,
           erp_project_id: task.project_id,
           due_date: task.due_date,
