@@ -32,6 +32,8 @@ import Dashboard from "./pages/Dashboard";
 import QuoteReview from "./pages/QuoteReview";
 import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation"; // NEW IMPORT
 import StaffDashboardPage from "./pages/StaffDashboardPage"; // NEW IMPORT FOR STAFF DASHBOARD
+import Jarvis from "./pages/Jarvis"; // JARVIS assistant cockpit
+import Platform from "./pages/Platform"; // AI platform org graph
 import EnhancedAIAssistant from "./components/EnhancedAIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
@@ -82,6 +84,10 @@ const App = () => {
                 
                 {/* STAFF ROUTES */}
                 <Route path="/staff" element={<StaffDashboardPage />} /> {/* NEW STAFF DASHBOARD */}
+
+                {/* JARVIS ASSISTANT */}
+                <Route path="/jarvis" element={<Jarvis />} />
+                <Route path="/platform" element={<Platform />} />
                 
                 {/* ADMIN/PM ROUTES */}
                 <Route path="/admin" element={<AdminDashboard />} />

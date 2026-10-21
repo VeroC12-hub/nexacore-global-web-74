@@ -16,6 +16,7 @@ import {
   Search,
   Plus,
   TrendingUp,
+  Sparkles,
   DollarSign,
   Activity,
   Calendar,
@@ -39,6 +40,7 @@ const AdminInvoicesTab = lazy(() => import('@/components/admin/AdminInvoicesTab'
 const EnhancedProjectManagement = lazy(() => import('@/components/admin/EnhancedProjectManagement'));
 const AdminServiceRequestsTab = lazy(() => import('@/components/admin/AdminServiceRequestsTab').then(m => ({ default: m.AdminServiceRequestsTab })));
 const AdminUsersTab = lazy(() => import('@/components/admin/AdminUsersTab').then(m => ({ default: m.AdminUsersTab })));
+const AdminGrowthTab = lazy(() => import('@/components/admin/AdminGrowthTab').then(m => ({ default: m.AdminGrowthTab })));
 const AdminPortfolioTab = lazy(() => import('@/components/admin/AdminPortfolioTab'));
 const AdminTeamTab = lazy(() => import('@/components/admin/AdminTeamTab').then(m => ({ default: m.AdminTeamTab })));
 const AdminFileRepositoryTab = lazy(() => import('@/components/admin/AdminFileRepositoryTab').then(m => ({ default: m.AdminFileRepositoryTab })));
@@ -211,6 +213,7 @@ export const ModernAdminDashboard: React.FC = () => {
     { id: 'overview', label: 'Overview', icon: <BarChart3 className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="h-5 w-5" />, count: null, requiresPermission: 'canViewReports' },
     { id: 'business', label: 'Business', icon: <DollarSign className="h-5 w-5" />, count: null, requiresPermission: 'canViewFinancials' },
+    { id: 'growth', label: 'Growth', icon: <Sparkles className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'quotes', label: 'Quotes', icon: <FileText className="h-5 w-5" />, count: stats.pendingRequests, requiresPermission: null },
     { id: 'proposals', label: 'Proposals', icon: <FileText className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'projects', label: 'Projects', icon: <FolderOpen className="h-5 w-5" />, count: stats.totalProjects, requiresPermission: null },
@@ -293,6 +296,14 @@ export const ModernAdminDashboard: React.FC = () => {
           <ErrorBoundary>
             <Suspense fallback={<DashboardSkeleton />}>
               <AdminServiceRequestsTab onStatsUpdate={loadDashboardStats} />
+            </Suspense>
+          </ErrorBoundary>
+        );
+      case 'growth':
+        return (
+          <ErrorBoundary>
+            <Suspense fallback={<DashboardSkeleton />}>
+              <AdminGrowthTab onStatsUpdate={loadDashboardStats} />
             </Suspense>
           </ErrorBoundary>
         );

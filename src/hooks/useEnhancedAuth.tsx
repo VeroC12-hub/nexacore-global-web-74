@@ -43,11 +43,47 @@ function buildUser(authUser: User, role: UserRole, profileData?: any): EnhancedU
 // ERP roles that can be returned from fetchProfile
 const ERP_ROLES: string[] = ['admin', 'project_manager', 'operations_manager', 'developer', 'support', 'client'];
 
-// Fetch profile with an 8-second timeout.
-// THROWS on network/timeout errors — callers must handle.
-// Only returns 'client' when the DB confirms the user has no elevated role.
-// Never silently downgrades an admin to client on a transient failure.
+// ── Resilient profile cache ──────────────────────────────────────────────────
+// On mobile / installed PWA, blocking every load on a profile fetch (and logging
+// the user out if it's slow or fails) caused long spinners and "signed out after
+// reopening". We cache the last good profile so we can hydrate the UI instantly
+// and keep a valid session signed in even when the re-fetch is slow or offline.
+const PROFILE_CACHE_KEY = 'nexacore_user_v1';
+function cacheStorageGet(k: string): string | null {
+  try { return window.localStorage.getItem(k); }
+  catch { try { return window.sessionStorage.getItem(k); } catch { return null; } }
+}
+function cacheStorageSet(k: string, v: string): void {
+  try { window.localStorage.setItem(k, v); }
+  catch { try { window.sessionStorage.setItem(k, v); } catch { /* ignore */ } }
+}
+function cacheUser(u: EnhancedUser): void {
+  try { cacheStorageSet(PROFILE_CACHE_KEY, JSON.stringify(u)); } catch { /* ignore */ }
+}
+function readCachedUser(id: string): EnhancedUser | null {
+  try {
+    const raw = cacheStorageGet(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    const u = JSON.parse(raw) as EnhancedUser;
+    return u && u.id === id ? u : null;   // never use another account's cache
+  } catch { return null; }
+}
+function clearCachedUser(): void {
+  try { window.localStorage.removeItem(PROFILE_CACHE_KEY); } catch { /* ignore */ }
+  try { window.sessionStorage.removeItem(PROFILE_CACHE_KEY); } catch { /* ignore */ }
+}
+
+// Fetch profile with an 8-second timeout, then cache it. THROWS on
+// network/timeout errors — callers must handle. Only returns 'client' when the
+// DB confirms the user has no elevated role; never silently downgrades on a
+// transient failure.
 async function fetchProfile(authUser: User): Promise<EnhancedUser> {
+  const enhanced = await fetchProfileRaw(authUser);
+  cacheUser(enhanced);
+  return enhanced;
+}
+
+async function fetchProfileRaw(authUser: User): Promise<EnhancedUser> {
   const timeout = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
   );
@@ -142,6 +178,15 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
         if (session?.user) {
           // Explicitly re-set the session so the Supabase client's internal
           // state is guaranteed to be populated (critical for mobile).
+          // Hydrate instantly from the cached profile so the app shows up
+          // immediately (no long spinner) and a valid session stays signed in
+          // even if the network is slow/offline. We still revalidate below.
+          const cached = readCachedUser(session.user.id);
+          if (cached && mountedRef.current) {
+            setUser(cached);
+            setLoading(false);
+            initialLoadDoneRef.current = true;
+          }
           if (session.access_token && session.refresh_token) {
             await supabase.auth.setSession({
               access_token: session.access_token,
@@ -161,11 +206,16 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
             try {
               enhanced = await fetchProfile(session.user);
             } catch {
-              // Both attempts failed — no valid profile; redirect to auth.
+              // Both attempts failed.
             }
           }
           if (mountedRef.current) {
-            setUser(enhanced);
+            // Refresh from the server if we got it; otherwise KEEP the cached
+            // user (a valid session must not be logged out just because the
+            // profile re-fetch was slow/failed). Only clear when there's no
+            // cache to fall back on.
+            if (enhanced) setUser(enhanced);
+            else if (!cached) setUser(null);
             setLoading(false);
             initialLoadDoneRef.current = true;
           }
@@ -294,18 +344,38 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
       }
 
       if (data.user) {
+        // On mobile, the Supabase client's HTTP auth header may not be attached
+        // immediately after signInWithPassword resolves. Explicitly set the
+        // session so the Authorization header is present BEFORE we read profiles
+        // (the getSession path already does this — "critical for mobile"). Without
+        // it, the profile query races the header, goes out as anon, RLS returns 0
+        // rows, and .single() throws → "could not load your profile".
+        if (data.session?.access_token && data.session?.refresh_token) {
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          }).catch(() => { /* best effort */ });
+        }
+        let enhanced: EnhancedUser | null = null;
         try {
-          const enhanced = await fetchProfile(data.user);
-          if (mountedRef.current) {
-            setUser(enhanced);
-            setLoading(false);
-          }
+          enhanced = await fetchProfile(data.user);
         } catch {
-          // Profile fetch failed after valid credentials — don't guess a role,
-          // return an error so the user can retry
-          if (mountedRef.current) setLoading(false);
-          signingInRef.current = false;
-          return { error: 'Signed in but could not load your profile. Please try again.' };
+          // Retry once after a brief delay — covers the mobile header race and
+          // transient slowness (mirrors the getSession retry).
+          await new Promise(r => setTimeout(r, 1500));
+          try {
+            enhanced = await fetchProfile(data.user);
+          } catch {
+            // Profile fetch failed twice after valid credentials — don't guess a
+            // role; return an error so the user can retry.
+            if (mountedRef.current) setLoading(false);
+            signingInRef.current = false;
+            return { error: 'Signed in but could not load your profile. Please try again.' };
+          }
+        }
+        if (mountedRef.current) {
+          setUser(enhanced);
+          setLoading(false);
         }
       } else {
         setLoading(false);
@@ -323,6 +393,7 @@ export function EnhancedAuthProvider({ children }: { children: React.ReactNode }
   const signOut = async () => {
     setUser(null);
     setLoading(false);
+    clearCachedUser();
     try {
       await supabase.auth.signOut();
     } catch { }

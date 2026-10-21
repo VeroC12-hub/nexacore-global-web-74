@@ -6,13 +6,38 @@ import { generateLocalResponse } from './localAI';
 
 export interface AIResponse {
   message: string;
-  source: 'claude' | 'local';
+  source: 'pitch' | 'claude' | 'local';
   metadata?: {
     model?: string;
     tokensUsed?: number;
     inputTokens?: number;
     outputTokens?: number;
+    captured?: boolean;
   };
+}
+
+/**
+ * Try the free, server-side NexaCore pitch-bot endpoint first.
+ * It is grounded in the public Pitch Brain and captures leads. Returns null on
+ * any failure so the caller can fall back to the existing Claude/local chain.
+ */
+async function tryPitchEndpoint(
+  message: string,
+  history: Array<{ role: 'user' | 'assistant'; content: string }>
+): Promise<AIResponse | null> {
+  try {
+    const resp = await fetch('/api/ai/pitch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data?.reply || !String(data.reply).trim()) return null;
+    return { message: String(data.reply).trim(), source: 'pitch', metadata: { captured: !!data.captured } };
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -26,7 +51,7 @@ export async function getAIResponse(
   forceLocal: boolean = false
 ): Promise<AIResponse> {
 
-  // If forced to use local AI, skip Claude entirely
+  // If forced to use local AI, skip everything else
   if (forceLocal) {
     console.log('🤖 Using Local AI (forced)');
     const localResponse = await generateLocalResponse(message);
@@ -36,7 +61,14 @@ export async function getAIResponse(
     };
   }
 
-  // Try Claude API first
+  // Primary: free, grounded NexaCore pitch-bot (Pitch Brain + lead capture).
+  const pitch = await tryPitchEndpoint(message, history);
+  if (pitch) {
+    console.log('✨ NexaCore pitch-bot answered');
+    return pitch;
+  }
+
+  // Fallback: try Claude API
   try {
     console.log('☁️ Trying Claude API...');
     const claudeResponse = await sendMessageToClaude(message, history);

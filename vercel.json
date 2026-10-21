@@ -8,16 +8,54 @@
       "destination": "/api/ai/chat"
     },
     {
+      "source": "/api/ai/jarvis",
+      "destination": "/api/ai/jarvis"
+    },
+    {
+      "source": "/api/ai/pitch",
+      "destination": "/api/ai/pitch"
+    },
+    {
+      "source": "/api/ai/sales-draft",
+      "destination": "/api/ai/sales-draft"
+    },
+    {
       "source": "/api/ai/embeddings",
       "destination": "/api/ai/embeddings"
+    },
+    {
+      "source": "/api/telegram/webhook",
+      "destination": "/api/telegram/webhook"
+    },
+    {
+      "source": "/api/cron/briefing",
+      "destination": "/api/cron/briefing"
+    },
+    {
+      "source": "/api/cron/reminders",
+      "destination": "/api/cron/reminders"
+    },
+    {
+      "source": "/api/push/subscribe",
+      "destination": "/api/push/subscribe"
     },
     {
       "source": "/api/quotes/([^/]+)/pdf",
       "destination": "/api/quotes/[id]/pdf?id=$1"
     },
     {
+      "source": "/api/agents/run",
+      "destination": "/api/agents/run"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/briefing",
+      "schedule": "0 6 * * *"
     }
   ],
   "redirects": [
@@ -27,7 +65,7 @@
       "permanent": true
     },
     {
-      "source": "/quote-review/:id", 
+      "source": "/quote-review/:id",
       "destination": "/quote/:id",
       "permanent": true
     }

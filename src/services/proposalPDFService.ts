@@ -263,15 +263,16 @@ export class ProposalPDFGenerator {
         .forEach(benefit => {
           this.doc.setFontSize(10);
           this.doc.setFont('helvetica', 'normal');
+          const lines = this.doc.splitTextToSize(benefit, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 10);
+          this.checkPageBreak(Math.min(lines.length * 6 + 4, 30));
           this.doc.setTextColor(...COLORS.textGray);
           this.doc.text('•', LETTERHEAD.MARGIN_LEFT, this.yPos);
-          const lines = this.doc.splitTextToSize(benefit, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 10);
-          lines.forEach((line: string) => {
+          lines.forEach((line: string, idx: number) => {
+            if (idx > 0) this.checkPageBreak(8);
             this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 8, this.yPos);
             this.yPos += 6;
           });
           this.yPos += 2;
-          this.checkPageBreak();
         });
       this.yPos += 5;
     }
@@ -330,7 +331,7 @@ export class ProposalPDFGenerator {
       this.addSubheader('Project Phases');
 
       this.proposal.methodology.phases.forEach((phase, index) => {
-        this.checkPageBreak(50);
+        this.checkPageBreak(40);
 
         this.doc.setFillColor(...this.brandColors.mediumGray);
         this.doc.rect(LETTERHEAD.MARGIN_LEFT + 2, this.yPos - 2, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 4, 8, 'F');
@@ -402,11 +403,11 @@ export class ProposalPDFGenerator {
         lineWidth: 0.3
       },
       columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 44 },
-        2: { cellWidth: 65 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 30 }
+        0: { cellWidth: 8 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 76, overflow: 'linebreak' },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 28 }
       }
     });
 
@@ -496,11 +497,11 @@ export class ProposalPDFGenerator {
         lineWidth: 0.3
       },
       columnStyles: {
-        0: { cellWidth: 35 },
-        1: { cellWidth: 44 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 50 }
+        0: { cellWidth: 28 },
+        1: { cellWidth: 38 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 20 },
+        4: { cellWidth: 70, overflow: 'linebreak' }
       }
     });
 
@@ -552,11 +553,11 @@ export class ProposalPDFGenerator {
         lineWidth: 0.3
       },
       columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 49 },
-        3: { cellWidth: 30 },
-        4: { cellWidth: 45 }
+        0: { cellWidth: 8 },
+        1: { cellWidth: 36 },
+        2: { cellWidth: 58, overflow: 'linebreak' },
+        3: { cellWidth: 28 },
+        4: { cellWidth: 44 }
       }
     });
 
@@ -695,15 +696,18 @@ export class ProposalPDFGenerator {
 
   private addBulletList(items: string[]): void {
     items.forEach(item => {
-      this.checkPageBreak();
-
       this.doc.setFontSize(10);
       this.doc.setFont('helvetica', 'normal');
+
+      const lines = this.doc.splitTextToSize(item, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 10);
+      // Reserve space for the first line plus bullet; wrap remainder with per-line checks
+      this.checkPageBreak(Math.min(lines.length * 6 + 4, 30));
+
       this.doc.setTextColor(...COLORS.textGray);
       this.doc.text('•', LETTERHEAD.MARGIN_LEFT, this.yPos);
 
-      const lines = this.doc.splitTextToSize(item, this.pageWidth - LETTERHEAD.MARGIN_LEFT - LETTERHEAD.MARGIN_RIGHT - 10);
-      lines.forEach((line: string) => {
+      lines.forEach((line: string, idx: number) => {
+        if (idx > 0) this.checkPageBreak(8);
         this.doc.text(line, LETTERHEAD.MARGIN_LEFT + 8, this.yPos);
         this.yPos += 6;
       });

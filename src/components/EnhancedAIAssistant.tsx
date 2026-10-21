@@ -288,10 +288,10 @@ const EnhancedAIAssistant = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-white flex items-center">
-                  NexaCore AI Assistant
+                  NexaCore Assistant
                   <Sparkles className="w-3 h-3 ml-1" />
                 </h3>
-                <p className="text-xs text-white/90">Powered by Claude AI • Always learning</p>
+                <p className="text-xs text-white/90">Ask about our services • Get a free quote</p>
               </div>
             </div>
             <div className="flex items-center space-x-1">
@@ -339,15 +339,15 @@ const EnhancedAIAssistant = () => {
                     <div className="w-16 h-16 bg-gradient-to-br from-primary to-success rounded-full flex items-center justify-center mb-4">
                       <Sparkles className="w-8 h-8 text-white" />
                     </div>
-                    <h4 className="font-semibold text-lg mb-2">Welcome to NexaCore AI</h4>
+                    <h4 className="font-semibold text-lg mb-2">Welcome to NexaCore</h4>
                     <p className="text-sm text-muted-foreground mb-4">
-                      I'm your intelligent assistant powered by Claude AI. I can help you with:
+                      Hi! I'm the NexaCore assistant. I can help you with:
                     </p>
                     <div className="text-sm text-muted-foreground text-left space-y-1">
-                      <p>• Information about our services</p>
-                      <p>• Technical questions and guidance</p>
-                      <p>• Project estimates and recommendations</p>
-                      <p>• Platform features and navigation</p>
+                      <p>• What we do (engineering, software, design, data)</p>
+                      <p>• Our Autodesk and Dassault partnerships</p>
+                      <p>• Pricing ranges and a free quote</p>
+                      <p>• Booking a consultation with our team</p>
                     </div>
                   </div>
                 )}
@@ -410,7 +410,7 @@ const EnhancedAIAssistant = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground mt-2 text-center">
-                  Powered by Claude AI • Press Enter to send, Shift+Enter for new line
+                  NexaCore Innovations • Press Enter to send, Shift+Enter for new line
                 </p>
               </div>
             </>

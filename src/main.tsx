@@ -7,6 +7,17 @@ import { initializeEnvironment } from './utils/environment.ts'
 // Initialize environment and enforce correct domain for NexaCore Innovations
 initializeEnvironment();
 
+// Register a minimal (no-cache) service worker so the site is installable as a
+// real app (WebAPK) on Android — required for "Add to Home screen" to create a
+// launchable app and for Google Assistant "Open JARVIS" to work. Inlined here
+// (rather than imported from performanceOptimization.ts, which has unrelated
+// duplicate-export issues that would break the build).
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => { /* best effort */ });
+  });
+}
+
 // Global handler for chunk-load errors (stale deployment — user has old index.html
 // cached but Vercel already replaced the asset hashes).
 // Reloads once to fetch fresh index.html. A sessionStorage guard prevents loops.
