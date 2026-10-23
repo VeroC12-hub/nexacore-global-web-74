@@ -44,7 +44,7 @@ deploys. Godwin reviews and deploys.
    `in_progress`, erp_tasks starts at `new`), hardcoded or fake data, buttons
    that do nothing (search for `<Button` without `onClick` or `type="submit"`),
    and missing loading or empty states. One panel per run.
-2. Client portal: same audit as item 2.
+2. Client portal: same audit as item 1.
 3. Other edge functions in `supabase/functions/`: check each for the same
    problems found in send-email (no auth on actions that should be staff-only,
    unescaped HTML, logging personal data).
