@@ -132,7 +132,10 @@ export function useSendProposal(
       if (result.error) {
         toast.error('Failed to send proposal: ' + result.error.message);
       } else {
-        toast.success('Proposal sent to client!');
+        // No email goes out yet: be explicit so nobody assumes the client has it
+        toast.success('Proposal marked as sent', {
+          description: 'No email is sent automatically. Download the PDF and send it to the client.',
+        });
         queryClient.invalidateQueries({ queryKey: [PROPOSAL_QUERY_KEY, proposalId] });
         queryClient.invalidateQueries({ queryKey: [PROPOSALS_QUERY_KEY] });
         queryClient.invalidateQueries({ queryKey: [PROPOSAL_ACTIVITIES_QUERY_KEY, proposalId] });

@@ -29,7 +29,7 @@ import {
   Send
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useCreateProposal } from '@/hooks/useProposalActions';
+import { useCreateProposal, useSendProposal } from '@/hooks/useProposalActions';
 import type { CreateProposalInput, ExecutiveSummary, ScopeOfWork, Methodology, DeliverablesSection, TeamBios, RiskAnalysis, SuccessMetrics, CustomSection } from '@/types/proposal';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -169,6 +169,7 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
   });
 
   const createProposalMutation = useCreateProposal();
+  const sendProposalMutation = useSendProposal();
 
   useEffect(() => {
     if (isOpen) {
@@ -329,8 +330,8 @@ export const ProposalCreationModal: React.FC<ProposalCreationModalProps> = ({
     try {
       const result = await createProposalMutation.mutateAsync(formData);
       if (result.data) {
-        // TODO: Add send functionality in Phase 6
-        toast.success('Proposal created! Send functionality coming in Phase 6.');
+        // Same as Send in the Proposals tab: marks it sent and logs the activity
+        await sendProposalMutation.mutateAsync(result.data.id);
         onSuccess(result.data.id);
         handleClose();
       }
