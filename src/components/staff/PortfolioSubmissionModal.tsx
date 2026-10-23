@@ -168,6 +168,8 @@ export default function PortfolioSubmissionModal({
     try {
       setLoading(true);
 
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+
       // Create portfolio project (will be in pending state)
       const { data: project, error: projectError } = await supabase
         .from('portfolio_projects')
@@ -177,34 +179,53 @@ export default function PortfolioSubmissionModal({
           is_featured: false,
           display_order: 999,
           submission_status: 'pending_review',
-          submitted_by: (await supabase.auth.getUser()).data.user?.id
+          submitted_by: userId
         })
         .select()
         .single();
 
       if (projectError) throw projectError;
 
-      toast.success('Portfolio project submitted for review!');
-      
-      // TODO: Handle file uploads to storage
-      // For now, just create file records
-      if (files.length > 0) {
-        const fileRecords = files.map(file => ({
+      // Upload attached files to the portfolio-files bucket, then record them
+      const fileRecords = [];
+      let failedUploads = 0;
+      for (const [index, file] of files.filter(f => f.file).entries()) {
+        const safeName = file.file!.name.replace(/[^\w.-]+/g, '_');
+        const path = `${userId}/${project.id}/${Date.now()}-${safeName}`;
+        const { error: uploadError } = await supabase.storage
+          .from('portfolio-files')
+          .upload(path, file.file!, { contentType: file.file!.type || undefined });
+        if (uploadError) {
+          console.error('Portfolio file upload failed:', uploadError);
+          failedUploads++;
+          continue;
+        }
+        const { data: { publicUrl } } = supabase.storage.from('portfolio-files').getPublicUrl(path);
+        fileRecords.push({
           portfolio_project_id: project.id,
-          filename: file.filename,
-          original_filename: file.filename,
-          file_type: file.file_type,
+          filename: file.filename || file.file!.name,
+          original_filename: file.file!.name,
+          file_type: file.file_type || file.file!.type,
           file_category: file.file_category,
           description: file.description,
           software_used: file.software_used,
           is_downloadable: file.is_downloadable,
           is_public: false, // Admin must approve
-          file_path: `/uploads/pending/${project.id}/${file.filename}`,
-          file_url: `/uploads/pending/${project.id}/${file.filename}`,
-          display_order: 1
-        }));
+          file_path: path,
+          file_url: publicUrl,
+          display_order: index + 1
+        });
+      }
 
-        await supabase.from('portfolio_files').insert(fileRecords);
+      if (fileRecords.length > 0) {
+        const { error: filesError } = await supabase.from('portfolio_files').insert(fileRecords);
+        if (filesError) throw filesError;
+      }
+
+      if (failedUploads > 0) {
+        toast.warning(`Project submitted, but ${failedUploads} file(s) failed to upload`);
+      } else {
+        toast.success('Portfolio project submitted for review!');
       }
 
       onSuccess?.();
