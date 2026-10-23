@@ -19,7 +19,7 @@ const STATUS_MAP: Record<string, string> = {
   'completed': 'completed',
 };
 
-function transformTask(task: any) {
+export function transformTask(task: any) {
   return {
     ...task,
     assignee: task.profiles?.full_name || 'Unassigned',

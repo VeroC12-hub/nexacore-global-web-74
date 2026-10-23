@@ -8,7 +8,7 @@ export { EnhancedSearchBar } from './EnhancedSearchBar';
 
 // Data wrapper components with pagination
 export { ERPProjectsTabWithData } from './ERPProjectsTabWithData';
-export { ERPTasksTabWithData } from './ERPTasksTabWithData';
+export { ERPTasksTabWithData, transformTask } from './ERPTasksTabWithData';
 export { ERPTimeTabWithData } from './ERPTimeTabWithData';
 export { ProjectFormModal } from './ProjectFormModal';
 export { ProjectViewModal } from './ProjectViewModal';

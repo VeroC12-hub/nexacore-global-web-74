@@ -14,6 +14,7 @@ import {
   ERPOverviewTab,
   ERPProjectsTabWithData,
   ERPTasksTabWithData,
+  transformTask,
   ERPTimeTabWithData,
   ERPTeamTab,
   ERPProject,
@@ -203,6 +204,8 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
   // Project export modal states
   const [isProjectExportOpen, setIsProjectExportOpen] = useState(false);
   const [singleProjectToExport, setSingleProjectToExport] = useState<ERPProject | null>(null);
+  const [exportTasks, setExportTasks] = useState<ERPTask[]>([]);
+  const [exportProjects, setExportProjects] = useState<ERPProject[]>([]);
 
   // Time entry modal states
   const [selectedTimeEntry, setSelectedTimeEntry] = useState<TimeEntry | null>(null);
@@ -604,8 +607,17 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
     }
   };
 
-  const handleExportTasks = () => {
-    setSingleTaskToExport(null); // Export all/filtered tasks
+  const handleExportTasks = async () => {
+    setSingleTaskToExport(null); // Export all tasks
+    const { data, error } = await (supabase as any)
+      .from('erp_tasks')
+      .select('*, profiles:profiles!erp_tasks_assigned_to_fkey(full_name), erp_projects:erp_projects!erp_tasks_erp_project_id_fkey(title)')
+      .order('created_at', { ascending: false });
+    if (error) {
+      toast.error('Failed to load tasks for export');
+      return;
+    }
+    setExportTasks((data || []).map(transformTask));
     setIsTaskExportOpen(true);
   };
 
@@ -615,8 +627,17 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
   };
 
   // Project export handlers
-  const handleExportProjects = () => {
-    setSingleProjectToExport(null); // Export all/filtered projects
+  const handleExportProjects = async () => {
+    setSingleProjectToExport(null); // Export all projects
+    const { data, error } = await (supabase as any)
+      .from('erp_projects')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) {
+      toast.error('Failed to load projects for export');
+      return;
+    }
+    setExportProjects(data || []);
     setIsProjectExportOpen(true);
   };
 
@@ -1188,29 +1209,27 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       />
 
       {/* Task Export Modal */}
-      {/* TODO Phase 2: Move this modal to ERPTasksTabWithData to properly access tasks data */}
       <TaskExportModal
         isOpen={isTaskExportOpen}
         onClose={() => {
           setIsTaskExportOpen(false);
           setSingleTaskToExport(null);
         }}
-        tasks={[]} // Temporary: bulk export disabled until Phase 2
-        filteredTasks={[]} // Temporary: filtered export disabled until Phase 2
-        singleTask={singleTaskToExport} // Single task export still works
+        tasks={exportTasks}
+        filteredTasks={exportTasks}
+        singleTask={singleTaskToExport}
       />
 
       {/* Project Export Modal */}
-      {/* TODO Phase 2: Move this modal to ERPProjectsTabWithData to properly access projects data */}
       <ERPProjectExportModal
         isOpen={isProjectExportOpen}
         onClose={() => {
           setIsProjectExportOpen(false);
           setSingleProjectToExport(null);
         }}
-        projects={[]} // Temporary: bulk export disabled until Phase 2
-        filteredProjects={[]} // Temporary: filtered export disabled until Phase 2
-        singleProject={singleProjectToExport} // Single project export still works
+        projects={exportProjects}
+        filteredProjects={exportProjects}
+        singleProject={singleProjectToExport}
       />
 
       {/* Time Entry Form Modal */}
