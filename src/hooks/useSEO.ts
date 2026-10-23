@@ -58,7 +58,7 @@ const getPageFromPath = (pathname: string): string => {
 };
 
 // Preload critical SEO resources
-export const preloadSEOResources = () => {
+export const usePreloadSEOResources = () => {
   useEffect(() => {
     // Preload Open Graph image
     const ogImage = new Image();

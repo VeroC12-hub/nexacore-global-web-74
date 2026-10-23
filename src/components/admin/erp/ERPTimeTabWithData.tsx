@@ -61,6 +61,15 @@ export function ERPTimeTabWithData(props: ERPTimeTabWithDataProps) {
     setPage(1);
   }, []);
 
+  // Hooks must run before the early returns below, on every render
+  const rawEntries = timeEntriesData?.data;
+  const projects = useMemo(() => {
+    const seen = new Set<string>();
+    return (rawEntries || [])
+      .filter((e: any) => e.erp_project_id && !seen.has(e.erp_project_id) && seen.add(e.erp_project_id))
+      .map((e: any) => ({ id: e.erp_project_id, title: e.erp_projects?.title || 'Unknown' }));
+  }, [rawEntries]);
+
   if (error) {
     return (
       <div className="p-6">
@@ -85,18 +94,9 @@ export function ERPTimeTabWithData(props: ERPTimeTabWithDataProps) {
     return <DashboardSkeleton />;
   }
 
-  const rawEntries = timeEntriesData?.data || [];
-  const timeEntries = rawEntries.map(transformTimeEntry);
+  const timeEntries = (rawEntries || []).map(transformTimeEntry);
   const totalCount = timeEntriesData?.count || 0;
   const totalPages = timeEntriesData?.totalPages || 1;
-
-  // Extract unique projects for the projects prop
-  const projects = useMemo(() => {
-    const seen = new Set<string>();
-    return rawEntries
-      .filter((e: any) => e.erp_project_id && !seen.has(e.erp_project_id) && seen.add(e.erp_project_id))
-      .map((e: any) => ({ id: e.erp_project_id, title: e.erp_projects?.title || 'Unknown' }));
-  }, [rawEntries]);
 
   return (
     <div>
