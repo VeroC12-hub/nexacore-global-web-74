@@ -22,10 +22,6 @@ deploys. Godwin reviews and deploys.
   `admin/AdvancedWorkflowBuilder.tsx` (its Preview is a stub),
   `admin/StaffPermissionManagement.tsx`, and `staff/StaffDashboard.tsx`
   (replaced by ModernStaffDashboard).
-- **Deploy the two email functions** after the security fix (commit 6a0035c):
-  `npx supabase functions deploy send-email` and
-  `npx supabase functions deploy send-enhanced-quote-emails`. Until then anyone
-  can still send NexaCore-branded emails with their own content to any address.
 - **Proposal emails:** "Send" on a proposal only marks it sent; no email goes
   out (the message now says so). Decide whether proposals should be emailed
   automatically, from which address, and as a PDF attachment or a link to a
@@ -95,3 +91,5 @@ deploys. Godwin reviews and deploys.
   window; removed the dead Email button.
 - 2026-10-23: Portfolio export: removed PowerPoint, Web and Excel options that
   only said "coming soon"; PDF remains.
+- 2026-10-23: Godwin deployed both secured email functions (send-email,
+  send-enhanced-quote-emails). Phishing hole closed in production.
