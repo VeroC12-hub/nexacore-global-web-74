@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,6 +8,40 @@ const corsHeaders = {
 };
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
+
+// Escape every string the caller supplies before it goes into email HTML,
+// otherwise anyone can inject links or markup into a NexaCore-branded email
+const escapeHtml = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+const sanitize = (value: any): any => {
+  if (typeof value === 'string') return escapeHtml(value);
+  if (Array.isArray(value)) return value.map(sanitize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, sanitize(v)]));
+  }
+  return value;
+};
+
+// Emails sent to a caller-chosen client address are staff-only
+const isStaffRequest = async (req: Request): Promise<boolean> => {
+  const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
+  if (!token) return false;
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return false;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  return ['admin', 'staff', 'project_manager'].includes(profile?.role ?? '');
+};
 
 console.log('Enhanced Email function starting...');
 console.log('Resend API Key available:', !!RESEND_API_KEY);
@@ -20,7 +55,6 @@ serve(async (req) => {
 
   try {
     const requestBody = await req.text();
-    console.log('Raw request body:', requestBody);
     
     let requestData;
     try {
@@ -30,9 +64,10 @@ serve(async (req) => {
       throw new Error('Invalid JSON in request body');
     }
 
-    const { type, data } = requestData;
+    const { type } = requestData;
+    // Escaped copy for HTML; the raw address is kept only for the recipient field
+    const data = { ...sanitize(requestData.data ?? {}), recipient_email: requestData.data?.client_email };
     console.log('Email request type:', type);
-    console.log('Email data:', JSON.stringify(data, null, 2));
 
     if (!type) {
       throw new Error('Email type is required');
@@ -49,6 +84,12 @@ serve(async (req) => {
         emailResponse = await sendQuoteRequestToPM(data);
         break;
       case 'quote_to_client':
+        if (!(await isStaffRequest(req))) {
+          return new Response(JSON.stringify({ error: 'Not allowed' }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
         emailResponse = await sendQuoteToClient(data);
         break;
       case 'quote_response_to_pm':
@@ -463,7 +504,7 @@ async function sendQuoteToClient(data: any) {
     },
     body: JSON.stringify({
       from: 'NexaCore Projects <projects@nexacore-innovations.com>',
-      to: [data.client_email],
+      to: [data.recipient_email],
       subject: `Your Quote is Ready - ${data.service_type} Project (#${data.quote_id})`,
       html: emailHtml
     }),

@@ -14,6 +14,35 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
+// Escape every string the caller supplies before it goes into email HTML,
+// otherwise anyone can inject links or markup into a NexaCore-branded email
+const escapeHtml = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+const sanitize = (value: any): any => {
+  if (typeof value === 'string') return escapeHtml(value);
+  if (Array.isArray(value)) return value.map(sanitize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, sanitize(v)]));
+  }
+  return value;
+};
+
+// Emails addressed to a caller-chosen recipient with quote content are staff-only
+const isStaffRequest = async (req: Request): Promise<boolean> => {
+  const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
+  if (!token) return false;
+  const { data: { user } } = await supabase.auth.getUser(token);
+  if (!user) return false;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single();
+  return ['admin', 'staff', 'project_manager'].includes(profile?.role ?? '');
+};
+
 interface EmailRequest {
   type: 'quote_request' | 'quote_sent' | 'quote_approved' | 'quote_revision_requested' | 'quote_request_confirmation';
   to: string;
@@ -28,7 +57,6 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const requestBody = await req.text();
-    console.log('Raw request body:', requestBody);
     
     let requestData;
     try {
@@ -38,11 +66,19 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Invalid JSON in request body');
     }
 
-    const { type, to, data }: EmailRequest = requestData;
-    console.log('Email request:', { type, to, data });
+    const { type, to }: EmailRequest = requestData;
+    const data = sanitize(requestData.data ?? {});
+    console.log('Email request:', { type, to });
 
     if (!type) {
       throw new Error('Email type is required');
+    }
+
+    if (type === 'quote_sent' && !(await isStaffRequest(req))) {
+      return new Response(JSON.stringify({ error: 'Not allowed' }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
     }
 
     let emailResponse;
