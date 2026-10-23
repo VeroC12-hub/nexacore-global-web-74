@@ -502,6 +502,8 @@ export function ERPOverviewTab({
     { id: 'schedule-meeting', label: 'Meeting', icon: Calendar, color: 'bg-indigo-500 hover:bg-indigo-600', description: 'Schedule a meeting' }
   ];
 
+  const [showAllActivity, setShowAllActivity] = useState(false);
+
   const recentActivity = [
     ...liveTasks.map(t => ({
       id: `task-${t.id}`,
@@ -522,7 +524,7 @@ export function ERPOverviewTab({
   ]
     .filter(a => a.at)
     .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
-    .slice(0, 4)
+    .slice(0, showAllActivity ? 25 : 4)
     .map(a => ({ ...a, time: formatDistanceToNow(new Date(a.at), { addSuffix: true }) }));
 
   const upcomingTasks = liveTasks
@@ -944,8 +946,8 @@ export function ERPOverviewTab({
                 <Activity className="h-5 w-5 text-purple-500" />
                 Recent Activity
               </span>
-              <Button variant="outline" size="sm" onClick={() => onQuickAction('view-all-activity')}>
-                View All
+              <Button variant="outline" size="sm" onClick={() => setShowAllActivity(v => !v)}>
+                {showAllActivity ? 'Show Less' : 'View All'}
               </Button>
             </CardTitle>
             <CardDescription>Latest updates across your organization</CardDescription>

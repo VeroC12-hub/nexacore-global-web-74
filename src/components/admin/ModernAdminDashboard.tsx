@@ -367,7 +367,7 @@ export const ModernAdminDashboard: React.FC = () => {
         return (
           <ErrorBoundary>
             <Suspense fallback={<DashboardSkeleton />}>
-              <AdminERPTab />
+              <AdminERPTab onNavigate={(view) => setActiveView(view as typeof activeView)} />
             </Suspense>
           </ErrorBoundary>
         );

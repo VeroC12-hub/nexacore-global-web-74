@@ -105,7 +105,12 @@ import {
   Users2
 } from 'lucide-react';
 
-export function AdminERPTab() {
+interface AdminERPTabProps {
+  /** Switch the admin dashboard to another panel (e.g. 'invoices', 'users') */
+  onNavigate?: (view: string) => void;
+}
+
+export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
   const { isAdmin } = useEnhancedAuth();
 
   // React Query hooks - Progressive loading (stats only on mount)
@@ -739,17 +744,20 @@ export function AdminERPTab() {
 
       // Client management (future feature)
       case 'add-client':
-        toast.info('Client Management', {
-          description: 'Client management system coming in Phase 7. For now, you can manage clients through the Projects tab.'
-        });
+        if (onNavigate) {
+          onNavigate('users');
+        } else {
+          toast.info('Clients are managed in the Users panel');
+        }
         break;
 
       // Invoice creation (future feature)
       case 'create-invoice':
-        toast.info('Invoice Creation', {
-          description: 'Invoice system coming in Phase 7. You can export time entries for billing from the Time tab.'
-        });
-        setActiveTab('time');
+        if (onNavigate) {
+          onNavigate('invoices');
+        } else {
+          toast.info('Invoices are created in the Invoices panel');
+        }
         break;
 
       // Start timer with project selection
@@ -784,9 +792,7 @@ export function AdminERPTab() {
 
       // Activity feed actions
       case 'view-all-activity':
-        toast.info('Activity Log', {
-          description: 'Full activity history view coming soon. Current activities are shown on the Overview tab.'
-        });
+        // Handled inside ERPOverviewTab, which expands its own list
         break;
 
       case 'view-activity':
