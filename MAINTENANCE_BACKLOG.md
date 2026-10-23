@@ -10,11 +10,6 @@ deploys. Godwin reviews and deploys.
 
 ## Needs Godwin
 
-- **Apply two storage migrations** in the Supabase SQL editor (project
-  nmwfevhetlwehbuikflk), in order:
-  `supabase/migrations/20261021000000_project_files_storage.sql` (admin File
-  Repository) and `supabase/migrations/20261023000000_portfolio_files_storage.sql`
-  (staff portfolio submissions). Until then those uploads fail with an error.
 - **Deploy** branch `site-maintenance` to production (`npx vercel --prod`) after
   reviewing the commits, then merge it into `main`.
 - **Delete or keep** four unused components, none of which appear anywhere on
@@ -93,3 +88,5 @@ deploys. Godwin reviews and deploys.
   --schema public`). ERP and JARVIS tables are now typed; removed the casts in
   ERP overview and export code. Casts remain only where TypeScript hits its
   depth limit (EnhancedProjectManagement, ModernStaffDashboard) and in Jarvis.tsx.
+- 2026-10-23: Both storage migrations applied in production and verified
+  (project-files private, portfolio-files public, 4 policies).
