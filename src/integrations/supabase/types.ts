@@ -41,6 +41,214 @@ export type Database = {
         }
         Relationships: []
       }
+      agent_memory: {
+        Row: {
+          company_agent_id: string | null
+          company_id: string
+          confidence: number | null
+          created_at: string | null
+          embedding: string | null
+          expires_at: string | null
+          fact: string
+          id: string
+          scope: string | null
+          source: string | null
+          topic: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          company_agent_id?: string | null
+          company_id: string
+          confidence?: number | null
+          created_at?: string | null
+          embedding?: string | null
+          expires_at?: string | null
+          fact: string
+          id?: string
+          scope?: string | null
+          source?: string | null
+          topic: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          company_agent_id?: string | null
+          company_id?: string
+          confidence?: number | null
+          created_at?: string | null
+          embedding?: string | null
+          expires_at?: string | null
+          fact?: string
+          id?: string
+          scope?: string | null
+          source?: string | null
+          topic?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_memory_company_agent_id_fkey"
+            columns: ["company_agent_id"]
+            isOneToOne: false
+            referencedRelation: "company_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_memory_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_runs: {
+        Row: {
+          cached_tokens: number | null
+          company_agent_id: string | null
+          company_id: string
+          conversation_id: string | null
+          cost_usd: number | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          input_tokens: number | null
+          latency_ms: number | null
+          model: string | null
+          output_tokens: number | null
+          provider: string | null
+          status: string | null
+          tool_calls: Json | null
+          tools_used: string[] | null
+          trigger: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cached_tokens?: number | null
+          company_agent_id?: string | null
+          company_id: string
+          conversation_id?: string | null
+          cost_usd?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          status?: string | null
+          tool_calls?: Json | null
+          tools_used?: string[] | null
+          trigger?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cached_tokens?: number | null
+          company_agent_id?: string | null
+          company_id?: string
+          conversation_id?: string | null
+          cost_usd?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          input_tokens?: number | null
+          latency_ms?: number | null
+          model?: string | null
+          output_tokens?: number | null
+          provider?: string | null
+          status?: string | null
+          tool_calls?: Json | null
+          tools_used?: string[] | null
+          trigger?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_runs_company_agent_id_fkey"
+            columns: ["company_agent_id"]
+            isOneToOne: false
+            referencedRelation: "company_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_runs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_runs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_agents: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          default_model: string | null
+          default_tools: string[] | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_builtin: boolean | null
+          is_published: boolean | null
+          key: string
+          max_permission_level: string | null
+          name: string
+          required_connectors: string[] | null
+          system_prompt: string
+          tagline: string | null
+          updated_at: string | null
+          version: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          default_model?: string | null
+          default_tools?: string[] | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_builtin?: boolean | null
+          is_published?: boolean | null
+          key: string
+          max_permission_level?: string | null
+          name: string
+          required_connectors?: string[] | null
+          system_prompt: string
+          tagline?: string | null
+          updated_at?: string | null
+          version?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          default_model?: string | null
+          default_tools?: string[] | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_builtin?: boolean | null
+          is_published?: boolean | null
+          key?: string
+          max_permission_level?: string | null
+          name?: string
+          required_connectors?: string[] | null
+          system_prompt?: string
+          tagline?: string | null
+          updated_at?: string | null
+          version?: string | null
+        }
+        Relationships: []
+      }
       ai_assistant_analytics: {
         Row: {
           created_at: string | null
@@ -138,9 +346,13 @@ export type Database = {
       }
       ai_conversations: {
         Row: {
+          channel: string | null
+          company_agent_id: string | null
+          company_id: string | null
           context: Json | null
           created_at: string | null
           ended_at: string | null
+          external_ref: string | null
           feedback: string | null
           id: string
           is_resolved: boolean | null
@@ -158,9 +370,13 @@ export type Database = {
           user_satisfaction: number | null
         }
         Insert: {
+          channel?: string | null
+          company_agent_id?: string | null
+          company_id?: string | null
           context?: Json | null
           created_at?: string | null
           ended_at?: string | null
+          external_ref?: string | null
           feedback?: string | null
           id?: string
           is_resolved?: boolean | null
@@ -178,9 +394,13 @@ export type Database = {
           user_satisfaction?: number | null
         }
         Update: {
+          channel?: string | null
+          company_agent_id?: string | null
+          company_id?: string | null
           context?: Json | null
           created_at?: string | null
           ended_at?: string | null
+          external_ref?: string | null
           feedback?: string | null
           id?: string
           is_resolved?: boolean | null
@@ -197,67 +417,112 @@ export type Database = {
           user_id?: string | null
           user_satisfaction?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_conversations_company_agent_id_fkey"
+            columns: ["company_agent_id"]
+            isOneToOne: false
+            referencedRelation: "company_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_conversations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_knowledge_base: {
         Row: {
           category: string
+          chunk_index: number | null
+          company_id: string | null
           content: string
           created_at: string | null
           created_by: string | null
+          document_id: string | null
           embedding: string | null
           id: string
           is_active: boolean | null
           metadata: Json | null
+          page_number: number | null
           search_count: number | null
           source_id: string | null
           source_type: string | null
           subcategory: string | null
           tags: string[] | null
           title: string
+          token_count: number | null
           updated_at: string | null
           usefulness_score: number | null
           version: number | null
         }
         Insert: {
           category: string
+          chunk_index?: number | null
+          company_id?: string | null
           content: string
           created_at?: string | null
           created_by?: string | null
+          document_id?: string | null
           embedding?: string | null
           id?: string
           is_active?: boolean | null
           metadata?: Json | null
+          page_number?: number | null
           search_count?: number | null
           source_id?: string | null
           source_type?: string | null
           subcategory?: string | null
           tags?: string[] | null
           title: string
+          token_count?: number | null
           updated_at?: string | null
           usefulness_score?: number | null
           version?: number | null
         }
         Update: {
           category?: string
+          chunk_index?: number | null
+          company_id?: string | null
           content?: string
           created_at?: string | null
           created_by?: string | null
+          document_id?: string | null
           embedding?: string | null
           id?: string
           is_active?: boolean | null
           metadata?: Json | null
+          page_number?: number | null
           search_count?: number | null
           source_id?: string | null
           source_type?: string | null
           subcategory?: string | null
           tags?: string[] | null
           title?: string
+          token_count?: number | null
           updated_at?: string | null
           usefulness_score?: number | null
           version?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_knowledge_base_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_knowledge_base_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_documents"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ai_learning_feedback: {
         Row: {
@@ -333,10 +598,12 @@ export type Database = {
       }
       ai_messages: {
         Row: {
+          citations: Json | null
           confidence_score: number | null
           content: string
           content_type: string | null
           conversation_id: string
+          cost_usd: number | null
           created_at: string | null
           feedback_comment: string | null
           id: string
@@ -346,13 +613,17 @@ export type Database = {
           retrieved_knowledge: string[] | null
           role: string
           tokens_used: number | null
+          tool_call_id: string | null
+          tool_calls: Json | null
           was_helpful: boolean | null
         }
         Insert: {
+          citations?: Json | null
           confidence_score?: number | null
           content: string
           content_type?: string | null
           conversation_id: string
+          cost_usd?: number | null
           created_at?: string | null
           feedback_comment?: string | null
           id?: string
@@ -362,13 +633,17 @@ export type Database = {
           retrieved_knowledge?: string[] | null
           role: string
           tokens_used?: number | null
+          tool_call_id?: string | null
+          tool_calls?: Json | null
           was_helpful?: boolean | null
         }
         Update: {
+          citations?: Json | null
           confidence_score?: number | null
           content?: string
           content_type?: string | null
           conversation_id?: string
+          cost_usd?: number | null
           created_at?: string | null
           feedback_comment?: string | null
           id?: string
@@ -378,6 +653,8 @@ export type Database = {
           retrieved_knowledge?: string[] | null
           role?: string
           tokens_used?: number | null
+          tool_call_id?: string | null
+          tool_calls?: Json | null
           was_helpful?: boolean | null
         }
         Relationships: [
@@ -646,6 +923,207 @@ export type Database = {
         }
         Relationships: []
       }
+      company_agents: {
+        Row: {
+          agent_id: string
+          allowed_roles: string[] | null
+          company_id: string
+          config: Json | null
+          department_id: string | null
+          display_name: string | null
+          granted_connectors: string[] | null
+          granted_tools: string[] | null
+          id: string
+          installed_at: string | null
+          installed_by: string | null
+          is_enabled: boolean | null
+          model: string | null
+          monthly_budget_usd: number | null
+          permission_level: string | null
+          system_prompt_override: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id: string
+          allowed_roles?: string[] | null
+          company_id: string
+          config?: Json | null
+          department_id?: string | null
+          display_name?: string | null
+          granted_connectors?: string[] | null
+          granted_tools?: string[] | null
+          id?: string
+          installed_at?: string | null
+          installed_by?: string | null
+          is_enabled?: boolean | null
+          model?: string | null
+          monthly_budget_usd?: number | null
+          permission_level?: string | null
+          system_prompt_override?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string
+          allowed_roles?: string[] | null
+          company_id?: string
+          config?: Json | null
+          department_id?: string | null
+          display_name?: string | null
+          granted_connectors?: string[] | null
+          granted_tools?: string[] | null
+          id?: string
+          installed_at?: string | null
+          installed_by?: string | null
+          is_enabled?: boolean | null
+          model?: string | null
+          monthly_budget_usd?: number | null
+          permission_level?: string | null
+          system_prompt_override?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_agents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "ai_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_agents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_agents_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connections: {
+        Row: {
+          account_email: string | null
+          company_id: string
+          connected_by: string | null
+          created_at: string | null
+          credentials: Json | null
+          expires_at: string | null
+          external_id: string | null
+          id: string
+          label: string | null
+          last_error: string | null
+          last_synced_at: string | null
+          provider: string
+          scopes: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_email?: string | null
+          company_id: string
+          connected_by?: string | null
+          created_at?: string | null
+          credentials?: Json | null
+          expires_at?: string | null
+          external_id?: string | null
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider: string
+          scopes?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_email?: string | null
+          company_id?: string
+          connected_by?: string | null
+          created_at?: string | null
+          credentials?: Json | null
+          expires_at?: string | null
+          external_id?: string | null
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string
+          scopes?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      departments: {
+        Row: {
+          code: string | null
+          company_id: string
+          cost_centre: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          lead_user_id: string | null
+          name: string
+          parent_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          code?: string | null
+          company_id: string
+          cost_centre?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_user_id?: string | null
+          name: string
+          parent_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          code?: string | null
+          company_id?: string
+          cost_centre?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_user_id?: string | null
+          name?: string
+          parent_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       erp_companies: {
         Row: {
           created_at: string | null
@@ -882,6 +1360,7 @@ export type Database = {
           hourly_rate: number | null
           id: string
           is_active: boolean | null
+          manager_id: string | null
           permissions: Json | null
           position: string | null
           role: string
@@ -896,6 +1375,7 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           is_active?: boolean | null
+          manager_id?: string | null
           permissions?: Json | null
           position?: string | null
           role: string
@@ -910,6 +1390,7 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           is_active?: boolean | null
+          manager_id?: string | null
           permissions?: Json | null
           position?: string | null
           role?: string
@@ -1352,6 +1833,63 @@ export type Database = {
           },
         ]
       }
+      exam_jobs: {
+        Row: {
+          answer: string | null
+          claimed_at: string | null
+          created_at: string
+          file_data: string | null
+          file_name: string | null
+          file_type: string | null
+          finished_at: string | null
+          focus: string | null
+          id: string
+          instruction: string | null
+          kind: string
+          status: string
+          subject: string | null
+          system: string | null
+          task: string | null
+          text: string | null
+        }
+        Insert: {
+          answer?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          file_data?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          finished_at?: string | null
+          focus?: string | null
+          id?: string
+          instruction?: string | null
+          kind?: string
+          status?: string
+          subject?: string | null
+          system?: string | null
+          task?: string | null
+          text?: string | null
+        }
+        Update: {
+          answer?: string | null
+          claimed_at?: string | null
+          created_at?: string
+          file_data?: string | null
+          file_name?: string | null
+          file_type?: string | null
+          finished_at?: string | null
+          focus?: string | null
+          id?: string
+          instruction?: string | null
+          kind?: string
+          status?: string
+          subject?: string | null
+          system?: string | null
+          task?: string | null
+          text?: string | null
+        }
+        Relationships: []
+      }
       google_drive_folders: {
         Row: {
           created_at: string | null
@@ -1515,6 +2053,7 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          channel: string
           client_id: string | null
           created_at: string | null
           currency: string | null
@@ -1537,6 +2076,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          channel?: string
           client_id?: string | null
           created_at?: string | null
           currency?: string | null
@@ -1559,6 +2099,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          channel?: string
           client_id?: string | null
           created_at?: string | null
           currency?: string | null
@@ -1592,6 +2133,220 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jarvis_leads: {
+        Row: {
+          contact: string | null
+          created_at: string
+          id: string
+          name: string | null
+          next_action: string | null
+          notes: string | null
+          source: string | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          next_action?: string | null
+          notes?: string | null
+          source?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          next_action?: string | null
+          notes?: string | null
+          source?: string | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      jarvis_memory: {
+        Row: {
+          created_at: string
+          fact: string
+          id: string
+          source_task: string | null
+          topic: string
+        }
+        Insert: {
+          created_at?: string
+          fact: string
+          id?: string
+          source_task?: string | null
+          topic: string
+        }
+        Update: {
+          created_at?: string
+          fact?: string
+          id?: string
+          source_task?: string | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jarvis_memory_source_task_fkey"
+            columns: ["source_task"]
+            isOneToOne: false
+            referencedRelation: "jarvis_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jarvis_schedules: {
+        Row: {
+          cron: string
+          enabled: boolean
+          id: string
+          last_run: string | null
+          name: string
+          request: string
+        }
+        Insert: {
+          cron: string
+          enabled?: boolean
+          id?: string
+          last_run?: string | null
+          name: string
+          request: string
+        }
+        Update: {
+          cron?: string
+          enabled?: boolean
+          id?: string
+          last_run?: string | null
+          name?: string
+          request?: string
+        }
+        Relationships: []
+      }
+      jarvis_tasks: {
+        Row: {
+          chat_id: number | null
+          created_at: string
+          error: string | null
+          finished_at: string | null
+          id: string
+          model_used: string | null
+          notified: boolean
+          priority: number
+          request: string
+          result: string | null
+          source: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          chat_id?: number | null
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          model_used?: string | null
+          notified?: boolean
+          priority?: number
+          request: string
+          result?: string | null
+          source?: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          chat_id?: number | null
+          created_at?: string
+          error?: string | null
+          finished_at?: string | null
+          id?: string
+          model_used?: string | null
+          notified?: boolean
+          priority?: number
+          request?: string
+          result?: string | null
+          source?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      knowledge_documents: {
+        Row: {
+          byte_size: number | null
+          checksum: string | null
+          chunk_count: number | null
+          company_id: string
+          created_at: string | null
+          department_ids: string[] | null
+          error_message: string | null
+          id: string
+          indexed_at: string | null
+          mime_type: string | null
+          sensitivity: string | null
+          source_ref: string | null
+          source_type: string | null
+          status: string | null
+          storage_path: string | null
+          title: string
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          byte_size?: number | null
+          checksum?: string | null
+          chunk_count?: number | null
+          company_id: string
+          created_at?: string | null
+          department_ids?: string[] | null
+          error_message?: string | null
+          id?: string
+          indexed_at?: string | null
+          mime_type?: string | null
+          sensitivity?: string | null
+          source_ref?: string | null
+          source_type?: string | null
+          status?: string | null
+          storage_path?: string | null
+          title: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          byte_size?: number | null
+          checksum?: string | null
+          chunk_count?: number | null
+          company_id?: string
+          created_at?: string | null
+          department_ids?: string[] | null
+          error_message?: string | null
+          id?: string
+          indexed_at?: string | null
+          mime_type?: string | null
+          sensitivity?: string | null
+          source_ref?: string | null
+          source_type?: string | null
+          status?: string | null
+          storage_path?: string | null
+          title?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
             referencedColumns: ["id"]
           },
         ]
@@ -3582,6 +4337,102 @@ export type Database = {
           },
         ]
       }
+      team_members: {
+        Row: {
+          allocation: number | null
+          company_id: string
+          id: string
+          joined_at: string | null
+          role_in_team: string | null
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          allocation?: number | null
+          company_id: string
+          id?: string
+          joined_at?: string | null
+          role_in_team?: string | null
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          allocation?: number | null
+          company_id?: string
+          id?: string
+          joined_at?: string | null
+          role_in_team?: string | null
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          department_id: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          lead_user_id: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_user_id?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          department_id?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_user_id?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_department_id_fkey"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profiles: {
         Row: {
           avatar_url: string | null
@@ -4260,6 +5111,62 @@ export type Database = {
         }
         Relationships: []
       }
+      v_connections: {
+        Row: {
+          account_email: string | null
+          company_id: string | null
+          connected_by: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string | null
+          label: string | null
+          last_error: string | null
+          last_synced_at: string | null
+          provider: string | null
+          scopes: string[] | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_email?: string | null
+          company_id?: string | null
+          connected_by?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          label?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string | null
+          scopes?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_email?: string | null
+          company_id?: string | null
+          connected_by?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          label?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string | null
+          scopes?: string[] | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connections_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "erp_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       create_project_from_proposal: {
@@ -4277,6 +5184,7 @@ export type Database = {
         Returns: string
       }
       current_user_role: { Args: never; Returns: string }
+      default_company_id: { Args: never; Returns: string }
       exec_sql: { Args: { query: string }; Returns: Json }
       generate_proposal_number: { Args: never; Returns: string }
       get_current_user_role: { Args: never; Returns: string }
@@ -4358,6 +5266,36 @@ export type Database = {
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { user_id: string }; Returns: boolean }
+      is_app_admin: { Args: never; Returns: boolean }
+      is_company_admin: { Args: { p_company_id: string }; Returns: boolean }
+      is_internal_staff: { Args: never; Returns: boolean }
+      match_company_knowledge: {
+        Args: {
+          p_company_id: string
+          p_match_count?: number
+          p_min_similarity?: number
+          p_query_embedding: string
+        }
+        Returns: {
+          chunk_id: string
+          content: string
+          document_id: string
+          page_number: number
+          similarity: number
+          title: string
+        }[]
+      }
+      search_company_knowledge_text: {
+        Args: { p_company_id: string; p_match_count?: number; p_query: string }
+        Returns: {
+          chunk_id: string
+          content: string
+          document_id: string
+          page_number: number
+          rank: number
+          title: string
+        }[]
+      }
       search_knowledge_base: {
         Args: {
           filter_category?: string
@@ -4373,6 +5311,7 @@ export type Database = {
           title: string
         }[]
       }
+      user_company_ids: { Args: never; Returns: string[] }
       user_has_permission: {
         Args: { permission_name: string }
         Returns: boolean
@@ -4395,12 +5334,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4424,11 +5363,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4449,11 +5388,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4474,11 +5413,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -4491,11 +5430,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

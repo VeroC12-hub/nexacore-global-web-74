@@ -38,27 +38,22 @@ deploys. Godwin reviews and deploys.
 
 ## Open
 
-1. Regenerate Supabase types so ERP tables (`erp_projects`, `erp_tasks`,
-   `erp_time_entries`, `erp_staff_roles`, `jarvis_tasks`) are typed, then remove
-   the `(supabase as any)` casts that exist only because of the missing types.
-   Needs the Supabase CLI logged into the right account; if not possible, move to
-   Needs Godwin.
-2. Audit every remaining admin panel (Users, Team, Proposals, Quotes, Invoices,
+1. Audit every remaining admin panel (Users, Team, Proposals, Quotes, Invoices,
    Requests, Messages, Portfolio, Workflows, Settings, Letterhead, Growth) for:
    wrong status values (profiles use `approved`, projects and workflows use
    `in_progress`, erp_tasks starts at `new`), hardcoded or fake data, buttons
    that do nothing (search for `<Button` without `onClick` or `type="submit"`),
    and missing loading or empty states. One panel per run.
-3. Client portal: same audit as item 2.
-4. Other edge functions in `supabase/functions/`: check each for the same
+2. Client portal: same audit as item 2.
+3. Other edge functions in `supabase/functions/`: check each for the same
    problems found in send-email (no auth on actions that should be staff-only,
    unescaped HTML, logging personal data).
-5. Lint: 33 `react-hooks/exhaustive-deps` warnings across `src`. Review each for
+4. Lint: 33 `react-hooks/exhaustive-deps` warnings across `src`. Review each for
    stale data bugs; fix real ones only, do not blindly add deps (risk of loops).
-6. Public site pages: broken links, placeholder text ("Portfolio Examples Coming
+5. Public site pages: broken links, placeholder text ("Portfolio Examples Coming
    Soon" on `services/EngineeringTechnical.tsx`), missing titles and meta
    descriptions.
-7. Bundle size: Vite warns about chunks over 500 kB. Split the largest vendor
+6. Bundle size: Vite warns about chunks over 500 kB. Split the largest vendor
    chunks with `manualChunks`. Build currently takes about 5 to 6 minutes.
 
 ## Done
@@ -93,3 +88,8 @@ deploys. Godwin reviews and deploys.
   only said "coming soon"; PDF remains.
 - 2026-10-23: Godwin deployed both secured email functions (send-email,
   send-enhanced-quote-emails). Phishing hole closed in production.
+- 2026-10-23: Regenerated `src/integrations/supabase/types.ts` from the live
+  database (`npx supabase gen types typescript --project-id nmwfevhetlwehbuikflk
+  --schema public`). ERP and JARVIS tables are now typed; removed the casts in
+  ERP overview and export code. Casts remain only where TypeScript hits its
+  depth limit (EnhancedProjectManagement, ModernStaffDashboard) and in Jarvis.tsx.

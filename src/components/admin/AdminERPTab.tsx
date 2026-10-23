@@ -609,7 +609,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
 
   const handleExportTasks = async () => {
     setSingleTaskToExport(null); // Export all tasks
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('erp_tasks')
       .select('*, profiles:profiles!erp_tasks_assigned_to_fkey(full_name), erp_projects:erp_projects!erp_tasks_erp_project_id_fkey(title)')
       .order('created_at', { ascending: false });
@@ -629,7 +629,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
   // Project export handlers
   const handleExportProjects = async () => {
     setSingleProjectToExport(null); // Export all projects
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('erp_projects')
       .select('*')
       .order('created_at', { ascending: false });
@@ -637,7 +637,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       toast.error('Failed to load projects for export');
       return;
     }
-    setExportProjects(data || []);
+    setExportProjects((data || []) as unknown as ERPProject[]);
     setIsProjectExportOpen(true);
   };
 

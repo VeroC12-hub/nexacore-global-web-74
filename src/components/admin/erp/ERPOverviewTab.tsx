@@ -147,12 +147,12 @@ export function ERPOverviewTab({
   useEffect(() => {
     const loadFeed = async () => {
       const [tasksRes, projectsRes] = await Promise.all([
-        (supabase as any)
+        supabase
           .from('erp_tasks')
           .select('*, profiles:profiles!erp_tasks_assigned_to_fkey(full_name), erp_projects:erp_projects!erp_tasks_erp_project_id_fkey(title)')
           .order('created_at', { ascending: false })
           .limit(100),
-        (supabase as any)
+        supabase
           .from('erp_projects')
           .select('*')
           .order('created_at', { ascending: false })
