@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { PaymentModal } from './PaymentModal';
 import { toast } from 'sonner';
+import { downloadInvoicePDF } from '@/utils/invoicePDFGenerator';
 
 interface Invoice {
   id: string;
@@ -235,7 +236,7 @@ export function InvoicePaymentCard({
               variant="outline" 
               size="lg" 
               className="flex items-center justify-center gap-2"
-              onClick={() => onDownload ? onDownload(invoice.id) : toast.info(`Downloading ${invoice.invoice_number} - Feature coming soon!`)}
+              onClick={() => onDownload ? onDownload(invoice.id) : downloadInvoicePDF(invoice as any).catch(() => toast.error('Failed to generate PDF'))}
             >
               <Download className="w-4 h-4" />
               Download

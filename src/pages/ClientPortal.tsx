@@ -86,6 +86,7 @@ import Footer from '@/components/Footer';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { downloadInvoicePDF } from '@/utils/invoicePDFGenerator';
 
 interface Project {
   id: string;
@@ -1781,9 +1782,13 @@ const ClientPortal: React.FC = () => {
                       setSelectedInvoice(invoice);
                       setShowInvoiceDetailModal(true);
                     }}
-                    onDownload={(invoiceId) => {
-                      toast.info('PDF download feature coming soon!');
-                      // TODO: Generate and download PDF invoice
+                    onDownload={async () => {
+                      try {
+                        await downloadInvoicePDF(invoice, projects.find(p => p.id === invoice.project_id));
+                      } catch (error) {
+                        console.error('Error generating invoice PDF:', error);
+                        toast.error('Failed to generate PDF');
+                      }
                     }}
                     className="w-full"
                   />
@@ -2064,9 +2069,6 @@ const ClientPortal: React.FC = () => {
         onClose={() => {
           setShowInvoiceDetailModal(false);
           setSelectedInvoice(null);
-        }}
-        onDownload={(invoiceId) => {
-          toast.info('PDF download feature coming soon!');
         }}
       />
 

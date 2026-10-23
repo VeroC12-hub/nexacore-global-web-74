@@ -324,3 +324,19 @@ export async function generateInvoicePDF(
     return URL.createObjectURL(blob);
   }
 }
+
+// Download an invoice that has no separate line items: the whole amount is one line
+export async function downloadInvoicePDF(
+  invoice: InvoiceData,
+  project?: { title?: string; service_type?: string } | null
+): Promise<void> {
+  await generateInvoicePDF(
+    { ...invoice, project_title: project?.title, service_type: project?.service_type },
+    [{
+      description: invoice.description || invoice.title || 'Service',
+      quantity: 1,
+      unit_price: invoice.amount || 0,
+      total: invoice.amount || 0,
+    }]
+  );
+}
