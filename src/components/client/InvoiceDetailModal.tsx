@@ -16,7 +16,6 @@ import {
   AlertCircle,
   Download,
   Printer,
-  Mail,
   CreditCard,
   Package,
   Receipt,
@@ -25,6 +24,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { generateInvoicePDF } from '@/utils/invoicePDFGenerator';
+import { PaymentModal } from '@/components/payments/PaymentModal';
 
 interface Invoice {
   id: string;
@@ -62,6 +62,7 @@ interface InvoiceDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onDownload?: (invoiceId: string) => void;
+  onPaymentSuccess?: () => void;
 }
 
 export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
@@ -69,8 +70,10 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   isOpen,
   onClose,
   onDownload,
+  onPaymentSuccess,
 }) => {
   const [loading, setLoading] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [project, setProject] = useState<Project | null>(null);
 
@@ -181,11 +184,6 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
       console.error('Error generating print document:', error);
       toast.error('Failed to prepare document for printing');
     }
-  };
-
-  const handleEmail = () => {
-    toast.info('Email functionality coming soon!');
-    // TODO: Implement email invoice functionality
   };
 
   const handleDownload = async () => {
@@ -393,12 +391,8 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
-            <Button onClick={handleEmail} variant="outline" className="flex-1 sm:flex-initial">
-              <Mail className="w-4 h-4 mr-2" />
-              Email
-            </Button>
             {invoice.status !== 'paid' && (
-              <Button variant="default" className="flex-1 sm:flex-initial">
+              <Button variant="default" className="flex-1 sm:flex-initial" onClick={() => setShowPaymentModal(true)}>
                 <CreditCard className="w-4 h-4 mr-2" />
                 Pay Now
               </Button>
@@ -412,6 +406,16 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
           </Button>
         </div>
       </DialogContent>
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        invoice={invoice as any}
+        onPaymentSuccess={() => {
+          setShowPaymentModal(false);
+          onPaymentSuccess?.();
+          onClose();
+        }}
+      />
     </Dialog>
   );
 };

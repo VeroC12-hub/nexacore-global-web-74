@@ -2070,6 +2070,7 @@ const ClientPortal: React.FC = () => {
           setShowInvoiceDetailModal(false);
           setSelectedInvoice(null);
         }}
+        onPaymentSuccess={loadInvoices}
       />
 
       <ServiceRequestEditModal

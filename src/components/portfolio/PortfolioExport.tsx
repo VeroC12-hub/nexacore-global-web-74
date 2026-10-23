@@ -47,7 +47,7 @@ export default function PortfolioExport({
   onClose,
   className = ""
 }: PortfolioExportProps) {
-  const [exportFormat, setExportFormat] = useState<'pdf' | 'powerpoint' | 'web' | 'excel'>('pdf');
+  const [exportFormat, setExportFormat] = useState<'pdf'>('pdf');
   const [includeImages, setIncludeImages] = useState(true);
   const [includeMetrics, setIncludeMetrics] = useState(true);
   const [includeFiles, setIncludeFiles] = useState(false);
@@ -94,7 +94,7 @@ export default function PortfolioExport({
     setExporting(true);
 
     try {
-      if (exportFormat === 'pdf') {
+      {
         const { generatePortfolioPDF } = await import('@/utils/portfolioPDFGenerator');
 
         await generatePortfolioPDF(filters, {
@@ -107,9 +107,6 @@ export default function PortfolioExport({
         });
 
         toast.success('Portfolio PDF generated successfully!');
-      } else {
-        // Fallback for other formats (not implemented yet)
-        toast.info(`Export to ${exportFormat.toUpperCase()} is coming soon.`);
       }
 
     } catch (error) {
@@ -198,10 +195,8 @@ export default function PortfolioExport({
 
               <div className="space-y-3">
                 {[
+                  // Only PDF is implemented; use the share link for a web view
                   { value: 'pdf', label: 'PDF Document', icon: FileText },
-                  { value: 'powerpoint', label: 'PowerPoint Presentation', icon: Presentation },
-                  { value: 'web', label: 'Web Page', icon: Globe },
-                  { value: 'excel', label: 'Excel Spreadsheet', icon: FileDown }
                 ].map((format) => (
                   <div
                     key={format.value}

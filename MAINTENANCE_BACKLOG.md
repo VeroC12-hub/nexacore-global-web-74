@@ -17,10 +17,28 @@ deploys. Godwin reviews and deploys.
   (staff portfolio submissions). Until then those uploads fail with an error.
 - **Deploy** branch `site-maintenance` to production (`npx vercel --prod`) after
   reviewing the commits, then merge it into `main`.
-- **Delete or keep** three unused admin components, none of which appear
-  anywhere on the site: `AutomatedTaskAssignmentSystem.tsx` (all mock data),
-  `AdvancedWorkflowBuilder.tsx` (its Preview is a stub), and
-  `StaffPermissionManagement.tsx`.
+- **Delete or keep** four unused components, none of which appear anywhere on
+  the site: `admin/AutomatedTaskAssignmentSystem.tsx` (all mock data),
+  `admin/AdvancedWorkflowBuilder.tsx` (its Preview is a stub),
+  `admin/StaffPermissionManagement.tsx`, and `staff/StaffDashboard.tsx`
+  (replaced by ModernStaffDashboard).
+- **Deploy the two email functions** after the security fix (commit 6a0035c):
+  `npx supabase functions deploy send-email` and
+  `npx supabase functions deploy send-enhanced-quote-emails`. Until then anyone
+  can still send NexaCore-branded emails with their own content to any address.
+- **Proposal emails:** "Send" on a proposal only marks it sent; no email goes
+  out (the message now says so). Decide whether proposals should be emailed
+  automatically, from which address, and as a PDF attachment or a link to a
+  client page. Same question for the message composer's "Send email
+  notification" checkbox, which currently does nothing.
+- **Staff portal menu:** 13 of 18 items (Calendar, Documents, Contacts,
+  Communication, CRM, Sales, Inventory, Accounting, HR, Reporting, Workflow,
+  Business Intelligence, Administration, System) open a "coming soon" page.
+  Recommendation: hide them until built. Say the word and it is a small change.
+- **Public quote confirmation email** (`quote_request_confirmation` in
+  send-email) can still be triggered for any address by anyone; content is now
+  escaped, so the risk is low-volume nuisance mail. Fixing it properly needs
+  rate limiting or a captcha on the Get Started form.
 
 ## Open
 
@@ -29,30 +47,23 @@ deploys. Godwin reviews and deploys.
    the `(supabase as any)` casts that exist only because of the missing types.
    Needs the Supabase CLI logged into the right account; if not possible, move to
    Needs Godwin.
-2. Proposals: creating a proposal says "Send functionality coming in Phase 6"
-   (`proposals/ProposalCreationModal.tsx`). Check whether proposals can be
-   emailed elsewhere (Resend is set up) and wire it in.
-3. Client invoice detail: Email button is a "coming soon" stub
-   (`client/InvoiceDetailModal.tsx` handleEmail). Either implement or remove the
-   button.
-4. Staff portal: `staff/ModernStaffDashboard.tsx` shows "This ERP module is
-   coming soon" for some modules, and `staff/StaffDashboard.tsx` has five
-   "coming soon" cards. Check whether StaffDashboard is still used; wire modules
-   to the existing ERP components where they exist.
-5. Portfolio export: only some formats work, others say "coming soon"
-   (`portfolio/PortfolioExport.tsx`). Hide unsupported formats or implement.
-6. Audit every remaining admin panel (Users, Team, Proposals, Quotes, Invoices,
+2. Audit every remaining admin panel (Users, Team, Proposals, Quotes, Invoices,
    Requests, Messages, Portfolio, Workflows, Settings, Letterhead, Growth) for:
    wrong status values (profiles use `approved`, projects and workflows use
    `in_progress`, erp_tasks starts at `new`), hardcoded or fake data, buttons
-   that do nothing, and missing loading or empty states. One panel per run.
-7. Lint: 33 `react-hooks/exhaustive-deps` warnings across `src`. Review each for
+   that do nothing (search for `<Button` without `onClick` or `type="submit"`),
+   and missing loading or empty states. One panel per run.
+3. Client portal: same audit as item 2.
+4. Other edge functions in `supabase/functions/`: check each for the same
+   problems found in send-email (no auth on actions that should be staff-only,
+   unescaped HTML, logging personal data).
+5. Lint: 33 `react-hooks/exhaustive-deps` warnings across `src`. Review each for
    stale data bugs; fix real ones only, do not blindly add deps (risk of loops).
-8. Public site pages: broken links, placeholder text ("Portfolio Examples Coming
+6. Public site pages: broken links, placeholder text ("Portfolio Examples Coming
    Soon" on `services/EngineeringTechnical.tsx`), missing titles and meta
    descriptions.
-9. Bundle size: Vite warns about chunks over 500 kB. Split the largest vendor
-   chunks with `manualChunks`. Build currently takes about 5 minutes.
+7. Bundle size: Vite warns about chunks over 500 kB. Split the largest vendor
+   chunks with `manualChunks`. Build currently takes about 5 to 6 minutes.
 
 ## Done
 
@@ -74,3 +85,13 @@ deploys. Godwin reviews and deploys.
 - 2026-10-23: Staff portfolio submissions now upload files (were never stored).
 - 2026-10-23: ERP bulk Export of tasks and projects works (modals were passed
   empty lists).
+- 2026-10-23: Proposals: Send in the creation modal now marks the proposal sent
+  (was "coming in Phase 6"); the sent message no longer claims an email went
+  out.
+- 2026-10-23: Security: email edge functions escape all caller input and only
+  staff can send quote emails to a chosen address; stopped logging client
+  personal data. Needs deploying (see Needs Godwin).
+- 2026-10-23: Client invoice detail: Pay Now did nothing, now opens the payment
+  window; removed the dead Email button.
+- 2026-10-23: Portfolio export: removed PowerPoint, Web and Excel options that
+  only said "coming soon"; PDF remains.
