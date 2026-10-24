@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import SEO from '@/components/SEO';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -138,6 +139,10 @@ const CADServices = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="CAD Design & Engineering Services"
+        description="Professional CAD design, 3D modelling and engineering drawings from NexaCore Innovations, an Autodesk partner, for manufacturing, construction and product design."
+      />
       <Navbar />
 
       {/* Hero Section */}

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -6,34 +6,6 @@ import { queryClient } from "@/lib/queryClient";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EnhancedAuthProvider } from "./hooks/useEnhancedAuth";
 import Index from "./pages/Index";
-import About from "./pages/About";
-import Team from "./pages/Team";
-import Services from "./pages/Services";
-import Contact from "./pages/Contact";
-import GetStarted from "./pages/GetStarted";
-import Portfolio from "./pages/Portfolio";
-import PortfolioPage from "./pages/PortfolioPage";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import RemoteDevelopment from "./pages/RemoteDevelopment";
-import AIMLServices from "./pages/services/AIMLServices";
-import CADServices from "./pages/services/CADServices";
-import BlockchainServices from "./pages/services/BlockchainServices";
-import EngineeringTechnical from "./pages/services/EngineeringTechnical";
-import GhanaDigitalHub from "./pages/GhanaDigitalHub";
-import NotFound from "./pages/NotFound";
-import BookConsultation from "./pages/BookConsultation";
-import AdminDashboard from "./pages/AdminDashboard";
-import Auth from "./pages/Auth";
-import AuthConfirm from "./pages/AuthConfirm"; // NEW IMPORT FOR EMAIL CONFIRMATION
-import PasswordReset from "./pages/PasswordReset";
-import ClientPortal from "./pages/ClientPortal";
-import Dashboard from "./pages/Dashboard";
-import QuoteReview from "./pages/QuoteReview";
-import ProjectManagerQuoteCreation from "./pages/ProjectManagerQuoteCreation"; // NEW IMPORT
-import StaffDashboardPage from "./pages/StaffDashboardPage"; // NEW IMPORT FOR STAFF DASHBOARD
-import Jarvis from "./pages/Jarvis"; // JARVIS assistant cockpit
-import Platform from "./pages/Platform"; // AI platform org graph
 import EnhancedAIAssistant from "./components/EnhancedAIAssistant";
 import CookieConsent from "./components/CookieConsent";
 
@@ -43,6 +15,44 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
+import { lazyPage } from "@/lib/lazyPage";
+
+// Pages other than the home page load on demand, so visitors do not
+// download the admin, portal and dashboard code up front
+const About = lazyPage(() => import("./pages/About"));
+const Team = lazyPage(() => import("./pages/Team"));
+const Services = lazyPage(() => import("./pages/Services"));
+const Contact = lazyPage(() => import("./pages/Contact"));
+const GetStarted = lazyPage(() => import("./pages/GetStarted"));
+const Portfolio = lazyPage(() => import("./pages/Portfolio"));
+const PortfolioPage = lazyPage(() => import("./pages/PortfolioPage"));
+const Privacy = lazyPage(() => import("./pages/Privacy"));
+const Terms = lazyPage(() => import("./pages/Terms"));
+const RemoteDevelopment = lazyPage(() => import("./pages/RemoteDevelopment"));
+const AIMLServices = lazyPage(() => import("./pages/services/AIMLServices"));
+const CADServices = lazyPage(() => import("./pages/services/CADServices"));
+const BlockchainServices = lazyPage(() => import("./pages/services/BlockchainServices"));
+const EngineeringTechnical = lazyPage(() => import("./pages/services/EngineeringTechnical"));
+const GhanaDigitalHub = lazyPage(() => import("./pages/GhanaDigitalHub"));
+const NotFound = lazyPage(() => import("./pages/NotFound"));
+const BookConsultation = lazyPage(() => import("./pages/BookConsultation"));
+const AdminDashboard = lazyPage(() => import("./pages/AdminDashboard"));
+const Auth = lazyPage(() => import("./pages/Auth"));
+const AuthConfirm = lazyPage(() => import("./pages/AuthConfirm"));
+const PasswordReset = lazyPage(() => import("./pages/PasswordReset"));
+const ClientPortal = lazyPage(() => import("./pages/ClientPortal"));
+const Dashboard = lazyPage(() => import("./pages/Dashboard"));
+const QuoteReview = lazyPage(() => import("./pages/QuoteReview"));
+const ProjectManagerQuoteCreation = lazyPage(() => import("./pages/ProjectManagerQuoteCreation"));
+const StaffDashboardPage = lazyPage(() => import("./pages/StaffDashboardPage"));
+const Jarvis = lazyPage(() => import("./pages/Jarvis"));
+const Platform = lazyPage(() => import("./pages/Platform"));
+
+const PageFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+  </div>
+);
 
 const App = () => {
   return (
@@ -52,6 +62,7 @@ const App = () => {
           <AuthProvider>
             <EnhancedAuthProvider>
               <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                <Suspense fallback={<PageFallback />}>
                 <Routes>
                 {/* PUBLIC ROUTES */}
                 <Route path="/" element={<Index />} />
@@ -96,6 +107,7 @@ const App = () => {
                 {/* 404 FALLBACK */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
+                </Suspense>
                 <EnhancedAIAssistant />
                 <CookieConsent />
                 <Toaster />

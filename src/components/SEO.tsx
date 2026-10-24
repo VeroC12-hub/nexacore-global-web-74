@@ -1,4 +1,9 @@
 import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router-dom';
+
+const SITE = 'https://www.nexacore-innovations.com';
+// The bare domain redirects to www, so canonical and share links must use www
+const toSiteUrl = (value: string) => value.replace(/^https?:\/\/(www\.)?nexacore-innovations\.com/, SITE);
 
 interface SEOProps {
   title?: string;
@@ -10,20 +15,26 @@ interface SEOProps {
   author?: string;
   publishedTime?: string;
   modifiedTime?: string;
+  noindex?: boolean;
 }
 
 const SEO = ({
   title = 'NexaCore Innovations - Global Technology Solutions & Services',
   description = 'Leading provider of CAD design, software development, AI/ML, blockchain, and digital solutions. We deliver world-class technical, creative, and digital services to clients worldwide.',
   keywords = 'CAD design, software development, web development, mobile apps, AI solutions, machine learning, blockchain, web3, UI/UX design, data analytics, Ghana technology company, engineering services, 3D modeling, project management',
-  image = 'https://nexacore-innovations.com/nexacore-logo.png',
-  url = 'https://nexacore-innovations.com',
+  image = `${SITE}/nexacore-logo.png`,
+  url,
   type = 'website',
   author = 'NexaCore Innovations',
   publishedTime,
-  modifiedTime
+  modifiedTime,
+  noindex = false
 }: SEOProps) => {
+  const location = useLocation();
   const siteTitle = title.includes('NexaCore') ? title : `${title} | NexaCore Innovations`;
+  // Without an explicit url, each page is canonical to itself, never the home page
+  const pageUrl = toSiteUrl(url || `${SITE}${location.pathname === '/' ? '' : location.pathname}`);
+  const imageUrl = toSiteUrl(image);
 
   return (
     <Helmet>
@@ -34,23 +45,23 @@ const SEO = ({
       <meta name="author" content={author} />
 
       {/* Canonical URL */}
-      <link rel="canonical" href={url} />
+      <link rel="canonical" href={pageUrl} />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={type} />
-      <meta property="og:url" content={url} />
+      <meta property="og:url" content={pageUrl} />
       <meta property="og:title" content={siteTitle} />
       <meta property="og:description" content={description} />
-      <meta property="og:image" content={image} />
+      <meta property="og:image" content={imageUrl} />
       <meta property="og:site_name" content="NexaCore Innovations" />
       <meta property="og:locale" content="en_US" />
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:url" content={url} />
+      <meta name="twitter:url" content={pageUrl} />
       <meta name="twitter:title" content={siteTitle} />
       <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={image} />
+      <meta name="twitter:image" content={imageUrl} />
 
       {/* Article specific (for blog posts) */}
       {publishedTime && <meta property="article:published_time" content={publishedTime} />}
@@ -58,9 +69,7 @@ const SEO = ({
       {type === 'article' && <meta property="article:author" content={author} />}
 
       {/* Additional SEO */}
-      <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-      <meta name="googlebot" content="index, follow" />
-      <meta name="bingbot" content="index, follow" />
+      <meta name="robots" content={noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1'} />
 
       {/* Geo Tags */}
       <meta name="geo.region" content="GH" />

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import SEO from '@/components/SEO';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Badge } from '../components/ui/badge';
@@ -12,6 +13,10 @@ const Terms = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Terms of Service"
+        description="The terms that apply when you use the NexaCore Innovations website and services."
+      />
       <Navbar />
       
       {/* Hero Section */}

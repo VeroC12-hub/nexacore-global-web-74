@@ -400,7 +400,7 @@ const AdminQuoteRequestsTab = () => {
     const selectedQuotes = quotes.filter(q => selectedArray.includes(q.id));
     
     // Show detailed confirmation
-    let breakdown = {
+    const breakdown = {
       expired: 0,
       invalid_dates: 0,
       null_dates: 0,

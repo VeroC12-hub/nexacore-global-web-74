@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import SEO from '@/components/SEO';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -111,6 +112,10 @@ const AIMLServices = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="AI & Machine Learning Solutions"
+        description="Custom AI and machine learning solutions from NexaCore Innovations: predictive models, automation, chat assistants and data analytics for your business."
+      />
       <Navbar />
 
       {/* Hero Section */}

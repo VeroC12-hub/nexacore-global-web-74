@@ -411,20 +411,12 @@ export const updateMetaTags = (seoData: SEOData) => {
   updateMetaTag('twitter:description', seoData.description);
   updateMetaTag('twitter:image', seoData.ogImage || 'https://www.nexacore-innovations.com/og-image.png');
   
-  // Canonical URL
-  let canonical = document.querySelector('link[rel="canonical"]');
-  if (!canonical && seoData.canonical) {
-    canonical = document.createElement('link');
-    canonical.setAttribute('rel', 'canonical');
-    document.head.appendChild(canonical);
-  }
-  if (canonical && seoData.canonical) {
-    canonical.setAttribute('href', seoData.canonical);
-  }
-  
+  // The canonical link is set per page by the <SEO> component; setting it
+  // here as well left the home page canonical on every page after navigating
+
   // JSON-LD Schema
   if (seoData.schema) {
-    let existingScript = document.querySelector('script[data-schema="page"]');
+    const existingScript = document.querySelector('script[data-schema="page"]');
     if (existingScript) {
       existingScript.remove();
     }

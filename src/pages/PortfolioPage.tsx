@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SEO from '@/components/SEO';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -70,6 +71,10 @@ export default function PortfolioPage({ className = "" }: PortfolioPageProps) {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-50 to-white ${className}`}>
+      <SEO
+        title="Portfolio Showcase"
+        description="A closer look at engineering, design and software projects delivered by NexaCore Innovations."
+      />
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-700 text-white">
         <div className="container mx-auto px-4 py-16">

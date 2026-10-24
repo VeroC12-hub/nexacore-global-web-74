@@ -179,8 +179,8 @@ export function ERPOverviewTab({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMetric, setSelectedMetric] = useState('all');
   const [timeFilter, setTimeFilter] = useState('today');
-  const [dismissedAlerts, setDismissedAlerts] = useState<number[]>([]);
-  const [notificationCount, setNotificationCount] = useState(3);
+  const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
+  const [showAllActivity, setShowAllActivity] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   
   // Search functionality state
@@ -471,9 +471,8 @@ export function ERPOverviewTab({
     return () => clearInterval(greetingInterval);
   }, []);
 
-  const handleDismissAlert = (alertId: number) => {
+  const handleDismissAlert = (alertId: string) => {
     setDismissedAlerts(prev => [...prev, alertId]);
-    setNotificationCount(prev => Math.max(0, prev - 1));
   };
 
   const toggleNotifications = () => {
@@ -484,13 +483,27 @@ export function ERPOverviewTab({
     return <div className="flex items-center justify-center h-64">Loading ERP Overview...</div>;
   }
 
-  // Real-time data and alerts (now interactive)
+  // Alerts worked out from the live projects and tasks
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const inAWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const isOpen = (status?: string) => !['completed', 'cancelled', 'archived'].includes(status || '');
+  const overBudget = liveProjects.filter(p => isOpen(p.status) && Number(p.budget) > 0 && Number(p.actual_cost) > Number(p.budget));
+  const overdueProjects = liveProjects.filter(p => isOpen(p.status) && p.end_date && new Date(p.end_date) < today);
+  const dueThisWeek = liveProjects.filter(p => isOpen(p.status) && p.end_date && new Date(p.end_date) >= today && new Date(p.end_date) <= inAWeek);
+  const overdueTasks = liveTasks.filter(t => isOpen(t.status) && t.due_date && new Date(t.due_date) < today);
+  const blockedTasks = liveTasks.filter(t => t.status === 'blocked');
+  const names = (rows: any[]) => rows.slice(0, 2).map(r => r.title).join(', ') + (rows.length > 2 ? ` and ${rows.length - 2} more` : '');
+
   const alerts = [
-    { id: 1, type: 'urgent', title: 'Budget Alert', message: 'Civil Engineering project 67% over budget', time: '2 min ago', actionable: true },
-    { id: 2, type: 'warning', title: 'Deadline Risk', message: '3 projects due this week', time: '5 min ago', actionable: true },
-    { id: 3, type: 'success', title: 'Goal Achievement', message: 'Q3 revenue target reached!', time: '1 hour ago', actionable: false },
-    { id: 4, type: 'info', title: 'New Assignment', message: '2 new team members added', time: '2 hours ago', actionable: false }
-  ].filter(alert => !dismissedAlerts.includes(alert.id));
+    overBudget.length > 0 && { id: 'over-budget', type: 'urgent', title: 'Over Budget', message: `${overBudget.length} project${overBudget.length !== 1 ? 's' : ''} over budget: ${names(overBudget)}`, time: 'Now', actionable: false },
+    overdueProjects.length > 0 && { id: 'overdue-projects', type: 'urgent', title: 'Overdue Projects', message: `${overdueProjects.length} past the end date: ${names(overdueProjects)}`, time: 'Now', actionable: false },
+    overdueTasks.length > 0 && { id: 'overdue-tasks', type: 'warning', title: 'Overdue Tasks', message: `${overdueTasks.length} task${overdueTasks.length !== 1 ? 's' : ''} past due: ${names(overdueTasks)}`, time: 'Now', actionable: false },
+    dueThisWeek.length > 0 && { id: 'due-week', type: 'warning', title: 'Due This Week', message: `${dueThisWeek.length} project${dueThisWeek.length !== 1 ? 's' : ''} due within 7 days: ${names(dueThisWeek)}`, time: 'Now', actionable: false },
+    blockedTasks.length > 0 && { id: 'blocked-tasks', type: 'info', title: 'Blocked Tasks', message: `${blockedTasks.length} task${blockedTasks.length !== 1 ? 's' : ''} blocked: ${names(blockedTasks)}`, time: 'Now', actionable: false },
+  ].filter((alert): alert is { id: string; type: string; title: string; message: string; time: string; actionable: boolean } =>
+    !!alert && !dismissedAlerts.includes(alert.id));
+  const notificationCount = alerts.length;
 
   const quickActions = [
     { id: 'new-project', label: 'New Project', icon: Plus, color: 'bg-blue-500 hover:bg-blue-600', description: 'Create a new project' },
@@ -500,8 +513,6 @@ export function ERPOverviewTab({
     { id: 'new-task', label: 'Quick Task', icon: Target, color: 'bg-pink-500 hover:bg-pink-600', description: 'Create a quick task' },
     { id: 'schedule-meeting', label: 'Meeting', icon: Calendar, color: 'bg-indigo-500 hover:bg-indigo-600', description: 'Schedule a meeting' }
   ];
-
-  const [showAllActivity, setShowAllActivity] = useState(false);
 
   const recentActivity = [
     ...liveTasks.map(t => ({

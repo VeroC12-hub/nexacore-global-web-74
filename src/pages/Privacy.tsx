@@ -1,4 +1,5 @@
 import React from 'react';
+import SEO from '@/components/SEO';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Badge } from '../components/ui/badge';
@@ -7,6 +8,10 @@ import { Shield, Mail, Phone, MapPin, ChevronRight } from 'lucide-react';
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Privacy Policy"
+        description="How NexaCore Innovations collects, uses and protects your personal information."
+      />
       <Navbar />
       
       {/* Hero Section */}

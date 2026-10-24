@@ -101,7 +101,7 @@ const ProjectTimelineView: React.FC = () => {
       const projectIds = (projectData || []).map((p: any) => p.id);
 
       // Fetch tasks for these projects from erp_tasks
-      let tasksByProject: Record<string, Task[]> = {};
+      const tasksByProject: Record<string, Task[]> = {};
       if (projectIds.length > 0) {
         const { data: taskData } = await supabase
           .from('erp_tasks')

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import {
   MessageCircle, X, Send, Bot, User, Minimize2, ThumbsUp, ThumbsDown,
   Copy, Check, Sparkles, RotateCw, Trash2, AlertCircle
@@ -11,9 +11,9 @@ import {  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/com
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useToast } from '@/hooks/use-toast';
 import type { AIMessage } from '@/types/ai-assistant';
-import ReactMarkdown from 'react-markdown';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+
+// Markdown and code highlighting are large, so they load with the first message
+const ChatMarkdown = lazy(() => import('@/components/ai/ChatMarkdown'));
 
 interface MessageBubbleProps {
   message: AIMessage;
@@ -67,39 +67,9 @@ const MessageBubble = ({ message, onFeedback }: MessageBubbleProps) => {
         }`}>
           {/* Markdown Content */}
           <div className={`prose prose-sm max-w-none ${message.role === 'user' ? 'prose-invert' : 'prose-slate'}`}>
-            <ReactMarkdown
-              components={{
-                code({ className, children, ...props }) {
-                  const match = /language-(\w+)/.exec(className || '');
-                  const codeString = String(children).replace(/\n$/, '');
-                  const isInline = !match;
-
-                  return !isInline && match ? (
-                    <div className="relative group">
-                      <button
-                        onClick={() => copyToClipboard(codeString)}
-                        className="absolute top-2 right-2 p-1 bg-white/10 hover:bg-white/20 rounded transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                      </button>
-                      <SyntaxHighlighter
-                        style={vscDarkPlus as any}
-                        language={match[1]}
-                        PreTag="div"
-                      >
-                        {codeString}
-                      </SyntaxHighlighter>
-                    </div>
-                  ) : (
-                    <code className="bg-muted px-1 py-0.5 rounded text-sm" {...props}>
-                      {children}
-                    </code>
-                  );
-                }
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
+            <Suspense fallback={<p className="whitespace-pre-wrap">{message.content}</p>}>
+              <ChatMarkdown content={message.content} />
+            </Suspense>
           </div>
 
           {/* Metadata */}

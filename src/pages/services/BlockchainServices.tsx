@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import SEO from '@/components/SEO';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -138,6 +139,10 @@ const BlockchainServices = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Blockchain & Web3 Development"
+        description="Blockchain and Web3 development from NexaCore Innovations: smart contracts, decentralised apps and secure digital asset solutions."
+      />
       <Navbar />
 
       {/* Hero Section */}

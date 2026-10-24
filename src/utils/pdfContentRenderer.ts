@@ -260,7 +260,7 @@ function renderInlineText(
   const wrapped: string[] = doc.splitTextToSize(plainText, maxWidth);
 
   // Map character positions to segments
-  let segCharMap: { char: string; bold: boolean; italic: boolean }[] = [];
+  const segCharMap: { char: string; bold: boolean; italic: boolean }[] = [];
   for (const seg of segments) {
     for (const ch of seg.text) {
       segCharMap.push({ char: ch, bold: seg.bold, italic: seg.italic });

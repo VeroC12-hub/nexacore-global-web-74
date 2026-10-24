@@ -43,7 +43,7 @@ export function TimeEntryExport({ timeEntries, projects, users }: TimeEntryExpor
   const exportToCSV = () => {
     try {
       // Filter entries based on criteria
-      let filtered = timeEntries.filter(entry => {
+      const filtered = timeEntries.filter(entry => {
         const entryDate = entry.date || entry.created_at.split('T')[0];
 
         if (filters.startDate && entryDate < filters.startDate) return false;

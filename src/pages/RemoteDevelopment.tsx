@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import SEO from '@/components/SEO';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -74,6 +75,10 @@ const RemoteDevelopment = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Remote Engineering Services Worldwide"
+        description="Remote engineering, CAD and software development from NexaCore Innovations in Ghana, delivered to clients around the world."
+      />
       <Navbar />
 
       {/* Hero Section - Optimized for ALL keyword variations */}

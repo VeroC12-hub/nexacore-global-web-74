@@ -1,5 +1,6 @@
 // src/pages/GetStarted.tsx - COMPLETE VERSION WITH "WHY CHOOSE NEXACORE" SECTION
 import { useEffect, useState } from "react";
+import SEO from '@/components/SEO';
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { 
   ArrowRight, 
@@ -647,6 +648,10 @@ const GetStarted = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <SEO
+        title="Get a Quote - Start Your Project"
+        description="Tell us about your engineering, software, CAD or AI project and get a tailored quote from NexaCore Innovations, with pricing shown in your local currency."
+      />
       <Navbar />
       
       {/* Hero Section */}

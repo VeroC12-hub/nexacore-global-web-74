@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import SEO from '@/components/SEO';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -723,6 +724,10 @@ export default function EngineeringTechnical() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Engineering & Technical Solutions"
+        description="Mechanical, civil and industrial engineering services from NexaCore Innovations: design, analysis, technical documentation and consulting."
+      />
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10 py-20">
         <div className="container mx-auto px-4">

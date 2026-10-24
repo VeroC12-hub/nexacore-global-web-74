@@ -19,6 +19,7 @@ npm install react-calendly
 */
 
 import React, { useState } from 'react';
+import SEO from '@/components/SEO';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,10 @@ const CalendlyEmbed = ({ url, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <SEO
+        title="Book a Consultation"
+        description="Book a free consultation with NexaCore Innovations to discuss your engineering, software or design project."
+      />
       <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] relative">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-semibold">Book Your Consultation</h3>

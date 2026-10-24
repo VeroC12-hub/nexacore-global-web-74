@@ -2,15 +2,14 @@
 User-agent: *
 Allow: /
 
-# Disallow admin and auth pages
-Disallow: /admin/
-Disallow: /dashboard/
-Disallow: /client-portal/
-Disallow: /auth/
-Disallow: /staff/
+# Signed-in areas (no trailing slash, so /admin itself is covered too)
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /client-portal
+Disallow: /auth
+Disallow: /staff
+Disallow: /jarvis
+Disallow: /platform
+Disallow: /quote/
 
-# Sitemap location
-Sitemap: https://nexacore-innovations.com/sitemap.xml
-
-# Crawl-delay for polite crawling
-Crawl-delay: 1
+Sitemap: https://www.nexacore-innovations.com/sitemap.xml

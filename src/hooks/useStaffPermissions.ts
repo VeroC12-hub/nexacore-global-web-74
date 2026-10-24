@@ -275,7 +275,7 @@ export const useStaffPermissions = () => {
         }
 
         const userRole = (profile?.role || 'admin') as UserRole;
-        let basePermissions = getBaseRolePermissions(userRole);
+        const basePermissions = getBaseRolePermissions(userRole);
 
         // If user is staff, get delegated permissions
         if (userRole === 'staff') {
