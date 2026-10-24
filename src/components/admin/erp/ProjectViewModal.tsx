@@ -28,7 +28,7 @@ interface ERPProject {
   end_date: string;
   project_type: string;
   department: string;
-  is_active: boolean;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -210,8 +210,8 @@ export function ProjectViewModal({ isOpen, onClose, project, onEdit }: ProjectVi
             <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground mb-2">Active Status</h3>
-                <Badge variant={project.is_active ? "default" : "secondary"}>
-                  {project.is_active ? 'Active' : 'Inactive'}
+                <Badge variant={!['completed', 'cancelled', 'archived', 'on_hold'].includes(project.status) ? "default" : "secondary"}>
+                  {!['completed', 'cancelled', 'archived', 'on_hold'].includes(project.status) ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
 

@@ -36,7 +36,7 @@ export interface ERPProject {
   end_date: string;
   project_type: string;
   department: string;
-  is_active: boolean;
+  is_active?: boolean; // not a column on erp_projects
   created_at: string;
   updated_at: string;
 }

@@ -1,4 +1,7 @@
 import React from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +28,6 @@ interface ERPProject {
   end_date: string;
   project_type: string;
   department: string;
-  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -54,7 +56,12 @@ interface ERPTeamTabProps {
   existingTeamMembers: any[];
   onAssignTeamMembers: () => void;
   mapStaffRoleToProjectRole: (staffRole: string) => string;
+  onTeamChanged?: () => void;
+  showOverview?: boolean;
 }
+
+// Projects that can still take team members
+const isOpenProject = (project: ERPProject) => !['completed', 'cancelled', 'archived'].includes(project.status);
 
 export function ERPTeamTab({
   projects,
@@ -67,8 +74,44 @@ export function ERPTeamTab({
   setSelectedProjectRole,
   existingTeamMembers,
   onAssignTeamMembers,
-  mapStaffRoleToProjectRole
+  mapStaffRoleToProjectRole,
+  onTeamChanged,
+  showOverview = false
 }: ERPTeamTabProps) {
+  const queryClient = useQueryClient();
+
+  // Every active assignment, for the overview of who works on what
+  const { data: allMembers = [] } = useQuery({
+    queryKey: ['erp', 'team-overview'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_members')
+        .select('id, project_id, user_id, role, profiles:profiles!fk_project_members_profiles_user(full_name, email)')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: showOverview,
+  });
+
+  const removeMember = async (projectId: string, userId: string, name: string) => {
+    const { error } = await supabase
+      .from('project_members')
+      .update({ is_active: false, updated_at: new Date().toISOString() })
+      .eq('project_id', projectId)
+      .eq('user_id', userId);
+    if (error) {
+      console.error('Error removing team member:', error);
+      toast.error('Failed to remove team member');
+      return;
+    }
+    toast.success(`${name} removed from the project`);
+    queryClient.invalidateQueries({ queryKey: ['erp', 'team-overview'] });
+    onTeamChanged?.();
+  };
+
+  const openProjects = projects.filter(isOpenProject);
+
   return (
     <div className="space-y-6">
       <Card>
@@ -98,15 +141,19 @@ export function ERPTeamTab({
                 <SelectValue placeholder="Choose a project..." />
               </SelectTrigger>
               <SelectContent>
-                {projects
-                  .filter(project => project.is_active && project.status !== 'completed')
+                {openProjects.length === 0 && (
+                  <SelectItem value="none" disabled>No open projects</SelectItem>
+                )}
+                {openProjects
                   .map(project => (
                     <SelectItem key={project.id} value={project.id}>
                       <div className="flex items-center justify-between w-full">
                         <span>{project.title}</span>
-                        <Badge className="ml-2 text-xs">
-                          {project.department}
-                        </Badge>
+                        {project.department && (
+                          <Badge className="ml-2 text-xs">
+                            {project.department}
+                          </Badge>
+                        )}
                       </div>
                     </SelectItem>
                   ))
@@ -127,6 +174,18 @@ export function ERPTeamTab({
                         <UserCheck className="h-3 w-3" />
                         {member.profiles?.full_name || member.profiles?.email || 'Unknown User'}
                         <span className="text-xs">({member.role})</span>
+                        <button
+                          type="button"
+                          aria-label="Remove from project"
+                          onClick={() => removeMember(
+                            selectedProjectForTeam.id,
+                            member.user_id,
+                            member.profiles?.full_name || member.profiles?.email || 'Team member'
+                          )}
+                          className="ml-1 text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                   </div>
@@ -300,6 +359,70 @@ export function ERPTeamTab({
           )}
         </CardContent>
       </Card>
+
+      {showOverview && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-500" />
+              Project Teams
+            </CardTitle>
+            <CardDescription>Who is assigned to each open project</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {openProjects.length === 0 && (
+              <p className="text-sm text-muted-foreground">No open projects</p>
+            )}
+            {openProjects.map(project => {
+              const members = (allMembers as any[]).filter(m => m.project_id === project.id);
+              return (
+                <div key={project.id} className="border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">{project.title}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedProjectForTeam(project);
+                        setSelectedTeamMembers([]);
+                        setSelectedProjectRole('');
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4 mr-1" />
+                      Manage
+                    </Button>
+                  </div>
+                  {members.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No one assigned yet</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {members.map(member => {
+                        const name = member.profiles?.full_name || member.profiles?.email || 'Unknown User';
+                        return (
+                          <Badge key={member.id} variant="secondary" className="flex items-center gap-1">
+                            <UserCheck className="h-3 w-3" />
+                            {name}
+                            {member.role && <span className="text-xs">({member.role})</span>}
+                            <button
+                              type="button"
+                              aria-label="Remove from project"
+                              onClick={() => removeMember(project.id, member.user_id, name)}
+                              className="ml-1 text-muted-foreground hover:text-foreground"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

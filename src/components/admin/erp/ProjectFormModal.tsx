@@ -24,7 +24,7 @@ interface ERPProject {
   start_date: string;
   end_date: string;
   progress?: number;
-  is_active: boolean;
+  is_active?: boolean;
 }
 
 interface ProjectFormModalProps {

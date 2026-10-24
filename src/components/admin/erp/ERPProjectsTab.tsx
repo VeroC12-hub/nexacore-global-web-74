@@ -38,7 +38,7 @@ interface ERPProject {
   end_date: string;
   project_type: string;
   department: string;
-  is_active: boolean;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 }

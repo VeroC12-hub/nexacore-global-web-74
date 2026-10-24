@@ -25,7 +25,7 @@ interface ERPProject {
   end_date: string;
   project_type: string;
   department: string;
-  is_active: boolean;
+  is_active?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -166,7 +166,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
           `${project.progress}%`,
           formatDate(project.start_date),
           formatDate(project.end_date),
-          project.is_active ? 'Yes' : 'No'
+          !['completed', 'cancelled', 'archived', 'on_hold'].includes(project.status) ? 'Yes' : 'No'
         ];
         csvContent += row.join(',') + '\n';
       });
@@ -244,7 +244,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
         'Progress %': project.progress,
         'Start Date': formatDate(project.start_date),
         'End Date': formatDate(project.end_date),
-        'Active': project.is_active ? 'Yes' : 'No'
+        'Active': !['completed', 'cancelled', 'archived', 'on_hold'].includes(project.status) ? 'Yes' : 'No'
       }));
 
       const projectWorksheet = XLSX.utils.json_to_sheet(projectData);
@@ -407,7 +407,7 @@ export function ERPProjectExportModal({ isOpen, onClose, projects, filteredProje
               { content: 'PROGRESS', styles: labelStyle },
               { content: `${project.progress}%` },
               { content: 'ACTIVE', styles: labelStyle },
-              { content: project.is_active ? 'Active' : 'Inactive' }
+              { content: !['completed', 'cancelled', 'archived', 'on_hold'].includes(project.status) ? 'Active' : 'Inactive' }
             ],
             [
               { content: 'BUDGET', styles: labelStyle },

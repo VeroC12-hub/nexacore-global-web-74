@@ -215,7 +215,7 @@ export function useERPStaffRoles(options?: { enabled?: boolean }) {
       const { data, error } = await supabase
         .from('profiles')
         .select('id, email, full_name, phone, role, status, created_at')
-        .in('role', ['admin', 'project_manager', 'operations_manager', 'developer'])
+        .in('role', ['admin', 'project_manager', 'operations_manager', 'developer', 'support', 'staff'])
         .order('full_name', { ascending: true });
 
       if (error) throw error;

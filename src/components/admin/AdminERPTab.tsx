@@ -210,7 +210,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
     return (staffRolesData as any[]).map(item => ({
       ...item,
       user_id: item.id || item.user_id,
-      is_active: item.status === 'active' || true,
+      is_active: item.status === 'approved',
       profiles: item
     })) as StaffRole[];
   }, [staffRolesData]);
@@ -491,6 +491,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
     setSelectedTeamMembers([]);
     setSelectedProjectRole('');
     setIsTeamAssignModalOpen(true);
+    refetchStaffRoles();
   };
 
   const loadExistingTeamMembers = async (projectId: string) => {
@@ -1200,6 +1201,8 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
             existingTeamMembers={existingTeamMembers}
             onAssignTeamMembers={handleAssignTeamMembers}
             mapStaffRoleToProjectRole={mapStaffRoleToProjectRole}
+            onTeamChanged={() => selectedProjectForTeam && loadExistingTeamMembers(selectedProjectForTeam.id)}
+            showOverview
           />
         </TabsContent>
       </Tabs>
