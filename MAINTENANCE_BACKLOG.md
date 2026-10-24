@@ -21,6 +21,12 @@ those when working on NexaCore.
   transfer only) and supply the real bank / MoMo details, then re-enable.
   The `payments` table points at a legacy `bookings` table, so it needs a
   small schema fix as part of that.
+- **Phone numbers disagree:** Contact page and Footer show +233 20 962 8907,
+  the Footer also shows +233 50 158 8710, and Book Consultation calls and
+  WhatsApps +233 55 833 0610. Say which is correct for each use.
+- **Engineering services page case studies and testimonials:** check they
+  describe real clients and results; buttons for case study pages and video
+  testimonials that do not exist were removed.
 - **Client portal Services page** lists generic services (Web Development,
   Mobile, Digital Marketing, Cloud). Confirm whether that matches what NexaCore
   sells.
@@ -119,3 +125,10 @@ those when working on NexaCore.
   task status picker, working New Task and Log Time.
 - 2026-10-24: ERP lock-down migration applied. Verified as real accounts: a
   client sees 0 ERP rows, a developer still sees 4 projects and 20 tasks.
+- 2026-10-24: Admin invoices: creating an invoice always failed (status
+  'pending' rejected by the database); now drafts with Send and Mark Paid.
+  Service requests: approve/reject never appeared for new ('submitted')
+  requests; fixed, plus a details view.
+- 2026-10-24: Dead buttons: ~25 across the public site, staff portal and admin
+  now link to real pages or work; ones promising content that does not exist
+  were removed.
