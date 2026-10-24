@@ -33,6 +33,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
 
 // Lazy-load admin components for better performance
 const AdminProjectsTab = lazy(() => import('@/components/admin/AdminProjectsTab').then(m => ({ default: m.AdminProjectsTab })));
@@ -74,6 +75,19 @@ interface DashboardStats {
   unreadMessages: number;
 }
 
+interface ActivityItem {
+  kind: 'project' | 'user' | 'invoice' | 'quote';
+  text: string;
+  at: string;
+}
+
+const ACTIVITY_VIEW = {
+  project: 'projects',
+  user: 'users',
+  invoice: 'invoices',
+  quote: 'quotes',
+} as const;
+
 interface QuickAction {
   id: string;
   title: string;
@@ -102,6 +116,7 @@ export const ModernAdminDashboard: React.FC = () => {
     unreadMessages: 0
   });
   const [loading, setLoading] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const mainContentRef = React.useRef<HTMLDivElement>(null);
 
@@ -165,6 +180,25 @@ export const ModernAdminDashboard: React.FC = () => {
         activeWorkflows: workflowsResult.count || 0,
         unreadMessages: messagesResult.count || 0
       });
+
+      const [recentProjects, recentUsers, recentInvoices, recentQuotes] = await Promise.all([
+        supabase.from('projects').select('title, created_at').order('created_at', { ascending: false }).limit(5),
+        supabase.from('profiles').select('full_name, email, created_at').order('created_at', { ascending: false }).limit(5),
+        supabase.from('invoices').select('invoice_number, total_amount, currency, created_at').order('created_at', { ascending: false }).limit(5),
+        supabase.from('quote_requests').select('full_name, service_type, created_at').order('created_at', { ascending: false }).limit(5),
+      ]);
+      const activity: ActivityItem[] = [
+        ...(recentProjects.data || []).map(p => ({ kind: 'project' as const, text: `Project created: ${p.title}`, at: p.created_at })),
+        ...(recentUsers.data || []).map(u => ({ kind: 'user' as const, text: `User registered: ${u.full_name || u.email}`, at: u.created_at })),
+        ...(recentInvoices.data || []).map(i => ({ kind: 'invoice' as const, text: `Invoice ${i.invoice_number} (${i.currency || 'USD'} ${formatMoney(i.total_amount || 0)})`, at: i.created_at })),
+        ...(recentQuotes.data || []).map(q => ({ kind: 'quote' as const, text: `Quote request from ${q.full_name}${q.service_type ? ` (${q.service_type})` : ''}`, at: q.created_at })),
+      ];
+      setRecentActivity(
+        activity
+          .filter(a => a.at)
+          .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+          .slice(0, 6)
+      );
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
       toast.error('Failed to load dashboard statistics');
@@ -530,20 +564,26 @@ export const ModernAdminDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {[
-              { icon: <CheckCircle className="h-5 w-5 text-green-500" />, text: "New project created", time: "2 hours ago" },
-              { icon: <Users className="h-5 w-5 text-blue-500" />, text: "User registered", time: "4 hours ago" },
-              { icon: <CreditCard className="h-5 w-5 text-purple-500" />, text: "Invoice generated", time: "1 day ago" },
-              { icon: <Workflow className="h-5 w-5 text-orange-500" />, text: "Workflow completed", time: "2 days ago" }
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                {activity.icon}
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{activity.text}</p>
-                  <p className="text-xs text-gray-500">{activity.time}</p>
+            {recentActivity.length === 0 && (
+              <p className="text-sm text-gray-500 text-center py-6">No recent activity</p>
+            )}
+            {recentActivity.map((activity, index) => (
+              <button
+                key={index}
+                type="button"
+                onClick={() => setActiveView(ACTIVITY_VIEW[activity.kind])}
+                className="w-full text-left flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                {activity.kind === 'project' && <CheckCircle className="h-5 w-5 text-green-500" />}
+                {activity.kind === 'user' && <Users className="h-5 w-5 text-blue-500" />}
+                {activity.kind === 'invoice' && <CreditCard className="h-5 w-5 text-purple-500" />}
+                {activity.kind === 'quote' && <FileText className="h-5 w-5 text-orange-500" />}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{activity.text}</p>
+                  <p className="text-xs text-gray-500">{formatDistanceToNow(new Date(activity.at), { addSuffix: true })}</p>
                 </div>
                 <ArrowRight className="h-4 w-4 text-gray-400" />
-              </div>
+              </button>
             ))}
           </div>
         </CardContent>
