@@ -16,7 +16,7 @@ import {
   Smartphone,
   Zap
 } from 'lucide-react';
-import { PaymentModal } from '@/components/payments/PaymentModal';
+import { PaymentInstructionsModal } from '@/components/payments/PaymentInstructionsModal';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -372,7 +372,7 @@ const PayInvoice: React.FC = () => {
       </div>
 
       {/* Payment Modal */}
-      <PaymentModal
+      <PaymentInstructionsModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         invoice={invoice}

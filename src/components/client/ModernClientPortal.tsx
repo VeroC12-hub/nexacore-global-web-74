@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
 import {
   FolderOpen,
   DollarSign,
@@ -19,7 +18,6 @@ import {
   Download,
   CreditCard,
   Bell,
-  Search,
   BarChart3,
   TrendingUp,
   Users,
@@ -29,7 +27,8 @@ import {
   Zap,
   Target,
   Menu,
-  X
+  X,
+  Send
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
@@ -37,7 +36,8 @@ import { toast } from 'sonner';
 import ServiceRequestModal from '@/components/ServiceRequestModal';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import VisaPaymentForm from '@/components/VisaPaymentForm';
+import { PaymentInstructionsModal } from '@/components/payments/PaymentInstructionsModal';
+import { Textarea } from '@/components/ui/textarea';
 import ClientSettings from '@/components/ClientSettings';
 
 interface Project {
@@ -53,6 +53,28 @@ interface Project {
   deadline: string | null;
 }
 
+const isUnpaid = (status: string) => status === 'sent' || status === 'overdue';
+
+const formatStatus = (status: string) => (status || '').replace(/_/g, ' ');
+
+const seenKey = (userId: string) => `nexacore_client_messages_seen_${userId}`;
+
+const readMessagesSeenAt = (userId: string): number => {
+  try {
+    return Number(localStorage.getItem(seenKey(userId))) || 0;
+  } catch {
+    return 0;
+  }
+};
+
+const markMessagesSeen = (userId: string) => {
+  try {
+    localStorage.setItem(seenKey(userId), String(Date.now()));
+  } catch {
+    // Storage unavailable (private mode); the count just will not clear
+  }
+};
+
 interface Invoice {
   id: string;
   invoice_number: string;
@@ -65,6 +87,7 @@ interface Invoice {
   due_date?: string;
   created_at: string;
   project_id?: string;
+  currency?: string;
 }
 
 interface ProjectMessage {
@@ -125,11 +148,14 @@ export const ModernClientPortal: React.FC = () => {
     unreadMessages: 0
   });
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<{ id: string; invoice_number: string; total_amount: number; title: string } | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [replyProjectId, setReplyProjectId] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const loadClientData = useCallback(async () => {
     if (!user) {
@@ -172,7 +198,9 @@ export const ModernClientPortal: React.FC = () => {
       ]);
 
       const projectsData = projectsResult.data || [];
-      const invoicesData = invoicesResult.data || [];
+      // Draft invoices are still being prepared by staff, so clients do not see them
+      const invoicesData = (invoicesResult.data || []).filter((inv: any) => inv.status !== 'draft');
+      setCurrentUserId(userId);
       const projectIds = projectsData.map((p: any) => p.id);
 
       // Build a project title lookup for messages/files display
@@ -203,9 +231,10 @@ export const ModernClientPortal: React.FC = () => {
 
       const processedProjects = projectsData.map(project => ({
         ...project,
-        progress: project.spent_amount && project.budget
-          ? Math.min(100, Math.round((project.spent_amount / project.budget) * 100))
-          : 0,
+        // Work progress set by the team, not budget spent
+        progress: project.status === 'completed'
+          ? 100
+          : Math.min(100, Math.max(0, project.progress ?? project.completion_percentage ?? 0)),
       }));
 
       const processedMessages: ProjectMessage[] = messagesData.map(m => ({
@@ -218,8 +247,17 @@ export const ModernClientPortal: React.FC = () => {
         project_title: projectTitleMap[f.project_id] || 'Unknown Project',
       }));
 
-      const totalSpent = invoicesData.reduce((sum, inv) => sum + (inv.total_amount || inv.amount || 0), 0);
-      const pendingInvoices = invoicesData.filter(inv => inv.status === 'pending').length;
+      const totalSpent = invoicesData
+        .filter(inv => inv.status === 'paid')
+        .reduce((sum, inv) => sum + (inv.total_amount || inv.amount || 0), 0);
+      const pendingInvoices = invoicesData.filter(inv => isUnpaid(inv.status)).length;
+
+      // Clients cannot mark messages read in the database, so "new" means
+      // team messages since this browser last opened the Messages view
+      const lastSeen = readMessagesSeenAt(userId);
+      const newMessages = messagesData.filter(
+        m => m.sender_id !== userId && new Date(m.created_at).getTime() > lastSeen
+      ).length;
 
       setProjects(processedProjects);
       setInvoices(invoicesData as Invoice[]);
@@ -231,7 +269,7 @@ export const ModernClientPortal: React.FC = () => {
         completedProjects: processedProjects.filter(p => p.status === 'completed').length,
         totalSpent,
         pendingInvoices,
-        unreadMessages: messagesData.length,
+        unreadMessages: newMessages,
       });
 
     } catch (error) {
@@ -250,6 +288,60 @@ export const ModernClientPortal: React.FC = () => {
   const navigateTo = (view: typeof activeView) => {
     setActiveView(view);
     setMobileMenuOpen(false);
+    if (view === 'messages' && currentUserId) {
+      markMessagesSeen(currentUserId);
+      setStats(prev => ({ ...prev, unreadMessages: 0 }));
+    }
+  };
+
+  // Opens payment instructions for the given invoice, or the oldest unpaid one
+  const openPayment = (invoice?: Invoice) => {
+    const target = invoice ?? [...invoices]
+      .filter(inv => isUnpaid(inv.status))
+      .sort((a, b) => new Date(a.due_date || a.created_at).getTime() - new Date(b.due_date || b.created_at).getTime())[0];
+    if (!target) {
+      toast.info('You have no invoices awaiting payment');
+      return;
+    }
+    setSelectedInvoice(target);
+    setShowPaymentForm(true);
+  };
+
+  const sendReply = async () => {
+    const projectId = replyProjectId || projects[0]?.id;
+    if (!projectId || !replyText.trim()) return;
+    setSendingReply(true);
+    try {
+      const { error } = await supabase.from('project_messages').insert([{
+        project_id: projectId,
+        sender_id: currentUserId,
+        message: replyText.trim(),
+        message_type: 'general',
+        is_internal: false,
+      }]);
+      if (error) throw error;
+      setReplyText('');
+      toast.success('Message sent to your project team');
+      loadClientData();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+    } finally {
+      setSendingReply(false);
+    }
+  };
+
+  const downloadFile = async (file: ProjectFile) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('project-files')
+        .createSignedUrl(file.file_path, 60, { download: file.file_name });
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank', 'noopener');
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      toast.error('This file is not available for download');
+    }
   };
 
   const quickActions: QuickAction[] = [
@@ -266,7 +358,7 @@ export const ModernClientPortal: React.FC = () => {
       title: 'Make Payment',
       description: 'Pay outstanding invoices',
       icon: <CreditCard className="h-5 w-5" />,
-      action: () => setShowPaymentForm(true),
+      action: () => openPayment(),
       color: 'bg-green-500 hover:bg-green-600'
     },
     {
@@ -282,7 +374,7 @@ export const ModernClientPortal: React.FC = () => {
       title: 'Contact Team',
       description: 'Send message to our team',
       icon: <MessageSquare className="h-5 w-5" />,
-      action: () => setActiveView('messages'),
+      action: () => navigateTo('messages'),
       color: 'bg-orange-500 hover:bg-orange-600'
     }
   ];
@@ -299,12 +391,14 @@ export const ModernClientPortal: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'in_progress':
         return 'bg-green-100 text-green-800';
       case 'completed':
         return 'bg-blue-100 text-blue-800';
-      case 'on-hold':
+      case 'on_hold':
         return 'bg-yellow-100 text-yellow-800';
+      case 'review':
+        return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -488,12 +582,17 @@ export const ModernClientPortal: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {projects.length === 0 && (
+              <p className="text-sm text-gray-500 text-center py-6">
+                No projects yet. Request a service to get started.
+              </p>
+            )}
             {projects.slice(0, 3).map((project) => (
               <div key={project.id} className={`border-l-4 ${getPriorityColor(project.priority)} bg-gradient-to-r from-background/50 to-primary/5 p-4 rounded-lg hover:shadow-md hover:scale-[1.02] transition-all duration-200 border border-border/20`}>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-gray-900">{project.title}</h3>
                   <Badge className={getStatusColor(project.status)}>
-                    {project.status}
+                    {formatStatus(project.status)}
                   </Badge>
                 </div>
                 <p className="text-gray-600 text-sm mb-3">{project.description}</p>
@@ -534,7 +633,7 @@ export const ModernClientPortal: React.FC = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl">{project.title}</CardTitle>
-                <Badge className={getStatusColor(project.status)}>{project.status}</Badge>
+                <Badge className={getStatusColor(project.status)}>{formatStatus(project.status)}</Badge>
               </div>
               <CardDescription>{project.description}</CardDescription>
             </CardHeader>
@@ -546,7 +645,7 @@ export const ModernClientPortal: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Spent</p>
-                  <p className="font-semibold text-lg">${project.spent_amount?.toLocaleString()}</p>
+                  <p className="font-semibold text-lg">${(project.spent_amount ?? 0).toLocaleString()}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Priority</p>
@@ -570,7 +669,7 @@ export const ModernClientPortal: React.FC = () => {
   const getInvoiceStatusColor = (status: string) => {
     switch (status) {
       case 'paid': return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'sent': return 'bg-orange-100 text-orange-800 border-orange-200';
       case 'overdue': return 'bg-red-100 text-red-800 border-red-200';
       case 'cancelled': return 'bg-gray-100 text-gray-600 border-gray-200';
       default: return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -591,7 +690,7 @@ export const ModernClientPortal: React.FC = () => {
           <h2 className="text-xl font-bold">Invoices & Payments</h2>
           <p className="text-sm text-muted-foreground">{invoices.length} invoice{invoices.length !== 1 ? 's' : ''} total</p>
         </div>
-        <Button onClick={() => setShowPaymentForm(true)} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
+        <Button onClick={() => openPayment()} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
           <CreditCard className="mr-2 h-4 w-4" />
           Make Payment
         </Button>
@@ -639,19 +738,11 @@ export const ModernClientPortal: React.FC = () => {
                     <p className="text-lg font-bold text-gray-900">
                       ${(invoice.total_amount || invoice.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
-                    {invoice.status === 'pending' && (
+                    {isUnpaid(invoice.status) && (
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700 text-xs h-7"
-                        onClick={() => {
-                          setSelectedInvoice({
-                            id: invoice.id,
-                            invoice_number: invoice.invoice_number,
-                            total_amount: invoice.total_amount || invoice.amount,
-                            title: invoice.title,
-                          });
-                          setShowPaymentForm(true);
-                        }}
+                        onClick={() => openPayment(invoice)}
                       >
                         Pay Now
                       </Button>
@@ -673,6 +764,37 @@ export const ModernClientPortal: React.FC = () => {
         <p className="text-sm text-muted-foreground">{messages.length} message{messages.length !== 1 ? 's' : ''} from your projects</p>
       </div>
 
+      {projects.length > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            {projects.length > 1 && (
+              <select
+                value={replyProjectId || projects[0].id}
+                onChange={(e) => setReplyProjectId(e.target.value)}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                aria-label="Project"
+              >
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.title}</option>
+                ))}
+              </select>
+            )}
+            <Textarea
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              placeholder={`Write a message to the ${projects.length > 1 ? 'project' : projects[0].title} team...`}
+              rows={3}
+            />
+            <div className="flex justify-end">
+              <Button onClick={sendReply} disabled={sendingReply || !replyText.trim()} size="sm">
+                <Send className="mr-2 h-4 w-4" />
+                {sendingReply ? 'Sending...' : 'Send'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {messages.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center">
@@ -692,6 +814,9 @@ export const ModernClientPortal: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-gray-700">
+                        {msg.sender_id === currentUserId ? 'You' : 'NexaCore team'}
+                      </span>
                       <span className="text-xs font-medium text-primary">{msg.project_title}</span>
                       <Badge variant="outline" className="text-xs capitalize">{msg.message_type}</Badge>
                     </div>
@@ -742,17 +867,15 @@ export const ModernClientPortal: React.FC = () => {
                       <span>{new Date(file.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <a
-                    href={file.file_path}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-shrink-0"
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1 flex-shrink-0"
+                    onClick={() => downloadFile(file)}
                   >
-                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1">
-                      <Download className="h-3 w-3" />
-                      <span className="hidden sm:inline">Download</span>
-                    </Button>
-                  </a>
+                    <Download className="h-3 w-3" />
+                    <span className="hidden sm:inline">Download</span>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -794,25 +917,10 @@ export const ModernClientPortal: React.FC = () => {
           <p className="text-sm font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent capitalize">
             {user?.email?.split('@')[0]}
           </p>
-          <div className="flex items-center mt-2 text-xs text-muted-foreground">
-            <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
-            Online Now
-          </div>
         </div>
       </div>
 
-      {/* Search */}
-      <div className="px-6 mt-5 mb-5">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-primary/70" />
-          <Input
-            placeholder="Search everything..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white/70 backdrop-blur-sm border-0 focus:ring-2 focus:ring-primary/20 rounded-xl h-10 shadow-sm"
-          />
-        </div>
-      </div>
+      <div className="mt-5" />
 
       {/* Navigation */}
       <nav className="px-4 flex-1 overflow-y-auto">
@@ -866,7 +974,7 @@ export const ModernClientPortal: React.FC = () => {
             <p className="text-xs font-semibold text-gray-700">Account Status</p>
             <div className="flex items-center">
               <div className="w-2 h-2 bg-green-400 rounded-full mr-1.5 animate-pulse"></div>
-              <span className="text-xs font-bold text-green-700">Premium</span>
+              <span className="text-xs font-bold text-green-700">Active</span>
             </div>
           </div>
           <div className="space-y-1">
@@ -957,21 +1065,18 @@ export const ModernClientPortal: React.FC = () => {
         <ServiceRequestModal
           isOpen={showServiceModal}
           onClose={() => setShowServiceModal(false)}
-          onSuccess={() => setShowServiceModal(false)}
-        />
-      )}
-
-      {showPaymentForm && selectedInvoice && (
-        <VisaPaymentForm
-          isOpen={showPaymentForm}
-          onClose={() => setShowPaymentForm(false)}
-          invoice={selectedInvoice}
-          onPaymentComplete={() => {
-            setShowPaymentForm(false);
+          onSuccess={() => {
+            setShowServiceModal(false);
             loadClientData();
           }}
         />
       )}
+
+      <PaymentInstructionsModal
+        isOpen={showPaymentForm}
+        onClose={() => setShowPaymentForm(false)}
+        invoice={selectedInvoice}
+      />
       <Footer />
     </div>
   );

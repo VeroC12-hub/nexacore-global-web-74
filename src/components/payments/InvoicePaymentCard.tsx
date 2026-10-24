@@ -15,7 +15,7 @@ import {
   Eye,
   ArrowRight
 } from 'lucide-react';
-import { PaymentModal } from './PaymentModal';
+import { PaymentInstructionsModal } from './PaymentInstructionsModal';
 import { toast } from 'sonner';
 import { downloadInvoicePDF } from '@/utils/invoicePDFGenerator';
 
@@ -271,7 +271,7 @@ export function InvoicePaymentCard({
       </Card>
 
       {/* Payment Modal */}
-      <PaymentModal
+      <PaymentInstructionsModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         invoice={invoice}

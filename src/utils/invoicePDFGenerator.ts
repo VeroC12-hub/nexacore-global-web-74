@@ -325,18 +325,35 @@ export async function generateInvoicePDF(
   }
 }
 
-// Download an invoice that has no separate line items: the whole amount is one line
+// Stored line items when the invoice has them, otherwise the whole amount as one line
+export function invoiceLineItems(invoice: {
+  line_items?: unknown;
+  description?: string;
+  title?: string;
+  amount?: number;
+}): InvoiceLineItem[] {
+  if (Array.isArray(invoice.line_items) && invoice.line_items.length > 0) {
+    return invoice.line_items.map((item: any) => ({
+      description: String(item.description ?? ''),
+      quantity: Number(item.quantity ?? 1),
+      unit_price: Number(item.unit_price ?? 0),
+      total: Number(item.total ?? Number(item.quantity ?? 1) * Number(item.unit_price ?? 0)),
+    }));
+  }
+  return [{
+    description: invoice.description || invoice.title || 'Service',
+    quantity: 1,
+    unit_price: invoice.amount || 0,
+    total: invoice.amount || 0,
+  }];
+}
+
 export async function downloadInvoicePDF(
-  invoice: InvoiceData,
+  invoice: InvoiceData & { line_items?: unknown },
   project?: { title?: string; service_type?: string } | null
 ): Promise<void> {
   await generateInvoicePDF(
     { ...invoice, project_title: project?.title, service_type: project?.service_type },
-    [{
-      description: invoice.description || invoice.title || 'Service',
-      quantity: 1,
-      unit_price: invoice.amount || 0,
-      total: invoice.amount || 0,
-    }]
+    invoiceLineItems(invoice)
   );
 }

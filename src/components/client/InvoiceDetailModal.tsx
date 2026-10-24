@@ -23,8 +23,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { generateInvoicePDF } from '@/utils/invoicePDFGenerator';
-import { PaymentModal } from '@/components/payments/PaymentModal';
+import { generateInvoicePDF, invoiceLineItems } from '@/utils/invoicePDFGenerator';
+import { PaymentInstructionsModal } from '@/components/payments/PaymentInstructionsModal';
 
 interface Invoice {
   id: string;
@@ -41,6 +41,7 @@ interface Invoice {
   payment_method?: string;
   created_at: string;
   project_id?: string;
+  line_items?: unknown;
 }
 
 interface LineItem {
@@ -89,11 +90,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
 
     setLoading(true);
     try {
-      // Load line items if they exist in a separate table
-      // For now, we'll parse from description or generate from amount
-      // In a real scenario, you'd have an invoice_line_items table
-      const items = parseLineItemsFromDescription(invoice.description);
-      setLineItems(items);
+      setLineItems(invoiceLineItems(invoice).map((item, index) => ({ id: String(index + 1), ...item })));
 
       // Load related project if project_id exists
       if (invoice.project_id) {
@@ -112,22 +109,6 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  // Helper function to parse line items from description
-  // In a real app, line items would be in a separate table
-  const parseLineItemsFromDescription = (description: string): LineItem[] => {
-    // For now, create a single line item from the invoice amount
-    // In production, you'd fetch from invoice_line_items table
-    return [
-      {
-        id: '1',
-        description: description || invoice?.title || 'Service',
-        quantity: 1,
-        unit_price: invoice?.amount || 0,
-        total: invoice?.amount || 0,
-      }
-    ];
   };
 
   const getStatusColor = (status: string) => {
@@ -406,7 +387,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
           </Button>
         </div>
       </DialogContent>
-      <PaymentModal
+      <PaymentInstructionsModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
         invoice={invoice as any}
