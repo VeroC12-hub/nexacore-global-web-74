@@ -35,59 +35,6 @@ export async function createProjectFromProposal(proposal: Proposal): Promise<str
 }
 
 /**
- * Create a project from an accepted quote
- * This function is called automatically when a quote is accepted
- */
-export async function createProjectFromQuote(quote: any): Promise<any> {
-  try {
-    // Create project directly in the database
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData?.user?.id;
-
-    const projectData = {
-      title: quote.service_type || 'New Project',
-      description: quote.scope || '',
-      client_id: quote.client_id || null,
-      status: 'planning',
-      priority: 'normal',
-      budget: quote.price,
-      service_type: quote.service_type || 'General',
-      metadata: {
-        created_from_quote: true,
-        quote_id: quote.id,
-        created_by: userId,
-        timeline: quote.timeline,
-      },
-    };
-
-    const { data: project, error } = await supabase
-      .from('projects')
-      .insert(projectData as any)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating project from quote:', error);
-      throw error;
-    }
-
-    // Update quote to mark project as created - use fields that exist
-    await supabase
-      .from('quotes')
-      .update({ 
-        status: 'approved',
-        approved_at: new Date().toISOString()
-      } as any)
-      .eq('id', quote.id);
-
-    return project;
-  } catch (error) {
-    console.error('Error in createProjectFromQuote:', error);
-    throw error;
-  }
-}
-
-/**
  * Check if a project already exists for a proposal
  */
 export async function checkProjectExists(proposalId: string): Promise<boolean> {
@@ -110,6 +57,5 @@ export async function checkProjectExists(proposalId: string): Promise<boolean> {
 // Default export for backward compatibility
 export const projectCreationService = {
   createProjectFromProposal,
-  createProjectFromQuote,
   checkProjectExists,
 };

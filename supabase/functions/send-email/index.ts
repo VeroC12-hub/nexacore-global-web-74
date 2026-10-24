@@ -128,15 +128,34 @@ const handler = async (req: Request): Promise<Response> => {
         });
         break;
 
-      case 'quote_request_confirmation':
+      case 'quote_request_confirmation': {
+        // Only the address on a just-submitted request, and only once, so the
+        // endpoint cannot be used to mail arbitrary people
+        const requestId = typeof requestData.data?.quote_request_id === 'string' ? requestData.data.quote_request_id : '';
+        const { data: request } = await supabase
+          .from('quote_requests')
+          .update({ confirmation_sent_at: new Date().toISOString() })
+          .eq('id', requestId)
+          .is('confirmation_sent_at', null)
+          .gte('created_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
+          .select('email, full_name, service_type')
+          .maybeSingle();
+
+        if (!request) {
+          return new Response(JSON.stringify({ error: 'Not allowed' }), {
+            status: 403,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          });
+        }
+
         emailResponse = await resend.emails.send({
           from: "NexaCore <noreply@nexacore-innovations.com>",
-          to: [to],
+          to: [request.email],
           subject: `We received your quote request`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #2563eb;">Thanks, ${data.full_name}!</h2>
-              <p>Your request for <strong>${data.service_type}</strong> has been received.</p>
+              <h2 style="color: #2563eb;">Thanks, ${escapeHtml(request.full_name || 'there')}!</h2>
+              <p>Your request for <strong>${escapeHtml(request.service_type || 'our services')}</strong> has been received.</p>
               <p>Our project team will review it and get back to you shortly.</p>
               <p style="color: #6b7280; font-size: 14px;">
                 You can create an account or sign in anytime to track progress.
@@ -145,6 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
           `,
         });
         break;
+      }
 
       case 'quote_sent':
         emailResponse = await resend.emails.send({

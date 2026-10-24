@@ -31,7 +31,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { projectCreationService } from '@/services/projectCreationService';
 import { generateQuotePDF } from '@/utils/quotePDFGenerator';
 import { parseContent } from '@/utils/pdfContentRenderer';
 
@@ -358,58 +357,23 @@ const QuoteReview = () => {
       console.log('Quote updated successfully:', updatedData);
       setDebugInfo('Database updated successfully!');
 
-      // Auto-create project when quote is approved
-      if (action === 'approved') {
-        console.log('Quote approved - Creating project automatically...');
-        setDebugInfo('Creating project from approved quote...');
-
-        try {
-          const projectResult = await projectCreationService.createProjectFromQuote(quote);
-          
-          if (projectResult.success) {
-            console.log('Project created successfully:', projectResult.projectId);
-            setDebugInfo(`Project created successfully! Project ID: ${projectResult.projectId}`);
-            
-            // Show success message with project info
-            toast.success(
-              `Quote approved and project created! Project ID: ${projectResult.projectId}`,
-              { duration: 6000 }
-            );
-            
-            // Store project info for display
-            setProjectInfo({
-              created: true,
-              projectId: projectResult.projectId,
-              project: projectResult.project
-            });
-
-          } else {
-            console.error('Failed to create project:', projectResult.error);
-            setDebugInfo(`Project creation failed: ${projectResult.error}`);
-            
-            // Still show success for quote approval, but warn about project
-            toast.success('Quote approved successfully!');
-            toast.warning(
-              `Project creation failed: ${projectResult.error}. Please create manually.`,
-              { duration: 8000 }
-            );
-          }
-        } catch (projectError: any) {
-          console.error('Unexpected error creating project:', projectError);
-          setDebugInfo(`Unexpected project creation error: ${projectError.message}`);
-          
-          // Still show success for quote approval
-          toast.success('Quote approved successfully!');
-          toast.error(
-            `Failed to create project automatically. Please create manually in admin panel.`,
-            { duration: 8000 }
-          );
-        }
+      // The database creates the project when the quote is approved
+      const projectId = (updatedData as any)?.project_id as string | undefined;
+      if (action === 'approved' && projectId) {
+        setProjectInfo({
+          created: true,
+          projectId,
+          project: {
+            title: quote.service_type || 'New Project',
+            budget: quote.price,
+            currency: quote.currency,
+          },
+        });
       }
 
       // Success feedback based on action
-      if (action === 'approved' && !projectInfo?.created) {
-        toast.success('Quote approved successfully!');
+      if (action === 'approved') {
+        toast.success(projectId ? 'Quote approved and project created!' : 'Quote approved successfully!');
       } else if (action === 'declined') {
         toast.success('Quote declined successfully');
       } else if (action === 'revision_requested') {
@@ -497,7 +461,6 @@ const QuoteReview = () => {
                 <ul className="text-sm text-green-700 space-y-1">
                   <li>• Our project manager will contact you within 24 hours</li>
                   <li>• You'll receive access to the client portal for progress tracking</li>
-                  <li>• Initial project tasks have been automatically created</li>
                   <li>• A kickoff meeting will be scheduled</li>
                 </ul>
               </div>

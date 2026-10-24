@@ -507,11 +507,7 @@ const GetStarted = () => {
         await supabase.functions.invoke('send-email', {
           body: {
             type: 'quote_request_confirmation',
-            to: clientEmail.trim(),
-            data: {
-              full_name: clientName.trim(),
-              service_type: selectedService,
-            },
+            data: { quote_request_id: quoteRequest.id },
           },
         });
 
@@ -552,9 +548,11 @@ const GetStarted = () => {
       setClientPhone("");
       setProjectDescription("");
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
-      toast.error('Sorry, there was an error submitting your request. Please try again.');
+      // Rate limit and validation messages from the database are meant for the visitor
+      const friendly = ['P0001', '22023', '22001'].includes(error?.code);
+      toast.error(friendly ? error.message : 'Sorry, there was an error submitting your request. Please try again.');
     } finally {
       setSubmitting(false);
     }
