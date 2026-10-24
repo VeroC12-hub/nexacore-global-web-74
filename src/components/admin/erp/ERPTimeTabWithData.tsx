@@ -31,7 +31,9 @@ function transformTimeEntry(entry: any) {
     task_id: entry.erp_task_id || '',
     start_time: entry.date || entry.created_at,
     end_time: null,
-    status: (entry.status === 'approved' || entry.status === 'submitted' || entry.status === 'invoiced') ? 'completed' : 'active',
+    // A running timer is an unapproved entry with no hours yet
+    db_status: entry.status,
+    status: (Number(entry.hours) === 0 && (entry.status === 'pending' || entry.status === 'draft')) ? 'active' : 'completed',
   };
 }
 

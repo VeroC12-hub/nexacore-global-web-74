@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 const STATUS_MAP: Record<string, string> = {
   'pending': 'todo',
   'new': 'todo',
-  'blocked': 'todo',
-  'cancelled': 'todo',
+  'blocked': 'blocked',
+  'cancelled': 'cancelled',
   'in_progress': 'in_progress',
   'review': 'review',
   'testing': 'review',

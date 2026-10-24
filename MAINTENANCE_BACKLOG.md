@@ -22,6 +22,9 @@ those when working on NexaCore.
   anyone (no sign-in) can read all quote requests; any client can read and
   change all projects and JARVIS memory/tasks; chat logs are public; the AI
   admin policies trust user-editable metadata. Quote review page needs it.
+- **Run migration `20261024030000_portfolio_submission_workflow.sql`:** the
+  staff portfolio submission and admin review used columns that did not
+  exist and had no write policies, so every step failed.
 - **Other app's tables on the shared project (not changed):** homepage_media
   and media_files can be edited by any signed-in user; users and
   user_profiles are publicly readable. Check which app owns them.
@@ -84,6 +87,17 @@ those when working on NexaCore.
    chunks with `manualChunks`. Build currently takes about 5 to 6 minutes.
 
 ## Done
+
+- 2026-10-24: ERP repair. Search and filters did nothing (cache key ignored
+  them); no action refreshed the lists; "To Do" filter always empty; blocked
+  and cancelled tasks shown as To Do; project save always failed (sent a
+  non-existent is_active column) and refused budget 0; departments stored as
+  names did not match the filter; progress never followed tasks (now synced
+  from task completion); timers always logged 1 hour at $50, every
+  unapproved entry showed as a running timer with a Stop button that could
+  overwrite its hours, and pending approvals never listed; Team tab never
+  loaded assigned members; task form crashed on empty description or due
+  date and offered clients as assignees.
 
 - 2026-10-24: RLS audit of all public tables; migration
   `20261024020000_close_public_data_leaks.sql` written. Get Started and the

@@ -234,7 +234,7 @@ export function TimeEntryFormModal({ isOpen, onClose, onSuccess, timeEntry, defa
         user_id: formData.user_id,
         erp_project_id: formData.project_id,
         erp_task_id: formData.task_id || null,
-        description: formData.description.trim(),
+        description: (formData.description || "").trim(),
         date: formData.start_time ? new Date(formData.start_time).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         hours: formData.hours,
         hourly_rate: formData.rate,

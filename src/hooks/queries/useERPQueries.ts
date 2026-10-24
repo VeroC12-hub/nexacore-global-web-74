@@ -2,6 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { usePaginatedSupabaseQuery } from './usePaginatedSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 
+// Characters that would break a PostgREST or() filter
+const searchSafe = (term: string) => term.replace(/[,()*%]/g, ' ').trim();
+
 // ERP Stats Query - Load immediately for dashboard overview
 export function useERPStats() {
   return useQuery({
@@ -71,7 +74,7 @@ export function useERPProjects({
   enabled?: boolean;
 }) {
   return usePaginatedSupabaseQuery(
-    ['erp', 'projects'],
+    ['erp', 'projects', statusFilter, departmentFilter, searchTerm],
     'erp_projects',
     {
       page,
@@ -91,9 +94,9 @@ export function useERPProjects({
         }
 
         // Search filter
-        if (searchTerm) {
+        if (searchSafe(searchTerm)) {
           filtered = filtered.or(
-            `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,department.ilike.%${searchTerm}%`
+            `title.ilike.%${searchSafe(searchTerm)}%,description.ilike.%${searchSafe(searchTerm)}%,department.ilike.%${searchSafe(searchTerm)}%`
           );
         }
 
@@ -104,6 +107,12 @@ export function useERPProjects({
     }
   );
 }
+
+// UI task statuses that cover more than one database status
+const TASK_STATUS_FILTER: Record<string, string[]> = {
+  todo: ['new', 'pending'],
+  review: ['review', 'testing'],
+};
 
 // ERP Tasks Query - Paginated, lazy loaded
 export function useERPTasks({
@@ -122,7 +131,7 @@ export function useERPTasks({
   enabled?: boolean;
 }) {
   return usePaginatedSupabaseQuery(
-    ['erp', 'tasks'],
+    ['erp', 'tasks', statusFilter, priorityFilter, searchTerm],
     'erp_tasks',
     {
       page,
@@ -132,16 +141,16 @@ export function useERPTasks({
         let filtered = query;
 
         if (statusFilter !== 'all') {
-          filtered = filtered.eq('status', statusFilter);
+          filtered = filtered.in('status', TASK_STATUS_FILTER[statusFilter] || [statusFilter]);
         }
 
         if (priorityFilter !== 'all') {
           filtered = filtered.eq('priority', priorityFilter);
         }
 
-        if (searchTerm) {
+        if (searchSafe(searchTerm)) {
           filtered = filtered.or(
-            `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`
+            `title.ilike.%${searchSafe(searchTerm)}%,description.ilike.%${searchSafe(searchTerm)}%`
           );
         }
 
@@ -168,7 +177,7 @@ export function useERPTimeEntries({
   enabled?: boolean;
 }) {
   return usePaginatedSupabaseQuery(
-    ['erp', 'time-entries'],
+    ['erp', 'time-entries', dateFilter, userFilter],
     'erp_time_entries',
     {
       page,

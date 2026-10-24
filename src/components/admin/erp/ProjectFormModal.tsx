@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { FolderOpen, Loader2 } from 'lucide-react';
 
+const DEPARTMENT_CODES = ['cad_engineering', 'civil_engineering', 'architecture', 'software_development', 'ai_ml', 'digital_services', 'consulting', 'operations', 'finance', 'hr', 'marketing'];
+
 interface ERPProject {
   id?: string;
   title: string;
@@ -98,8 +100,9 @@ export function ProjectFormModal({ isOpen, onClose, onSuccess, project }: Projec
       return;
     }
 
-    if (formData.budget <= 0) {
-      toast.error('Budget must be greater than 0');
+    // Internal projects often have no budget, so 0 is allowed
+    if (formData.budget < 0) {
+      toast.error('Budget cannot be negative');
       return;
     }
 
@@ -118,7 +121,6 @@ export function ProjectFormModal({ isOpen, onClose, onSuccess, project }: Projec
         start_date: formData.start_date,
         end_date: formData.end_date,
         progress: formData.progress || 0,
-        is_active: formData.is_active,
         updated_at: new Date().toISOString()
       };
 
@@ -216,6 +218,9 @@ export function ProjectFormModal({ isOpen, onClose, onSuccess, project }: Projec
                   <SelectItem value="finance">Finance</SelectItem>
                   <SelectItem value="hr">Human Resources</SelectItem>
                   <SelectItem value="marketing">Marketing & Sales</SelectItem>
+                  {formData.department && !DEPARTMENT_CODES.includes(formData.department) && (
+                    <SelectItem value={formData.department}>{formData.department}</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

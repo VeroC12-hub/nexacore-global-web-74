@@ -24,7 +24,7 @@ interface ERPTask {
   id?: string;
   title: string;
   description: string;
-  status: 'todo' | 'in_progress' | 'review' | 'completed';
+  status: 'todo' | 'in_progress' | 'review' | 'completed' | 'blocked' | 'cancelled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignee_id?: string;  // Form field name
   assigned_to?: string;  // Database column name
@@ -67,12 +67,12 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
         setFormData({
           id: task.id,
           title: task.title,
-          description: task.description,
+          description: task.description || '',
           status: task.status,
           priority: task.priority,
           project_id: task.project_id,
           assignee_id: task.assigned_to || '',  // Database uses 'assigned_to' column
-          due_date: task.due_date.split('T')[0], // Extract date part
+          due_date: (task.due_date || '').split('T')[0], // Extract date part
           estimated_hours: task.estimated_hours,
           actual_hours: task.actual_hours || 0
         });
@@ -125,6 +125,8 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, email, role')
+        .in('role', ['admin', 'project_manager', 'operations_manager', 'developer', 'support', 'staff'])
+        .eq('status', 'approved')
         .order('full_name');
 
       if (error) {
@@ -133,7 +135,6 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
         return;
       }
 
-      console.log('Loaded staff:', data);
       setStaff(data || []);
 
       if (!data || data.length === 0) {
@@ -166,12 +167,12 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
         // Update existing task - don't update erp_project_id as it's a fixed relationship
         const updateData = {
           title: formData.title.trim(),
-          description: formData.description.trim(),
+          description: (formData.description || '').trim(),
           status: formData.status === 'todo' ? 'new' : formData.status,  // Map 'todo' to 'new'
           priority: formData.priority,
           erp_project_id: formData.project_id,  // Allow changing project when editing
           assigned_to: formData.assignee_id || null,
-          due_date: formData.due_date,
+          due_date: formData.due_date || null,
           estimated_hours: formData.estimated_hours,
           actual_hours: formData.actual_hours || 0
         };
@@ -191,12 +192,12 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
         // Create new task - include erp_project_id on creation
         const insertData = {
           title: formData.title.trim(),
-          description: formData.description.trim(),
+          description: (formData.description || '').trim(),
           status: formData.status === 'todo' ? 'new' : formData.status,
           priority: formData.priority,
           erp_project_id: formData.project_id,  // Column is erp_project_id, not project_id
           assigned_to: formData.assignee_id || null,
-          due_date: formData.due_date,
+          due_date: formData.due_date || null,
           estimated_hours: formData.estimated_hours,
           actual_hours: formData.actual_hours || 0
         };
@@ -344,6 +345,8 @@ export function TaskFormModal({ isOpen, onClose, onSuccess, task }: TaskFormModa
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todo">To Do</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
                   <SelectItem value="in_progress">In Progress</SelectItem>
                   <SelectItem value="review">In Review</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>

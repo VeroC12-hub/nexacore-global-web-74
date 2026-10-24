@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 import { useERPStats, useERPStaffRoles, useERPProjects } from '@/hooks/queries/useERPQueries';
 import { useEnhancedAuth } from '@/hooks/useEnhancedAuth';
 import { DashboardSkeleton } from './LoadingSkeletons';
@@ -35,7 +36,7 @@ interface ERPTask {
   id: string;
   title: string;
   description: string;
-  status: 'todo' | 'in_progress' | 'review' | 'completed';
+  status: 'todo' | 'in_progress' | 'review' | 'completed' | 'blocked' | 'cancelled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignee: string;
   project_id: string;
@@ -115,7 +116,50 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
   const { isAdmin } = useEnhancedAuth();
 
   // React Query hooks - Progressive loading (stats only on mount)
-  const { data: statsData, isLoading: statsLoading, refetch: refetchStats } = useERPStats();
+  const { data: statsData, isLoading: statsLoading } = useERPStats();
+  const queryClient = useQueryClient();
+
+  // Project progress is the share of a project's tasks that are completed
+  // (cancelled tasks are left out). Kept in erp_projects.progress so every
+  // view shows the same number.
+  const syncProjectProgress = async () => {
+    const [{ data: taskRows }, { data: projectRows }] = await Promise.all([
+      supabase.from('erp_tasks').select('erp_project_id, status'),
+      supabase.from('erp_projects').select('id, progress'),
+    ]);
+    const counts: Record<string, { total: number; done: number }> = {};
+    (taskRows || []).forEach((t: any) => {
+      if (!t.erp_project_id || t.status === 'cancelled') return;
+      const c = (counts[t.erp_project_id] ||= { total: 0, done: 0 });
+      c.total += 1;
+      if (t.status === 'completed') c.done += 1;
+    });
+    const updates = (projectRows || [])
+      .filter((p: any) => counts[p.id])
+      .map((p: any) => ({ id: p.id, progress: Math.round((counts[p.id].done / counts[p.id].total) * 100), old: p.progress }))
+      .filter(p => p.progress !== p.old);
+    await Promise.all(updates.map(p =>
+      supabase.from('erp_projects').update({ progress: p.progress }).eq('id', p.id)
+    ));
+    return updates.length;
+  };
+
+  // Every ERP list is cached under the 'erp' key; refresh them all after a change
+  const refetchStats = async () => {
+    try {
+      await syncProjectProgress();
+    } catch (error) {
+      console.error('Error syncing project progress:', error);
+    }
+    queryClient.invalidateQueries({ queryKey: ['erp'] });
+  };
+
+  useEffect(() => {
+    syncProjectProgress()
+      .then(changed => { if (changed) queryClient.invalidateQueries({ queryKey: ['erp'] }); })
+      .catch(error => console.error('Error syncing project progress:', error));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const { data: staffRolesData, refetch: refetchStaffRoles } = useERPStaffRoles({
     enabled: false, // Only load when team tab is active
   });
@@ -192,7 +236,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
   const [selectedProjectForTeam, setSelectedProjectForTeam] = useState<ERPProject | null>(null);
   const [selectedTeamMembers, setSelectedTeamMembers] = useState<string[]>([]);
   const [selectedProjectRole, setSelectedProjectRole] = useState<string>('');
-  const [existingTeamMembers, setExistingTeamMembers] = useState<{ user_id: string; role: string }[]>([]);
+  const [existingTeamMembers, setExistingTeamMembers] = useState<{ user_id: string; role: string; profiles?: { full_name: string | null; email: string | null } | null }[]>([]);
 
   // Task modal states
   const [selectedTask, setSelectedTask] = useState<ERPTask | null>(null);
@@ -447,10 +491,29 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
     setSelectedTeamMembers([]);
     setSelectedProjectRole('');
     setIsTeamAssignModalOpen(true);
-    // Load existing team members for this project
-    // This would be implemented with actual data loading
-    setExistingTeamMembers([]);
   };
+
+  const loadExistingTeamMembers = async (projectId: string) => {
+    const { data, error } = await supabase
+      .from('project_members')
+      .select('user_id, role, profiles:profiles!fk_project_members_profiles_user(full_name, email)')
+      .eq('project_id', projectId)
+      .eq('is_active', true);
+    if (error) {
+      console.error('Error loading team members:', error);
+      setExistingTeamMembers([]);
+      return;
+    }
+    setExistingTeamMembers((data || []).map((m: any) => ({ user_id: m.user_id, role: m.role || '', profiles: m.profiles })));
+  };
+
+  useEffect(() => {
+    if (selectedProjectForTeam?.id) {
+      loadExistingTeamMembers(selectedProjectForTeam.id);
+    } else {
+      setExistingTeamMembers([]);
+    }
+  }, [selectedProjectForTeam?.id]);
 
   const handleAssignTeamMembers = async () => {
     if (!selectedProjectForTeam || selectedTeamMembers.length === 0) {
@@ -498,6 +561,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       setSelectedTeamMembers([]);
       setSelectedProjectRole('');
       setIsTeamAssignModalOpen(false);
+      loadExistingTeamMembers(selectedProjectForTeam.id);
       
     } catch (error) {
       console.error('Error assigning team members:', error);
@@ -531,7 +595,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       if (error) throw error;
 
       toast.success(`Started task: ${task.title}`);
-      refetchStats(); // Update stats (React Query will auto-refetch tasks in the tab)
+      refetchStats();
     } catch (error) {
       console.error('Error starting task:', error);
       toast.error('Failed to start task');
@@ -548,7 +612,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       if (error) throw error;
 
       toast.success(`Completed task: ${task.title}`);
-      refetchStats(); // Update stats (React Query will auto-refetch tasks)
+      refetchStats();
     } catch (error) {
       console.error('Error completing task:', error);
       toast.error('Failed to complete task');
@@ -558,7 +622,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
   const handleTaskFormSuccess = async () => {
     setIsTaskFormOpen(false);
     setSelectedTask(null);
-    refetchStats(); // Update stats (React Query will auto-refetch tasks)
+    refetchStats();
   };
 
   const handleDeleteTask = async (task: ERPTask) => {
@@ -575,7 +639,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       if (error) throw error;
 
       toast.success(`Task "${task.title}" deleted successfully`);
-      refetchStats(); // Update stats (React Query will auto-refetch tasks)
+      refetchStats();
     } catch (error) {
       console.error('Error deleting task:', error);
       toast.error('Failed to delete task');
@@ -600,7 +664,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       if (error) throw error;
 
       toast.success(`Task duplicated: "${task.title} (Copy)"`);
-      refetchStats(); // Update stats (React Query will auto-refetch tasks)
+      refetchStats();
     } catch (error) {
       console.error('Error duplicating task:', error);
       toast.error('Failed to duplicate task');
@@ -665,6 +729,12 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
         return;
       }
 
+      // Bill at the person's own rate, else the project's rate
+      const [{ data: staffRole }, { data: projectRow }] = await Promise.all([
+        supabase.from('erp_staff_roles').select('hourly_rate').eq('user_id', user.id).eq('is_active', true).maybeSingle(),
+        supabase.from('erp_projects').select('hourly_rate').eq('id', projectId).maybeSingle(),
+      ]);
+
       const { error } = await supabase
         .from('erp_time_entries')
         .insert([{
@@ -674,7 +744,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
           description: 'Timer started',
           date: new Date().toISOString().split('T')[0],
           hours: 0,
-          hourly_rate: 50,
+          hourly_rate: staffRole?.hourly_rate ?? projectRow?.hourly_rate ?? 0,
           billable: true,
           status: 'pending'
         }]);
@@ -682,7 +752,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       if (error) throw error;
 
       toast.success('Timer started!');
-      // Time tab will auto-refetch via React Query
+      refetchStats();
     } catch (error: any) {
       console.error('Error starting timer:', error);
       toast.error(error.message || 'Failed to start timer');
@@ -691,7 +761,22 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
 
   const handleStopTimer = async (entryId: string, hours?: number) => {
     try {
-      const hoursLogged = hours || 1; // Default to 1 hour if not provided
+      let hoursLogged = hours;
+      if (!hoursLogged) {
+        // A running timer is an entry with 0 hours; its start is created_at
+        const { data: entry, error: fetchError } = await supabase
+          .from('erp_time_entries')
+          .select('created_at, hours')
+          .eq('id', entryId)
+          .single();
+        if (fetchError) throw fetchError;
+        if (Number(entry.hours) > 0) {
+          toast.error('This entry is not a running timer');
+          return;
+        }
+        const elapsed = (Date.now() - new Date(entry.created_at).getTime()) / 3600000;
+        hoursLogged = Math.max(0.01, Math.round(elapsed * 100) / 100);
+      }
 
       const { error } = await supabase
         .from('erp_time_entries')
@@ -704,7 +789,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       if (error) throw error;
 
       toast.success(`Timer stopped! ${hoursLogged.toFixed(2)} hours logged.`);
-      // Time tab will auto-refetch via React Query
+      refetchStats();
     } catch (error: any) {
       console.error('Error stopping timer:', error);
       toast.error(error.message || 'Failed to stop timer');
@@ -725,7 +810,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
       if (error) throw error;
 
       toast.success('Time entry deleted successfully');
-      // Time tab will auto-refetch via React Query
+      refetchStats();
     } catch (error: any) {
       console.error('Error deleting time entry:', error);
       toast.error(error.message || 'Failed to delete time entry');
@@ -1240,7 +1325,7 @@ export function AdminERPTab({ onNavigate }: AdminERPTabProps = {}) {
           setSelectedTimeEntry(null);
         }}
         onSuccess={() => {
-          // Time entries auto-refresh in ERPTimeTabWithData via React Query
+          refetchStats();
         }}
         timeEntry={selectedTimeEntry}
       />

@@ -16,7 +16,7 @@ interface ERPTask {
   id: string;
   title: string;
   description: string;
-  status: 'todo' | 'in_progress' | 'review' | 'completed';
+  status: 'todo' | 'in_progress' | 'review' | 'completed' | 'blocked' | 'cancelled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignee: string;
   project_id: string;
@@ -93,6 +93,8 @@ export function TaskExportModal({ isOpen, onClose, tasks, filteredTasks, singleT
   const formatStatus = (status: string) => {
     const statusMap: Record<string, string> = {
       'todo': 'To Do',
+      'blocked': 'Blocked',
+      'cancelled': 'Cancelled',
       'in_progress': 'In Progress',
       'review': 'In Review',
       'completed': 'Completed'

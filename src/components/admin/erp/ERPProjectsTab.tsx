@@ -23,6 +23,8 @@ import {
 } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
+const DEPARTMENT_CODES = ['cad_engineering', 'civil_engineering', 'architecture', 'software_development', 'ai_ml', 'digital_services', 'consulting', 'operations', 'finance', 'hr', 'marketing'];
+
 interface ERPProject {
   id: string;
   title: string;
@@ -74,6 +76,10 @@ export function ERPProjectsTab({
   onExportProjects,
   onExportSingleProject
 }: ERPProjectsTabProps) {
+  // Older projects store a free-text department name; offer those as filters too
+  const extraDepartments = [...new Set(projects.map(p => p.department).filter(Boolean))]
+    .filter(d => !DEPARTMENT_CODES.includes(d));
+
   const getDepartmentLabel = (department: string) => {
     const labels: Record<string, string> = {
       'cad_engineering': 'CAD Design & Engineering',
@@ -114,7 +120,7 @@ export function ERPProjectsTab({
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.department.toLowerCase().includes(searchTerm.toLowerCase());
+                         (project.department || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     const matchesDepartment = departmentFilter === 'all' || project.department === departmentFilter;
     
@@ -264,6 +270,9 @@ export function ERPProjectsTab({
                 <SelectItem value="finance">Finance</SelectItem>
                 <SelectItem value="hr">Human Resources</SelectItem>
                 <SelectItem value="marketing">Marketing & Sales</SelectItem>
+                {extraDepartments.map(d => (
+                  <SelectItem key={d} value={d}>{d}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
