@@ -8,6 +8,7 @@ import { Eye, Edit, Trash2, Plus, Download } from 'lucide-react';
 import { CreateInvoiceModal } from './CreateInvoiceModal';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { downloadInvoicePDF } from '@/utils/invoicePDFGenerator';
 
 interface Invoice {
   id: string;
@@ -182,7 +183,12 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
                       <Button variant="outline" size="sm" onClick={() => setViewingInvoice(invoice)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => downloadInvoicePDF({ ...(invoice as any), client_name: invoice.client_name })
+                          .catch(() => toast.error('Failed to generate PDF'))}
+                      >
                         <Download className="h-4 w-4" />
                       </Button>
                       {invoice.status === 'pending' && (

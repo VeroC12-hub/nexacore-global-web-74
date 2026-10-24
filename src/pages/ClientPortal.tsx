@@ -320,6 +320,7 @@ const ClientPortal: React.FC = () => {
         .from('invoices')
         .select('*')
         .eq('client_id', user.id)
+        .neq('status', 'draft') // drafts are still being prepared by staff
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -397,8 +398,9 @@ const ClientPortal: React.FC = () => {
       // Get recent invoices
       const { data: recentInvoices } = await supabase
         .from('invoices')
-        .select('id, invoice_number, amount, status, created_at')
+        .select('id, invoice_number, amount, total_amount, status, created_at')
         .eq('client_id', user.id)
+        .neq('status', 'draft')
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -448,7 +450,7 @@ const ClientPortal: React.FC = () => {
           description: `Invoice ${invoice.invoice_number}`,
           timestamp: getRelativeTime(invoice.created_at),
           status: invoice.status === 'paid' ? 'success' : 'info',
-          amount: invoice.amount,
+          amount: invoice.total_amount || invoice.amount,
           created_at: invoice.created_at
         });
       });
@@ -516,14 +518,16 @@ const ClientPortal: React.FC = () => {
     const completedProjects = projects.filter(p => p.status === 'completed').length;
     
     // Invoice statistics
-    const totalInvoiced = invoices.reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
-    const totalPaid = invoices.filter(i => i.status === 'paid').reduce((sum, invoice) => sum + (invoice.amount || 0), 0);
-    const pendingPayments = invoices.filter(i => i.status === 'sent').length;
+    // total_amount includes tax, which is what the client actually pays
+    const invoiceTotal = (invoice: any) => invoice.total_amount || invoice.amount || 0;
+    const totalInvoiced = invoices.reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
+    const totalPaid = invoices.filter(i => i.status === 'paid').reduce((sum, invoice) => sum + invoiceTotal(invoice), 0);
+    const pendingPayments = invoices.filter(i => i.status === 'sent' || i.status === 'overdue').length;
     
     // Overdue invoices
     const now = new Date();
     const overdueInvoices = invoices.filter(i => 
-      i.status === 'sent' && new Date(i.due_date) < now
+      i.status === 'overdue' || (i.status === 'sent' && new Date(i.due_date) < now)
     ).length;
     
     // Service requests
