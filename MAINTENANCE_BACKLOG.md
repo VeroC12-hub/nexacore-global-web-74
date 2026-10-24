@@ -8,6 +8,11 @@ sooner.
 Work happens on branch `site-maintenance`. The run commits but never pushes or
 deploys. Godwin reviews and deploys.
 
+**Shared database:** Supabase project nmwfevhetlwehbuikflk also hosts the
+Eltuff app (schema `eltuff`, the `product-images` bucket, the "Eltuff staff ..."
+storage policies, edge function `admin-create-user`). Never change or remove
+those when working on NexaCore.
+
 ## Needs Godwin
 
 - **Deploy** branch `site-maintenance` to production (`npx vercel --prod`) after
@@ -40,15 +45,12 @@ deploys. Godwin reviews and deploys.
    that do nothing (search for `<Button` without `onClick` or `type="submit"`),
    and missing loading or empty states. One panel per run.
 2. Client portal: same audit as item 1.
-3. Other edge functions in `supabase/functions/`: check each for the same
-   problems found in send-email (no auth on actions that should be staff-only,
-   unescaped HTML, logging personal data).
-4. Lint: 33 `react-hooks/exhaustive-deps` warnings across `src`. Review each for
+3. Lint: 33 `react-hooks/exhaustive-deps` warnings across `src`. Review each for
    stale data bugs; fix real ones only, do not blindly add deps (risk of loops).
-5. Public site pages: broken links, placeholder text ("Portfolio Examples Coming
+4. Public site pages: broken links, placeholder text ("Portfolio Examples Coming
    Soon" on `services/EngineeringTechnical.tsx`), missing titles and meta
    descriptions.
-6. Bundle size: Vite warns about chunks over 500 kB. Split the largest vendor
+5. Bundle size: Vite warns about chunks over 500 kB. Split the largest vendor
    chunks with `manualChunks`. Build currently takes about 5 to 6 minutes.
 
 ## Done
@@ -90,3 +92,6 @@ deploys. Godwin reviews and deploys.
   depth limit (EnhancedProjectManagement, ModernStaffDashboard) and in Jarvis.tsx.
 - 2026-10-23: Both storage migrations applied in production and verified
   (project-files private, portfolio-files public, 4 policies).
+- 2026-10-24: Audited all deployed edge functions. create-payment is a
+  login-gated placeholder (no money moves); admin-create-user belongs to Eltuff
+  and correctly checks the caller's Eltuff admin/staff role. No further holes.
