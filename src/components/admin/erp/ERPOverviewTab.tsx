@@ -46,7 +46,6 @@ import {
   Edit,
   Play,
   Pause,
-  ArrowUp,
   ArrowDown,
   ArrowRight,
   Zap,
@@ -832,12 +831,6 @@ export function ERPOverviewTab({
                 <p className="text-xs text-muted-foreground mt-1">
                   {erpStats.completedTasks} of {erpStats.totalTasks} tasks completed
                 </p>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="outline" className="text-emerald-600 border-emerald-200">
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                    +12% vs last week
-                  </Badge>
-                </div>
               </div>
               <div className="h-12 w-12 bg-emerald-100 rounded-full flex items-center justify-center">
                 <Gauge className="h-6 w-6 text-emerald-600" />

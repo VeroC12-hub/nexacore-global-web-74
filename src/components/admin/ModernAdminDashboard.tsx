@@ -57,6 +57,9 @@ const LetterheadDocumentCreator = lazy(() => import('@/components/admin/Letterhe
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { DashboardSkeleton } from '@/components/admin/LoadingSkeletons';
 
+const formatMoney = (value: number) =>
+  value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 interface DashboardStats {
   totalUsers: number;
   totalProjects: number;
@@ -439,7 +442,7 @@ export const ModernAdminDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</p>
+                <p className="text-2xl font-bold">${formatMoney(stats.totalRevenue)}</p>
                 {stats.monthlyGrowth !== null && (
                   <div className="flex items-center mt-1">
                     <TrendingUp className={`h-4 w-4 mr-1 ${stats.monthlyGrowth >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`} />
@@ -703,7 +706,7 @@ export const ModernAdminDashboard: React.FC = () => {
               <div className="flex items-center">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                  <p className="text-3xl font-bold text-green-600">${stats.totalRevenue.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-green-600">${formatMoney(stats.totalRevenue)}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-500" />
               </div>
@@ -744,7 +747,7 @@ export const ModernAdminDashboard: React.FC = () => {
               <div className="flex items-center">
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-600">Outstanding</p>
-                  <p className="text-3xl font-bold text-purple-600">${stats.outstandingAmount.toLocaleString()}</p>
+                  <p className="text-3xl font-bold text-purple-600">${formatMoney(stats.outstandingAmount)}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-purple-500" />
               </div>
