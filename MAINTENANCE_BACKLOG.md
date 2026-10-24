@@ -15,6 +15,19 @@ those when working on NexaCore.
 
 ## Needs Godwin
 
+- **Run the ERP lock-down migration** (clients can currently read and edit all
+  internal ERP data): `npx supabase db query --linked --project-ref
+  nmwfevhetlwehbuikflk -f supabase/migrations/20261024000000_erp_internal_staff_only.sql`
+- **Client payments:** there is no working online payment. Client portals now
+  show honest "ask for payment details" instructions instead of fake card
+  forms. Decide the payment route (Paystack, MTN MoMo, Stripe, or bank
+  transfer only) and supply the real bank / MoMo details, then re-enable.
+  The `payments` table points at a legacy `bookings` table, so it needs a
+  small schema fix as part of that.
+- **Client portal Services page** lists generic services (Web Development,
+  Mobile, Digital Marketing, Cloud). Confirm whether that matches what NexaCore
+  sells.
+
 - **Deploy** branch `site-maintenance` to production (`npx vercel --prod`) after
   reviewing the commits, then merge it into `main`.
 - **Delete or keep** four unused components, none of which appear anywhere on
@@ -95,3 +108,15 @@ those when working on NexaCore.
 - 2026-10-24: Audited all deployed edge functions. create-payment is a
   login-gated placeholder (no money moves); admin-create-user belongs to Eltuff
   and correctly checks the caller's Eltuff admin/staff role. No further holes.
+- 2026-10-24: Vercel deploys were failing (14 functions, Hobby limit 12).
+  Merged admin endpoints into api/admin/[action].ts. Production live again.
+- 2026-10-24: Admin dashboard: replaced invented figures (12.5% growth, 98%
+  satisfaction, 92% efficiency), revenue counts paid invoices only, badge
+  counts are real.
+- 2026-10-24: Client payments: removed the fake Visa success and the
+  placeholder bank details (account 1234567890, a real US routing number).
+- 2026-10-24: Client portal: unpaid badge, Pay Now, Make Payment, project
+  statuses, progress, drafts hidden, message replies, signed file downloads,
+  stored invoice line items in views and PDFs.
+- 2026-10-24: Staff portal: own tasks and hours only, real open-task count,
+  task status picker, working New Task and Log Time.
