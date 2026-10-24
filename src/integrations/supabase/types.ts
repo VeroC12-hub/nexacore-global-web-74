@@ -2782,6 +2782,7 @@ export type Database = {
       }
       portfolio_projects: {
         Row: {
+          admin_notes: string | null
           approved_at: string | null
           approved_by: string | null
           challenge: string | null
@@ -2806,12 +2807,15 @@ export type Database = {
           short_description: string | null
           show_client_name: boolean | null
           solution: string | null
+          submission_status: string
+          submitted_by: string | null
           tags: string[] | null
           thumbnail_url: string | null
           title: string
           updated_at: string | null
         }
         Insert: {
+          admin_notes?: string | null
           approved_at?: string | null
           approved_by?: string | null
           challenge?: string | null
@@ -2836,12 +2840,15 @@ export type Database = {
           short_description?: string | null
           show_client_name?: boolean | null
           solution?: string | null
+          submission_status?: string
+          submitted_by?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string | null
         }
         Update: {
+          admin_notes?: string | null
           approved_at?: string | null
           approved_by?: string | null
           challenge?: string | null
@@ -2866,6 +2873,8 @@ export type Database = {
           short_description?: string | null
           show_client_name?: boolean | null
           solution?: string | null
+          submission_status?: string
+          submitted_by?: string | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
@@ -2891,6 +2900,20 @@ export type Database = {
             columns: ["service_category_id"]
             isOneToOne: false
             referencedRelation: "portfolio_service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_projects_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portfolio_projects_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -5205,6 +5228,7 @@ export type Database = {
           title: string
         }[]
       }
+      get_quote_for_review: { Args: { p_quote_id: string }; Returns: Json }
       get_storage_usage: {
         Args: never
         Returns: {
@@ -5284,6 +5308,10 @@ export type Database = {
           similarity: number
           title: string
         }[]
+      }
+      respond_to_quote: {
+        Args: { p_action: string; p_message?: string; p_quote_id: string }
+        Returns: Json
       }
       search_company_knowledge_text: {
         Args: { p_company_id: string; p_match_count?: number; p_query: string }
