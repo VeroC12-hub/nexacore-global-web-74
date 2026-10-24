@@ -15,9 +15,6 @@ those when working on NexaCore.
 
 ## Needs Godwin
 
-- **Run the ERP lock-down migration** (clients can currently read and edit all
-  internal ERP data): `npx supabase db query --linked --project-ref
-  nmwfevhetlwehbuikflk -f supabase/migrations/20261024000000_erp_internal_staff_only.sql`
 - **Client payments:** there is no working online payment. Client portals now
   show honest "ask for payment details" instructions instead of fake card
   forms. Decide the payment route (Paystack, MTN MoMo, Stripe, or bank
@@ -120,3 +117,5 @@ those when working on NexaCore.
   stored invoice line items in views and PDFs.
 - 2026-10-24: Staff portal: own tasks and hours only, real open-task count,
   task status picker, working New Task and Log Time.
+- 2026-10-24: ERP lock-down migration applied. Verified as real accounts: a
+  client sees 0 ERP rows, a developer still sees 4 projects and 20 tasks.
