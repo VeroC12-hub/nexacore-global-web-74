@@ -44,7 +44,7 @@
       "destination": "/api/quotes/[id]/pdf?id=$1"
     },
     {
-      "source": "/api/admin/(delete-user|seed-keba-proposal|send-project-emails)",
+      "source": "/api/admin/(delete-user|seed-keba-proposal|send-project-emails|invite-member)",
       "destination": "/api/admin/[action]?action=$1"
     },
     {

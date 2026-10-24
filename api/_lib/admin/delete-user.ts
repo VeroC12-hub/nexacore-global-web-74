@@ -29,32 +29,18 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { userId, currentAdminId } = req.body;
+    const { userId } = req.body || {};
+    // The caller was verified from their access token by api/admin/[action].ts
+    const currentAdminId: string = req.adminCaller.id;
 
-    // Validate input
-    if (!userId || !currentAdminId) {
-      return res.status(400).json({ 
-        error: 'Missing required fields: userId and currentAdminId' 
-      });
+    if (!userId) {
+      return res.status(400).json({ error: 'Missing required field: userId' });
     }
 
     // Prevent self-deletion
     if (userId === currentAdminId) {
       return res.status(400).json({ 
         error: 'Cannot delete your own account' 
-      });
-    }
-
-    // Verify admin permissions
-    const { data: adminProfile, error: adminError } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', currentAdminId)
-      .single();
-
-    if (adminError || !adminProfile || adminProfile.role !== 'admin') {
-      return res.status(403).json({ 
-        error: 'Insufficient permissions. Admin access required.' 
       });
     }
 

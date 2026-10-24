@@ -15,6 +15,13 @@ those when working on NexaCore.
 
 ## Needs Godwin
 
+- **URGENT, run migration `20261024010000_profiles_privilege_guard.sql`:**
+  any signed-in user could set their own profile role to `admin`, and every
+  public signup (role `member`) counted as internal staff. Not applied yet.
+- **Eltuff app (not NexaCore, not changed):** `eltuff.handle_new_user` takes
+  the role from signup metadata, so anyone can sign up to Eltuff as `admin`.
+  Fix it in the Eltuff project.
+
 - **Client payments:** there is no working online payment. Client portals now
   show honest "ask for payment details" instructions instead of fake card
   forms. Decide the payment route (Paystack, MTN MoMo, Stripe, or bank
@@ -70,6 +77,18 @@ those when working on NexaCore.
    chunks with `manualChunks`. Build currently takes about 5 to 6 minutes.
 
 ## Done
+
+- 2026-10-24: Admin API (`/api/admin/*`) now verifies the caller's Supabase
+  token and role in `api/admin/[action].ts`. Before, delete-user trusted an
+  admin id from the request body, and send-project-emails was an open,
+  unescaped email relay. Emails now go only to staff profiles, HTML escaped.
+- 2026-10-24: Team "Add Member" uses a server invite (`invite-member`) instead
+  of a browser signUp with a throwaway password; role list matches the
+  database (three roles always failed); invite links go to
+  `/auth/reset-password` (old `/reset-password` was a dead link).
+- 2026-10-24: Project Analytics: removed fake trend lines; On-Time Delivery and
+  Team Utilization (always ~100% and 0%) replaced by Overdue Projects and
+  Average Completion.
 
 - 2026-10-21: Fixed all 80 TypeScript errors (duplicate exports in
   performanceOptimization/seoAnalytics, gtag globals, PDF letterhead types,

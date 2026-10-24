@@ -243,9 +243,13 @@ export function ERPSeedModal({ open, onOpenChange, onSeeded }: ERPSeedModalProps
     setStatusLine('Sending project assignment emails…');
 
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
       const resp = await fetch('/api/admin/send-project-emails', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData?.session?.access_token}`,
+        },
         body: JSON.stringify({ payloads: emailPayloads }),
       });
 

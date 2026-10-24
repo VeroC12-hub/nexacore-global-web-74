@@ -17,8 +17,8 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { created_by } = req.body || {};
-  if (!created_by) return res.status(400).json({ error: 'created_by (admin user id) is required' });
+  // Verified by api/admin/[action].ts; never taken from the request body
+  const created_by: string = req.adminCaller.id;
 
   const today = new Date();
   const startDate = '2025-05-01';

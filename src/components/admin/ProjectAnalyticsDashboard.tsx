@@ -22,8 +22,6 @@ import {
   Area
 } from 'recharts';
 import {
-  TrendingUp,
-  TrendingDown,
   Clock,
   DollarSign,
   Users,
@@ -289,10 +287,7 @@ const ProjectAnalyticsDashboard: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.totalProjects}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600 flex items-center">
-                <TrendingUp className="w-3 h-3 mr-1" />
-                +12% from last month
-              </span>
+              {metrics?.activeProjects || 0} in progress, {metrics?.completedProjects || 0} completed
             </p>
           </CardContent>
         </Card>
@@ -318,33 +313,27 @@ const ProjectAnalyticsDashboard: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">On-Time Delivery</CardTitle>
+            <CardTitle className="text-sm font-medium">Overdue Projects</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics?.onTimeDelivery}%</div>
+            <div className={`text-2xl font-bold ${(metrics?.overdueProjects || 0) > 0 ? 'text-red-600' : ''}`}>
+              {metrics?.overdueProjects || 0}
+            </div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600 flex items-center">
-                <TrendingUp className="w-3 h-3 mr-1" />
-                +3.2% from last quarter
-              </span>
+              Past end date and not completed
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Utilization</CardTitle>
+            <CardTitle className="text-sm font-medium">Average Completion</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics?.teamUtilization}%</div>
-            <p className="text-xs text-muted-foreground">
-              <span className="text-red-600 flex items-center">
-                <TrendingDown className="w-3 h-3 mr-1" />
-                -1.4% from last month
-              </span>
-            </p>
+            <div className="text-2xl font-bold">{metrics?.averageCompletion || 0}%</div>
+            <Progress value={metrics?.averageCompletion || 0} className="mt-2 h-2" />
           </CardContent>
         </Card>
       </div>

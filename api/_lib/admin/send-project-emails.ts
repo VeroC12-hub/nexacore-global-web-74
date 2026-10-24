@@ -3,10 +3,27 @@
 // Called after ERP projects are seeded from the admin panel.
 
 import { Resend } from 'resend';
+import { createClient } from '@supabase/supabase-js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'NexaCore Admin <admin@nexacore-innovations.com>';
 const PORTAL_URL = 'https://www.nexacore-innovations.com/admin';
+const STAFF_ROLES = ['admin', 'project_manager', 'operations_manager', 'developer', 'staff'];
+
+const supabaseAdmin = createClient(
+  process.env.VITE_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+
+function esc(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 interface StaffProjectPayload {
   staff: {
@@ -46,19 +63,20 @@ function priorityBadge(priority: string): string {
     low: '#16a34a',
   };
   const bg = colours[priority] || '#6b7280';
+  priority = esc(priority);
   return `<span style="display:inline-block;background:${bg};color:#fff;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;text-transform:uppercase;">${priority}</span>`;
 }
 
 function buildEmailHtml(payload: StaffProjectPayload): string {
   const { staff, project, tasks } = payload;
-  const name = staff.full_name || staff.email || 'Team Member';
-  const role = (staff.role || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const name = esc(staff.full_name || staff.email || 'Team Member');
+  const role = esc(staff.role || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const taskRows = tasks.map((t, i) =>
     `<tr style="background:${i % 2 === 0 ? '#f9fafb' : '#fff'};">
-      <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#111827;">${t.title}</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#111827;">${esc(t.title)}</td>
       <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;text-align:center;">${priorityBadge(t.priority)}</td>
-      <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;text-align:center;">${t.estimated_hours}h</td>
+      <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;text-align:center;">${esc(t.estimated_hours)}h</td>
       <td style="padding:10px 14px;border-bottom:1px solid #e5e7eb;font-size:13px;color:#6b7280;text-align:center;">${formatDate(t.due_date)}</td>
     </tr>`
   ).join('');
@@ -91,13 +109,13 @@ function buildEmailHtml(payload: StaffProjectPayload): string {
           <!-- Project Card -->
           <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:24px;margin-bottom:28px;">
             <p style="margin:0 0 4px 0;font-size:11px;font-weight:700;color:#64748b;letter-spacing:1.5px;text-transform:uppercase;">Project</p>
-            <h2 style="margin:0 0 12px 0;font-size:20px;color:#0f172a;font-weight:700;">${project.title}</h2>
-            <p style="margin:0 0 20px 0;font-size:14px;color:#475569;line-height:1.6;">${project.description}</p>
+            <h2 style="margin:0 0 12px 0;font-size:20px;color:#0f172a;font-weight:700;">${esc(project.title)}</h2>
+            <p style="margin:0 0 20px 0;font-size:14px;color:#475569;line-height:1.6;">${esc(project.description)}</p>
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td width="33%" style="padding-right:16px;">
                   <p style="margin:0 0 2px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;">Department</p>
-                  <p style="margin:0;font-size:14px;color:#1e293b;font-weight:600;">${project.department}</p>
+                  <p style="margin:0;font-size:14px;color:#1e293b;font-weight:600;">${esc(project.department)}</p>
                 </td>
                 <td width="33%" style="padding-right:16px;">
                   <p style="margin:0 0 2px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;">Start Date</p>
@@ -167,7 +185,26 @@ export default async function handler(req: any, res: any) {
 
   const results: { email: string; success: boolean; error?: string }[] = [];
 
+  if (payloads.length > 50) {
+    return res.status(400).json({ error: 'Too many payloads' });
+  }
+
+  const staffIds = [...new Set(payloads.map(p => p?.staff?.id).filter(Boolean))];
+  const { data: staffProfiles } = await supabaseAdmin
+    .from('profiles')
+    .select('id, email, full_name, role')
+    .in('id', staffIds)
+    .in('role', STAFF_ROLES);
+  const staffById = new Map((staffProfiles || []).map(p => [p.id, p]));
+
   for (const payload of payloads) {
+    const profile = staffById.get(payload?.staff?.id);
+    if (!profile) {
+      results.push({ email: '(unknown)', success: false, error: 'Recipient is not a staff member' });
+      continue;
+    }
+    payload.staff = { ...payload.staff, email: profile.email, full_name: profile.full_name, role: profile.role };
+    payload.tasks = Array.isArray(payload.tasks) ? payload.tasks : [];
     const toEmail = payload.staff.email;
     if (!toEmail) {
       results.push({ email: '(no email)', success: false, error: 'No email address on profile' });
@@ -178,7 +215,7 @@ export default async function handler(req: any, res: any) {
       const { error } = await resend.emails.send({
         from: FROM,
         to: [toEmail],
-        subject: `You've been assigned a project: ${payload.project.title}`,
+        subject: `You've been assigned a project: ${String(payload.project?.title ?? '').slice(0, 150)}`,
         html: buildEmailHtml(payload),
       });
 

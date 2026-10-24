@@ -131,72 +131,23 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
       setActionLoading('adding');
       // Note: Loading toast not needed with shadcn/ui toast system
 
-      // First, invite the user to create an account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newMember.email,
-        password: generateTempPassword(), // Generate a temporary password
-        options: {
-          data: {
-            full_name: newMember.full_name,
-            role: newMember.role,
-          }
-        }
+      const { data: sessionData } = await supabase.auth.getSession();
+      const resp = await fetch('/api/admin/invite-member', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionData?.session?.access_token}`,
+        },
+        body: JSON.stringify(newMember),
       });
-
-      if (authError) {
-        // If user already exists, try to create profile directly
-        if (authError.message.includes('already registered')) {
-          // Get existing user and update profile
-          const { data: existingUser, error: fetchError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('email', newMember.email)
-            .single();
-
-          if (fetchError) {
-            throw new Error('User email already exists but profile not found');
-          }
-
-          // Update existing profile
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({
-              full_name: newMember.full_name,
-              role: newMember.role,
-              status: 'approved'
-            })
-            .eq('email', newMember.email);
-
-          if (updateError) throw updateError;
-        } else {
-          throw authError;
-        }
-      } else if (authData.user) {
-        // Create profile for new user
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: authData.user.id,
-            email: newMember.email,
-            full_name: newMember.full_name,
-            role: newMember.role,
-            status: 'pending'
-          });
-
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          throw profileError;
-        }
-
-        // Send password reset email so they can set their own password
-        await supabase.auth.resetPasswordForEmail(newMember.email, {
-          redirectTo: `${window.location.origin}/reset-password`
-        });
-      }
+      const result = await resp.json().catch(() => ({}));
+      if (!resp.ok) throw new Error(result.error || 'Failed to add team member');
 
       toast({
         title: 'Success',
-        description: 'Team member added successfully! They will receive an email to set up their account.'
+        description: result.invited
+          ? 'Invitation sent. They will receive an email to set their password.'
+          : 'Existing account updated with the new role.'
       });
       
       setIsAddModalOpen(false);
@@ -357,7 +308,7 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     try {
       setActionLoading(email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: `${window.location.origin}/auth/reset-password`
       });
 
       if (error) {
@@ -384,10 +335,6 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
     }
   };
 
-  // Generate temporary password
-  const generateTempPassword = (): string => {
-    return Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8);
-  };
 
   // Get role color styling
   const getRoleColor = (role: string): string => {
@@ -502,9 +449,8 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="project_manager">Project Manager</SelectItem>
                     <SelectItem value="operations_manager">Operations Manager</SelectItem>
-                    <SelectItem value="business_analyst">Business Analyst</SelectItem>
-                    <SelectItem value="quality_assurance">Quality Assurance</SelectItem>
-                    <SelectItem value="sales_manager">Sales Manager</SelectItem>
+                    <SelectItem value="developer">Developer</SelectItem>
+                    <SelectItem value="support">Support</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
                     <SelectItem value="member">Member</SelectItem>
                   </SelectContent>
@@ -618,9 +564,8 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
                             <SelectItem value="admin">Admin</SelectItem>
                             <SelectItem value="project_manager">Project Manager</SelectItem>
                             <SelectItem value="operations_manager">Operations Manager</SelectItem>
-                            <SelectItem value="business_analyst">Business Analyst</SelectItem>
-                            <SelectItem value="quality_assurance">Quality Assurance</SelectItem>
-                            <SelectItem value="sales_manager">Sales Manager</SelectItem>
+                            <SelectItem value="developer">Developer</SelectItem>
+                            <SelectItem value="support">Support</SelectItem>
                             <SelectItem value="staff">Staff</SelectItem>
                             <SelectItem value="member">Member</SelectItem>
                           </SelectContent>
