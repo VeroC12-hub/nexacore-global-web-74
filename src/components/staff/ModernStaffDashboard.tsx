@@ -65,8 +65,22 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { TaskFormModal } from '@/components/admin/erp/TaskFormModal';
+import { TimeEntryFormModal } from '@/components/admin/erp/TimeEntryFormModal';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+
+// Every value the erp_tasks status check constraint accepts
+const TASK_STATUSES = [
+  { value: 'new', label: 'New' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'in_progress', label: 'In progress' },
+  { value: 'review', label: 'Review' },
+  { value: 'testing', label: 'Testing' },
+  { value: 'blocked', label: 'Blocked' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
 import { Task, TimeEntry, ProjectAnalytics, TaskAnalytics, ActivityItem } from '@/types/erp';
 
 export const ModernStaffDashboard: React.FC = () => {
@@ -141,6 +155,8 @@ export const ModernStaffDashboard: React.FC = () => {
   const [portfolioProjects, setPortfolioProjects] = useState<any[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
+  const [showTaskForm, setShowTaskForm] = useState(false);
+  const [showTimeForm, setShowTimeForm] = useState(false);
   const [analytics, setAnalytics] = useState<{
     projects: ProjectAnalytics;
     tasks: TaskAnalytics;
@@ -356,6 +372,7 @@ export const ModernStaffDashboard: React.FC = () => {
       const { data: tasksData, error: tasksError } = await supabase
         .from('erp_tasks')
         .select('*')
+        .eq('assigned_to', user.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -374,6 +391,7 @@ export const ModernStaffDashboard: React.FC = () => {
       const { data: timeData, error: timeError } = await supabase
         .from('erp_time_entries')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false })
         .limit(50);
 
@@ -452,8 +470,8 @@ export const ModernStaffDashboard: React.FC = () => {
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-800">Pending Tasks</p>
-                <p className="text-2xl font-bold text-orange-900">{tasks.filter(t => t.status === 'pending').length}</p>
+                <p className="text-sm font-medium text-orange-800">Open Tasks</p>
+                <p className="text-2xl font-bold text-orange-900">{tasks.filter(t => !['completed', 'cancelled'].includes(t.status as string)).length}</p>
               </div>
               <CheckSquare className="h-8 w-8 text-orange-600" />
             </div>
@@ -463,7 +481,7 @@ export const ModernStaffDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-green-800">Time Logged</p>
-                <p className="text-2xl font-bold text-green-900">{timeEntries.reduce((sum, entry) => sum + entry.hours, 0)}h</p>
+                <p className="text-2xl font-bold text-green-900">{Math.round(timeEntries.reduce((sum, entry) => sum + Number(entry.hours || 0), 0) * 10) / 10}h</p>
               </div>
               <Clock className="h-8 w-8 text-green-600" />
             </div>
@@ -1028,15 +1046,29 @@ export const ModernStaffDashboard: React.FC = () => {
     </div>
   );
 
+  const updateTaskStatus = async (taskId: string, status: string) => {
+    const { error } = await supabase
+      .from('erp_tasks')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', taskId);
+    if (error) {
+      console.error('Error updating task status:', error);
+      toast.error('Failed to update task');
+      return;
+    }
+    setTasks(prev => prev.map(t => (t.id === taskId ? { ...t, status } as Task : t)));
+    toast.success('Task updated');
+  };
+
   const renderTasks = () => (
     <div className="bg-white rounded-lg border border-gray-200">
       <div className="border-b border-gray-200 p-6">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-gray-900">Task Management</h1>
-            <p className="text-sm text-gray-600">Track and manage all tasks</p>
+            <p className="text-sm text-gray-600">Tasks assigned to you</p>
           </div>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setShowTaskForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Task
           </Button>
@@ -1048,8 +1080,8 @@ export const ModernStaffDashboard: React.FC = () => {
           <div className="text-center py-12">
             <CheckSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Tasks Found</h3>
-            <p className="text-gray-500 mb-4">Create tasks to track work and progress.</p>
-            <Button>
+            <p className="text-gray-500 mb-4">Nothing is assigned to you right now.</p>
+            <Button onClick={() => setShowTaskForm(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Task
             </Button>
@@ -1060,7 +1092,16 @@ export const ModernStaffDashboard: React.FC = () => {
               <div key={task.id || index} className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-medium">{task.title}</h3>
-                  <Badge variant="outline">{task.status}</Badge>
+                  <Select value={task.status as string} onValueChange={(value) => updateTaskStatus(task.id, value)}>
+                    <SelectTrigger className="w-36 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TASK_STATUSES.map(s => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <p className="text-sm text-gray-600 mb-3">{task.description}</p>
                 <div className="flex items-center justify-between text-sm text-gray-500">
@@ -1083,7 +1124,7 @@ export const ModernStaffDashboard: React.FC = () => {
             <h1 className="text-xl font-semibold text-gray-900">Timesheet</h1>
             <p className="text-sm text-gray-600">Track your work hours</p>
           </div>
-          <Button size="sm">
+          <Button size="sm" onClick={() => setShowTimeForm(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Log Time
           </Button>
@@ -1096,7 +1137,7 @@ export const ModernStaffDashboard: React.FC = () => {
             <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Time Entries Found</h3>
             <p className="text-gray-500 mb-4">Start logging your work hours to track productivity.</p>
-            <Button>
+            <Button onClick={() => setShowTimeForm(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Log Time
             </Button>
@@ -1261,6 +1302,23 @@ export const ModernStaffDashboard: React.FC = () => {
         </div>
       </div>
 
+      <TaskFormModal
+        isOpen={showTaskForm}
+        onClose={() => setShowTaskForm(false)}
+        onSuccess={() => {
+          setShowTaskForm(false);
+          loadDashboardData();
+        }}
+      />
+      <TimeEntryFormModal
+        isOpen={showTimeForm}
+        onClose={() => setShowTimeForm(false)}
+        onSuccess={() => {
+          setShowTimeForm(false);
+          loadDashboardData();
+        }}
+        defaultUserId={user?.id}
+      />
       <Footer />
 
       {/* Portfolio Submission Modals */}

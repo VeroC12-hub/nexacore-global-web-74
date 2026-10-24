@@ -47,9 +47,11 @@ interface TimeEntryFormModalProps {
   onClose: () => void;
   onSuccess: () => void;
   timeEntry?: TimeEntry | null;
+  /** Pre-selects the staff member for new entries (staff portal: the signed-in user) */
+  defaultUserId?: string;
 }
 
-export function TimeEntryFormModal({ isOpen, onClose, onSuccess, timeEntry }: TimeEntryFormModalProps) {
+export function TimeEntryFormModal({ isOpen, onClose, onSuccess, timeEntry, defaultUserId }: TimeEntryFormModalProps) {
   const [projects, setProjects] = useState<ERPProject[]>([]);
   const [tasks, setTasks] = useState<ERPTask[]>([]);
   const [staff, setStaff] = useState<Profile[]>([]);
@@ -98,7 +100,7 @@ export function TimeEntryFormModal({ isOpen, onClose, onSuccess, timeEntry }: Ti
         const startTime = new Date(now.getTime() - (1 * 60 * 60 * 1000)); // 1 hour ago
 
         setFormData({
-          user_id: '',
+          user_id: defaultUserId || '',
           project_id: '',
           task_id: '',
           description: '',
