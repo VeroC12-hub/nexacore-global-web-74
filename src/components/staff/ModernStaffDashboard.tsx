@@ -67,6 +67,7 @@ import {
 } from 'lucide-react';
 import { TaskFormModal } from '@/components/admin/erp/TaskFormModal';
 import { TimeEntryFormModal } from '@/components/admin/erp/TimeEntryFormModal';
+import { ProjectFormModal } from '@/components/admin/erp/ProjectFormModal';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -157,6 +158,7 @@ export const ModernStaffDashboard: React.FC = () => {
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([]);
   const [showTaskForm, setShowTaskForm] = useState(false);
   const [showTimeForm, setShowTimeForm] = useState(false);
+  const [showProjectForm, setShowProjectForm] = useState(false);
   const [analytics, setAnalytics] = useState<{
     projects: ProjectAnalytics;
     tasks: TaskAnalytics;
@@ -448,7 +450,7 @@ export const ModernStaffDashboard: React.FC = () => {
               <RefreshCw className={`h-4 w-4 mr-2 ${dataLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={exportMyWork}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -618,13 +620,15 @@ export const ModernStaffDashboard: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                >
+                onClick={() => setShowProjectHelp(true)}
+              >
                   Quick Start Guide
                 </Button>
                 <Button
                   size="sm"
                   className="bg-blue-600 hover:bg-blue-700"
-                >
+                onClick={() => setShowProjectForm(true)}
+              >
                   Create First Project
                 </Button>
               </div>
@@ -707,11 +711,7 @@ export const ModernStaffDashboard: React.FC = () => {
               <p className="text-sm text-gray-500">Manage and track project progress</p>
             </div>
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filter
-              </Button>
-              <Button size="sm">
+              <Button size="sm" onClick={() => setShowProjectForm(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 New Project
               </Button>
@@ -725,7 +725,7 @@ export const ModernStaffDashboard: React.FC = () => {
             <FolderOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Projects Found</h3>
             <p className="text-gray-500 mb-4">Create your first project to get started with the ERP system.</p>
-            <Button>
+            <Button onClick={() => setShowProjectForm(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Project
             </Button>
@@ -1046,6 +1046,22 @@ export const ModernStaffDashboard: React.FC = () => {
     </div>
   );
 
+  const exportMyWork = () => {
+    const cell = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const rows = [
+      ['Type', 'Title / Description', 'Status', 'Date', 'Hours'],
+      ...tasks.map(t => ['Task', t.title, t.status, t.due_date || '', t.estimated_hours ?? '']),
+      ...timeEntries.map(e => ['Time', e.description, '', e.date, e.hours]),
+    ];
+    const csv = rows.map(r => r.map(cell).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `my-work-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const updateTaskStatus = async (taskId: string, status: string) => {
     const { error } = await supabase
       .from('erp_tasks')
@@ -1302,6 +1318,14 @@ export const ModernStaffDashboard: React.FC = () => {
         </div>
       </div>
 
+      <ProjectFormModal
+        isOpen={showProjectForm}
+        onClose={() => setShowProjectForm(false)}
+        onSuccess={() => {
+          setShowProjectForm(false);
+          loadDashboardData();
+        }}
+      />
       <TaskFormModal
         isOpen={showTaskForm}
         onClose={() => setShowTaskForm(false)}
@@ -1502,11 +1526,14 @@ export const ModernStaffDashboard: React.FC = () => {
                           </div>
                         </div>
                         <div className="mt-2 flex space-x-2">
-                          <Button variant="outline" size="sm" className="text-xs">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-xs"
+                            disabled={!file.file_url}
+                            onClick={() => window.open(file.file_url, '_blank', 'noopener')}
+                          >
                             View
-                          </Button>
-                          <Button variant="outline" size="sm" className="text-xs text-red-600">
-                            Remove
                           </Button>
                         </div>
                       </div>

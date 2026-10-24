@@ -166,10 +166,6 @@ const EnhancedProjectManagement: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
-          </Button>
           <Button onClick={() => setShowCreateModal(true)}>
             <Zap className="w-4 h-4 mr-2" />
             New Project
@@ -390,7 +386,7 @@ const EnhancedProjectManagement: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <Button variant="outline" className="w-full mt-4" size="sm">
+                <Button variant="outline" className="w-full mt-4" size="sm" onClick={() => setActiveTab('timeline')}>
                   View All Activity
                 </Button>
               </CardContent>
@@ -408,15 +404,15 @@ const EnhancedProjectManagement: React.FC = () => {
                   <Target className="w-5 h-5" />
                   New Project
                 </Button>
-                <Button variant="outline" className="h-20 flex-col gap-2">
+                <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => setActiveTab('kanban')}>
                   <Users className="w-5 h-5" />
                   Assign Tasks
                 </Button>
-                <Button variant="outline" className="h-20 flex-col gap-2">
+                <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => setActiveTab('timeline')}>
                   <Calendar className="w-5 h-5" />
                   Schedule Review
                 </Button>
-                <Button variant="outline" className="h-20 flex-col gap-2">
+                <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => setActiveTab('analytics')}>
                   <FileText className="w-5 h-5" />
                   Generate Report
                 </Button>

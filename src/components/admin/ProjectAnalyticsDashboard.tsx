@@ -275,7 +275,7 @@ const ProjectAnalyticsDashboard: React.FC = () => {
               <SelectItem value="1y">1 Year</SelectItem>
             </SelectContent>
           </Select>
-          <Button>Export Report</Button>
+          <Button onClick={() => window.print()}>Print / Save as PDF</Button>
         </div>
       </div>
 

@@ -260,10 +260,6 @@ const ClientSettings: React.FC<ClientSettingsProps> = ({ isOpen, onClose }) => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <Button variant="outline" size="sm">
-                      <Camera className="w-4 h-4 mr-2" />
-                      Change Photo
-                    </Button>
                     <p className="text-sm text-muted-foreground mt-1">
                       JPG, GIF or PNG. 1MB max.
                     </p>

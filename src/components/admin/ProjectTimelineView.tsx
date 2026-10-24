@@ -253,9 +253,9 @@ const ProjectTimelineView: React.FC = () => {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => window.print()}>
             <Download className="w-4 h-4 mr-2" />
-            Export
+            Print / Save as PDF
           </Button>
         </div>
       </div>

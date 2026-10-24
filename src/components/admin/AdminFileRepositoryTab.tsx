@@ -114,6 +114,19 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
     }
   };
 
+  const handlePreviewFile = async (file: ProjectFile) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('project-files')
+        .createSignedUrl(file.file_path, 300);
+      if (error) throw error;
+      window.open(data.signedUrl, '_blank', 'noopener');
+    } catch (error: any) {
+      console.error('Error previewing file:', error);
+      toast.error(error.message || 'Failed to open file');
+    }
+  };
+
   const handleDownloadFile = async (file: ProjectFile) => {
     try {
       const { data, error } = await supabase.storage
@@ -277,7 +290,7 @@ export function AdminFileRepositoryTab({ onStatsUpdate }: AdminFileRepositoryTab
                     >
                       <Download className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handlePreviewFile(file)}>
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button

@@ -173,6 +173,24 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
 
   // Users are now server-side filtered and paginated via React Query
   const filteredUsers = useMemo(() => users, [users]);
+
+  const exportUsers = () => {
+    const cell = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const rows = [
+      ['Name', 'Email', 'Phone', 'Company', 'Role', 'Status', 'Created', 'Last sign-in'],
+      ...filteredUsers.map(u => [
+        u.full_name, u.email, u.phone, u.company, u.role, u.status,
+        u.created_at?.slice(0, 10), u.last_sign_in_at?.slice(0, 10),
+      ]),
+    ];
+    const csv = rows.map(r => r.map(cell).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nexacore-users-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
   const paginatedUsers = useMemo(() => users, [users]); // Already paginated from server
 
   const handleCreateUser = async () => {
@@ -464,7 +482,7 @@ export function AdminUsersTab({ onStatsUpdate }: AdminUsersTabProps) {
           <p className="text-muted-foreground">Manage user accounts, roles, and permissions</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={exportUsers}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
