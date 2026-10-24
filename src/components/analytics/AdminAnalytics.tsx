@@ -53,7 +53,7 @@ const AdminAnalytics = () => {
         supabase.from('quote_requests').select('*').order('created_at', { ascending: false }),
         supabase.from('quotes').select('*').order('created_at', { ascending: false }),
         supabase.from('projects').select('*').order('created_at', { ascending: false }),
-        supabase.from('invoices').select('id, total_amount, status, created_at').order('created_at', { ascending: false }),
+        supabase.from('invoices').select('id, total_amount, status, created_at, paid_date').order('created_at', { ascending: false }),
       ]);
 
       if (quoteRequestRes.error) throw quoteRequestRes.error;
@@ -81,7 +81,8 @@ const AdminAnalytics = () => {
     },
     { 
       stage: 'Quotes Sent', 
-      count: quotes.filter(q => q.status === 'sent').length,
+      // A quote that was approved or declined was sent first
+      count: quotes.filter(q => q.status && q.status !== 'draft').length,
       color: '#00C49F'
     },
     { 
@@ -96,18 +97,22 @@ const AdminAnalytics = () => {
     }
   ];
 
-  // Revenue trends (last 6 months) — based on invoices
+  // Revenue only counts paid invoices, on the date they were paid
+  const paidInvoices = invoices.filter(inv => inv.status === 'paid');
+  const paidOn = (inv: Invoice) => new Date((inv as Invoice & { paid_date?: string | null }).paid_date || inv.created_at);
+
+  // Revenue trends (last 12 months)
   const revenueData = () => {
     const months = [];
     const now = new Date();
 
-    for (let i = 5; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthName = date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
 
-      const revenue = invoices
+      const revenue = paidInvoices
         .filter(inv => {
-          const invDate = new Date(inv.created_at);
+          const invDate = paidOn(inv);
           return invDate.getMonth() === date.getMonth() &&
                  invDate.getFullYear() === date.getFullYear();
         })
@@ -147,7 +152,7 @@ const AdminAnalytics = () => {
     return <div className="p-6">Loading analytics...</div>;
   }
 
-  const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+  const totalRevenue = paidInvoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
 
   const conversionRate = quoteRequests.length > 0 
     ? ((quotes.filter(q => q.status === 'approved').length / quoteRequests.length) * 100).toFixed(1)
@@ -175,7 +180,7 @@ const AdminAnalytics = () => {
               <FileText className="h-5 w-5 text-green-500" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Quotes Sent</p>
-                <p className="text-2xl font-bold">{quotes.length}</p>
+                <p className="text-2xl font-bold">{quoteFunnelData[1].count}</p>
               </div>
             </div>
           </CardContent>
@@ -227,10 +232,10 @@ const AdminAnalytics = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={quoteFunnelData} layout="horizontal">
+              <BarChart data={quoteFunnelData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="stage" type="category" width={80} />
+                <XAxis type="number" allowDecimals={false} />
+                <YAxis dataKey="stage" type="category" width={90} />
                 <Tooltip />
                 <Bar dataKey="count" fill="#8884d8" />
               </BarChart>
@@ -241,7 +246,7 @@ const AdminAnalytics = () => {
         {/* Revenue Trends */}
         <Card>
           <CardHeader>
-            <CardTitle>Revenue Trends (6 Months)</CardTitle>
+            <CardTitle>Paid Revenue (12 Months)</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

@@ -87,6 +87,8 @@ const AdminTeamTab: React.FC<AdminTeamTabProps> = ({ onStatsUpdate }) => {
           last_sign_in_at,
           bio
         `)
+        // Staff only; clients and members are managed in the Users tab
+        .not('role', 'in', '(client,member)')
         .order('created_at', { ascending: false });
 
       if (error) {

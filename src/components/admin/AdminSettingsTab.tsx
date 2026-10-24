@@ -295,16 +295,20 @@ export function AdminSettingsTab() {
   // ERP Role Management Functions
   const loadStaffRoles = async () => {
     try {
+      // erp_staff_roles.user_id has no foreign key, so PostgREST cannot embed
+      // the user; look the profiles up separately
       const { data, error } = await supabase
         .from('erp_staff_roles')
-        .select(`
-          *,
-          user:user_id (email, full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setStaffRoles((data || []) as any);
+      const userIds = [...new Set((data || []).map((r: any) => r.user_id).filter(Boolean))];
+      const { data: users } = userIds.length
+        ? await supabase.from('profiles').select('id, email, full_name').in('id', userIds)
+        : { data: [] as any[] };
+      const byId = new Map((users || []).map((u: any) => [u.id, u]));
+      setStaffRoles((data || []).map((r: any) => ({ ...r, user: byId.get(r.user_id) || null })) as any);
     } catch (error) {
       console.error('Error loading staff roles:', error);
     }
