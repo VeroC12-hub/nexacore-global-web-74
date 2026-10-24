@@ -24,6 +24,11 @@ const MessageBubble = ({ message, onFeedback }: MessageBubbleProps) => {
   const [copied, setCopied] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackComment, setFeedbackComment] = useState('');
+  // Rows from the database use snake_case, the AIMessage type uses camelCase
+  const row = message as AIMessage & { created_at?: string; response_time_ms?: number; was_helpful?: boolean };
+  const createdAt = message.createdAt ?? row.created_at;
+  const responseTime = message.responseTime ?? row.response_time_ms;
+  const wasHelpful = message.wasHelpful ?? row.was_helpful;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -74,9 +79,9 @@ const MessageBubble = ({ message, onFeedback }: MessageBubbleProps) => {
 
           {/* Metadata */}
           <div className="flex items-center justify-between mt-2 text-xs opacity-70">
-            <span>{new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-            {message.responseTime && (
-              <span>{(message.responseTime / 1000).toFixed(1)}s</span>
+            <span>{createdAt ? new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+            {!!responseTime && (
+              <span>{(responseTime / 1000).toFixed(1)}s</span>
             )}
           </div>
         </div>
@@ -91,7 +96,7 @@ const MessageBubble = ({ message, onFeedback }: MessageBubbleProps) => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleFeedback(true)}
-                    className={`h-6 px-2 ${message.wasHelpful === true ? 'bg-success/20 text-success' : ''}`}
+                    className={`h-6 px-2 ${wasHelpful === true ? 'bg-success/20 text-success' : ''}`}
                   >
                     <ThumbsUp className="w-3 h-3" />
                   </Button>
@@ -107,7 +112,7 @@ const MessageBubble = ({ message, onFeedback }: MessageBubbleProps) => {
                     variant="ghost"
                     size="sm"
                     onClick={() => handleFeedback(false)}
-                    className={`h-6 px-2 ${message.wasHelpful === false ? 'bg-destructive/20 text-destructive' : ''}`}
+                    className={`h-6 px-2 ${wasHelpful === false ? 'bg-destructive/20 text-destructive' : ''}`}
                   >
                     <ThumbsDown className="w-3 h-3" />
                   </Button>
