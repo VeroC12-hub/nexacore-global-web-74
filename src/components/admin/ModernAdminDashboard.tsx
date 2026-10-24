@@ -61,9 +61,12 @@ interface DashboardStats {
   totalUsers: number;
   totalProjects: number;
   totalInvoices: number;
-  pendingRequests: number;
+  pendingQuotes: number;
+  pendingServiceRequests: number;
   totalRevenue: number;
-  monthlyGrowth: number;
+  outstandingAmount: number;
+  /** Paid revenue this month vs last month, null when last month had none */
+  monthlyGrowth: number | null;
   activeWorkflows: number;
   unreadMessages: number;
 }
@@ -87,9 +90,11 @@ export const ModernAdminDashboard: React.FC = () => {
     totalUsers: 0,
     totalProjects: 0,
     totalInvoices: 0,
-    pendingRequests: 0,
+    pendingQuotes: 0,
+    pendingServiceRequests: 0,
     totalRevenue: 0,
-    monthlyGrowth: 0,
+    outstandingAmount: 0,
+    monthlyGrowth: null,
     activeWorkflows: 0,
     unreadMessages: 0
   });
@@ -115,24 +120,45 @@ export const ModernAdminDashboard: React.FC = () => {
         projectsResult,
         invoicesResult,
         workflowsResult,
-        messagesResult
+        messagesResult,
+        quotesResult,
+        serviceRequestsResult
       ] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact' }),
         supabase.from('projects').select('id', { count: 'exact' }).eq('status', 'in_progress'),
-        supabase.from('invoices').select('id, total_amount', { count: 'exact' }),
+        supabase.from('invoices').select('id, total_amount, status, paid_date, created_at', { count: 'exact' }),
         supabase.from('workflow_instances').select('id', { count: 'exact' }).eq('status', 'in_progress'),
-        supabase.from('project_messages').select('id', { count: 'exact' })
+        supabase.from('project_messages').select('id', { count: 'exact' }),
+        supabase.from('quote_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('service_requests').select('id', { count: 'exact', head: true }).eq('status', 'submitted')
       ]);
 
-      const totalRevenue = invoicesResult.data?.reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0) || 0;
+      // Revenue counts paid invoices only; drafts and unpaid ones are not revenue
+      const invoices = invoicesResult.data || [];
+      const paid = invoices.filter(invoice => invoice.status === 'paid');
+      const totalRevenue = paid.reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0);
+      const outstandingAmount = invoices
+        .filter(invoice => invoice.status === 'sent' || invoice.status === 'overdue')
+        .reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0);
+
+      const now = new Date();
+      const monthKey = (d: Date) => d.getFullYear() * 12 + d.getMonth();
+      const revenueInMonth = (key: number) => paid
+        .filter(invoice => monthKey(new Date(invoice.paid_date || invoice.created_at)) === key)
+        .reduce((sum, invoice) => sum + (invoice.total_amount || 0), 0);
+      const thisMonth = revenueInMonth(monthKey(now));
+      const lastMonth = revenueInMonth(monthKey(now) - 1);
+      const monthlyGrowth = lastMonth > 0 ? Math.round(((thisMonth - lastMonth) / lastMonth) * 1000) / 10 : null;
 
       setStats({
         totalUsers: usersResult.count || 0,
         totalProjects: projectsResult.count || 0,
         totalInvoices: invoicesResult.count || 0,
-        pendingRequests: 0,
+        pendingQuotes: quotesResult.count || 0,
+        pendingServiceRequests: serviceRequestsResult.count || 0,
         totalRevenue,
-        monthlyGrowth: 12.5,
+        outstandingAmount,
+        monthlyGrowth,
         activeWorkflows: workflowsResult.count || 0,
         unreadMessages: messagesResult.count || 0
       });
@@ -214,12 +240,12 @@ export const ModernAdminDashboard: React.FC = () => {
     { id: 'analytics', label: 'Analytics', icon: <TrendingUp className="h-5 w-5" />, count: null, requiresPermission: 'canViewReports' },
     { id: 'business', label: 'Business', icon: <DollarSign className="h-5 w-5" />, count: null, requiresPermission: 'canViewFinancials' },
     { id: 'growth', label: 'Growth', icon: <Sparkles className="h-5 w-5" />, count: null, requiresPermission: null },
-    { id: 'quotes', label: 'Quotes', icon: <FileText className="h-5 w-5" />, count: stats.pendingRequests, requiresPermission: null },
+    { id: 'quotes', label: 'Quotes', icon: <FileText className="h-5 w-5" />, count: stats.pendingQuotes, requiresPermission: null },
     { id: 'proposals', label: 'Proposals', icon: <FileText className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'projects', label: 'Projects', icon: <FolderOpen className="h-5 w-5" />, count: stats.totalProjects, requiresPermission: null },
     { id: 'portfolio', label: 'Portfolio', icon: <Camera className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'invoices', label: 'Invoices', icon: <CreditCard className="h-5 w-5" />, count: stats.totalInvoices, requiresPermission: 'canManageInvoices' },
-    { id: 'requests', label: 'Requests', icon: <MessageSquare className="h-5 w-5" />, count: stats.pendingRequests, requiresPermission: null },
+    { id: 'requests', label: 'Requests', icon: <MessageSquare className="h-5 w-5" />, count: stats.pendingServiceRequests, requiresPermission: null },
     { id: 'users', label: 'Users', icon: <Users className="h-5 w-5" />, count: stats.totalUsers, requiresPermission: 'canManageUsers' },
     { id: 'team', label: 'Team', icon: <Users className="h-5 w-5" />, count: null, requiresPermission: null },
     { id: 'files', label: 'Files', icon: <FolderOpen className="h-5 w-5" />, count: null, requiresPermission: null },
@@ -414,10 +440,14 @@ export const ModernAdminDashboard: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                 <p className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</p>
-                <div className="flex items-center mt-1">
-                  <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                  <span className="text-sm text-green-600">+{stats.monthlyGrowth}%</span>
-                </div>
+                {stats.monthlyGrowth !== null && (
+                  <div className="flex items-center mt-1">
+                    <TrendingUp className={`h-4 w-4 mr-1 ${stats.monthlyGrowth >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`} />
+                    <span className={`text-sm ${stats.monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {stats.monthlyGrowth >= 0 ? '+' : ''}{stats.monthlyGrowth}% vs last month
+                    </span>
+                  </div>
+                )}
               </div>
               <DollarSign className="h-8 w-8 text-green-500" />
             </div>
@@ -678,9 +708,17 @@ export const ModernAdminDashboard: React.FC = () => {
                 <DollarSign className="h-8 w-8 text-green-500" />
               </div>
               <div className="mt-4 flex items-center text-sm">
-                <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
-                <span className="text-green-600 font-medium">+{stats.monthlyGrowth}%</span>
-                <span className="text-gray-600 ml-1">from last month</span>
+                {stats.monthlyGrowth !== null ? (
+                  <>
+                    <TrendingUp className={`h-4 w-4 mr-1 ${stats.monthlyGrowth >= 0 ? 'text-green-500' : 'text-red-500 rotate-180'}`} />
+                    <span className={`font-medium ${stats.monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {stats.monthlyGrowth >= 0 ? '+' : ''}{stats.monthlyGrowth}%
+                    </span>
+                    <span className="text-gray-600 ml-1">from last month</span>
+                  </>
+                ) : (
+                  <span className="text-gray-600">Paid invoices to date</span>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -705,14 +743,13 @@ export const ModernAdminDashboard: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Client Satisfaction</p>
-                  <p className="text-3xl font-bold text-purple-600">98%</p>
+                  <p className="text-sm font-medium text-gray-600">Outstanding</p>
+                  <p className="text-3xl font-bold text-purple-600">${stats.outstandingAmount.toLocaleString()}</p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-purple-500" />
               </div>
               <div className="mt-4 flex items-center text-sm">
-                <span className="text-purple-600 font-medium">Excellent</span>
-                <span className="text-gray-600 ml-1">rating</span>
+                <span className="text-gray-600">Sent invoices awaiting payment</span>
               </div>
             </CardContent>
           </Card>
@@ -721,49 +758,13 @@ export const ModernAdminDashboard: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center">
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Team Efficiency</p>
-                  <p className="text-3xl font-bold text-orange-600">92%</p>
+                  <p className="text-sm font-medium text-gray-600">Open Requests</p>
+                  <p className="text-3xl font-bold text-orange-600">{stats.pendingQuotes + stats.pendingServiceRequests}</p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-orange-500" />
               </div>
               <div className="mt-4 flex items-center text-sm">
-                <span className="text-orange-600 font-medium">High</span>
-                <span className="text-gray-600 ml-1">productivity</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Revenue Trends</CardTitle>
-              <CardDescription>Monthly revenue over the past year</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center">
-                  <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Revenue chart visualization</p>
-                  <p className="text-sm text-gray-400">Integration with charting library needed</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Project Distribution</CardTitle>
-              <CardDescription>Projects by status and type</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                <div className="text-center">
-                  <Activity className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">Project analytics visualization</p>
-                  <p className="text-sm text-gray-400">Real-time project insights</p>
-                </div>
+                <span className="text-gray-600">{stats.pendingQuotes} quotes, {stats.pendingServiceRequests} service requests</span>
               </div>
             </CardContent>
           </Card>
@@ -772,127 +773,5 @@ export const ModernAdminDashboard: React.FC = () => {
     );
   }
 
-  function renderQuotes() {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Quote Management</h2>
-            <p className="text-gray-600">Manage client quotes and proposals</p>
-          </div>
-          <Button onClick={() => navigate('/project-manager-quote-creation')} className="bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Quote
-          </Button>
-        </div>
 
-        {/* Quote Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Pending Quotes</p>
-                  <p className="text-3xl font-bold text-yellow-600">{stats.pendingRequests}</p>
-                </div>
-                <Clock className="h-8 w-8 text-yellow-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Approved</p>
-                  <p className="text-3xl font-bold text-green-600">24</p>
-                </div>
-                <CheckCircle className="h-8 w-8 text-green-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">In Review</p>
-                  <p className="text-3xl font-bold text-blue-600">8</p>
-                </div>
-                <FileText className="h-8 w-8 text-blue-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-600">Conversion Rate</p>
-                  <p className="text-3xl font-bold text-purple-600">78%</p>
-                </div>
-                <TrendingUp className="h-8 w-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Quotes */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Quote Requests</CardTitle>
-            <CardDescription>Latest quotes from potential clients</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex-1">
-                  <h4 className="font-medium">Website Development Project</h4>
-                  <p className="text-sm text-gray-600">John Smith • Enterprise Tier</p>
-                  <p className="text-xs text-gray-400">2 hours ago</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-green-600">$25,000</p>
-                  <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                </div>
-                <Button variant="outline" size="sm" className="ml-4">
-                  Review
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex-1">
-                  <h4 className="font-medium">Mobile App Development</h4>
-                  <p className="text-sm text-gray-600">Sarah Johnson • Professional Tier</p>
-                  <p className="text-xs text-gray-400">1 day ago</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-green-600">$15,000</p>
-                  <Badge className="bg-blue-100 text-blue-800">In Review</Badge>
-                </div>
-                <Button variant="outline" size="sm" className="ml-4">
-                  Review
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                <div className="flex-1">
-                  <h4 className="font-medium">E-commerce Platform</h4>
-                  <p className="text-sm text-gray-600">Tech Corp • Enterprise Tier</p>
-                  <p className="text-xs text-gray-400">3 days ago</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-bold text-green-600">$45,000</p>
-                  <Badge className="bg-green-100 text-green-800">Approved</Badge>
-                </div>
-                <Button variant="outline" size="sm" className="ml-4">
-                  View Details
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 };
