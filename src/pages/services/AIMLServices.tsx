@@ -27,16 +27,6 @@ const AIMLServices = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    
-    // Update page title and meta description dynamically
-    document.title = "AI & Machine Learning Services - NexaCore Innovations";
-    
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 
-        'Professional AI and machine learning services. Custom AI solutions, ML models, data analytics, and artificial intelligence development for businesses worldwide.'
-      );
-    }
   }, []);
 
   const aiServices = [

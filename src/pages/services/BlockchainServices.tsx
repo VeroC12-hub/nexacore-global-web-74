@@ -27,16 +27,6 @@ const BlockchainServices = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    
-    // Update page title and meta description dynamically
-    document.title = "Blockchain & Web3 Development Services - NexaCore Innovations";
-    
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 
-        'Professional blockchain and Web3 development services. Smart contracts, DApps, cryptocurrency solutions, and decentralized applications for businesses worldwide.'
-      );
-    }
   }, []);
 
   const blockchainServices = [

@@ -27,16 +27,6 @@ const CADServices = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    
-    // Update page title and meta description dynamically
-    document.title = "CAD Design & Engineering Services - NexaCore Innovations";
-    
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', 
-        'Professional CAD design and engineering services. 3D modeling, technical drawings, product design, and engineering consultation for manufacturing and construction worldwide.'
-      );
-    }
   }, []);
 
   const cadServices = [

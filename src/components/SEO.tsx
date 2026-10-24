@@ -1,8 +1,16 @@
+import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 
 const SITE = 'https://www.nexacore-innovations.com';
 // The bare domain redirects to www, so canonical and share links must use www
+// Defaults written into index.html for crawlers that do not run JavaScript.
+// Helmet adds its own copies, so remove these to leave one of each tag.
+const STATIC_TAGS = [
+  'meta[name="description"]', 'meta[name="keywords"]', 'meta[name="author"]',
+  'meta[property^="og:"]', 'meta[name^="twitter:"]:not([name="twitter:site"])', 'link[rel="canonical"]',
+].map(selector => `head > ${selector}:not([data-rh])`).join(', ');
+
 const toSiteUrl = (value: string) => value.replace(/^https?:\/\/(www\.)?nexacore-innovations\.com/, SITE);
 
 interface SEOProps {
@@ -31,6 +39,9 @@ const SEO = ({
   noindex = false
 }: SEOProps) => {
   const location = useLocation();
+  useEffect(() => {
+    document.querySelectorAll(STATIC_TAGS).forEach(tag => tag.remove());
+  }, []);
   const siteTitle = title.includes('NexaCore') ? title : `${title} | NexaCore Innovations`;
   // Without an explicit url, each page is canonical to itself, never the home page
   const pageUrl = toSiteUrl(url || `${SITE}${location.pathname === '/' ? '' : location.pathname}`);
