@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -1479,16 +1480,15 @@ const PortfolioWithAdmin = () => {
             <Button 
               size="lg" 
               className="bg-white text-primary hover:bg-white/90"
-            >
-              Start Your Project
-              <ArrowRight className="ml-2 w-5 h-5" />
+            asChild>
+              <Link to="/get-started">Start Your Project <ArrowRight className="ml-2 w-5 h-5" /></Link>
             </Button>
             <Button 
               size="lg" 
               variant="outline" 
               className="border-white text-white hover:bg-white hover:text-primary"
-            >
-              View Our Services
+            asChild>
+              <Link to="/services">View Our Services</Link>
             </Button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -216,9 +217,11 @@ export default function PortfolioDisplay({
       {/* Show More Button */}
       {projects.length >= maxProjects && (
         <div className="text-center">
-          <Button variant="outline">
-            View All {serviceId?.replace('-', ' ')} Projects
-            <ExternalLink className="ml-2 w-4 h-4" />
+          <Button variant="outline" asChild>
+            <Link to="/portfolio">
+              View All {serviceId?.replace('-', ' ')} Projects
+              <ExternalLink className="ml-2 w-4 h-4" />
+            </Link>
           </Button>
         </div>
       )}
@@ -341,13 +344,6 @@ function ProjectCard({ project }: { project: any }) {
           </div>
         )}
 
-        {/* Action Button */}
-        <div className="pt-2">
-          <Button variant="outline" size="sm" className="w-full">
-            View Project Details
-            <ExternalLink className="ml-2 w-3 h-3" />
-          </Button>
-        </div>
       </div>
     </Card>
   );

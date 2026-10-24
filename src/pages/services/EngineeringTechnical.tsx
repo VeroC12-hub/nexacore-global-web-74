@@ -44,7 +44,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import PortfolioDisplay from '@/components/portfolio/PortfolioDisplay';
 
@@ -977,9 +977,6 @@ export default function EngineeringTechnical() {
                           <Calendar className="w-4 h-4" />
                           <span className="text-sm font-medium">{service.caseStudy.timeline}</span>
                         </div>
-                        <Button variant="outline" size="sm" className="w-full">
-                          Read Full Case Study <ArrowRight className="ml-2 w-3 h-3" />
-                        </Button>
                       </div>
                     </Card>
 
@@ -1058,8 +1055,8 @@ export default function EngineeringTechnical() {
                             <Calendar className="w-4 h-4 text-primary" />
                             <span className="text-sm font-medium">{service.caseStudy.timeline}</span>
                           </div>
-                          <Button size="sm">
-                            View More Cases <ArrowRight className="ml-2 w-3 h-3" />
+                          <Button size="sm" asChild>
+                            <Link to="/portfolio">View More Cases <ArrowRight className="ml-2 w-3 h-3" /></Link>
                           </Button>
                         </div>
                       </div>
@@ -1392,10 +1389,6 @@ export default function EngineeringTechnical() {
                   <p className="text-muted-foreground">See how our engineering solutions transformed businesses</p>
                 </div>
               </div>
-              <Button variant="outline">
-                <Play className="mr-2 w-4 h-4" />
-                Watch Video Testimonials
-              </Button>
             </Card>
           </div>
         </div>
@@ -1476,8 +1469,8 @@ export default function EngineeringTechnical() {
                     </div>
                   </div>
                   
-                  <Button className="w-full mt-4">
-                    View {industry.industry} Solutions
+                  <Button className="w-full mt-4" asChild>
+                    <Link to="/get-started">View {industry.industry} Solutions</Link>
                   </Button>
                 </div>
               </Card>

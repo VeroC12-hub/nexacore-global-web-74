@@ -393,9 +393,11 @@ const Index = () => {
                   </li>
                 ))}
               </ul>
-              <Button className="btn-hero">
-                Meet Our Team
-                <ArrowRight className="ml-2 w-5 h-5" />
+              <Button className="btn-hero" asChild>
+                <Link to="/team">
+                  Meet Our Team
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
               </Button>
             </div>
             
