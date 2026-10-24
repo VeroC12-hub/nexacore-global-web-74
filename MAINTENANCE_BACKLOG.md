@@ -18,6 +18,13 @@ those when working on NexaCore.
 - **URGENT, run migration `20261024010000_profiles_privilege_guard.sql`:**
   any signed-in user could set their own profile role to `admin`, and every
   public signup (role `member`) counted as internal staff. Not applied yet.
+- **URGENT, run migration `20261024020000_close_public_data_leaks.sql`:**
+  anyone (no sign-in) can read all quote requests; any client can read and
+  change all projects and JARVIS memory/tasks; chat logs are public; the AI
+  admin policies trust user-editable metadata. Quote review page needs it.
+- **Other app's tables on the shared project (not changed):** homepage_media
+  and media_files can be edited by any signed-in user; users and
+  user_profiles are publicly readable. Check which app owns them.
 - **Eltuff app (not NexaCore, not changed):** `eltuff.handle_new_user` takes
   the role from signup metadata, so anyone can sign up to Eltuff as `admin`.
   Fix it in the Eltuff project.
@@ -77,6 +84,12 @@ those when working on NexaCore.
    chunks with `manualChunks`. Build currently takes about 5 to 6 minutes.
 
 ## Done
+
+- 2026-10-24: RLS audit of all public tables; migration
+  `20261024020000_close_public_data_leaks.sql` written. Get Started and the
+  chat widget generate ids in the browser (no read-back needed); public
+  quote review uses `get_quote_for_review` / `respond_to_quote` (declining a
+  quote always failed before: `declined_at` column does not exist).
 
 - 2026-10-24: Admin API (`/api/admin/*`) now verifies the caller's Supabase
   token and role in `api/admin/[action].ts`. Before, delete-user trusted an

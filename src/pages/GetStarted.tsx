@@ -458,9 +458,13 @@ const GetStarted = () => {
       const currentPricing = getCurrentServiceData();
       const currentMaxPrice = Math.round(currentPricing.max * rate);
 
-      const { data: quoteRequest, error: quoteError } = await supabase
+      // The id is generated here because visitors cannot read quote requests
+      // back (they hold other people's contact details).
+      const quoteRequest = { id: crypto.randomUUID() };
+      const { error: quoteError } = await supabase
         .from('quote_requests')
         .insert({
+          id: quoteRequest.id,
           full_name: clientName.trim(),
           email: clientEmail.trim(),
           phone: clientPhone.trim() || null,
@@ -471,9 +475,7 @@ const GetStarted = () => {
           budget_estimate: currentMaxPrice,
           timeline: null,
           status: 'pending'
-        })
-        .select()
-        .single();
+        });
 
       if (quoteError) {
         throw quoteError;

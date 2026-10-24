@@ -32,6 +32,18 @@ export function useAIAssistant(options?: {
     }
   }, [user?.id]);
 
+  // Visitors who are not signed in may write chat rows but not read them back
+  // (other visitors' chats live in the same tables), so their row ids are
+  // generated here and inserts skip the read-back.
+  const insertRow = async (table: 'ai_conversations' | 'ai_messages', row: Record<string, any>) => {
+    if (user) {
+      return supabase.from(table).insert([row as any]).select().single();
+    }
+    const withId = { ...row, id: crypto.randomUUID() };
+    const { error } = await supabase.from(table).insert([withId as any]);
+    return { data: error ? null : { ...withId, created_at: new Date().toISOString() }, error };
+  };
+
   const makeLocalConversation = (): AIConversation => ({
     id: sessionIdRef.current,
     user_id: user?.id || null,
@@ -64,7 +76,7 @@ export function useAIAssistant(options?: {
       }
 
       // If no conversation yet, try to find by session_id
-      if (!conv) {
+      if (!conv && user) {
         const { data: existingConv, error: existingError } = await supabase
           .from('ai_conversations')
           .select('*')
@@ -78,19 +90,15 @@ export function useAIAssistant(options?: {
 
       // Create new conversation only if none exists
       if (!conv) {
-        const { data, error: createError } = await supabase
-          .from('ai_conversations')
-          .insert([{
-            user_id: user?.id || null,
-            session_id: sessionIdRef.current,
-            context: {
-              userRole: userRole || 'visitor',
-              currentPage: window.location.pathname,
-            },
-            total_messages: 0,
-          }])
-          .select()
-          .single();
+        const { data, error: createError } = await insertRow('ai_conversations', {
+          user_id: user?.id || null,
+          session_id: sessionIdRef.current,
+          context: {
+            userRole: userRole || 'visitor',
+            currentPage: window.location.pathname,
+          },
+          total_messages: 0,
+        });
 
         if (createError) {
           // RLS or permission error — fall back to an in-memory conversation
@@ -213,16 +221,12 @@ export function useAIAssistant(options?: {
         setMessages(prev => [...prev, localUserMsg]);
       } else {
         // Insert user message to DB
-        const { data: savedUserMessage, error: userMsgError } = await supabase
-          .from('ai_messages')
-          .insert([{
-            conversation_id: conversation.id,
-            role: 'user',
-            content: messageText,
-            content_type: 'text',
-          }])
-          .select()
-          .single();
+        const { data: savedUserMessage, error: userMsgError } = await insertRow('ai_messages', {
+          conversation_id: conversation.id,
+          role: 'user',
+          content: messageText,
+          content_type: 'text',
+        });
 
         if (userMsgError) throw userMsgError;
         setMessages(prev => [...prev, savedUserMessage as unknown as AIMessage]);
@@ -268,20 +272,16 @@ export function useAIAssistant(options?: {
         setMessages(prev => [...prev, localAssistantMsg]);
       } else {
         // Save assistant message to DB
-        const { data: savedAssistantMessage, error: assistantMsgError } = await supabase
-          .from('ai_messages')
-          .insert([{
-            conversation_id: conversation.id,
-            role: 'assistant',
-            content: aiResponse.message,
-            content_type: 'text',
-            model_used: aiResponse.source === 'claude' ? (aiResponse.metadata?.model || 'claude-3-5-sonnet-20241022') : 'local-ai-v1',
-            tokens_used: aiResponse.metadata?.tokensUsed || 0,
-            response_time_ms: responseTime,
-            retrieved_knowledge: [] as string[],
-          }])
-          .select()
-          .single();
+        const { data: savedAssistantMessage, error: assistantMsgError } = await insertRow('ai_messages', {
+          conversation_id: conversation.id,
+          role: 'assistant',
+          content: aiResponse.message,
+          content_type: 'text',
+          model_used: aiResponse.source === 'claude' ? (aiResponse.metadata?.model || 'claude-3-5-sonnet-20241022') : 'local-ai-v1',
+          tokens_used: aiResponse.metadata?.tokensUsed || 0,
+          response_time_ms: responseTime,
+          retrieved_knowledge: [] as string[],
+        });
 
         if (assistantMsgError) throw assistantMsgError;
         setMessages(prev => [...prev, savedAssistantMessage as unknown as AIMessage]);

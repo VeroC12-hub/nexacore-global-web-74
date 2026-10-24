@@ -246,24 +246,19 @@ const QuoteReview = () => {
     try {
       console.log('Loading quote data for ID:', id);
       
-      // Load quote data with enhanced error handling
-      const { data: quoteData, error: quoteError } = await supabase
-        .from('quotes')
-        .select('*')
-        .eq('id', id)
-        .single();
+      // Visitors cannot read the quotes tables directly; this function returns
+      // only the quote whose id is in the link, plus its request summary.
+      const { data: review, error: quoteError } = await supabase
+        .rpc('get_quote_for_review' as any, { p_quote_id: id });
 
       if (quoteError) {
         console.error('Quote fetch error:', quoteError);
         setDebugInfo(`Database error: ${quoteError.message} (Code: ${quoteError.code})`);
-        
-        if (quoteError.code === 'PGRST116') {
-          toast.error('Quote not found - it may have been deleted');
-          navigate('/');
-          return;
-        }
         throw quoteError;
       }
+
+      const quoteData = (review as any)?.quote;
+      const requestData = (review as any)?.request;
 
       if (!quoteData) {
         console.error('No quote data returned');
@@ -293,24 +288,9 @@ const QuoteReview = () => {
 
       setQuote(quoteData as any);
 
-      // Load related quote request
-      if (quoteData.quote_request_id) {
-        console.log('Loading quote request:', quoteData.quote_request_id);
-        
-        const { data: requestData, error: requestError } = await supabase
-          .from('quote_requests')
-          .select('*')
-          .eq('id', quoteData.quote_request_id)
-          .single();
-
-        if (!requestError && requestData) {
-          console.log('Quote request loaded');
-          setQuoteRequest(requestData);
-          setDebugInfo(prev => `${prev} | Request loaded for: ${requestData.full_name}`);
-        } else {
-          console.warn('Could not load quote request:', requestError);
-          setDebugInfo(prev => `${prev} | Warning: Could not load quote request`);
-        }
+      if (requestData) {
+        setQuoteRequest(requestData);
+        setDebugInfo(prev => `${prev} | Request loaded for: ${requestData.full_name}`);
       }
 
     } catch (error) {
@@ -352,27 +332,14 @@ const QuoteReview = () => {
     setDebugInfo(`Submitting ${action} response...`);
 
     try {
-      // Update quote status in database
-      const updateData: any = {
-        status: action
-      };
-
-      if (action === 'approved') {
-        updateData.approved_at = new Date().toISOString();
-      } else if (action === 'declined') {
-        updateData.declined_at = new Date().toISOString();
-      }
-
-      console.log('Updating quote with data:', updateData);
       setDebugInfo(`Updating database with ${action} status...`);
 
-      // Perform the database update
       const { data: updatedData, error: updateError } = await supabase
-        .from('quotes')
-        .update(updateData)
-        .eq('id', id)
-        .select()
-        .single();
+        .rpc('respond_to_quote' as any, {
+          p_quote_id: id,
+          p_action: action,
+          p_message: message.trim() || null,
+        });
 
       if (updateError) {
         console.error('Database update error:', updateError);
