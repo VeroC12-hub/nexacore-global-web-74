@@ -90,20 +90,23 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
     }
   };
 
-  const markAsPaid = async (invoiceId: string) => {
+  const setInvoiceStatus = async (invoiceId: string, status: 'sent' | 'paid') => {
     try {
+      const update = status === 'paid'
+        ? { status, paid_date: new Date().toISOString() }
+        : { status };
       const { error } = await supabase
         .from('invoices')
-        .update({ status: 'paid' })
+        .update(update)
         .eq('id', invoiceId);
 
       if (error) throw error;
 
       setInvoices(invoices.map(inv => 
-        inv.id === invoiceId ? { ...inv, status: 'paid' } : inv
+        inv.id === invoiceId ? { ...inv, status } : inv
       ));
       onStatsUpdate();
-      toast.success('Invoice marked as paid');
+      toast.success(status === 'paid' ? 'Invoice marked as paid' : 'Invoice sent: the client can now see it');
     } catch (error) {
       console.error('Error updating invoice:', error);
       toast.error('Failed to update invoice');
@@ -113,7 +116,8 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'paid': return 'bg-green-500';
-      case 'pending': return 'bg-yellow-500';
+      case 'sent': return 'bg-yellow-500';
+      case 'draft': return 'bg-slate-400';
       case 'overdue': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
@@ -191,11 +195,20 @@ export function AdminInvoicesTab({ onStatsUpdate }: AdminInvoicesTabProps) {
                       >
                         <Download className="h-4 w-4" />
                       </Button>
-                      {invoice.status === 'pending' && (
+                      {invoice.status === 'draft' && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => markAsPaid(invoice.id)}
+                          onClick={() => setInvoiceStatus(invoice.id, 'sent')}
+                        >
+                          Send
+                        </Button>
+                      )}
+                      {(invoice.status === 'sent' || invoice.status === 'overdue') && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setInvoiceStatus(invoice.id, 'paid')}
                         >
                           Mark Paid
                         </Button>

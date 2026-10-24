@@ -79,7 +79,9 @@ export function CreateInvoiceModal({ isOpen, onClose, onSuccess }: CreateInvoice
           due_date: formData.dueDate,
           currency: formData.currency,
           invoice_number: `INV-${Date.now()}`,
-          status: 'pending'
+          // 'pending' is not an allowed invoice status, so every insert failed.
+          // New invoices start as drafts (hidden from the client until sent).
+          status: 'draft'
         });
 
       if (error) throw error;

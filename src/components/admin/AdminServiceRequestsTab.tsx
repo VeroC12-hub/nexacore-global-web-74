@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 interface ServiceRequest {
   id: string;
@@ -28,6 +29,7 @@ interface AdminServiceRequestsTabProps {
 export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsTabProps) {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewingRequest, setViewingRequest] = useState<ServiceRequest | null>(null);
 
   useEffect(() => {
     loadServiceRequests();
@@ -109,7 +111,8 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'bg-green-500';
-      case 'pending': return 'bg-yellow-500';
+      case 'submitted': return 'bg-yellow-500';
+      case 'reviewing': return 'bg-orange-500';
       case 'rejected': return 'bg-red-500';
       case 'in_progress': return 'bg-blue-500';
       case 'completed': return 'bg-purple-500';
@@ -189,7 +192,7 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    ${request.budget_estimate?.toLocaleString() || 'N/A'}
+                    {request.budget_estimate ? `$${request.budget_estimate.toLocaleString()}` : 'N/A'}
                   </TableCell>
                   <TableCell>
                     {request.requested_completion ? 
@@ -199,10 +202,11 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
                   </TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => setViewingRequest(request)}>
                         <Eye className="h-4 w-4" />
                       </Button>
-                      {request.status === 'pending' && (
+                      {/* New client requests arrive as 'submitted' (see service_requests check constraint) */}
+                      {(request.status === 'submitted' || request.status === 'reviewing') && (
                         <>
                           <Button
                             variant="outline"
@@ -253,6 +257,37 @@ export function AdminServiceRequestsTab({ onStatsUpdate }: AdminServiceRequestsT
           </Table>
         )}
       </CardContent>
+
+      <Dialog open={!!viewingRequest} onOpenChange={(open) => !open && setViewingRequest(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{viewingRequest?.title}</DialogTitle>
+            <DialogDescription>
+              {viewingRequest?.client_name || 'Unknown client'} ·{' '}
+              {viewingRequest && new Date(viewingRequest.created_at).toLocaleDateString()}
+            </DialogDescription>
+          </DialogHeader>
+          {viewingRequest && (
+            <div className="space-y-3 text-sm">
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="outline">{viewingRequest.request_type.replace('_', ' ')}</Badge>
+                <Badge className={getPriorityColor(viewingRequest.priority)}>{viewingRequest.priority}</Badge>
+                <Badge className={getStatusColor(viewingRequest.status)}>{viewingRequest.status.replace('_', ' ')}</Badge>
+              </div>
+              <p className="whitespace-pre-wrap">{viewingRequest.description}</p>
+              <div className="grid grid-cols-2 gap-2 text-muted-foreground">
+                <span>Budget: {viewingRequest.budget_estimate ? `$${viewingRequest.budget_estimate.toLocaleString()}` : 'Not given'}</span>
+                <span>
+                  Wanted by:{' '}
+                  {viewingRequest.requested_completion
+                    ? new Date(viewingRequest.requested_completion).toLocaleDateString()
+                    : 'Not specified'}
+                </span>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
