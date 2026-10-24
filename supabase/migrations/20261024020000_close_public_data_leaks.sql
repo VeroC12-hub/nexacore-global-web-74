@@ -17,6 +17,7 @@
 --    auth.users.raw_user_meta_data->>'role', which every user can set on
 --    their own account with supabase.auth.updateUser().
 -- 6. project_members: any signed-in user had full access.
+-- 7. proposals: anon could read sent proposals and change their price.
 --
 -- FIXES:
 -- - Public quote review goes through two SECURITY DEFINER functions keyed by
@@ -235,3 +236,13 @@ CREATE POLICY project_members_internal_staff_all ON public.project_members
   FOR ALL TO authenticated
   USING (public.is_internal_staff())
   WITH CHECK (public.is_internal_staff());
+
+-- ---------------------------------------------------------------------
+-- 7. Proposals
+-- Anon could read every sent proposal and update every column (including
+-- price) of any sent or viewed one. The public proposal page that used
+-- this (src/pages/ProposalReview.tsx) is not routed, and its ?token= was
+-- never checked. Signed-in clients and staff keep their own policies.
+-- ---------------------------------------------------------------------
+DROP POLICY IF EXISTS "Anon can view proposals" ON public.proposals;
+DROP POLICY IF EXISTS "Anon can update proposal responses" ON public.proposals;
